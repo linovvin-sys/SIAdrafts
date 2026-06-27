@@ -22,7 +22,7 @@
                   <iconify-icon icon="mdi:email-outline"></iconify-icon>
                 </span>
                 <input type="email" class="form-control" id="login-email" name="email"
-                       placeholder="you@eduschool.edu" required>
+                       placeholder="Professor/staff ID" required>
               </div>
             </div>
 
