@@ -13,7 +13,7 @@
           <h1 class="login-title h3 fw-semibold mb-2">Welcome back</h1>
           <p class="text-ink-soft mb-4">Log in to access your dashboard, admission status, and enrollment records.</p>
 
-          <form action="login_process.php" method="POST" autocomplete="off">
+          <form action="dashboard.php" method="POST" autocomplete="off">
 
             <div class="mb-3">
               <label for="login-email" class="form-label fw-bold small">Email address</label>
