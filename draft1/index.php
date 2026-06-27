@@ -7,7 +7,7 @@
         <div class="card-body p-0">
 
           <div class="login-mark d-flex align-items-center justify-content-center mb-3">
-            <iconify-icon icon="mdi:school"></iconify-icon>
+            <iconify-icon icon="mdi:school"></iconify-icon> 
           </div>
 
           <h1 class="login-title h3 fw-semibold mb-2">Welcome back</h1>

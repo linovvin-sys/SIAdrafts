@@ -1,3 +1,4 @@
+<?php include 'session.php'?> <!-- pag meron na tayo login at accs -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
