@@ -221,6 +221,8 @@
     border-radius:2px;
     transition: transform .25s ease, top .25s ease;
   }
+
+  /* para hindi nakaka lito ung mga specific styles sa normal styles */
   .nav-toggle span::before{ top:-5px; }
   .nav-toggle span::after{ top:5px; }
 
