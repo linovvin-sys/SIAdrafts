@@ -1,15 +1,3 @@
-document.querySelectorAll('[data-target]').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    const input   = document.getElementById(btn.dataset.target);
-    const icon    = btn.querySelector('iconify-icon');
-    const showing = input.type === 'password';
-    input.type    = showing ? 'text' : 'password';
-    icon.setAttribute('icon', showing ? 'mdi:eye-off-outline' : 'mdi:eye-outline');
-    btn.setAttribute('aria-label', showing ? 'Hide password' : 'Show password');
-  });
-});
-
-// AJAX login
 const loginForm = document.getElementById('login-form');
 const loginBtn  = document.getElementById('login-btn');
 const loginErr  = document.getElementById('login-error');
@@ -17,18 +5,15 @@ const loginErr  = document.getElementById('login-error');
 if (loginForm) {
   loginForm.addEventListener('submit', async function (e) {
     e.preventDefault();
-
-    loginBtn.disabled = true;
+    loginBtn.disabled  = true;
     loginBtn.innerHTML = 'Logging in… <iconify-icon icon="mdi:loading" class="spin"></iconify-icon>';
-    loginErr.hidden   = true;
-
+    loginErr.hidden    = true;
     try {
       const r = await fetch('api/login.php', {
         method: 'POST',
         body:   new FormData(loginForm),
       });
       const d = await r.json();
-
       if (d.success) {
         window.location.href = d.redirect;
       } else {
