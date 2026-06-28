@@ -1,4 +1,5 @@
-<?php include 'session.php'?> <!-- pag meron na tayo login at accs -->
+<!-- pag meron na tayo login at accs -->
+ <?php include 'db.php'; ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,8 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EduSchool</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
-<link rel="stylesheet" href="login.css">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/login.css">
+<link rel="stylesheet" href="css/admission.css">
 <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
 <body>
@@ -22,8 +24,8 @@
       </a>
 
       <ul class="nav-links">
-        <li><a href="#" class="active">Dashboard</a></li>
-        <li><a href="#">Admission</a></li>
+        <li><a href="#">Dashboard</a></li>
+        <li><a href="admission.php" class="active">Admission</a></li>
         <li><a href="#">Enrollment</a></li>
       </ul>
 
