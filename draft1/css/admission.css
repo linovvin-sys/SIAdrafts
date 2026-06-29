@@ -7,7 +7,7 @@
       var(--paper);
   }
  
-  /* ---- page header ---- */
+  /*  page header  */
   .admission-head{
     max-width: 900px;
     margin: 0 auto 28px;
@@ -42,7 +42,7 @@
     font-size: 0.96rem;
   }
  
-  /* ---- progress rail ---- */
+  /*  progress rail  */
   .step-rail{
     max-width: 900px;
     margin: 0 auto 30px;
@@ -68,8 +68,8 @@
     position:absolute; inset:0;
     background: var(--amber);
   }
- 
-  /* ---- card / sections ---- */
+
+  /*  card / sections  */
   .admission-card{
     max-width: 900px;
     margin: 0 auto;
@@ -139,7 +139,7 @@
   }
   .form-text{ color: var(--ink-soft); font-size: 0.78rem; }
  
-  /* ---- repeatable academic-history row ---- */
+  /*  repeatable academic-history row  */
   .history-row{
     background: rgba(27,42,74,0.03);
     border: 1px solid var(--ink-line);
@@ -173,7 +173,7 @@
   }
   .btn-add-row:hover{ border-color: var(--sage); background: rgba(124,152,133,0.06); }
  
-  /* ---- checklist ---- */
+  /*  checklist  */
   .doc-checklist{
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -209,7 +209,7 @@
     letter-spacing:0.02em;
   }
  
-  /* ---- AJAX result banner ---- */
+  /*  AJAX result banner  */
   .form-banner{
     border-radius: 14px;
     padding: 16px 18px;
@@ -234,7 +234,7 @@
     cursor: not-allowed;
   }
  
-  /* ---- footer actions ---- */
+  /*  footer actions  */
   .form-actions{
     padding: 24px 32px;
     background: rgba(27,42,74,0.03);
