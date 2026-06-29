@@ -1,4 +1,7 @@
-<?php include 'header.php' ?>
+<?php 
+$page_scripts = ['js/admission.js'];
+include 'header.php';
+require_once 'includes/auth.php';?>
 
 <div class="admission-page">
  
@@ -19,12 +22,12 @@
     <div class="seg"></div>
   </div>
  
-  <form id="admissionForm" action="admission_process.php" method="POST" class="admission-card" autocomplete="off">
+  <form id="admissionForm" action="api/admission_process.php" method="POST" class="admission-card" autocomplete="off">
  
     <div id="formBanner" style="display:none; margin:20px 32px 0;"></div>
  
  
-    <!-- ===== 1. STUDENT INFORMATION ===== -->
+    <!--  1. STUDENT INFORMATION  -->
     <div class="form-section">
       <div class="section-head">
         <span class="section-num">1</span>
@@ -85,7 +88,7 @@
       </div>
     </div>
  
-    <!-- ===== 2. ACADEMIC HISTORY ===== -->
+    <!--  2. ACADEMIC HISTORY  -->
     <div class="form-section">
       <div class="section-head">
         <span class="section-num">2</span>
@@ -128,7 +131,7 @@
       </button>
     </div>
  
-    <!-- ===== 3. GUARDIAN INFORMATION ===== -->
+    <!--  3. GUARDIAN INFORMATION  -->
     <div class="form-section">
       <div class="section-head">
         <span class="section-num">3</span>
@@ -175,7 +178,7 @@
       </div>
     </div>
  
-    <!-- ===== 4. PROGRAM DETAILS ===== -->
+    <!--  4. PROGRAM DETAILS  -->
     <div class="form-section">
       <div class="section-head">
         <span class="section-num">4</span>
@@ -194,10 +197,10 @@
           <label class="form-label">Year level</label>
           <select class="form-select" name="year_level" required>
             <option value="" selected disabled>Select</option>
-            <option>1st Year</option>
-            <option>2nd Year (transferee)</option>
-            <option>3rd Year (transferee)</option>
-            <option>4th Year (transferee)</option>
+            <option value="1">1st Year</option>
+            <option value="2">2nd Year (transferee)</option>
+            <option value="3">3rd Year (transferee)</option>
+            <option value="4">4th Year (transferee)</option>
           </select>
         </div>
         <div class="col-md-3">
@@ -215,7 +218,7 @@
       </div>
     </div>
  
-    <!-- ===== 5. DOCUMENT CHECKLIST ===== -->
+    <!--  5. DOCUMENT CHECKLIST  -->
     <div class="form-section">
       <div class="section-head">
         <span class="section-num">5</span>
@@ -257,7 +260,7 @@
       </div>
     </div>
  
-    <!-- ===== ACTIONS ===== -->
+    <!--  6. ACTIONS  -->
     <div class="form-actions">
       <span class="hint">Double-check guardian ID details before saving — this record can't auto-verify them.</span>
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
