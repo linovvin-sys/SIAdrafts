@@ -32,8 +32,7 @@
     rows.appendChild(block);
   });
 
-
-// ===== AJAX form submission =====
+//  AJAX form submission 
   const form = document.getElementById('admissionForm');
   const banner = document.getElementById('formBanner');
   const submitBtn = form.querySelector('.btn-submit');
@@ -51,12 +50,7 @@
     return div.innerHTML;
   }
  
-  // ===== AJAX submission =====
-  // This only transports the form data and displays whatever
-  // admission_process.php returns. No validation logic lives here —
-  // every check runs server-side in PHP (see validation_rules.php
-  // and admission_process.php).
- 
+  //  AJAX submission 
   form.addEventListener('submit', function (e) {
     e.preventDefault();
  
