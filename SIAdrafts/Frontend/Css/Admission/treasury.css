@@ -1,0 +1,121 @@
+:root{
+    --ink:#1B2A4A; --paper:#FAF7F0; --amber:#E8A33D; --sage:#7C9885;
+    --ink-soft: rgba(27,42,74,0.65); --ink-line: rgba(27,42,74,0.12);
+  }
+ 
+  .treasury-page{
+    padding-top: 130px; padding-bottom: 70px; min-height: 100vh;
+    background: var(--paper);
+  }
+  .treasury-head{ max-width: 1100px; margin: 0 auto 24px; padding: 0 16px; }
+  .treasury-head h1{
+    font-family: Georgia, "Times New Roman", serif;
+    color: var(--ink); font-size: clamp(1.6rem, 3vw, 2.1rem); margin: 0 0 6px;
+  }
+  .treasury-head p{ color: var(--ink-soft); margin: 0; font-size: 0.96rem; }
+ 
+  .treasury-tabs{
+    max-width: 1100px; margin: 0 auto 20px; padding: 0 16px;
+    display: flex; gap: 6px;
+  }
+  .t-tab{
+    background: #fff; border: 1px solid var(--ink-line); color: var(--ink-soft);
+    font-weight: 600; font-size: 0.9rem; padding: 10px 18px; border-radius: 999px;
+    cursor: pointer;
+  }
+  .t-tab.active{ background: var(--ink); color: #fff; border-color: var(--ink); }
+ 
+  .treasury-card{
+    max-width: 1100px; margin: 0 auto; background: #fff;
+    border: 1px solid var(--ink-line); border-radius: 20px;
+    box-shadow: 0 1px 1px rgba(27,42,74,0.03), 0 24px 48px -22px rgba(27,42,74,0.22);
+    padding: 0 16px;
+  }
+ 
+  /* ---- queue table ---- */
+  .queue-table{ width: 100%; border-collapse: collapse; }
+  .queue-table th{
+    text-align: left; font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.03em; color: var(--ink-soft); padding: 16px 12px;
+    border-bottom: 1px solid var(--ink-line);
+  }
+  .queue-table td{
+    padding: 14px 12px; border-bottom: 1px solid var(--ink-line);
+    font-size: 0.92rem; color: var(--ink); vertical-align: middle;
+  }
+  .queue-table tr:last-child td{ border-bottom: none; }
+ 
+  .status-pill{
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px;
+  }
+  .status-pill.unpaid{ background: rgba(232,163,61,0.15); color: #b8741f; }
+  .status-pill.down{ background: rgba(124,152,133,0.15); color: #4f6b56; }
+  .status-pill.full{ background: rgba(27,42,74,0.1); color: var(--ink); }
+ 
+  .btn-pay-row{
+    background: var(--amber); color: var(--ink); font-weight: 700;
+    border: none; padding: 7px 16px; border-radius: 999px; font-size: 0.84rem; cursor: pointer;
+  }
+  .btn-pay-row:hover{ background: #f0ad4f; }
+ 
+  .empty-queue{ text-align: center; padding: 60px 20px; color: var(--ink-soft); }
+ 
+  /* ---- search panel ---- */
+  .search-panel{ padding: 28px 0; display: none; }
+  .search-panel.active{ display: block; }
+  .search-box{ display: flex; gap: 10px; margin-bottom: 22px; padding: 0 4px; }
+  .search-box input{
+    flex: 1; border: 1.5px solid var(--ink-line); border-radius: 0.85rem;
+    padding: 12px 16px; font-size: 0.95rem; color: var(--ink);
+  }
+  .search-box input:focus{ outline: none; border-color: var(--sage); box-shadow: 0 0 0 0.2rem rgba(124,152,133,0.18); }
+  .search-box button{
+    background: var(--ink); color: #fff; border: none; border-radius: 0.85rem;
+    padding: 12px 22px; font-weight: 600; cursor: pointer;
+  }
+ 
+  .pay-result{ padding: 0 4px 20px; }
+  .pay-student-card{
+    background: var(--paper); border: 1px solid var(--ink-line); border-radius: 16px;
+    padding: 20px; margin-bottom: 18px;
+  }
+  .pay-student-name{ font-family: Georgia, serif; font-size: 1.2rem; color: var(--ink); margin: 0 0 4px; }
+  .pay-student-meta{ color: var(--ink-soft); font-size: 0.88rem; }
+ 
+  .pay-stats{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0; }
+  .pay-stat .k{ font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 3px; }
+  .pay-stat .v{ font-size: 1.3rem; font-weight: 700; color: var(--ink); }
+  .pay-stat .v.balance{ color: #b8741f; }
+ 
+  .pay-form{ display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+  .pay-form .field{ flex: 1; min-width: 160px; }
+  .pay-form label{ display: block; font-size: 0.8rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .pay-form input{
+    width: 100%; border: 1.5px solid var(--ink-line); border-radius: 0.7rem;
+    padding: 10px 12px; font-size: 0.92rem; color: var(--ink);
+  }
+  .btn-record-pay{
+    background: var(--amber); color: var(--ink); font-weight: 700; border: none;
+    border-radius: 0.7rem; padding: 11px 22px; cursor: pointer; white-space: nowrap;
+  }
+  .btn-record-pay:hover{ background: #f0ad4f; }
+  .btn-record-pay[disabled]{ opacity: 0.6; cursor: not-allowed; }
+ 
+  .pay-history{ margin-top: 18px; }
+  .pay-history h4{ font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 10px; }
+  .pay-history-row{
+    display: flex; justify-content: space-between; padding: 10px 0;
+    border-bottom: 1px solid var(--ink-line); font-size: 0.9rem; color: var(--ink);
+  }
+  .pay-history-row:last-child{ border-bottom: none; }
+ 
+  .t-banner{ border-radius: 12px; padding: 12px 16px; font-size: 0.88rem; margin-bottom: 14px; }
+  .t-banner.error{ background: rgba(232,163,61,0.1); border: 1px solid rgba(232,163,61,0.35); color: var(--ink); }
+  .t-banner.success{ background: rgba(124,152,133,0.12); border: 1px solid rgba(124,152,133,0.35); color: var(--ink); }
+ 
+  @media (max-width: 700px){
+    .pay-stats{ grid-template-columns: 1fr; }
+    .queue-table{ font-size: 0.84rem; }
+    .queue-table th:nth-child(3), .queue-table td:nth-child(3){ display: none; }
+  }
