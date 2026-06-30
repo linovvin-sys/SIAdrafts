@@ -17,6 +17,7 @@ Vue.createApp({
             semester:    ENROLLMENT_PAYLOAD.semester,
             year_level:  ENROLLMENT_PAYLOAD.year_level,
             type_id:     ENROLLMENT_PAYLOAD.type_id,
+            section_id:  ENROLLMENT_PAYLOAD.section_id,
             subject_ids: ENROLLMENT_PAYLOAD.subject_ids,
           }),
         });

@@ -6,7 +6,7 @@ $db   = new Database();
 $conn = $db->connect();
 
 $enroll = $_SESSION['enroll'] ?? null;
-if (!$enroll || empty($enroll['subject_ids'])) {
+if (!$enroll || empty($enroll['subject_ids']) || empty($enroll['section_id'])) {
     header('Location: enrollment.php');
     exit;
 }
@@ -14,7 +14,7 @@ if (!$enroll || empty($enroll['subject_ids'])) {
 // Fetch fresh student data from applicants
 $stmt = $conn->prepare(
     "SELECT a.applicant_id, a.student_id, a.first_name, a.last_name, a.middle_name,
-            0 AS section_id, '—' AS section_name, st.type_name
+            st.type_name
      FROM applicants a
      JOIN student_type st ON a.applicant_type_id = st.type_id
      WHERE a.student_id = ?"
@@ -30,12 +30,25 @@ if (!$student) {
     exit;
 }
 
+// Section was chosen in step 3 (enrollment_subjects.php); use it directly
+// rather than re-deriving anything from the applicant record.
+$section_id   = (int)$enroll['section_id'];
+$section_name = $enroll['section_name'] ?? null;
+
+if (!$section_name) {
+    $secStmt = $conn->prepare("SELECT section_name FROM section WHERE section_id = ?");
+    $secStmt->bind_param('i', $section_id);
+    $secStmt->execute();
+    $section_name = $secStmt->get_result()->fetch_row()[0] ?? '—';
+    $secStmt->close();
+}
+
 // Fetch selected subjects with schedule info
 $ids = $enroll['subject_ids'];
 $ph  = implode(',', array_fill(0, count($ids), '?'));
 
 $types  = str_repeat('i', count($ids));
-$params = array_merge([$enroll['school_year'], $enroll['semester'], $enroll['section_id']], $ids);
+$params = array_merge([$enroll['school_year'], $enroll['semester'], $section_id], $ids);
 
 $stmt = $conn->prepare(
     "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
@@ -104,7 +117,7 @@ function fmt_time(string $t): string {
         <div class="ws-line done"></div>
         <div class="ws-step done"><span>2</span> Profile</div>
         <div class="ws-line done"></div>
-        <div class="ws-step done"><span>3</span> Subjects</div>
+        <div class="ws-step done"><span>3</span> Section</div>
         <div class="ws-line done"></div>
         <div class="ws-step active"><span>4</span> Confirm</div>
       </div>
@@ -142,7 +155,7 @@ function fmt_time(string $t): string {
             </div>
             <div class="reg-info-row">
               <span class="ri-label">Section</span>
-              <span class="ri-value"><?= htmlspecialchars($student['section_name']) ?></span>
+              <span class="ri-value"><?= htmlspecialchars($section_name) ?></span>
             </div>
             <div class="reg-info-row">
               <span class="ri-label">Year Level</span>
@@ -227,7 +240,7 @@ function fmt_time(string $t): string {
       </div>
       <div class="d-flex justify-content-between align-items-center mt-4 no-print">
         <a href="enrollment_subjects.php" class="btn-back-link">
-          <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back to Subjects
+          <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back to Section
         </a>
         <button
           type="button"
@@ -251,6 +264,7 @@ const ENROLLMENT_PAYLOAD = <?= json_encode([
     'semester'    => $enroll['semester'],
     'year_level'  => $enroll['year_level'],
     'type_id'     => $enroll['type_id'],
+    'section_id'  => $section_id,
     'subject_ids' => $enroll['subject_ids'],
 ]) ?>;
 </script>

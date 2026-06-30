@@ -35,12 +35,13 @@ $school_year = trim($data['school_year']  ?? '');
 $semester    = (int)($data['semester']    ?? 0);
 $year_level  = (int)($data['year_level']  ?? 0);
 $type_id     = (int)($data['type_id']     ?? 1);
+$section_id  = (int)($data['section_id']  ?? 0);
 
 $subject_ids = array_values(array_unique(
     array_filter(array_map('intval', $data['subject_ids'] ?? []))
 ));
 
-if (!$student_id || !$school_year || !$semester || !$year_level || !$type_id || empty($subject_ids)) {
+if (!$student_id || !$school_year || !$semester || !$year_level || !$type_id || !$section_id || empty($subject_ids)) {
     echo json_encode(['error' => 'Missing required fields.']);
     exit;
 }
@@ -58,6 +59,32 @@ if (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
 $conn->begin_transaction();
 
 try {
+    // Section must exist and actually be offering this exact subject load
+    // for this year level / semester / school year. Re-validating here
+    // (rather than trusting the client) matches the all-or-nothing section
+    // package model from the subject-selection step.
+    $secCheck = $conn->prepare(
+        "SELECT COUNT(DISTINCT sch.subject_id)
+         FROM schedule sch
+         JOIN subject sub ON sub.subject_id = sch.subject_id
+         WHERE sch.section_id = ? AND sch.school_year = ? AND sch.semester = ?
+           AND sub.year_level = ? AND sub.semester = ?"
+    );
+    if (!$secCheck) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $secCheck->bind_param('isiii', $section_id, $school_year, $semester, $year_level, $semester);
+    $secCheck->execute();
+    $offered_count = (int)$secCheck->get_result()->fetch_row()[0];
+    $secCheck->close();
+
+    if ($offered_count === 0) {
+        throw new RuntimeException('Selected section is not offered for this year level / semester.');
+    }
+    if ($offered_count !== count($subject_ids)) {
+        throw new RuntimeException('Subject selection does not match the section\'s current offering. Please go back and reselect the section.');
+    }
+
     // Duplicate guard
     $dup = $conn->prepare(
         "SELECT enrollment_id FROM enrollment
@@ -80,13 +107,13 @@ try {
     // responsible for setting up and confirming payment, which is what
     // moves this to "Enrolled" (see setup_payment.php / record_payment.php).
     $ins = $conn->prepare(
-        "INSERT INTO enrollment (student_id, school_year, semester, year_level, status, type_id)
-         VALUES (?, ?, ?, ?, 'Pending Payment', ?)"
+        "INSERT INTO enrollment (student_id, school_year, semester, year_level, section_id, status, type_id)
+         VALUES (?, ?, ?, ?, ?, 'Pending Payment', ?)"
     );
     if (!$ins) {
         throw new RuntimeException('Database error: ' . $conn->error);
     }
-    $ins->bind_param('isiii', $student_id, $school_year, $semester, $year_level, $type_id);
+    $ins->bind_param('isiiii', $student_id, $school_year, $semester, $year_level, $section_id, $type_id);
     if (!$ins->execute()) {
         $ins->close();
         throw new RuntimeException('Database error: ' . $conn->error);
