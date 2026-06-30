@@ -192,7 +192,7 @@ function student_fullname(array $s): string {
             <div>
               <h2 class="h5 fw-bold mb-0"><?= htmlspecialchars(student_fullname($student)) ?></h2>
               <p class="text-ink-soft small mb-0">
-                <?= htmlspecialchars(fmt_id((int)$student['student_id'])) ?>
+                <?= htmlspecialchars(fmt_id($student['student_id'])) ?>
                 &mdash; <?= htmlspecialchars($student['section_name']) ?>
               </p>
             </div>

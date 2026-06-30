@@ -147,7 +147,7 @@ function fmt_time(string $t): string {
           <div class="reg-info-grid">
             <div class="reg-info-row">
               <span class="ri-label">Student ID</span>
-              <span class="ri-value"><?= htmlspecialchars(fmt_id((int)$student['student_id'])) ?></span>
+              <span class="ri-value"><?= htmlspecialchars(fmt_id($student['student_id'])) ?></span>
             </div>
             <div class="reg-info-row">
               <span class="ri-label">Full Name</span>

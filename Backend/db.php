@@ -4,9 +4,9 @@ class Database
 {
     private $host = "localhost";
     private $username = "root";
-    private $password = "root";
-    private $database = "enrollment_db";
-    private $port = 8889;
+    private $password = "";
+    private $database = "enrollment_db_v3";
+
     public $conn;
 
     public function connect()
@@ -15,8 +15,7 @@ class Database
             $this->host,
             $this->username,
             $this->password,
-            $this->database,
-            $this->port
+            $this->database
         );
 
         if ($this->conn->connect_error) {

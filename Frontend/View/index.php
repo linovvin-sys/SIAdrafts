@@ -8,7 +8,7 @@ if (!empty($_SESSION['user_id'])) {
 $page_scripts = [
     //'/SIAdrafts/Frontend/Js/Admission/password-toggle.js',
     //'/SIAdrafts/Frontend/Js/Admission/login-submit.js',
-    '/SIAdrafts/Frontend/Js/Admission/login.js',
+    //'/SIAdrafts/Frontend/Js/Admission/login.js',
     ];
 ?>
 <?php include 'Admission/Include/header.php'; ?>

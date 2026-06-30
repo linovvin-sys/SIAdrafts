@@ -1,5 +1,5 @@
 <?php $page_scripts = $page_scripts ?? []; ?>
-  <script src="/SIAdrafts/Frontend/Js/Admission/nav-scroll.js"></script>
+  <!--<script src="/SIAdrafts/Frontend/Js/Admission/nav-scroll.js"></script>-->
   <script src="/SIAdrafts/Frontend/Js/Admission/nav-toggle.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/nav-user-dropdown.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/main.js"></script>

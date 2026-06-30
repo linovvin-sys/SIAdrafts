@@ -187,7 +187,7 @@ function fmt_id(int $id): string {
           </form>
 
           <div class="d-flex justify-content-between align-items-center mt-4">
-            <a href="enrollment_profile.php?student_id=<?= (int)$enroll['student_id'] ?>" class="btn-back-link">
+            <a href="enrollment_profile.php?student_id=<?=$enroll['student_id'] ?>" class="btn-back-link">
               <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back
             </a>
             <button type="button" class="btn-primary-action" @click="proceed" :disabled="!selectedId">
