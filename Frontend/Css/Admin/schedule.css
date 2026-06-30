@@ -1,0 +1,299 @@
+/* ===== PAGE HEADER ===== */
+.sched-page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.sched-page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--navy);
+  margin: 0;
+}
+.sched-page-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+/* ===== FILTER BAR ===== */
+.sched-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+.sched-select { min-width: 180px; }
+.sched-search {
+  min-width: 220px;
+  max-width: 280px;
+}
+
+/* ===== SCHEDULE TABLE ===== */
+.sched-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13.5px;
+}
+.sched-table thead tr {
+  background: var(--navy);
+}
+.sched-table thead th {
+  padding: 13px 16px;
+  color: var(--text-light);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  text-align: left;
+  white-space: nowrap;
+}
+
+/* ===== SECTION GROUP ROW ===== */
+.section-group-row {
+  background: #e8e2d8;
+  cursor: pointer;
+  user-select: none;
+  border-top: 3px solid #d6cfc4;
+}
+.section-group-row:first-of-type {
+  border-top: none;
+}
+.section-group-row:hover {
+  background: #e0d9cd;
+}
+.section-group-row td {
+  padding: 14px 16px;
+  font-weight: 600;
+  color: var(--navy);
+  border-bottom: none;
+}
+
+/* ===== EXPAND ARROW ===== */
+.expand-cell {
+  text-align: center;
+  width: 44px;
+}
+.expand-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: rgba(26,35,64,0.12);
+  color: var(--navy);
+  font-size: 10px;
+  font-weight: 700;
+  transition: background 0.15s;
+}
+.section-group-row:hover .expand-arrow {
+  background: rgba(26,35,64,0.2);
+}
+
+/* ===== GROUP LABEL (course badge + year) ===== */
+.group-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.course-badge {
+  display: inline-block;
+  padding: 5px 12px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.course-badge.blue   { background: #1d4ed8; color: #fff; }
+.course-badge.purple { background: #6d28d9; color: #fff; }
+.course-badge.green  { background: #047857; color: #fff; }
+.course-badge.orange { background: #b45309; color: #fff; }
+.course-badge.red    { background: #b91c1c; color: #fff; }
+.course-badge.teal   { background: #0f766e; color: #fff; }
+
+.year-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--navy);
+}
+
+/* ===== GROUP META ===== */
+.group-meta {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  font-weight: 500;
+}
+
+/* ===== SECTION TAG (in child rows) ===== */
+.sec-tag {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  background: rgba(26,35,64,0.1);
+  color: var(--navy);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+}
+
+/* ===== SUBJECT CHILD ROWS ===== */
+.subject-row td {
+  padding: 13px 16px;
+  border-bottom: 1px solid #ece6db;
+  background: #f5f1eb;
+  color: var(--navy);
+  vertical-align: middle;
+}
+.subject-row:last-of-type td,
+.subject-row + .section-group-row td ~ td,
+.subject-row:has(+ .section-group-row) td {
+  border-bottom: none;
+}
+.subject-row:hover td {
+  background: #efe9e0;
+}
+
+/* indent cell */
+.child-indent-cell {
+  text-align: center;
+  width: 44px;
+}
+.child-arrow {
+  color: var(--text-muted);
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1;
+}
+.subject-name {
+  font-weight: 500;
+}
+.room-cell {
+  font-size: 13px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* ===== DAY BADGES ===== */
+.day-badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  background: rgba(26,35,64,0.09);
+  color: var(--navy);
+  margin: 2px 1px;
+  white-space: nowrap;
+}
+
+/* ===== TIME CELL ===== */
+.time-cell {
+  font-size: 13px;
+  color: var(--navy);
+  white-space: nowrap;
+  line-height: 1.6;
+}
+.time-cell span {
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+/* ===== ACTION CELL ===== */
+.actions-cell {
+  white-space: nowrap;
+}
+.action-btn {
+  padding: 5px 11px;
+  font-size: 12px;
+}
+.btn-danger {
+  background: transparent;
+  color: #b91c1c;
+  border: 1.5px solid rgba(185,28,28,0.35);
+  margin-left: 5px;
+}
+.btn-danger:hover {
+  background: rgba(239,68,68,0.09);
+  border-color: #b91c1c;
+}
+
+/* ===== EMPTY STATE ===== */
+.empty-state {
+  text-align: center;
+  padding: 56px 24px;
+  color: var(--text-muted);
+}
+.empty-state .empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+}
+.empty-state p { font-size: 14px; }
+
+/* ===== MODAL: DAY CHECKBOXES ===== */
+.days-check-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.day-check-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1.5px solid #ddd4c0;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--navy);
+  transition: border-color 0.2s, background 0.2s;
+  user-select: none;
+}
+.day-check-item input[type="checkbox"] {
+  accent-color: var(--gold);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+.day-check-item:has(input:checked) {
+  border-color: var(--gold);
+  background: rgba(232,168,32,0.08);
+  color: var(--gold-dark);
+}
+
+/* ===== DELETE MODAL ===== */
+#deleteModal .modal-box { max-width: 420px; }
+.delete-warning {
+  text-align: center;
+  padding: 8px 0 4px;
+}
+.delete-warning .warn-icon {
+  font-size: 36px;
+  margin-bottom: 10px;
+}
+.delete-warning p {
+  font-size: 14px;
+  color: var(--navy);
+  line-height: 1.6;
+}
+.delete-warning strong { color: #b91c1c; }
+.btn-red { background: #dc2626; color: #fff; }
+.btn-red:hover { background: #b91c1c; }
+
+
+/* ===== TYPE BADGES (Lab / Lec) ===== */
+.type-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .5px;
+}
+.type-lab { background: #dbeafe; color: #1d4ed8; }
+.type-lec { background: #dcfce7; color: #15803d; }
