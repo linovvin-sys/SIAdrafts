@@ -173,6 +173,117 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  /* ===== EDIT USER MODAL ===== */
+  const editModal        = document.getElementById('editUserModal');
+  const closeEditBtn     = document.getElementById('closeEditUserModal');
+  const cancelEditBtn    = document.getElementById('cancelEditUser');
+  const editPwToggleBtn  = document.getElementById('toggleEditPassword');
+  const editPwField      = document.getElementById('editPassword');
+  const editForm         = document.getElementById('editUserForm');
+
+  if (editModal) {
+
+    /* -- Open (one button per row, populated with that row's data) -- */
+    document.querySelectorAll('.btn-edit-user').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.getElementById('editUserId').value     = btn.dataset.id || '';
+        document.getElementById('editFirstName').value  = btn.dataset.first_name || '';
+        document.getElementById('editMiddleName').value = btn.dataset.middle_name || '';
+        document.getElementById('editLastName').value   = btn.dataset.last_name || '';
+        document.getElementById('editEmail').value      = btn.dataset.email || '';
+        document.getElementById('editUsername').value   = btn.dataset.username || '';
+        document.getElementById('editPhone').value      = btn.dataset.phone || '';
+        document.getElementById('editRole').value        = btn.dataset.role || '';
+        document.getElementById('editStatus').checked    = (btn.dataset.status === 'Active');
+        if (editPwField) editPwField.value = '';
+
+        clearEditErrors();
+        editModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+      });
+    });
+
+    /* -- Close -- */
+    function closeEditModal() {
+      editModal.classList.remove('active');
+      document.body.style.overflow = '';
+      if (editForm) editForm.reset();
+      if (editPwField) editPwField.type = 'password';
+      if (editPwToggleBtn) editPwToggleBtn.textContent = '👁';
+      clearEditErrors();
+    }
+
+    if (closeEditBtn)  closeEditBtn.addEventListener('click', closeEditModal);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModal);
+
+    editModal.addEventListener('click', (e) => {
+      if (e.target === editModal) closeEditModal();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && editModal.classList.contains('active')) closeEditModal();
+    });
+
+    /* -- Password toggle -- */
+    if (editPwToggleBtn && editPwField) {
+      editPwToggleBtn.addEventListener('click', () => {
+        const show = editPwField.type === 'password';
+        editPwField.type = show ? 'text' : 'password';
+        editPwToggleBtn.textContent = show ? '🙈' : '👁';
+      });
+    }
+
+    /* -- Validation on submit -- */
+    if (editForm) {
+      editForm.addEventListener('submit', (e) => {
+        clearEditErrors();
+        let valid = true;
+        const checks = [
+          { id: 'editFirstName', msg: 'First name is required.' },
+          { id: 'editLastName',  msg: 'Last name is required.' },
+          { id: 'editEmail',     msg: 'Email is required.' },
+          { id: 'editUsername',  msg: 'Username is required.' },
+          { id: 'editRole',      msg: 'Please select a role.' },
+        ];
+        checks.forEach(({ id, msg }) => {
+          const el = document.getElementById(id);
+          if (!el || !el.value.trim()) { showEditError(id, msg); valid = false; }
+        });
+        const email = document.getElementById('editEmail');
+        if (email && email.value.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())) {
+          showEditError('editEmail', 'Enter a valid email address.');
+          valid = false;
+        }
+        if (editPwField && editPwField.value && editPwField.value.length < 8) {
+          showEditError('editPassword', 'Password must be at least 8 characters.');
+          valid = false;
+        }
+        if (!valid) e.preventDefault();
+      });
+    }
+
+    function showEditError(inputId, message) {
+      const input = document.getElementById(inputId);
+      if (!input) return;
+      input.style.borderColor = '#e03a3a';
+      input.style.boxShadow   = '0 0 0 3px rgba(224,58,58,0.10)';
+      const old = input.parentElement.querySelector('.error-msg');
+      if (old) old.remove();
+      const msg = document.createElement('span');
+      msg.className   = 'error-msg';
+      msg.textContent = message;
+      input.parentElement.appendChild(msg);
+    }
+
+    function clearEditErrors() {
+      editModal.querySelectorAll('.form-input').forEach(el => {
+        el.style.borderColor = '';
+        el.style.boxShadow   = '';
+      });
+      editModal.querySelectorAll('.error-msg').forEach(el => el.remove());
+    }
+  }
+
   /* ===== TOAST ===== */
   function showToast(message) {
     let toast = document.getElementById('toast-msg');

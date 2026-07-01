@@ -5,7 +5,7 @@ class Database
     private $host = "localhost";
     private $username = "root";
     private $password = "";
-    private $database = "enrollment_db_v3";
+    private $database = "enrollment_db_complete";
 
     public $conn;
 

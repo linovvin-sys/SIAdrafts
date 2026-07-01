@@ -10,6 +10,9 @@ $users = [];
 $sql = "
 SELECT
     u.user_id,
+    u.first_name,
+    u.middle_name,
+    u.last_name,
 
     CONCAT(
         u.first_name,
@@ -19,6 +22,8 @@ SELECT
     ) AS full_name,
 
     u.email,
+    u.username,
+    u.phone_number,
     r.role_name,
     s.status_name,
     u.updated_at AS last_login

@@ -2,6 +2,8 @@
 $pageTitle = "MANAGE USER";
 $activePage = "manage_user";
 
+
+require_once '../../../Backend/auth.php';
 require_once __DIR__ . '/../../../Backend/admin/manage_user.php';
 
 include 'Include/header.php';
@@ -81,11 +83,20 @@ include 'Include/header.php';
                                 </td>
 
                                 <td>
-                                    <a href="admin_edit_user.php?id=<?= $row['user_id']; ?>"
-                                       class="btn btn-outline"
-                                       style="padding:4px 10px;font-size:12px">
+                                    <button type="button"
+                                       class="btn btn-outline btn-edit-user"
+                                       style="padding:4px 10px;font-size:12px"
+                                       data-id="<?= htmlspecialchars($row['user_id']); ?>"
+                                       data-first_name="<?= htmlspecialchars($row['first_name']); ?>"
+                                       data-middle_name="<?= htmlspecialchars($row['middle_name'] ?? ''); ?>"
+                                       data-last_name="<?= htmlspecialchars($row['last_name']); ?>"
+                                       data-email="<?= htmlspecialchars($row['email']); ?>"
+                                       data-username="<?= htmlspecialchars($row['username']); ?>"
+                                       data-phone="<?= htmlspecialchars($row['phone_number'] ?? ''); ?>"
+                                       data-role="<?= htmlspecialchars($row['role_name']); ?>"
+                                       data-status="<?= htmlspecialchars($row['status_name']); ?>">
                                         Edit
-                                    </a>
+                                    </button>
                                 </td>
 
                             </tr>
@@ -147,7 +158,7 @@ include 'Include/header.php';
             <!-- Body -->
             <div class="modal-body">
 
-                <div class="modal-form-row">
+                <div class="modal-form-row modal-form-row-3">
 
                     <div class="form-group">
                         <label class="form-label">First Name <span class="required">*</span></label>
@@ -164,6 +175,13 @@ include 'Include/header.php';
                                class="form-input"
                                required>
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Middle Name</label>
+                        <input
+                            type="text"
+                            name="middle_name"
+                            class="form-input">
+                    </div>
 
                 </div>
 
@@ -174,46 +192,44 @@ include 'Include/header.php';
                            class="form-input"
                            required>
                 </div>
-
                 <div class="modal-form-row">
 
                     <div class="form-group">
-                        <label class="form-label">Role <span class="required">*</span></label>
-
-                        <div class="select-wrapper">
-                            <select name="role"
-                                    class="form-input form-select"
-                                    required>
-
-                                <option value="">Select role</option>
-                                <option value="Administrator">System Administrator</option>
-                                <option value="Registrar">Registrar</option>
-                                <option value="Cashier">Cashier</option>
-                                <option value="Teacher">Teacher</option>
-                                <option value="Staff">Staff</option>
-
-                            </select>
-                        </div>
+                        <label class="form-label">Username <span class="required">*</span></label>
+                        <input
+                            type="text"
+                            name="username"
+                            class="form-input"
+                            required>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Department</label>
-
-                        <div class="select-wrapper">
-                            <select name="department"
-                                    class="form-input form-select">
-
-                                <option value="">Select Department</option>
-                                <option value="Administration">Administration</option>
-                                <option value="Academic Affairs">Academic Affairs</option>
-                                <option value="Finance">Finance</option>
-                                <option value="Student Services">Student Services</option>
-
-                            </select>
-                        </div>
-
+                        <label class="form-label">Phone Number</label>
+                        <input
+                            type="text"
+                            name="phone_number"
+                            class="form-input">
                     </div>
 
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Role <span class="required">*</span></label>
+
+                    <div class="select-wrapper">
+                        <select name="role"
+                                class="form-input form-select"
+                                required>
+
+                            <option value="">Select role</option>
+                            <option value="Administrator">System Administrator</option>
+                            <option value="Registrar">Registrar</option>
+                            <option value="Cashier">Cashier</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Staff">Staff</option>
+
+                        </select>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -272,6 +288,189 @@ include 'Include/header.php';
                 <button type="submit"
                         class="btn btn-primary">
                     + Add User
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+<!-- ===== EDIT USER MODAL ===== -->
+
+<div class="modal-overlay" id="editUserModal">
+
+    <div class="modal-box">
+
+        <form action="../../../Backend/admin/edit_user.php" method="POST" id="editUserForm">
+
+            <input type="hidden" name="user_id" id="editUserId">
+
+            <!-- Header -->
+            <div class="modal-header">
+
+                <div class="modal-header-left">
+
+                    <div class="modal-icon">✏️</div>
+
+                    <div>
+                        <div class="modal-title">Edit User</div>
+                        <div class="modal-subtitle">Update the details below</div>
+                    </div>
+
+                </div>
+
+                <button type="button"
+                        class="modal-close"
+                        id="closeEditUserModal">
+                    ✕
+                </button>
+
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+
+                <div class="modal-form-row modal-form-row-3">
+
+                    <div class="form-group">
+                        <label class="form-label">First Name <span class="required">*</span></label>
+                        <input type="text"
+                               name="first_name"
+                               id="editFirstName"
+                               class="form-input"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Last Name <span class="required">*</span></label>
+                        <input type="text"
+                               name="last_name"
+                               id="editLastName"
+                               class="form-input"
+                               required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Middle Name</label>
+                        <input
+                            type="text"
+                            name="middle_name"
+                            id="editMiddleName"
+                            class="form-input">
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Email Address <span class="required">*</span></label>
+                    <input type="email"
+                           name="email"
+                           id="editEmail"
+                           class="form-input"
+                           required>
+                </div>
+                <div class="modal-form-row">
+
+                    <div class="form-group">
+                        <label class="form-label">Username <span class="required">*</span></label>
+                        <input
+                            type="text"
+                            name="username"
+                            id="editUsername"
+                            class="form-input"
+                            required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Phone Number</label>
+                        <input
+                            type="text"
+                            name="phone_number"
+                            id="editPhone"
+                            class="form-input">
+                    </div>
+
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Role <span class="required">*</span></label>
+
+                    <div class="select-wrapper">
+                        <select name="role"
+                                id="editRole"
+                                class="form-input form-select"
+                                required>
+
+                            <option value="">Select role</option>
+                            <option value="Administrator">System Administrator</option>
+                            <option value="Registrar">Registrar</option>
+                            <option value="Cashier">Cashier</option>
+                            <option value="Teacher">Teacher</option>
+                            <option value="Staff">Staff</option>
+
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">New Password</label>
+
+                    <div class="pass-wrapper">
+
+                        <input type="password"
+                               name="password"
+                               id="editPassword"
+                               class="form-input"
+                               minlength="8"
+                               placeholder="Leave blank to keep current password">
+
+                        <button type="button"
+                                class="pass-toggle"
+                                id="toggleEditPassword">
+                            👁
+                        </button>
+
+                    </div>
+
+                </div>
+
+                <div class="modal-divider"></div>
+
+                <div class="modal-status-row">
+
+                    <div>
+                        <div class="status-label">Active Account</div>
+                        <div class="status-desc">
+                            User can log in while this is enabled
+                        </div>
+                    </div>
+
+                    <label class="toggle-switch">
+                        <input type="checkbox"
+                               name="status"
+                               id="editStatus"
+                               value="Active">
+                        <span class="toggle-slider"></span>
+                    </label>
+
+                </div>
+
+            </div>
+
+            <!-- Footer -->
+            <div class="modal-footer">
+
+                <button type="button"
+                        class="btn btn-outline"
+                        id="cancelEditUser">
+                    Cancel
+                </button>
+
+                <button type="submit"
+                        class="btn btn-primary">
+                    Save Changes
                 </button>
 
             </div>

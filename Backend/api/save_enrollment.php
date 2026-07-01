@@ -51,10 +51,13 @@ if (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
     exit;
 }
 
-// NOTE: payment (amount_due / downpayment / due_date) is no longer collected
-// here. Enrollment confirmation just enrolls the student in subjects.
-// Treasury sets up and records payment separately via setup_payment.php
-// and record_payment.php.
+// Payment is now fully automated: amount_due comes from fee_schedule
+// (keyed by year_level + school_year), the breakdown is copied from
+// fee_schedule_item into payment_breakdown as a point-in-time snapshot,
+// and due_date is fixed at "today + PAYMENT_DUE_DAYS". There is no
+// manual treasury setup step anymore — setup_payment.php is kept only
+// as a fallback for legacy enrollments created before this change.
+const PAYMENT_DUE_DAYS = 3;
 
 $conn->begin_transaction();
 
@@ -103,9 +106,137 @@ try {
     }
     $dup->close();
 
-    // Insert enrollment. Status starts as "Pending Payment" — treasury is
-    // responsible for setting up and confirming payment, which is what
-    // moves this to "Enrolled" (see setup_payment.php / record_payment.php).
+    // Look up the fee schedule for this year level / school year BEFORE
+    // creating the enrollment, so we fail fast (and roll back nothing)
+    // if treasury hasn't configured fees for this year level yet.
+    $feeStmt = $conn->prepare(
+        "SELECT fee_schedule_id, total_amount FROM fee_schedule
+         WHERE year_level = ? AND school_year = ? AND is_active = 1
+         LIMIT 1"
+    );
+    if (!$feeStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $feeStmt->bind_param('is', $year_level, $school_year);
+    $feeStmt->execute();
+    $feeSchedule = $feeStmt->get_result()->fetch_assoc();
+    $feeStmt->close();
+
+    if (!$feeSchedule) {
+        throw new RuntimeException(
+            "No fee schedule has been set up for Year $year_level, SY $school_year. " .
+            "Please ask Treasury to configure it before this student can be enrolled."
+        );
+    }
+
+    $itemsStmt = $conn->prepare(
+        "SELECT label, amount, sort_order FROM fee_schedule_item
+         WHERE fee_schedule_id = ? ORDER BY sort_order"
+    );
+    if (!$itemsStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $itemsStmt->bind_param('i', $feeSchedule['fee_schedule_id']);
+    $itemsStmt->execute();
+    $feeItems = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $itemsStmt->close();
+
+    if (empty($feeItems)) {
+        throw new RuntimeException(
+            "The fee schedule for Year $year_level, SY $school_year has no breakdown items configured."
+        );
+    }
+
+    // Promote the applicant into the `student` table. `student` is a
+    // separate table from `applicants` (its own auto-increment PK),
+    // linked back via student.applicant_id. Nothing else in the app
+    // ever wrote this row before, which is why enrolled applicants
+    // never showed up in the admin enrollment list / dashboard / section
+    // rosters — those all join against `student`, not `applicants`.
+    // We upsert on applicant_id since re-enrolling in a later term
+    // should just update the existing student's section/type, not
+    // create a duplicate student row.
+    $studentCheck = $conn->prepare(
+        "SELECT student_id FROM student WHERE applicant_id = ? LIMIT 1"
+    );
+    if (!$studentCheck) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $studentCheck->bind_param('i', $student_id);
+    $studentCheck->execute();
+    $existingStudent = $studentCheck->get_result()->fetch_assoc();
+    $studentCheck->close();
+
+    $applicantStmt = $conn->prepare(
+        "SELECT last_name, first_name, middle_name, birth_date, sex,
+                contact_number, email, home_address
+         FROM applicants WHERE applicant_id = ? LIMIT 1"
+    );
+    if (!$applicantStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $applicantStmt->bind_param('i', $student_id);
+    $applicantStmt->execute();
+    $applicant = $applicantStmt->get_result()->fetch_assoc();
+    $applicantStmt->close();
+
+    if (!$applicant) {
+        throw new RuntimeException('Applicant record not found.');
+    }
+
+    $student_name = trim($applicant['first_name'] . ' ' . $applicant['last_name']);
+
+    if ($existingStudent) {
+        $upd = $conn->prepare(
+            "UPDATE student SET
+                student_name = ?, last_name = ?, first_name = ?, middle_name = ?,
+                birth_date = ?, sex = ?, contact_number = ?, email = ?, address = ?,
+                section_id = ?, type_id = ?
+             WHERE student_id = ?"
+        );
+        if (!$upd) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $upd->bind_param(
+            'sssssssssiii',
+            $student_name, $applicant['last_name'], $applicant['first_name'], $applicant['middle_name'],
+            $applicant['birth_date'], $applicant['sex'], $applicant['contact_number'],
+            $applicant['email'], $applicant['home_address'],
+            $section_id, $type_id, $existingStudent['student_id']
+        );
+        if (!$upd->execute()) {
+            $upd->close();
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $upd->close();
+    } else {
+        $insStudent = $conn->prepare(
+            "INSERT INTO student
+                (student_name, last_name, first_name, middle_name, birth_date, sex,
+                 contact_number, email, address, applicant_id, section_id, type_id)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        );
+        if (!$insStudent) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $insStudent->bind_param(
+            'sssssssssiii',
+            $student_name, $applicant['last_name'], $applicant['first_name'], $applicant['middle_name'],
+            $applicant['birth_date'], $applicant['sex'], $applicant['contact_number'],
+            $applicant['email'], $applicant['home_address'],
+            $student_id, $section_id, $type_id
+        );
+        if (!$insStudent->execute()) {
+            $insStudent->close();
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $insStudent->close();
+    }
+
+    // Insert enrollment. Status starts as "Pending Payment" — the payment
+    // row below is auto-created with amount owed, but the student still
+    // needs to actually pay; record_payment.php is what moves this to
+    // "Enrolled" once treasury records the payment.
     $ins = $conn->prepare(
         "INSERT INTO enrollment (student_id, school_year, semester, year_level, section_id, status, type_id)
          VALUES (?, ?, ?, ?, ?, 'Pending Payment', ?)"
@@ -137,10 +268,55 @@ try {
     }
     $sub_stmt->close();
 
+    // Auto-create the payment row from the fee schedule total.
+    $amount_due = round((float)$feeSchedule['total_amount'], 2);
+    $due_date   = date('Y-m-d', strtotime('+' . PAYMENT_DUE_DAYS . ' days'));
+
+    $payStmt = $conn->prepare(
+        "INSERT INTO payment (enrollment_id, amount_due, downpayment, due_date, payment_status)
+         VALUES (?, ?, 0, ?, 'Unpaid')"
+    );
+    if (!$payStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $payStmt->bind_param('ids', $enrollment_id, $amount_due, $due_date);
+    if (!$payStmt->execute()) {
+        $payStmt->close();
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $payment_id = (int)$conn->insert_id;
+    $payStmt->close();
+
+    // Snapshot the fee breakdown onto this payment, so later changes to
+    // fee_schedule don't retroactively change what this student owes.
+    $bdStmt = $conn->prepare(
+        "INSERT INTO payment_breakdown (payment_id, label, amount, sort_order) VALUES (?, ?, ?, ?)"
+    );
+    if (!$bdStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    foreach ($feeItems as $item) {
+        $bdStmt->bind_param('isdi', $payment_id, $item['label'], $item['amount'], $item['sort_order']);
+        if (!$bdStmt->execute()) {
+            $bdStmt->close();
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+    }
+    $bdStmt->close();
+
     $conn->commit();
     unset($_SESSION['enroll']);
 
-    echo json_encode(['success' => true, 'enrollment_id' => $enrollment_id]);
+    echo json_encode([
+        'success'       => true,
+        'enrollment_id' => $enrollment_id,
+        'payment'       => [
+            'payment_id' => $payment_id,
+            'amount_due' => $amount_due,
+            'due_date'   => $due_date,
+            'breakdown'  => $feeItems,
+        ],
+    ]);
 
 } catch (RuntimeException $e) {
     $conn->rollback();

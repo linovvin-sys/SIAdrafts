@@ -24,6 +24,12 @@ $queue = $queueStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $queueStmt->close();
  
 // ---- Queue: enrollments awaiting payment setup (no payment row yet) ----
+// As of the fee-schedule automation, save_enrollment.php auto-creates the
+// payment row (with amount + due date pulled from fee_schedule) at the
+// moment enrollment is finalized. So new enrollments should never land
+// here. This queue/panel — and setup_payment.php — are kept only as a
+// manual fallback for legacy enrollments created before this change, or
+// for rare cases treasury needs to override.
 $setupStmt = $conn->prepare(
     "SELECT e.enrollment_id, e.school_year, e.semester, e.created_at,
             a.student_id, a.first_name, a.last_name
@@ -107,13 +113,19 @@ function student_fullname_t(array $s): string {
       <?php endif; ?>
     </div>
  
-    <!-- ===== SETUP QUEUE VIEW (enrollments with no payment row yet) ===== -->
+    <!-- ===== SETUP QUEUE VIEW (legacy fallback — enrollments with no
+         payment row, e.g. created before fee-schedule automation) ===== -->
     <div id="setupPanel" style="display:none;">
       <?php if (empty($setupQueue)): ?>
         <div class="empty-queue">
           <p>No enrollments waiting on payment setup.</p>
         </div>
       <?php else: ?>
+        <div class="alert-box alert-info mb-3">
+          <iconify-icon icon="mdi:information-outline"></iconify-icon>
+          New enrollments get their payment set up automatically from the fee schedule at finalize time.
+          The rows below are older enrollments (or edge cases) that still need it done manually.
+        </div>
         <table class="queue-table">
           <thead>
             <tr>

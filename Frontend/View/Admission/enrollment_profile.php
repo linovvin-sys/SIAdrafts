@@ -111,8 +111,8 @@ $detected_year = 1;
 $now        = new DateTime();
 $yr         = (int)$now->format('Y');
 $mo         = (int)$now->format('n');
-$default_sy  = $mo >= 8 ? "$yr-" . ($yr + 1) : ($yr - 1) . "-$yr";
-$default_sem = $mo >= 8 ? 1 : 2;
+$default_sy  = $mo >= 6 ? "$yr-" . ($yr + 1) : ($yr - 1) . "-$yr";
+$default_sem = $mo >= 6 ? 1 : 2;
 
 // Student types for dropdown
 $types_result = $conn->query("SELECT type_id, type_name FROM student_type ORDER BY type_id");

@@ -3,7 +3,9 @@
 $pageTitle = "ENROLLMENT";
 $activePage = "enrollment";
 
+require_once '../../../Backend/auth.php';
 require_once __DIR__ . '/../../../Backend/admin/enrollment.php';
+
 
 include 'Include/header.php';
 
@@ -49,10 +51,6 @@ include 'Include/header.php';
 
             <div class="panel-header">
                 <span class="panel-title">Enrollment List</span>
-
-                <button class="btn btn-primary">
-                    + Enroll Student
-                </button>
             </div>
 
             <div class="panel-body" style="padding:0;">

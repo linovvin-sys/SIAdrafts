@@ -11,8 +11,7 @@ if (!$enroll || !isset($enroll['student_id'])) {
     exit;
 }
 
-// Handle POST: validate the chosen section server-side, then resolve its
-// premade subject load before saving to session.
+// Handle POST: validate chosen section server-side, resolve its subject load
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $section_id = (int)($_POST['section_id'] ?? 0);
 
@@ -23,8 +22,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $semester    = (int)$enroll['semester'];
         $school_year = $enroll['school_year'];
 
-        // Re-derive the subject list server-side; never trust a client-submitted
-        // subject_ids list for an "all-or-nothing" section package.
         $stmt = $conn->prepare(
             "SELECT sec.section_name
              FROM section sec
@@ -67,9 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-// Build semester label
-$sem_label = $enroll['semester'] == 1 ? '1st Semester' : '2nd Semester';
-
+$sem_label    = $enroll['semester'] == 1 ? '1st Semester' : '2nd Semester';
 $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/section-picker.js'];
 
 function fmt_id(int $id): string {
@@ -78,6 +73,7 @@ function fmt_id(int $id): string {
 }
 ?>
 <?php include '../Admission/Include/header.php'; ?>
+
 
 <div class="container" style="padding-top: calc(var(--nav-h) + 40px); padding-bottom: 60px;">
   <div class="row justify-content-center">
@@ -113,29 +109,33 @@ function fmt_id(int $id): string {
       <?php endif; ?>
 
       <div id="section-app" v-cloak>
-        <!-- Loading state -->
+
+        <!-- Loading -->
         <div v-if="loading" class="text-center py-5">
-          <iconify-icon icon="mdi:loading" class="spin" style="font-size:2rem; color:var(--sage);"></iconify-icon>
+          <iconify-icon icon="mdi:loading" class="spin" style="font-size:2rem;color:var(--sage);"></iconify-icon>
           <p class="text-ink-soft mt-2">Loading sections&hellip;</p>
         </div>
 
-        <!-- Error state -->
+        <!-- Error -->
         <div v-else-if="loadError" class="alert-box alert-error mb-3">
           <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
           {{ loadError }}
         </div>
 
-        <div v-else-if="sections.length === 0" class="alert-box alert-error mb-3">
-          <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
-          No sections are currently offered for this year level and semester.
+        <!-- Empty -->
+        <div v-else-if="sections.length === 0" class="sections-empty">
+          <div><iconify-icon icon="mdi:folder-open-outline"></iconify-icon></div>
+          <p><strong>No sections available</strong><br>
+          No sections are currently offered for this year level and semester.</p>
         </div>
 
-        <!-- Section list -->
+        <!-- Section cards -->
         <template v-else>
-          <p class="text-ink-soft mb-3">
-            Each section comes with a pre-built subject load and schedule. Pick the section
-            this student will join &mdash; all of its subjects will be enrolled together.
-          </p>
+
+          <div class="section-intro mb-4">
+            <iconify-icon icon="mdi:information-outline"></iconify-icon>
+            <span>Select the section this student will join. Each section comes with a fixed subject load and schedule — all subjects will be enrolled together.</span>
+          </div>
 
           <div v-if="submitError" class="alert-box alert-error mb-3">
             <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
@@ -149,8 +149,9 @@ function fmt_id(int $id): string {
             :class="{ selected: selectedId === sec.section_id }"
             @click="select(sec.section_id)">
 
+            <!-- Card header -->
             <div class="section-card-head">
-              <label class="sec-check-label">
+              <label class="sec-check-label" @click.stop>
                 <input
                   type="radio"
                   name="section_pick"
@@ -159,11 +160,21 @@ function fmt_id(int $id): string {
                   v-model="selectedId">
                 <span class="sec-name">{{ sec.section_name }}</span>
               </label>
-              <span class="units-badge">{{ sec.total_units }} Units &middot; {{ sec.subjects.length }} subject(s)</span>
+
+              <div class="d-flex align-items-center gap-2 flex-wrap">
+                <span class="units-badge">{{ sec.total_units }} Units &middot; {{ sec.subjects.length }} subjects</span>
+                <span v-if="selectedId === sec.section_id" class="sec-selected-badge">
+                  <iconify-icon icon="mdi:check"></iconify-icon> Selected
+                </span>
+              </div>
             </div>
 
+            <!-- Subject rows -->
             <div class="subject-list">
-              <div v-for="sub in sec.subjects" :key="sub.subject_id" class="subject-row subject-row-static">
+              <div
+                v-for="sub in sec.subjects"
+                :key="sub.subject_id"
+                class="subject-row-static">
                 <div class="sub-info">
                   <span class="sub-code">{{ sub.subject_code }}</span>
                   <span class="sub-name">{{ sub.subject_name }}</span>
@@ -179,9 +190,10 @@ function fmt_id(int $id): string {
                 </span>
               </div>
             </div>
+
           </div>
 
-          <!-- Hidden form for POST submit -->
+          <!-- Hidden form -->
           <form id="sec-form" method="POST" action="enrollment_subjects.php" style="display:none">
             <input type="hidden" name="section_id" :value="selectedId">
           </form>
@@ -190,11 +202,16 @@ function fmt_id(int $id): string {
             <a href="enrollment_profile.php?student_id=<?=$enroll['student_id'] ?>" class="btn-back-link">
               <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back
             </a>
-            <button type="button" class="btn-primary-action" @click="proceed" :disabled="!selectedId">
+            <button
+              type="button"
+              class="btn-primary-action"
+              @click="proceed"
+              :disabled="!selectedId">
               Confirm Section
               <iconify-icon icon="mdi:arrow-right"></iconify-icon>
             </button>
           </div>
+
         </template>
       </div>
 

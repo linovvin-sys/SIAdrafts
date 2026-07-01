@@ -1,6 +1,11 @@
 <?php
 $pageTitle = "TOTAL ENROLEES";
 $activePage = "total_enrolees";
+
+require_once '../../../Backend/auth.php';
+require_once __DIR__ . '/../../../Backend/admin/total_enrolees.php';
+
+
 include 'Include/header.php';
 ?>
 
@@ -13,26 +18,26 @@ include 'Include/header.php';
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:24px;">
         <div class="stat-card">
           <div class="stat-icon gold">👥</div>
-          <div><div class="stat-value">1,284</div><div class="stat-label">Total Enrolees</div></div>
+          <div><div class="stat-value"><?= number_format($stats['total']) ?></div><div class="stat-label">Total Enrolees</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon blue">🆕</div>
-          <div><div class="stat-value">523</div><div class="stat-label">New Students</div></div>
+          <div><div class="stat-value"><?= number_format($stats['new']) ?></div><div class="stat-label">New Students</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon green">🔄</div>
-          <div><div class="stat-value">761</div><div class="stat-label">Continuing</div></div>
+          <div><div class="stat-value"><?= number_format($stats['continuing']) ?></div><div class="stat-label">Continuing</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon purple">👨‍🎓</div>
-          <div><div class="stat-value">48</div><div class="stat-label">Irregular</div></div>
+          <div><div class="stat-value"><?= number_format($stats['irregular']) ?></div><div class="stat-label">Irregular</div></div>
         </div>
       </div>
 
       <div class="panel">
         <div class="panel-header">
           <span class="panel-title">Enrolees by Course & Year Level</span>
-          <button class="btn btn-outline">Export Report</button>
+          <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_enrolees_csv.php">Export Report</a>
         </div>
         <div class="panel-body" style="padding:0">
           <table class="data-table">
@@ -47,54 +52,30 @@ include 'Include/header.php';
               </tr>
             </thead>
             <tbody>
+              <?php if (empty($byCourse)): ?>
               <tr>
-                <td>BS Computer Science</td>
-                <td>98</td>
-                <td>84</td>
-                <td>78</td>
-                <td>52</td>
-                <td><strong>312</strong></td>
+                <td colspan="6" style="text-align:center; padding:32px; color:#888;">No enrollment records yet.</td>
               </tr>
-              <tr>
-                <td>BS Nursing</td>
-                <td>90</td>
-                <td>75</td>
-                <td>68</td>
-                <td>47</td>
-                <td><strong>280</strong></td>
-              </tr>
-              <tr>
-                <td>BS Accountancy</td>
-                <td>62</td>
-                <td>55</td>
-                <td>48</td>
-                <td>33</td>
-                <td><strong>198</strong></td>
-              </tr>
-              <tr>
-                <td>BS Education</td>
-                <td>50</td>
-                <td>42</td>
-                <td>38</td>
-                <td>24</td>
-                <td><strong>154</strong></td>
-              </tr>
-              <tr>
-                <td>BS Engineering</td>
-                <td>110</td>
-                <td>95</td>
-                <td>82</td>
-                <td>53</td>
-                <td><strong>340</strong></td>
-              </tr>
-              <tr style="background:#faf7f2">
-                <td><strong>Grand Total</strong></td>
-                <td><strong>410</strong></td>
-                <td><strong>351</strong></td>
-                <td><strong>314</strong></td>
-                <td><strong>209</strong></td>
-                <td><strong>1,284</strong></td>
-              </tr>
+              <?php else: ?>
+                <?php foreach ($byCourse as $courseName => $c): ?>
+                <tr>
+                  <td><?= htmlspecialchars($courseName) ?></td>
+                  <td><?= $c['y1'] ?></td>
+                  <td><?= $c['y2'] ?></td>
+                  <td><?= $c['y3'] ?></td>
+                  <td><?= $c['y4'] ?></td>
+                  <td><strong><?= $c['total'] ?></strong></td>
+                </tr>
+                <?php endforeach; ?>
+                <tr style="background:#faf7f2">
+                  <td><strong>Grand Total</strong></td>
+                  <td><strong><?= $grand['y1'] ?></strong></td>
+                  <td><strong><?= $grand['y2'] ?></strong></td>
+                  <td><strong><?= $grand['y3'] ?></strong></td>
+                  <td><strong><?= $grand['y4'] ?></strong></td>
+                  <td><strong><?= $grand['total'] ?></strong></td>
+                </tr>
+              <?php endif; ?>
             </tbody>
           </table>
         </div>

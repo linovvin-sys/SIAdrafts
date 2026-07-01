@@ -2,6 +2,7 @@
 $pageTitle = "ADMISSION";
 $activePage = "admission";
 
+require_once '../../../Backend/auth.php';
 require_once __DIR__ . '/../../../Backend/admin/admission.php';
 
 include 'Include/header.php';
@@ -17,7 +18,7 @@ include 'Include/header.php';
 
             <div class="panel-header">
                 <span class="panel-title">All Admission Records</span>
-                <button class="btn btn-primary">+ New Application</button>
+                
             </div>
 
             <div class="panel-body" style="padding:0;">

@@ -54,7 +54,7 @@ $enrollmentList = [];
 
 $sql = "
 SELECT
-    s.student_id,
+    a.student_id,
     CONCAT(s.first_name, ' ', s.last_name) AS student_name,
     c.course_name,
     sec.section_name,
@@ -64,7 +64,10 @@ SELECT
 FROM enrollment e
 
 INNER JOIN student s
-    ON s.student_id = e.student_id
+    ON s.applicant_id = e.student_id
+
+INNER JOIN applicants a
+    ON a.applicant_id = e.student_id
 
 LEFT JOIN section sec
     ON sec.section_id = s.section_id
@@ -75,7 +78,7 @@ LEFT JOIN course c
 LEFT JOIN payment p
     ON p.enrollment_id = e.enrollment_id
 
-ORDER BY s.student_id ASC
+ORDER BY a.student_id ASC
 ";
 
 $result = $conn->query($sql);
