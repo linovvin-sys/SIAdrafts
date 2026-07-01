@@ -79,6 +79,18 @@ if (!$payment) {
     exit;
 }
 
+// Fee breakdown snapshot for this payment (tuition, laboratory, misc, etc.)
+$stmt = $conn->prepare(
+    "SELECT label, amount, sort_order
+     FROM payment_breakdown
+     WHERE payment_id = ?
+     ORDER BY sort_order"
+);
+$stmt->bind_param('i', $payment['payment_id']);
+$stmt->execute();
+$breakdown = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
 // Payment history
 $stmt = $conn->prepare(
     "SELECT t.amount, t.paid_at, t.remarks, u.first_name, u.last_name
@@ -101,6 +113,7 @@ echo json_encode([
         'student_id' => $student['student_id'],
         'full_name'  => $full_name,
     ],
-    'payment' => $payment,
-    'history' => $history,
+    'payment'   => $payment,
+    'breakdown' => $breakdown,
+    'history'   => $history,
 ]);

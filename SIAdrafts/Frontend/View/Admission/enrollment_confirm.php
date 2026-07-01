@@ -85,6 +85,37 @@ $type_stmt->execute();
 $type_name = $type_stmt->get_result()->fetch_row()[0] ?? 'Regular';
 $type_stmt->close();
 
+// ---- Fee breakdown preview (informational only) ----
+// The actual payment row + payment_breakdown snapshot are created
+// automatically when the student clicks "Finalize Enrollment"
+// (see save_enrollment.php). This just previews what they'll owe,
+// based on the fee schedule configured for this year level / school
+// year, and lets us block finalizing if no schedule exists yet.
+const PAYMENT_DUE_DAYS = 3;
+
+$feeStmt = $conn->prepare(
+    "SELECT fee_schedule_id, total_amount FROM fee_schedule
+     WHERE year_level = ? AND school_year = ? AND is_active = 1
+     LIMIT 1"
+);
+$feeStmt->bind_param('is', $enroll['year_level'], $enroll['school_year']);
+$feeStmt->execute();
+$feeSchedule = $feeStmt->get_result()->fetch_assoc();
+$feeStmt->close();
+
+$feeItems = [];
+if ($feeSchedule) {
+    $itemsStmt = $conn->prepare(
+        "SELECT label, amount FROM fee_schedule_item WHERE fee_schedule_id = ? ORDER BY sort_order"
+    );
+    $itemsStmt->bind_param('i', $feeSchedule['fee_schedule_id']);
+    $itemsStmt->execute();
+    $feeItems = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $itemsStmt->close();
+}
+
+$preview_due_date = date('F j, Y', strtotime('+' . PAYMENT_DUE_DAYS . ' days'));
+
 $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment-finalize.js'];
 
 function fmt_id(string $id): string {
@@ -209,12 +240,44 @@ function fmt_time(string $t): string {
           </table>
         </div>
 
-        <!-- Print-only enrollment summary -->
+        <!-- Fee breakdown preview -->
         <div class="reg-section">
+          <h3 class="reg-section-title">Fee Breakdown</h3>
+          <?php if ($feeSchedule): ?>
+          <table class="reg-table">
+            <thead>
+              <tr>
+                <th>Fee</th>
+                <th class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($feeItems as $item): ?>
+              <tr>
+                <td><?= htmlspecialchars($item['label']) ?></td>
+                <td class="text-end">₱<?= number_format((float)$item['amount'], 2) ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td class="fw-bold">Total Due</td>
+                <td class="text-end fw-bold">₱<?= number_format((float)$feeSchedule['total_amount'], 2) ?></td>
+              </tr>
+            </tfoot>
+          </table>
           <div class="alert-box alert-info mb-3">
             <iconify-icon icon="mdi:information-outline"></iconify-icon>
-            Payment is set up and recorded separately in Treasury after this enrollment is finalized.
+            This will be billed automatically once enrollment is finalized, due <?= htmlspecialchars($preview_due_date) ?>
+            (<?= PAYMENT_DUE_DAYS ?> days from today). No separate treasury setup step is needed.
           </div>
+          <?php else: ?>
+          <div class="alert-box alert-error mb-3">
+            <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
+            No fee schedule has been configured for <?= htmlspecialchars($yr_label) ?>, SY <?= htmlspecialchars($enroll['school_year']) ?> yet.
+            Please contact Treasury to set one up — finalizing is disabled until then.
+          </div>
+          <?php endif; ?>
         </div>
 
         <!-- Signatures -->
@@ -246,7 +309,7 @@ function fmt_time(string $t): string {
           type="button"
           class="btn-primary-action"
           @click="finalize"
-          :disabled="saving">
+          :disabled="saving || <?= $feeSchedule ? 'false' : 'true' ?>">
           <iconify-icon v-if="saving" icon="mdi:loading" class="spin"></iconify-icon>
           <iconify-icon v-else icon="mdi:check-circle-outline"></iconify-icon>
           {{ saving ? 'Saving…' : 'Finalize Enrollment' }}
