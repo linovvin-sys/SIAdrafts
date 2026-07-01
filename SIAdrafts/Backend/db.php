@@ -5,7 +5,7 @@ class Database
     private $host = "localhost";
     private $username = "root";
     private $password = "root";
-    private $database = "enrollment_db_merged";
+    private $database = "enrollment_db_complete_1";
     private $port = 8889;
     public $conn;
 
