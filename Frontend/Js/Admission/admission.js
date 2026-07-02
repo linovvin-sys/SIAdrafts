@@ -51,9 +51,7 @@
   }
  
   //  AJAX submission 
-  form.addEventListener('submit', function (e) {
-    e.preventDefault();
- 
+  function submitApplication() {
     banner.style.display = 'none';
     submitBtn.disabled = true;
     submitBtn.innerHTML = 'Submitting…';
@@ -93,6 +91,13 @@
           'Documents: ' + docsHtml
         );
  
+        Swal.fire({
+          icon: 'success',
+          title: 'Application submitted',
+          text: 'Record #' + data.applicant_id + ' has been saved.',
+          confirmButtonColor: '#2f8f4e'
+        });
+ 
         form.reset();
         // Collapse any extra academic-history rows added back to just the first one
         const rows = document.getElementById('historyRows');
@@ -109,4 +114,24 @@
         );
         console.error(err);
       });
+  }
+ 
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+ 
+    Swal.fire({
+      icon: 'question',
+      title: 'Submit this application?',
+      text: 'Please make sure all the applicant\'s details and documents are correct before continuing.',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, submit',
+      cancelButtonText: 'Cancel',
+      confirmButtonColor: '#2f8f4e',
+      cancelButtonColor: '#aaa',
+      reverseButtons: true
+    }).then(function (result) {
+      if (result.isConfirmed) {
+        submitApplication();
+      }
+    });
   });

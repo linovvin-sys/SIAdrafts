@@ -42,8 +42,7 @@ if ($password === '' || strlen($password) < 8) {
 }
 
 if (!empty($errors)) {
-    http_response_code(422);
-    echo implode(' ', $errors);
+    header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?add_error=' . urlencode(implode(' ', $errors)));
     exit;
 }
 
@@ -55,8 +54,7 @@ $roleRow = $roleStmt->get_result()->fetch_assoc();
 $roleStmt->close();
 
 if (!$roleRow) {
-    http_response_code(422);
-    echo 'Invalid role selected.';
+    header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?add_error=' . urlencode('Invalid role selected.'));
     exit;
 }
 $role_id = $roleRow['role_id'];
@@ -69,8 +67,7 @@ $statusRow = $statusStmt->get_result()->fetch_assoc();
 $statusStmt->close();
 
 if (!$statusRow) {
-    http_response_code(422);
-    echo 'Invalid status.';
+    header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?add_error=' . urlencode('Invalid status.'));
     exit;
 }
 $status_id = $statusRow['status_id'];
@@ -88,8 +85,7 @@ $stmt = $conn->prepare("
 ");
 
 if (!$stmt) {
-    http_response_code(500);
-    echo 'Database error: ' . $conn->error;
+    header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?add_error=' . urlencode('Database error: ' . $conn->error));
     exit;
 }
 
@@ -100,14 +96,12 @@ $stmt->bind_param(
 );
 
 if (!$stmt->execute()) {
-    http_response_code(500);
-    echo 'Database error: ' . $stmt->error;
+    header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?add_error=' . urlencode('Database error: ' . $stmt->error));
     exit;
 }
 
 $stmt->close();
 $conn->close();
 
-
-
+header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?added=1');
 exit;
