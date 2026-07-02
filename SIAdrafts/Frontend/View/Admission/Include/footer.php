@@ -4,6 +4,8 @@
   <script src="/SIAdrafts/Frontend/Js/Admission/nav-user-dropdown.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/main.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/login.js"></script>
+  <script src="/SIAdrafts/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
+
 
   
 <?php foreach ($page_scripts as $_s): ?>
