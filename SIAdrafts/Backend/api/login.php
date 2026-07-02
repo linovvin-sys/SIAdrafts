@@ -49,6 +49,7 @@ if (!$user || !password_verify($password, $user['password'])) {
 }
 
 session_regenerate_id(true);
+
 $_SESSION['user_id']   = $user['user_id'];
 $_SESSION['username']  = $user['username'];
 $_SESSION['role_id']   = $user['role_id'];
@@ -57,4 +58,32 @@ $_SESSION['full_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
 
 $db->close();
 
-echo json_encode(['success' => true, 'redirect' => '/SIAdrafts/Frontend/View/Admission/enrollment.php']);
+// Determine redirect based on role
+$role = strtolower(trim($user['role_name']));
+
+switch ($role) {
+    case 'admin':
+        $redirect = '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php';
+        break;
+
+    case 'staff':
+        $redirect = '/SIAdrafts/Frontend/View/Admission/enrollment.php';
+        break;
+    
+    case 'treasury':
+        $redirect = '/SIAdrafts/Frontend/View/Admission/treasury.php';
+        break;
+
+    case 'admission':
+        $redirect = '/SIAdrafts/Frontend/View/Admission/admission.php';
+        break;
+    default:
+        // Students and all other roles
+        $redirect = '/SIAdrafts/Frontend/View/index.php';
+        break;
+}
+
+echo json_encode([
+    'success'  => true,
+    'redirect' => $redirect
+]);

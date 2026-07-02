@@ -104,14 +104,30 @@ $feeSchedule = $feeStmt->get_result()->fetch_assoc();
 $feeStmt->close();
 
 $feeItems = [];
+$computedTotal = 0.0;
 if ($feeSchedule) {
     $itemsStmt = $conn->prepare(
-        "SELECT label, amount FROM fee_schedule_item WHERE fee_schedule_id = ? ORDER BY sort_order"
+        "SELECT label, amount, is_per_unit FROM fee_schedule_item WHERE fee_schedule_id = ? ORDER BY sort_order"
     );
     $itemsStmt->bind_param('i', $feeSchedule['fee_schedule_id']);
     $itemsStmt->execute();
-    $feeItems = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $rawItems = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $itemsStmt->close();
+
+    foreach ($rawItems as $item) {
+        $lineAmount = $item['is_per_unit']
+            ? (float)$item['amount'] * $total_units
+            : (float)$item['amount'];
+
+        $feeItems[] = [
+            'label'  => $item['is_per_unit']
+                ? $item['label'] . ' (' . number_format((float)$item['amount'], 2) . ' × ' . $total_units . ' units)'
+                : $item['label'],
+            'amount' => $lineAmount,
+        ];
+
+        $computedTotal += $lineAmount;
+    }
 }
 
 $preview_due_date = date('F j, Y', strtotime('+' . PAYMENT_DUE_DAYS . ' days'));
@@ -178,7 +194,7 @@ function fmt_time(string $t): string {
           <div class="reg-info-grid">
             <div class="reg-info-row">
               <span class="ri-label">Student ID</span>
-              <span class="ri-value"><?= htmlspecialchars(fmt_id((int)$student['student_id'])) ?></span>
+              <span class="ri-value"><?= htmlspecialchars(fmt_id($student['student_id'])) ?></span>
             </div>
             <div class="reg-info-row">
               <span class="ri-label">Full Name</span>
@@ -262,7 +278,7 @@ function fmt_time(string $t): string {
             <tfoot>
               <tr>
                 <td class="fw-bold">Total Due</td>
-                <td class="text-end fw-bold">₱<?= number_format((float)$feeSchedule['total_amount'], 2) ?></td>
+                <td class="text-end fw-bold">₱<?= number_format($computedTotal, 2) ?></td>
               </tr>
             </tfoot>
           </table>

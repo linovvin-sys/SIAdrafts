@@ -573,6 +573,16 @@ a {
   transform: translateY(0) scale(1);
 }
 
+/* Header/body/footer live inside a <form>; it needs to be the flex
+   container for them so max-height on .modal-box actually constrains
+   things and .modal-body can scroll instead of being clipped. */
+.modal-box form {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
 /* Modal header */
 .modal-header {
   display: flex;
@@ -639,6 +649,8 @@ a {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .modal-form-row {
@@ -811,4 +823,9 @@ a {
   font-size: 11px;
   color: #e03a3a;
   margin-top: 2px;
+}
+
+.badge-info {
+  background: #e6f0ff;
+  color: #1a56cc;
 }

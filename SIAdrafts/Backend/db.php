@@ -15,8 +15,7 @@ class Database
             $this->host,
             $this->username,
             $this->password,
-            $this->database,
-            $this->port
+            $this->database
         );
 
         if ($this->conn->connect_error) {

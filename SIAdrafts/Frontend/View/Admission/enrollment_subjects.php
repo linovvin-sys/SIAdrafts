@@ -22,16 +22,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $semester    = (int)$enroll['semester'];
         $school_year = $enroll['school_year'];
 
+        $course_id = (int)$enroll['course_id'];
+
         $stmt = $conn->prepare(
             "SELECT sec.section_name
-             FROM section sec
-             JOIN schedule sch ON sch.section_id = sec.section_id
-             JOIN subject sub  ON sub.subject_id = sch.subject_id
-             WHERE sec.section_id = ? AND sub.year_level = ? AND sub.semester = ?
-               AND sch.semester = ? AND sch.school_year = ?
-             LIMIT 1"
+            FROM section sec
+            JOIN schedule sch ON sch.section_id = sec.section_id
+            JOIN subject sub  ON sub.subject_id = sch.subject_id
+            WHERE sec.section_id = ? AND sec.course_id = ?
+              AND sub.year_level = ? AND sub.semester = ?
+              AND sch.semester = ? AND sch.school_year = ?
+            LIMIT 1"
         );
-        $stmt->bind_param('iiiis', $section_id, $year_level, $semester, $semester, $school_year);
+        $stmt->bind_param('iiiiis', $section_id, $course_id, $year_level, $semester, $semester, $school_year);
         $stmt->execute();
         $secRow = $stmt->get_result()->fetch_assoc();
         $stmt->close();
@@ -41,12 +44,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $stmt2 = $conn->prepare(
                 "SELECT sub.subject_id
-                 FROM subject sub
-                 JOIN schedule sch ON sch.subject_id = sub.subject_id
-                 WHERE sub.year_level = ? AND sub.semester = ?
-                   AND sch.semester = ? AND sch.school_year = ? AND sch.section_id = ?"
+                FROM subject sub
+                JOIN schedule sch ON sch.subject_id = sub.subject_id
+                JOIN section sec  ON sec.section_id = sch.section_id
+                WHERE sec.course_id = ?
+                  AND sub.year_level = ? AND sub.semester = ?
+                  AND sch.semester = ? AND sch.school_year = ? AND sch.section_id = ?"
             );
-            $stmt2->bind_param('iiisi', $year_level, $semester, $semester, $school_year, $section_id);
+            $stmt2->bind_param('iiiisi', $course_id, $year_level, $semester, $semester, $school_year, $section_id);
             $stmt2->execute();
             $subject_ids = array_map(fn($r) => (int)$r['subject_id'], $stmt2->get_result()->fetch_all(MYSQLI_ASSOC));
             $stmt2->close();
@@ -199,7 +204,7 @@ function fmt_id(int $id): string {
           </form>
 
           <div class="d-flex justify-content-between align-items-center mt-4">
-            <a href="enrollment_profile.php?student_id=<?= (int)$enroll['student_id'] ?>" class="btn-back-link">
+            <a href="enrollment_profile.php?student_id=<?=$enroll['student_id'] ?>" class="btn-back-link">
               <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back
             </a>
             <button
@@ -225,6 +230,7 @@ const ENROLL_META = {
   semester:    <?= (int)$enroll['semester'] ?>,
   school_year: <?= json_encode($enroll['school_year']) ?>,
   type_id:     <?= (int)$enroll['type_id'] ?>,
+  course_id:   <?= (int)$enroll['course_id'] ?>,
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>

@@ -20,7 +20,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }   
 
-// helper 
+// look up the logged-in staff member's StaffID (format YYYY-NNNN)
+// so we can record "verified by" using the StaffID, not the raw user_id
+$verifying_staff_id = null;
+$staffStmt = $conn->prepare("SELECT staff_id FROM users WHERE user_id = ? LIMIT 1");
+$staffStmt->bind_param('i', $_SESSION['user_id']);
+$staffStmt->execute();
+$staffRow = $staffStmt->get_result()->fetch_assoc();
+$staffStmt->close();
+
+if (!$staffRow || empty($staffRow['staff_id'])) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'errors' => ['Your account is missing a StaffID. Contact an administrator.']]);
+    exit;
+}
+$verifying_staff_id = $staffRow['staff_id'];
+
+// helper
 function clean($value) {
     return htmlspecialchars(trim($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
@@ -68,9 +84,9 @@ $fields = [
     'guardian_contact'      => clean($_POST['guardian_contact'] ?? ''),
     'guardian_id_type'      => clean($_POST['guardian_id_type'] ?? ''),
     'guardian_id_number'    => clean($_POST['guardian_id_number'] ?? ''),
-    'id_verified_by' => $_SESSION['user_id'] ?? null,
+    'id_verified_by' => $verifying_staff_id,
 
-    'program'        => clean($_POST['program'] ?? ''),
+    'course_id'      => (int)($_POST['course_id'] ?? 0),
     'year_level'     => clean($_POST['year_level'] ?? ''),
     'start_term'     => clean($_POST['start_term'] ?? ''),
     'applicant_type' => clean($_POST['applicant_type'] ?? ''),
@@ -134,6 +150,35 @@ $check = [
     validate_address($fields['home_address']),
 ];
 
+// Resolve course_id → course_name (this becomes applicants.program)
+$fields['program'] = '';
+if ($fields['course_id'] > 0) {
+    $courseStmt = $conn->prepare("SELECT course_name FROM course WHERE course_id = ?");
+    $courseStmt->bind_param('i', $fields['course_id']);
+    $courseStmt->execute();
+    $courseRow = $courseStmt->get_result()->fetch_assoc();
+    $courseStmt->close();
+
+    if ($courseRow) {
+        $fields['program'] = $courseRow['course_name'];
+    }
+}
+
+if ($fields['course_id'] <= 0 || $fields['program'] === '') {
+    $errors[] = 'Please select a valid program.';
+}
+
+// Program must match an actual course — dropdown can be tampered with client-side
+$courseStmt = $conn->prepare("SELECT COUNT(*) FROM course WHERE course_name = ?");
+$courseStmt->bind_param('s', $fields['program']);
+$courseStmt->execute();
+$validCourse = (int)$courseStmt->get_result()->fetch_row()[0];
+$courseStmt->close();
+
+if ($fields['program'] !== '' && $validCourse === 0) {
+    $errors[] = 'Selected program is not a valid course.';
+}
+
 foreach ($check as $error) {
     if ($error !== null) $errors[] = $error;
 }
@@ -170,25 +215,25 @@ if (empty($errors)) {
     $stmt = $conn->prepare("
         INSERT INTO applicants
             (student_id, last_name, first_name, middle_name, birth_date, sex, civil_status,
-             contact_number, email, home_address,
-             guardian_name, guardian_relationship, guardian_contact,
-             guardian_id_type, guardian_id_number, id_verified_by,
-             program, year_level, start_term, applicant_type, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW())
+            contact_number, email, home_address,
+            guardian_name, guardian_relationship, guardian_contact,
+            guardian_id_type, guardian_id_number, id_verified_by,
+            program, course_id, year_level, start_term, applicant_type, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?, NOW())
     ");
 
     if (!$stmt) {
         $errors[] = 'Database error (applicants insert): ' . $conn->error;
     } else {
         $stmt->bind_param(
-            'sssssssssssssssissss',
+            'sssssssssssssssssisss',
             $student_id_value,
             $fields['last_name'], $fields['first_name'], $fields['middle_name'],
             $fields['birth_date'], $fields['sex'], $fields['civil_status'],
             $fields['contact_number'], $fields['email'], $fields['home_address'],
             $fields['guardian_name'], $fields['guardian_relationship'], $fields['guardian_contact'],
             $fields['guardian_id_type'], $fields['guardian_id_number'], $fields['id_verified_by'],
-            $fields['program'], $fields['year_level'], $fields['start_term'], $fields['applicant_type']
+            $fields['program'], $fields['course_id'], $fields['year_level'], $fields['start_term'], $fields['applicant_type']
         );
 
         if (!$stmt->execute()) {

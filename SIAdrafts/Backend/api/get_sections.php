@@ -15,28 +15,25 @@ if (empty($_SESSION['user_id'])) {
 $year_level  = (int)($_GET['year_level']  ?? 0);
 $semester    = (int)($_GET['semester']    ?? 0);
 $school_year = trim($_GET['school_year']  ?? '');
+$course_id   = (int)($_GET['course_id']   ?? 0);
 
-if (!$year_level || !$semester || !$school_year) {
+if (!$year_level || !$semester || !$school_year || !$course_id) {
     echo json_encode(['error' => 'Missing parameters.']);
     exit;
 }
 
-// 1) Find sections that actually have a schedule for this year_level / semester / school_year.
+// 1) Sections
 $stmt = $conn->prepare(
     "SELECT DISTINCT sec.section_id, sec.section_name
      FROM section sec
      JOIN schedule sch ON sch.section_id = sec.section_id
      JOIN subject sub  ON sub.subject_id = sch.subject_id
-     WHERE sub.year_level = ? AND sub.semester = ?
+     WHERE sec.course_id = ?
+       AND sub.year_level = ? AND sub.semester = ?
        AND sch.semester = ? AND sch.school_year = ?
      ORDER BY sec.section_name"
 );
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
-    exit;
-}
-$stmt->bind_param('iiis', $year_level, $semester, $semester, $school_year);
+$stmt->bind_param('iiiis', $course_id, $year_level, $semester, $semester, $school_year);
 $stmt->execute();
 $sections = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
@@ -46,7 +43,7 @@ if (empty($sections)) {
     exit;
 }
 
-// 2) For each section, pull its premade subject list (with schedule/professor/room).
+// 2) Subjects per section
 $subStmt = $conn->prepare(
     "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
             sc.category_name,
@@ -56,9 +53,11 @@ $subStmt = $conn->prepare(
      FROM subject sub
      JOIN subject_category sc ON sub.category_id = sc.category_id
      JOIN schedule sch        ON sch.subject_id = sub.subject_id
+     JOIN section sec         ON sec.section_id = sch.section_id
      LEFT JOIN professor p ON sch.professor_id = p.professor_id
      LEFT JOIN room r      ON sch.room_id = r.room_id
-     WHERE sub.year_level = ? AND sub.semester = ?
+     WHERE sec.course_id = ?
+       AND sub.year_level = ? AND sub.semester = ?
        AND sch.semester = ? AND sch.school_year = ? AND sch.section_id = ?
      ORDER BY sc.category_name, sub.subject_code"
 );
@@ -71,7 +70,7 @@ if (!$subStmt) {
 $out = [];
 foreach ($sections as $sec) {
     $section_id = (int)$sec['section_id'];
-    $subStmt->bind_param('iiisi', $year_level, $semester, $semester, $school_year, $section_id);
+    $subStmt->bind_param('iiiisi', $course_id, $year_level, $semester, $semester, $school_year, $section_id);
     $subStmt->execute();
     $subjects = $subStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 

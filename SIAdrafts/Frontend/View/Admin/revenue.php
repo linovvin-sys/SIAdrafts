@@ -1,34 +1,39 @@
 <?php
 $pageTitle = "REVENUE";
 $activePage = "revenue";
+
+require_once '../../../Backend/auth.php';
+require_once __DIR__ . '/../../../Backend/admin/revenue.php';
+
+
 include 'Include/header.php';
 ?>
 
 <div class="app-layout">
 
-  <?php include 'include/sidebar.php'; ?>
+  <?php include 'Include/sidebar.php'; ?>
 
     <main class="page-content">
 
       <div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:24px;">
         <div class="stat-card">
           <div class="stat-icon green">💰</div>
-          <div><div class="stat-value">₱2.4M</div><div class="stat-label">Total Revenue</div></div>
+          <div><div class="stat-value">₱<?= number_format($revenue['total'], 2) ?></div><div class="stat-label">Total Revenue</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon gold">📈</div>
-          <div><div class="stat-value">₱1.9M</div><div class="stat-label">Collected</div></div>
+          <div><div class="stat-value">₱<?= number_format($revenue['collected'], 2) ?></div><div class="stat-label">Collected</div></div>
         </div>
         <div class="stat-card">
           <div class="stat-icon blue">⏳</div>
-          <div><div class="stat-value">₱500K</div><div class="stat-label">Outstanding</div></div>
+          <div><div class="stat-value">₱<?= number_format($revenue['outstanding'], 2) ?></div><div class="stat-label">Outstanding</div></div>
         </div>
       </div>
 
       <div class="panel">
         <div class="panel-header">
           <span class="panel-title">Revenue by Course</span>
-          <button class="btn btn-outline">Export CSV</button>
+          <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_revenue_csv.php">Export CSV</a>
         </div>
         <div class="panel-body" style="padding:0">
           <table class="data-table">
@@ -43,46 +48,20 @@ include 'Include/header.php';
               </tr>
             </thead>
             <tbody>
+              <?php if (empty($revenueByCourse)): ?>
               <tr>
-                <td>BS Computer Science</td>
-                <td>312</td>
-                <td>₱18,000</td>
-                <td>₱5,616,000</td>
-                <td>₱4,800,000</td>
-                <td>₱816,000</td>
+                <td colspan="6" style="text-align:center; padding:32px; color:#888;">No payment records yet.</td>
               </tr>
+              <?php else: foreach ($revenueByCourse as $row): ?>
               <tr>
-                <td>BS Nursing</td>
-                <td>280</td>
-                <td>₱22,000</td>
-                <td>₱6,160,000</td>
-                <td>₱5,500,000</td>
-                <td>₱660,000</td>
+                <td><?= htmlspecialchars($row['course_name']) ?></td>
+                <td><?= (int)$row['enrolled'] ?></td>
+                <td>₱<?= number_format($row['fee_per_student'], 2) ?></td>
+                <td>₱<?= number_format($row['total_expected'], 2) ?></td>
+                <td>₱<?= number_format($row['collected'], 2) ?></td>
+                <td>₱<?= number_format($row['balance'], 2) ?></td>
               </tr>
-              <tr>
-                <td>BS Accountancy</td>
-                <td>198</td>
-                <td>₱16,000</td>
-                <td>₱3,168,000</td>
-                <td>₱2,900,000</td>
-                <td>₱268,000</td>
-              </tr>
-              <tr>
-                <td>BS Education</td>
-                <td>154</td>
-                <td>₱14,000</td>
-                <td>₱2,156,000</td>
-                <td>₱2,000,000</td>
-                <td>₱156,000</td>
-              </tr>
-              <tr>
-                <td>BS Engineering</td>
-                <td>340</td>
-                <td>₱20,000</td>
-                <td>₱6,800,000</td>
-                <td>₱6,200,000</td>
-                <td>₱600,000</td>
-              </tr>
+              <?php endforeach; endif; ?>
             </tbody>
           </table>
         </div>

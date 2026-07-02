@@ -1,6 +1,19 @@
 <?php 
 $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/admission.js'];
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/db.php';
+
+$db   = new Database();
+$conn = $db->connect();
+
+$courses = [];
+$result = $conn->query("SELECT course_id, course_code, course_name FROM course ORDER BY course_name");
+if ($result) {
+    while ($row = $result->fetch_assoc()) {
+        $courses[] = $row;
+    }
+}
+
 include '../Admission/Include/header.php';
 
 ?>
@@ -186,14 +199,21 @@ include '../Admission/Include/header.php';
         <span class="section-num">4</span>
         <div>
           <h2>Program Details</h2>
-          <p>Enrollment is currently limited to BS Information Technology.</p>
+          <p>Select the program the applicant is enrolling into.</p>
         </div>
       </div>
  
       <div class="row g-3">
         <div class="col-md-6">
           <label class="form-label">Program</label>
-          <input type="text" class="form-control" value="BS Information Technology" name="program" readonly style="background:rgba(27,42,74,0.04);">
+          <select class="form-select" name="course_id" required>
+            <option value="" selected disabled>Select a program</option>
+            <?php foreach ($courses as $c): ?>
+              <option value="<?= (int)$c['course_id'] ?>">
+                <?= htmlspecialchars($c['course_code']) ?> — <?= htmlspecialchars($c['course_name']) ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
         </div>
         <div class="col-md-3">
           <label class="form-label">Year level</label>

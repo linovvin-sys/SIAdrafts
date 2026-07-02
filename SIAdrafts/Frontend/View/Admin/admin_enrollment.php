@@ -1,76 +1,143 @@
 <?php
+
 $pageTitle = "ENROLLMENT";
 $activePage = "enrollment";
+
+require_once '../../../Backend/auth.php';
+require_once __DIR__ . '/../../../Backend/admin/enrollment.php';
+
+
 include 'Include/header.php';
+
 ?>
 
 <div class="app-layout">
 
-  <?php include 'Include/sidebar.php'; ?>
+    <?php include 'Include/sidebar.php'; ?>
 
     <main class="page-content">
-      <div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:24px;">
-        <div class="stat-card">
-          <div class="stat-icon gold">📝</div>
-          <div><div class="stat-value">1,284</div><div class="stat-label">Total Enrolled</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon blue">⏳</div>
-          <div><div class="stat-value">62</div><div class="stat-label">Awaiting Payment</div></div>
-        </div>
-        <div class="stat-card">
-          <div class="stat-icon green">✅</div>
-          <div><div class="stat-value">1,222</div><div class="stat-label">Fully Enrolled</div></div>
-        </div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Enrollment List</span>
-          <button class="btn btn-primary">+ Enroll Student</button>
+        <!-- Statistics -->
+        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
+
+            <div class="stat-card">
+                <div class="stat-icon gold">📝</div>
+                <div>
+                    <div class="stat-value"><?= $dashboard['enrolled']; ?></div>
+                    <div class="stat-label">Total Enrolled</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon blue">⏳</div>
+                <div>
+                    <div class="stat-value"><?= $dashboard['pending_payment']; ?></div>
+                    <div class="stat-label">Awaiting Payment</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div>
+                    <div class="stat-value"><?= $dashboard['fully_enrolled']; ?></div>
+                    <div class="stat-label">Fully Enrolled</div>
+                </div>
+            </div>
+
         </div>
-        <div class="panel-body" style="padding:0">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Student ID</th>
-                <th>Name</th>
-                <th>Course</th>
-                <th>Section</th>
-                <th>Payment</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>2025-0001</td>
-                <td>Maria Santos</td>
-                <td>BS Computer Science</td>
-                <td>CS-1A</td>
-                <td>Full</td>
-                <td><span class="badge badge-success">Active</span></td>
-              </tr>
-              <tr>
-                <td>2025-0002</td>
-                <td>Juan dela Cruz</td>
-                <td>BS Accountancy</td>
-                <td>ACC-2B</td>
-                <td>Partial</td>
-                <td><span class="badge badge-pending">Pending</span></td>
-              </tr>
-              <tr>
-                <td>2025-0003</td>
-                <td>Ana Reyes</td>
-                <td>BS Nursing</td>
-                <td>NUR-1C</td>
-                <td>Full</td>
-                <td><span class="badge badge-success">Active</span></td>
-              </tr>
-            </tbody>
-          </table>
+
+        <!-- Enrollment List -->
+        <div class="panel">
+
+            <div class="panel-header">
+                <span class="panel-title">Enrollment List</span>
+            </div>
+
+            <div class="panel-body" style="padding:0;">
+
+                <table class="data-table">
+
+                    <thead>
+                        <tr>
+                            <th>Student ID</th>
+                            <th>Name</th>
+                            <th>Course</th>
+                            <th>Section</th>
+                            <th>Payment</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                    <?php if (!empty($enrollmentList)): ?>
+
+                        <?php foreach ($enrollmentList as $row): ?>
+
+                            <?php
+
+                            $status = strtolower($row['status']);
+
+                            switch ($status) {
+
+                                case 'active':
+                                case 'enrolled':
+                                    $badge = 'success';
+                                    break;
+
+                                case 'pending':
+                                case 'pending payment':
+                                    $badge = 'pending';
+                                    break;
+
+                                default:
+                                    $badge = 'secondary';
+                            }
+
+                            ?>
+
+                            <tr>
+
+                                <td><?= htmlspecialchars($row['student_id']); ?></td>
+
+                                <td><?= htmlspecialchars($row['student_name']); ?></td>
+
+                                <td><?= htmlspecialchars($row['course_name']); ?></td>
+
+                                <td><?= htmlspecialchars($row['section_name']); ?></td>
+
+                                <td><?= htmlspecialchars($row['payment_status']); ?></td>
+
+                                <td>
+                                    <span class="badge badge-<?= $badge; ?>">
+                                        <?= htmlspecialchars($row['status']); ?>
+                                    </span>
+                                </td>
+
+                            </tr>
+
+                        <?php endforeach; ?>
+
+                    <?php else: ?>
+
+                        <tr>
+                            <td colspan="6" style="text-align:center;">
+                                No enrolled students found.
+                            </td>
+                        </tr>
+
+                    <?php endif; ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
         </div>
-      </div>
+
     </main>
-  </div>
+
 </div>
-<?php include 'Include/footer.php'?>
+
+<?php include 'Include/footer.php'; ?>

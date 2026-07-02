@@ -13,7 +13,7 @@ $error         = null;
 
 $student_query = "
     SELECT a.applicant_id, a.student_id, a.first_name, a.last_name, a.middle_name,
-           a.applicant_type_id AS default_type_id,
+           a.applicant_type_id AS default_type_id, a.course_id,
            st.type_name, '—' AS section_name, 0 AS section_id
     FROM applicants a
     JOIN student_type st ON a.applicant_type_id = st.type_id
@@ -27,10 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $year_level  = (int)($_POST['year_level']  ?? 0);
     $type_id     = (int)($_POST['type_id']     ?? 1);
     $section_id  = (int)($_POST['section_id']  ?? 0);
+    $course_id   = (int)($_POST['course_id']   ?? 0);
 
     $post_error = null;
 
-    if (!$student_id || !$school_year || !$semester || !$year_level || !$type_id) {
+    if (!$student_id || !$school_year || !$semester || !$year_level || !$type_id || !$course_id) {
         $post_error = 'All fields are required.';
     } elseif (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
         $post_error = 'School year must be in YYYY-YYYY format (e.g. 2025-2026).';
@@ -50,6 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'semester'     => $semester,
             'year_level'   => $year_level,
             'type_id'      => $type_id,
+            'course_id'    => $course_id,
         ];
         header('Location: enrollment_subjects.php');
         exit;
@@ -192,7 +194,7 @@ function student_fullname(array $s): string {
             <div>
               <h2 class="h5 fw-bold mb-0"><?= htmlspecialchars(student_fullname($student)) ?></h2>
               <p class="text-ink-soft small mb-0">
-                <?= htmlspecialchars(fmt_id((int)$student['student_id'])) ?>
+                <?= htmlspecialchars(fmt_id($student['student_id'])) ?>
                 &mdash; <?= htmlspecialchars($student['section_name']) ?>
               </p>
             </div>
@@ -229,7 +231,8 @@ function student_fullname(array $s): string {
             <input type="hidden" name="section_id"   value="<?= $student['section_id'] ?>">
             <input type="hidden" name="student_name" value="<?= htmlspecialchars(student_fullname($student)) ?>">
             <input type="hidden" name="section_name" value="<?= htmlspecialchars($student['section_name']) ?>">
-
+            <input type="hidden" name="course_id"    value="<?= (int)$student['course_id'] ?>">
+            
             <div class="mb-3">
               <label class="form-label fw-bold small">School Year</label>
               <input type="text" name="school_year" id="field-sy"

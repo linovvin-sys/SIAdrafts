@@ -59,6 +59,22 @@ if (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
 // as a fallback for legacy enrollments created before this change.
 const PAYMENT_DUE_DAYS = 3;
 
+// Resolve the applicant's course — needed to scope subject/section
+    // validation. Fetched here, not trusted from the client payload.
+    $courseStmt = $conn->prepare("SELECT course_id FROM applicants WHERE applicant_id = ? LIMIT 1");
+    if (!$courseStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $courseStmt->bind_param('i', $student_id);
+    $courseStmt->execute();
+    $courseRow = $courseStmt->get_result()->fetch_assoc();
+    $courseStmt->close();
+
+    if (!$courseRow || !$courseRow['course_id']) {
+        throw new RuntimeException('This applicant has no program assigned.');
+    }
+    $course_id = (int)$courseRow['course_id'];
+
 $conn->begin_transaction();
 
 try {
@@ -68,15 +84,17 @@ try {
     // package model from the subject-selection step.
     $secCheck = $conn->prepare(
         "SELECT COUNT(DISTINCT sch.subject_id)
-         FROM schedule sch
-         JOIN subject sub ON sub.subject_id = sch.subject_id
-         WHERE sch.section_id = ? AND sch.school_year = ? AND sch.semester = ?
-           AND sub.year_level = ? AND sub.semester = ?"
+        FROM schedule sch
+        JOIN subject sub ON sub.subject_id = sch.subject_id
+        JOIN section sec ON sec.section_id = sch.section_id
+        WHERE sch.section_id = ? AND sec.course_id = ?
+        AND sch.school_year = ? AND sch.semester = ?
+        AND sub.year_level = ? AND sub.semester = ?"
     );
     if (!$secCheck) {
         throw new RuntimeException('Database error: ' . $conn->error);
     }
-    $secCheck->bind_param('isiii', $section_id, $school_year, $semester, $year_level, $semester);
+    $secCheck->bind_param('iisiii', $section_id, $course_id, $school_year, $semester, $year_level, $semester);
     $secCheck->execute();
     $offered_count = (int)$secCheck->get_result()->fetch_row()[0];
     $secCheck->close();
@@ -130,8 +148,8 @@ try {
     }
 
     $itemsStmt = $conn->prepare(
-        "SELECT label, amount, sort_order FROM fee_schedule_item
-         WHERE fee_schedule_id = ? ORDER BY sort_order"
+        "SELECT label, amount, sort_order, is_per_unit FROM fee_schedule_item
+        WHERE fee_schedule_id = ? ORDER BY sort_order"
     );
     if (!$itemsStmt) {
         throw new RuntimeException('Database error: ' . $conn->error);
@@ -145,6 +163,121 @@ try {
         throw new RuntimeException(
             "The fee schedule for Year $year_level, SY $school_year has no breakdown items configured."
         );
+    }
+    // Total units being enrolled — needed to price per-unit fee items
+    // (e.g. Tuition Fee is a rate, not a flat amount).
+    $unitsPh    = implode(',', array_fill(0, count($subject_ids), '?'));
+    $unitsTypes = str_repeat('i', count($subject_ids));
+    $unitsStmt  = $conn->prepare(
+        "SELECT COALESCE(SUM(units), 0) FROM subject WHERE subject_id IN ($unitsPh)"
+    );
+    if (!$unitsStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $unitsStmt->bind_param($unitsTypes, ...$subject_ids);
+    $unitsStmt->execute();
+    $total_units = (float)$unitsStmt->get_result()->fetch_row()[0];
+    $unitsStmt->close();
+
+    if ($total_units <= 0) {
+        throw new RuntimeException('Could not determine total units for the selected subjects.');
+    }
+
+    // Resolve each fee item's actual charged amount: per-unit rates get
+    // multiplied by total_units, flat fees pass through unchanged.
+    foreach ($feeItems as &$item) {
+        if (!empty($item['is_per_unit'])) {
+            $item['amount'] = round((float)$item['amount'] * $total_units, 2);
+        } else {
+            $item['amount'] = round((float)$item['amount'], 2);
+        }
+    }
+    unset($item);
+
+    // Promote the applicant into the `student` table. `student` is a
+    // separate table from `applicants` (its own auto-increment PK),
+    // linked back via student.applicant_id. Nothing else in the app
+    // ever wrote this row before, which is why enrolled applicants
+    // never showed up in the admin enrollment list / dashboard / section
+    // rosters — those all join against `student`, not `applicants`.
+    // We upsert on applicant_id since re-enrolling in a later term
+    // should just update the existing student's section/type, not
+    // create a duplicate student row.
+    $studentCheck = $conn->prepare(
+        "SELECT student_id FROM student WHERE applicant_id = ? LIMIT 1"
+    );
+    if (!$studentCheck) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $studentCheck->bind_param('i', $student_id);
+    $studentCheck->execute();
+    $existingStudent = $studentCheck->get_result()->fetch_assoc();
+    $studentCheck->close();
+
+    $applicantStmt = $conn->prepare(
+        "SELECT last_name, first_name, middle_name, birth_date, sex,
+                contact_number, email, home_address
+         FROM applicants WHERE applicant_id = ? LIMIT 1"
+    );
+    if (!$applicantStmt) {
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+    $applicantStmt->bind_param('i', $student_id);
+    $applicantStmt->execute();
+    $applicant = $applicantStmt->get_result()->fetch_assoc();
+    $applicantStmt->close();
+
+    if (!$applicant) {
+        throw new RuntimeException('Applicant record not found.');
+    }
+
+    $student_name = trim($applicant['first_name'] . ' ' . $applicant['last_name']);
+
+    if ($existingStudent) {
+        $upd = $conn->prepare(
+            "UPDATE student SET
+                student_name = ?, last_name = ?, first_name = ?, middle_name = ?,
+                birth_date = ?, sex = ?, contact_number = ?, email = ?, address = ?,
+                section_id = ?, type_id = ?
+             WHERE student_id = ?"
+        );
+        if (!$upd) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $upd->bind_param(
+            'sssssssssiii',
+            $student_name, $applicant['last_name'], $applicant['first_name'], $applicant['middle_name'],
+            $applicant['birth_date'], $applicant['sex'], $applicant['contact_number'],
+            $applicant['email'], $applicant['home_address'],
+            $section_id, $type_id, $existingStudent['student_id']
+        );
+        if (!$upd->execute()) {
+            $upd->close();
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $upd->close();
+    } else {
+        $insStudent = $conn->prepare(
+            "INSERT INTO student
+                (student_name, last_name, first_name, middle_name, birth_date, sex,
+                 contact_number, email, address, applicant_id, section_id, type_id)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+        );
+        if (!$insStudent) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $insStudent->bind_param(
+            'sssssssssiii',
+            $student_name, $applicant['last_name'], $applicant['first_name'], $applicant['middle_name'],
+            $applicant['birth_date'], $applicant['sex'], $applicant['contact_number'],
+            $applicant['email'], $applicant['home_address'],
+            $student_id, $section_id, $type_id
+        );
+        if (!$insStudent->execute()) {
+            $insStudent->close();
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $insStudent->close();
     }
 
     // Insert enrollment. Status starts as "Pending Payment" — the payment
@@ -182,8 +315,8 @@ try {
     }
     $sub_stmt->close();
 
-    // Auto-create the payment row from the fee schedule total.
-    $amount_due = round((float)$feeSchedule['total_amount'], 2);
+    // Auto-create the payment row from the (now per-unit-resolved) fee items
+    $amount_due = round(array_sum(array_column($feeItems, 'amount')), 2);
     $due_date   = date('Y-m-d', strtotime('+' . PAYMENT_DUE_DAYS . ' days'));
 
     $payStmt = $conn->prepare(

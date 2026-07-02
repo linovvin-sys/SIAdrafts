@@ -6,5 +6,7 @@
   <title>EduSchool — <?= $pageTitle ?></title>
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css" />
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/schedule.css">
+    <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/modal.css">
+  
 </head>
 <body>

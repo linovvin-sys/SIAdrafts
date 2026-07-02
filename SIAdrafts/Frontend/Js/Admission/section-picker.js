@@ -21,6 +21,7 @@ if (document.getElementById('section-app')) {
             year_level:  ENROLL_META.year_level,
             semester:    ENROLL_META.semester,
             school_year: ENROLL_META.school_year,
+            course_id:   ENROLL_META.course_id,
           });
           const r = await fetch(`/SIAdrafts/Backend/api/get_sections.php?${params}`);
           const d = await r.json();
