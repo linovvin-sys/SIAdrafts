@@ -4,6 +4,7 @@
   <script src="/SIAdrafts/Frontend/Js/Admission/nav-user-dropdown.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/main.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/login.js"></script>
+   <script src="/SIAdrafts/Frontend/Js/Admission/confirm.js"></script>
 
   
 <?php foreach ($page_scripts as $_s): ?>

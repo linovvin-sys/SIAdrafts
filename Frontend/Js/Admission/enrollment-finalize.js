@@ -5,6 +5,16 @@ Vue.createApp({
   }),
   methods: {
     async finalize() {
+      const ok = await (window.confirmAction
+        ? window.confirmAction({
+            title: 'Finalize this enrollment?',
+            text: 'This will save the enrollment and generate the student\u2019s billing. This cannot be undone from here.',
+            icon: 'question',
+            confirmText: 'Yes, finalize',
+          })
+        : Promise.resolve(window.confirm('Finalize this enrollment?')));
+      if (!ok) return;
+
       this.error = null;
       this.saving = true;
       try {

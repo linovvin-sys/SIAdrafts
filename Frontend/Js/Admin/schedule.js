@@ -132,7 +132,41 @@
   scheduleModal.addEventListener('click', e => { if (e.target === scheduleModal) closeModal(scheduleModal); });
   deleteModal.addEventListener('click',   e => { if (e.target === deleteModal)   closeModal(deleteModal); });
 
-  /* ─── submit (add or edit) ─── */
+  submitBtn.addEventListener('click', async () => {
+    if (!validate()) return;
+    const payload = readForm();
+    if (editBlock) payload.ids = editBlock.ids;
+
+    const confirmed = await window.confirmAction({
+      title: editBlock ? 'Save changes to this schedule?' : 'Add this schedule?',
+      text: editBlock ? 'This will update the existing schedule entry.' : 'This will create a new schedule entry.',
+      confirmText: editBlock ? 'Yes, save changes' : 'Yes, add schedule',
+    });
+    if (!confirmed) return;
+
+    submitBtn.disabled = true;
+    try {
+      const r = await fetch(API_BASE + 'save_schedule.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      const d = await r.json();
+      if (d.error) {
+        show('errSection', d.error);
+        return;
+      }
+      await loadSchedules();
+      render();
+      closeModal(scheduleModal);
+    } catch (_) {
+      show('errSection', 'Network error. Please try again.');
+    } finally {
+      submitBtn.disabled = false;
+    }
+  });
+  /*
+   ─── submit (add or edit) ─── 
   submitBtn.addEventListener('click', async () => {
     if (!validate()) return;
     const payload = readForm();
@@ -159,6 +193,7 @@
       submitBtn.disabled = false;
     }
   });
+  */
 
   /* ─── delete confirm ─── */
   document.getElementById('confirmDelete').addEventListener('click', async () => {
