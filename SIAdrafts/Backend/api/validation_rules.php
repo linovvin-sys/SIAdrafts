@@ -1,17 +1,4 @@
 <?php
-// ============================================================
-// validation_rules.php
-// Single source of truth for every field-level validation rule.
-// Used by:
-//   - validate_field.php   (per-field AJAX check on blur)
-//   - admission_process.php (full-form check on submit)
-//
-// Each function returns null if valid, or an error message string
-// if invalid. Returning null on an empty value is intentional —
-// "required" is checked separately, so optional fields (like email)
-// don't fail this layer just for being blank.
-// ============================================================
-
 function validate_name($value, $label) {
     if ($value === '') return null;
     if (!preg_match("/^[A-Za-zÀ-ÿ' \-\.]{2,100}$/u", $value)) {
@@ -57,6 +44,14 @@ function validate_guardian_id($value) {
     if ($value === '') return null;
     if (!preg_match('/^[A-Za-z0-9\- ]{5,30}$/', $value)) {
         return 'Guardian ID number looks invalid — check the number was copied correctly.';
+    }
+    return null;
+}
+
+function validate_staff_id($value) {
+    if ($value === '') return null;
+    if (!preg_match('/^\d{4}-\d{4}$/', $value)) {
+        return 'Staff ID must be in the format YYYY-NNNN (e.g. 2026-0001).';
     }
     return null;
 }
@@ -124,6 +119,7 @@ function get_field_validator($field_name) {
         'birth_date'          => fn($v) => validate_birth_date($v),
         'guardian_id_number'  => fn($v) => validate_guardian_id($v),
         'home_address'        => fn($v) => validate_address($v),
+        'id_verified_by'      => fn($v) => validate_staff_id($v),
     ];
 
     return $map[$field_name] ?? null;

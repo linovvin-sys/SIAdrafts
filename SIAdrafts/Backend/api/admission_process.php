@@ -34,6 +34,14 @@ if (!$staffRow || empty($staffRow['staff_id'])) {
     echo json_encode(['success' => false, 'errors' => ['Your account is missing a StaffID. Contact an administrator.']]);
     exit;
 }
+
+$staff_id_error = validate_staff_id($staffRow['staff_id']);
+if ($staff_id_error !== null) {
+    http_response_code(500);
+    echo json_encode(['success' => false, 'errors' => ['Your account\'s StaffID is malformed (' . $staffRow['staff_id'] . '). Contact an administrator.']]);
+    exit;
+}
+
 $verifying_staff_id = $staffRow['staff_id'];
 
 // helper
