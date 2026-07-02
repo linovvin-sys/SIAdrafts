@@ -187,7 +187,7 @@ include '../Admission/Include/header.php';
           <input type="text" class="form-control" name="guardian_id_number" required>
         </div>
         <div class="col-md-4">
-          <label class="form-label">ID verified by (staff initials)</label>
+          <label class="form-label">ID verified by (staff ID)</label>
           <input type="text" class="form-control" name="id_verified_by" required>
         </div>
       </div>

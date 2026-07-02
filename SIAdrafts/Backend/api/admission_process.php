@@ -272,8 +272,8 @@ if (empty($errors)) {
     // document insert
     if ($applicant_id && empty($errors) && !empty($docs_submitted)) {
         $docStmt = $conn->prepare("
-            INSERT INTO applicant_documents (applicant_id, document_name)
-            VALUES (?, ?)
+            INSERT INTO applicant_documents (applicant_id, document_name, status)
+            VALUES (?, ?, 'submitted')
         ");
 
         if (!$docStmt) {
