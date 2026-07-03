@@ -70,7 +70,7 @@ include 'Include/header.php';
 
                             <tr>
 
-                                <td><?= $row['student_id']; ?></td>
+                                <td><?= $row['reference_id']; ?></td>
 
                                 <td><?= htmlspecialchars($row['applicant_name']); ?></td>
 
@@ -85,7 +85,7 @@ include 'Include/header.php';
                                 </td>
 
                                 <td>
-                                    <a href="admin_admission_view.php?id=<?= $row['student_id']; ?>"
+                                    <a href="admin_admission_view.php?id=<?= $row['reference_id']; ?>"
                                        class="btn btn-outline"
                                        style="padding:4px 10px;font-size:12px">
                                         View

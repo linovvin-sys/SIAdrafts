@@ -59,6 +59,35 @@ if (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
 // as a fallback for legacy enrollments created before this change.
 const PAYMENT_DUE_DAYS = 3;
 
+// The official, human-readable student ID. Generated here — at enrollment
+// confirmation — not at admission, since not every applicant who gets a
+// reference ID actually enrolls. Stored in student.student_no; the
+// auto-increment student.student_id stays untouched as the internal PK.
+function generate_student_no(mysqli $conn): string {
+    $year = date('Y');
+
+    $stmt = $conn->prepare(
+        "SELECT student_no FROM student
+         WHERE student_no LIKE ?
+         ORDER BY student_no DESC
+         LIMIT 1"
+    );
+    $like = $year . '-%';
+    $stmt->bind_param('s', $like);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($row && preg_match('/^(\d{4})-(\d{5})$/', $row['student_no'], $m)) {
+        $next_number = (int)$m[2] + 1;
+    } else {
+        $next_number = 1;
+    }
+
+    $padded = str_pad((string)$next_number, 5, '0', STR_PAD_LEFT);
+    return "{$year}-{$padded}";
+}
+
 // Resolve the applicant's course — needed to scope subject/section
     // validation. Fetched here, not trusted from the client payload.
     $courseStmt = $conn->prepare("SELECT course_id FROM applicants WHERE applicant_id = ? LIMIT 1");
@@ -204,7 +233,7 @@ try {
     // should just update the existing student's section/type, not
     // create a duplicate student row.
     $studentCheck = $conn->prepare(
-        "SELECT student_id FROM student WHERE applicant_id = ? LIMIT 1"
+        "SELECT student_id, student_no FROM student WHERE applicant_id = ? LIMIT 1"
     );
     if (!$studentCheck) {
         throw new RuntimeException('Database error: ' . $conn->error);
@@ -233,22 +262,29 @@ try {
 
     $student_name = trim($applicant['first_name'] . ' ' . $applicant['last_name']);
 
+    // Re-enrolling students keep the student number they already have.
+    // First-time enrollees get a fresh one — this is the one and only
+    // place in the system where an official student ID is minted.
+    $student_no = (!empty($existingStudent['student_no']))
+        ? $existingStudent['student_no']
+        : generate_student_no($conn);
+
     if ($existingStudent) {
         $upd = $conn->prepare(
             "UPDATE student SET
                 student_name = ?, last_name = ?, first_name = ?, middle_name = ?,
                 birth_date = ?, sex = ?, contact_number = ?, email = ?, address = ?,
-                section_id = ?, type_id = ?
+                student_no = ?, section_id = ?, type_id = ?
              WHERE student_id = ?"
         );
         if (!$upd) {
             throw new RuntimeException('Database error: ' . $conn->error);
         }
         $upd->bind_param(
-            'sssssssssiii',
+            'ssssssssssiii',
             $student_name, $applicant['last_name'], $applicant['first_name'], $applicant['middle_name'],
             $applicant['birth_date'], $applicant['sex'], $applicant['contact_number'],
-            $applicant['email'], $applicant['home_address'],
+            $applicant['email'], $applicant['home_address'], $student_no,
             $section_id, $type_id, $existingStudent['student_id']
         );
         if (!$upd->execute()) {
@@ -260,17 +296,17 @@ try {
         $insStudent = $conn->prepare(
             "INSERT INTO student
                 (student_name, last_name, first_name, middle_name, birth_date, sex,
-                 contact_number, email, address, applicant_id, section_id, type_id)
-             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+                 contact_number, email, address, student_no, applicant_id, section_id, type_id)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
         );
         if (!$insStudent) {
             throw new RuntimeException('Database error: ' . $conn->error);
         }
         $insStudent->bind_param(
-            'sssssssssiii',
+            'ssssssssssiii',
             $student_name, $applicant['last_name'], $applicant['first_name'], $applicant['middle_name'],
             $applicant['birth_date'], $applicant['sex'], $applicant['contact_number'],
-            $applicant['email'], $applicant['home_address'],
+            $applicant['email'], $applicant['home_address'], $student_no,
             $student_id, $section_id, $type_id
         );
         if (!$insStudent->execute()) {
@@ -357,6 +393,7 @@ try {
     echo json_encode([
         'success'       => true,
         'enrollment_id' => $enrollment_id,
+        'student_no'    => $student_no,
         'payment'       => [
             'payment_id' => $payment_id,
             'amount_due' => $amount_due,

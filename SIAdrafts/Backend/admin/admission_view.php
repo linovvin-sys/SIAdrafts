@@ -20,7 +20,7 @@ if ($studentId) {
             c.course_code
         FROM applicants a
         LEFT JOIN course c ON a.course_id = c.course_id
-        WHERE a.student_id = ?
+        WHERE a.reference_id = ?
         LIMIT 1
     ");
     $stmt->bind_param('s', $studentId);

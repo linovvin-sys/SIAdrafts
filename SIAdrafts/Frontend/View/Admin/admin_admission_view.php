@@ -66,7 +66,7 @@ include 'Include/header.php';
                             Student Registration / Admission Form
                         </h2>
                         <p class="text-muted">
-                            Application ID: <?= htmlspecialchars($applicant['student_id']); ?>
+                            Application ID: <?= htmlspecialchars($applicant['reference_id']); ?>
                             &nbsp;|&nbsp;
                             Date Filed: <?= date('M d, Y', strtotime($applicant['created_at'])); ?>
                         </p>
@@ -77,7 +77,7 @@ include 'Include/header.php';
                         <div class="grid-2">
                             <div class="form-group">
                                 <span class="form-label">Application ID</span>
-                                <span class="form-value"><?= htmlspecialchars($applicant['student_id']); ?></span>
+                                <span class="form-value"><?= htmlspecialchars($applicant['reference_id']); ?></span>
                             </div>
                             <div class="form-group">
                                 <span class="form-label">Status</span>

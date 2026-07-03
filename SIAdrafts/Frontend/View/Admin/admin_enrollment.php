@@ -93,12 +93,14 @@ include 'Include/header.php';
                                 default:
                                     $badge = 'secondary';
                             }
+                            
+                        
 
                             ?>
 
                             <tr>
 
-                                <td><?= htmlspecialchars($row['student_id']); ?></td>
+                                <td><?= htmlspecialchars($row['reference_id']); ?></td>
 
                                 <td><?= htmlspecialchars($row['student_name']); ?></td>
 

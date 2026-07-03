@@ -25,9 +25,14 @@ $looksLikeId = preg_match('/^[\d\-]+$/', $q);
 
 if ($looksLikeId) {
     $stmt = $conn->prepare(
-        "SELECT applicant_id, student_id, first_name, last_name FROM applicants WHERE student_id = ? LIMIT 1"
+        "SELECT a.applicant_id, COALESCE(s.student_no, a.reference_id) AS display_id,
+                a.first_name, a.last_name
+         FROM applicants a
+         LEFT JOIN student s ON s.applicant_id = a.applicant_id
+         WHERE a.reference_id = ? OR s.student_no = ?
+         LIMIT 1"
     );
-    $stmt->bind_param('s', $q);
+    $stmt->bind_param('ss', $q, $q);
 } else {
     if (strpos($q, ',') !== false) {
         [$lastPart, $firstPart] = array_map('trim', explode(',', $q, 2));
@@ -40,12 +45,15 @@ if ($looksLikeId) {
     $likeLast  = '%' . $lastPart . '%';
 
     $stmt = $conn->prepare(
-        "SELECT applicant_id, student_id, first_name, last_name FROM applicants
-         WHERE first_name LIKE ?
-            OR last_name LIKE ?
-            OR CONCAT(first_name, ' ', last_name) LIKE ?
-            OR CONCAT(last_name, ', ', first_name) LIKE ?
-            OR (first_name LIKE ? AND last_name LIKE ?)
+        "SELECT a.applicant_id, COALESCE(s.student_no, a.reference_id) AS display_id,
+                a.first_name, a.last_name
+         FROM applicants a
+         LEFT JOIN student s ON s.applicant_id = a.applicant_id
+         WHERE a.first_name LIKE ?
+            OR a.last_name LIKE ?
+            OR CONCAT(a.first_name, ' ', a.last_name) LIKE ?
+            OR CONCAT(a.last_name, ', ', a.first_name) LIKE ?
+            OR (a.first_name LIKE ? AND a.last_name LIKE ?)
          LIMIT 1"
     );
     $stmt->bind_param('ssssss', $like, $like, $like, $like, $likeFirst, $likeLast);
@@ -110,7 +118,7 @@ $full_name = $student['last_name'] . ', ' . $student['first_name'];
 
 echo json_encode([
     'student' => [
-        'student_id' => $student['student_id'],
+        'student_id' => $student['display_id'],
         'full_name'  => $full_name,
     ],
     'payment'   => $payment,

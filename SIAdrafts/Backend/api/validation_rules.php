@@ -48,6 +48,14 @@ function validate_guardian_id($value) {
     return null;
 }
 
+function validate_reference_id($value) {
+    if ($value === '') return null;
+    if (!preg_match('/^REF-\d{5}-\d{3}$/', $value)) {
+        return 'Reference ID must be in the format REF-NNNNN-NNN (e.g. REF-00042-007).';
+    }
+    return null;
+}
+
 function validate_staff_id($value) {
     if ($value === '') return null;
     if (!preg_match('/^\d{4}-\d{4}$/', $value)) {

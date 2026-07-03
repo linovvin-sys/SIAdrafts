@@ -9,7 +9,7 @@ $admissions = [];
 
 $sql = "
 SELECT
-    student_id,
+    reference_id,
     CONCAT(first_name, ' ', last_name) AS applicant_name,
     program,
     created_at,

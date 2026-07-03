@@ -6,7 +6,7 @@ $db   = new Database();
 $conn = $db->connect();
 
 $enroll = $_SESSION['enroll'] ?? null;
-if (!$enroll || !isset($enroll['student_id'])) {
+if (!$enroll || !isset($enroll['reference_id'])) {
     header('Location: enrollment.php');
     exit;
 }
@@ -99,7 +99,7 @@ function fmt_id(int $id): string {
       <div class="context-bar mb-3">
         <span><strong><?= htmlspecialchars($enroll['student_name']) ?></strong></span>
         <span class="cb-sep">|</span>
-        <span><?= htmlspecialchars(fmt_id((int)$enroll['student_id'])) ?></span>
+        <span><?= htmlspecialchars($enroll['reference_id']) ?></span>
         <span class="cb-sep">|</span>
         <span>SY <?= htmlspecialchars($enroll['school_year']) ?></span>
         <span class="cb-sep">|</span>
@@ -204,7 +204,7 @@ function fmt_id(int $id): string {
           </form>
 
           <div class="d-flex justify-content-between align-items-center mt-4">
-            <a href="enrollment_profile.php?student_id=<?=$enroll['student_id'] ?>" class="btn-back-link">
+            <a href="enrollment_profile.php?reference_id=<?= urlencode($enroll['reference_id']) ?>" class="btn-back-link">
               <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back
             </a>
             <button

@@ -4,7 +4,7 @@ require_once '../../../Backend/auth.php';
 // Show success flash if returning from a completed enrollment
 $enrolled_ref = isset($_GET['enrolled'], $_GET['ref']) ? (int)$_GET['ref'] : null;
 
-$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/student-search.js'];
+$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment.js'];
 ?>
 <?php include '../Admission/Include/header.php' ?>
 
@@ -34,7 +34,7 @@ $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/student-search.js'];
               <input
                 class="enroll-input w-100"
                 v-model="query"
-                :placeholder="nameMode ? 'Enter student name' : 'Student ID (e.g. 2025-00001)'"
+                :placeholder="nameMode ? 'Enter student name' : 'Reference ID'"
                 @input="onInput"
                 @keydown.enter.prevent="submitSearch"
                 @keydown.esc="results = []"

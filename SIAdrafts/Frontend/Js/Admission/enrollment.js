@@ -12,7 +12,7 @@ if (document.getElementById('enroll-app')) {
     computed: {
       hint: vm => vm.nameMode
         ? 'Enter first or last name (e.g. Juan Dela Cruz)'
-        : 'Format: YYYY-NNNNN (e.g. 2025-00001)',
+        : 'Enter Reference ID (e.g. REF-00042-007)',
     },
     methods: {
       toggle() {
@@ -24,8 +24,8 @@ if (document.getElementById('enroll-app')) {
 
       onInput() {
         if (!this.nameMode) {
-          let digits = this.query.replace(/\D/g, '').slice(0, 9);
-          this.query = digits.length > 4 ? digits.slice(0, 4) + '-' + digits.slice(4) : digits;
+          //ref-nnnnn-nnn format
+          this.query = this.query.toUpperCase().replace(/[^A-Z0-9\-]/g, '');
         }
         this.noResults = false;
         clearTimeout(this._timer);
@@ -52,7 +52,7 @@ if (document.getElementById('enroll-app')) {
       },
 
       pick(student) {
-        window.location.href = `enrollment_profile.php?student_id=${student.student_id}`;
+        window.location.href = `enrollment_profile.php?reference_id=${encodeURIComponent(student.student_id)}`;
       },
 
       submitSearch() {

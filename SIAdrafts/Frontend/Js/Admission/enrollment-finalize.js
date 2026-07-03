@@ -1,7 +1,11 @@
 Vue.createApp({
   data: () => ({
     saving: false,
+    saved:  false,
     error:  null,
+    enrollmentRef:  null,
+    studentIdLabel: 'Reference ID',
+    studentIdValue: ENROLLMENT_PAYLOAD.reference_id,
   }),
   methods: {
     async finalize() {
@@ -33,7 +37,20 @@ Vue.createApp({
         });
         const d = await r.json();
         if (d.success) {
-          window.location.href = 'enrollment.php?enrolled=1&ref=' + d.enrollment_id;
+          this.studentIdLabel = 'Student ID';
+          this.studentIdValue = d.student_no;
+          this.enrollmentRef  = d.enrollment_id;
+          this.saved  = true;
+          this.saving = false;
+          if (window.confirmAction) {
+            await window.confirmAction({
+              title: 'Enrollment saved',
+              text: 'Student number: ' + d.student_no + '. Print the registration form now for the student to bring to Treasury.',
+              icon: 'success',
+              confirmText: 'Continue',
+              showCancelButton: false,
+            });
+          }
         } else {
           this.error = d.error || 'An error occurred.';
           this.saving = false;

@@ -10,12 +10,16 @@ include '../Admission/Include/header.php';
  
 // ---- Queue: all payment rows not yet fully paid ----
 $queueStmt = $conn->prepare(
+    // Show student.student_no (the official ID), falling back to
+    // applicants.reference_id only if the student row is somehow missing
+    // (shouldn't happen for this queue, but matches get_student.php's pattern).
     "SELECT p.payment_id, p.amount_due, p.downpayment, p.balance, p.due_date, p.payment_status,
             e.enrollment_id, e.school_year, e.semester,
-            a.student_id, a.first_name, a.last_name
+            COALESCE(s.student_no, a.reference_id) AS display_id, a.first_name, a.last_name
      FROM payment p
      JOIN enrollment e ON e.enrollment_id = p.enrollment_id
      JOIN applicants a ON a.applicant_id = e.student_id
+     LEFT JOIN student s ON s.applicant_id = a.applicant_id
      WHERE p.payment_status != 'Fully Paid'
      ORDER BY p.due_date ASC"
 );
@@ -31,10 +35,12 @@ $queueStmt->close();
 // manual fallback for legacy enrollments created before this change, or
 // for rare cases treasury needs to override.
 $setupStmt = $conn->prepare(
+    // Same fix as the queue above — prefer the official student_no.
     "SELECT e.enrollment_id, e.school_year, e.semester, e.created_at,
-            a.student_id, a.first_name, a.last_name
+            COALESCE(s.student_no, a.reference_id) AS display_id, a.first_name, a.last_name
      FROM enrollment e
      JOIN applicants a ON a.applicant_id = e.student_id
+     LEFT JOIN student s ON s.applicant_id = a.applicant_id
      LEFT JOIN payment p ON p.enrollment_id = e.enrollment_id
      WHERE p.payment_id IS NULL
      ORDER BY e.created_at ASC"
@@ -44,7 +50,9 @@ $setupQueue = $setupStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $setupStmt->close();
 
 function fmt_id_t($id): string {
-    // applicants.student_id is already formatted, e.g. "2026-00001"
+    // Now receives student.student_no ("2026-00001") when the student is
+    // enrolled, falling back to applicants.reference_id if no student row
+    // exists yet (see the COALESCE in the queries above).
     return (string)$id;
 }
 function student_fullname_t(array $s): string {
@@ -90,7 +98,7 @@ function student_fullname_t(array $s): string {
             <?php foreach ($queue as $row): ?>
               <tr>
                 <td><?= htmlspecialchars(student_fullname_t($row)) ?></td>
-                <td><?= htmlspecialchars(fmt_id_t($row['student_id'])) ?></td>
+                <td><?= htmlspecialchars(fmt_id_t($row['display_id'])) ?></td>
                 <td><?= htmlspecialchars($row['school_year']) ?> &middot; Sem <?= (int)$row['semester'] ?></td>
                 <td><?= htmlspecialchars($row['due_date']) ?></td>
                 <td>₱<?= number_format((float)$row['balance'], 2) ?></td>
@@ -141,7 +149,7 @@ function student_fullname_t(array $s): string {
             <?php foreach ($setupQueue as $row): ?>
               <tr data-enrollment-id="<?= (int)$row['enrollment_id'] ?>">
                 <td><?= htmlspecialchars(student_fullname_t($row)) ?></td>
-                <td><?= htmlspecialchars(fmt_id_t($row['student_id'])) ?></td>
+                <td><?= htmlspecialchars(fmt_id_t($row['display_id'])) ?></td>
                 <td><?= htmlspecialchars($row['school_year']) ?> &middot; Sem <?= (int)$row['semester'] ?></td>
                 <td><input type="number" class="setup-amount" min="0" step="0.01" placeholder="0.00"></td>
                 <td><input type="date" class="setup-due-date"></td>

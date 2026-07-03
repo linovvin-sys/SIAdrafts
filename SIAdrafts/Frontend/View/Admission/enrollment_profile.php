@@ -12,7 +12,7 @@ $students_list = null;
 $error         = null;
 
 $student_query = "
-    SELECT a.applicant_id, a.student_id, a.first_name, a.last_name, a.middle_name,
+    SELECT a.applicant_id, a.reference_id, a.first_name, a.last_name, a.middle_name,
            a.applicant_type_id AS default_type_id, a.course_id,
            st.type_name, '—' AS section_name, 0 AS section_id
     FROM applicants a
@@ -21,7 +21,7 @@ $student_query = "
 
 // --- Handle POST: save params to session, go to subjects ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $student_id  = trim($_POST['student_id']  ?? '');  // string now
+    $reference_id = trim($_POST['reference_id']  ?? '');  // string now
     $school_year = trim($_POST['school_year']  ?? '');
     $semester    = (int)($_POST['semester']    ?? 0);
     $year_level  = (int)($_POST['year_level']  ?? 0);
@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $post_error = null;
 
-    if (!$student_id || !$school_year || !$semester || !$year_level || !$type_id || !$course_id) {
+    if (!$reference_id || !$school_year || !$semester || !$year_level || !$type_id || !$course_id) {
         $post_error = 'All fields are required.';
     } elseif (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
         $post_error = 'School year must be in YYYY-YYYY format (e.g. 2025-2026).';
@@ -43,7 +43,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!$post_error) {
         $_SESSION['enroll'] = [
-            'student_id'   => $student_id,
+            'reference_id'   => $reference_id,
             'student_name' => trim($_POST['student_name'] ?? ''),
             'section_name' => trim($_POST['section_name'] ?? ''),
             'section_id'   => $section_id,
@@ -58,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     // Re-fetch student on POST error
-    $stmt = $conn->prepare($student_query . " WHERE a.student_id = ?");
-    $stmt->bind_param('s', $student_id);
+    $stmt = $conn->prepare($student_query . " WHERE a.reference_id = ?");
+    $stmt->bind_param('s', $reference_id);
     $stmt->execute();
     $student = $stmt->get_result()->fetch_assoc();
     $stmt->close();
@@ -67,10 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 // --- GET: resolve student from URL params ---
 if (!$student && $_SERVER['REQUEST_METHOD'] === 'GET') {
-    if (isset($_GET['student_id'])) {
-        $sid  = trim($_GET['student_id']);  // string, no int cast
-        $stmt = $conn->prepare($student_query . " WHERE a.student_id = ?");
-        $stmt->bind_param('s', $sid);
+    if (isset($_GET['reference_id'])) {
+        $rid  = trim($_GET['reference_id']);  // string, no int cast
+        $stmt = $conn->prepare($student_query . " WHERE a.reference_id = ?");
+        $stmt->bind_param('s', $rid);
         $stmt->execute();
         $student = $stmt->get_result()->fetch_assoc() ?: null;
         $stmt->close();
@@ -81,7 +81,7 @@ if (!$student && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $mode = $_GET['mode'] ?? 'id';
 
         if ($mode === 'id') {
-            $stmt = $conn->prepare($student_query . " WHERE a.student_id = ?");
+            $stmt = $conn->prepare($student_query . " WHERE a.reference_id = ?");
             $stmt->bind_param('s', $q);
             $stmt->execute();
             $student = $stmt->get_result()->fetch_assoc() ?: null;
@@ -120,7 +120,7 @@ $default_sem = $mo >= 6 ? 1 : 2;
 $types_result = $conn->query("SELECT type_id, type_name FROM student_type ORDER BY type_id");
 $types = $types_result->fetch_all(MYSQLI_ASSOC);
 
-// student_id is already formatted as 2026-XXXXX
+// reference_id into string erp
 function fmt_id(string $id): string {
     return $id;
 }
@@ -166,11 +166,11 @@ function student_fullname(array $s): string {
           <p class="text-ink-soft small mb-3">Select the correct student to proceed.</p>
           <div class="student-pick-list">
             <?php foreach ($students_list as $s): ?>
-              <a href="enrollment_profile.php?student_id=<?= $s['student_id'] ?>" class="student-pick-item">
+              <a href="enrollment_profile.php?reference_id=<?= $s['reference_id'] ?>" class="student-pick-item">
                 <div>
                   <strong><?= htmlspecialchars(student_fullname($s)) ?></strong>
                   <small class="d-block text-ink-soft">
-                    <?= htmlspecialchars(fmt_id((int)$s['student_id'])) ?>
+                    <?= htmlspecialchars(fmt_id($s['reference_id'])) ?>
                     &mdash; <?= htmlspecialchars($s['section_name']) ?>
                     &mdash; <?= htmlspecialchars($s['type_name']) ?>
                   </small>
@@ -194,7 +194,7 @@ function student_fullname(array $s): string {
             <div>
               <h2 class="h5 fw-bold mb-0"><?= htmlspecialchars(student_fullname($student)) ?></h2>
               <p class="text-ink-soft small mb-0">
-                <?= htmlspecialchars(fmt_id($student['student_id'])) ?>
+                <?= htmlspecialchars(fmt_id($student['reference_id'])) ?>
                 &mdash; <?= htmlspecialchars($student['section_name']) ?>
               </p>
             </div>
@@ -227,7 +227,7 @@ function student_fullname(array $s): string {
           </div>
 
           <form method="POST" action="enrollment_profile.php">
-            <input type="hidden" name="student_id"   value="<?= $student['student_id'] ?>">
+            <input type="hidden" name="reference_id"   value="<?= $student['reference_id'] ?>">
             <input type="hidden" name="section_id"   value="<?= $student['section_id'] ?>">
             <input type="hidden" name="student_name" value="<?= htmlspecialchars(student_fullname($student)) ?>">
             <input type="hidden" name="section_name" value="<?= htmlspecialchars($student['section_name']) ?>">

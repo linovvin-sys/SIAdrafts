@@ -13,13 +13,13 @@ if (!$enroll || empty($enroll['subject_ids']) || empty($enroll['section_id'])) {
 
 // Fetch fresh student data from applicants
 $stmt = $conn->prepare(
-    "SELECT a.applicant_id, a.student_id, a.first_name, a.last_name, a.middle_name,
+    "SELECT a.applicant_id, a.reference_id, a.first_name, a.last_name, a.middle_name,
             st.type_name
      FROM applicants a
      JOIN student_type st ON a.applicant_type_id = st.type_id
-     WHERE a.student_id = ?"
+     WHERE a.reference_id = ?"
 );
-$stmt->bind_param('s', $enroll['student_id']);
+$stmt->bind_param('s', $enroll['reference_id']);
 $stmt->execute();
 $student = $stmt->get_result()->fetch_assoc();
 $stmt->close();
@@ -193,8 +193,8 @@ function fmt_time(string $t): string {
         <div class="reg-section">
           <div class="reg-info-grid">
             <div class="reg-info-row">
-              <span class="ri-label">Student ID</span>
-              <span class="ri-value"><?= htmlspecialchars(fmt_id($student['student_id'])) ?></span>
+              <span class="ri-label">{{ studentIdLabel }}</span>
+              <span class="ri-value">{{ studentIdValue }}</span>
             </div>
             <div class="reg-info-row">
               <span class="ri-label">Full Name</span>
@@ -317,7 +317,13 @@ function fmt_time(string $t): string {
         <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
         {{ error }}
       </div>
-      <div class="d-flex justify-content-between align-items-center mt-4 no-print">
+
+      <div class="alert-box alert-success mb-3 no-print" v-if="saved">
+        <iconify-icon icon="mdi:check-circle-outline"></iconify-icon>
+        Enrollment saved. Student No. <strong>{{ studentIdValue }}</strong> &mdash; print this form now for the student to bring to Treasury.
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 no-print" v-if="!saved">
         <a href="enrollment_subjects.php" class="btn-back-link">
           <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back to Section
         </a>
@@ -332,19 +338,29 @@ function fmt_time(string $t): string {
         </button>
       </div>
 
+      <div class="d-flex justify-content-between align-items-center mt-4 no-print" v-if="saved">
+        <a :href="'enrollment.php?enrolled=1&ref=' + enrollmentRef" class="btn-back-link">
+          <iconify-icon icon="mdi:arrow-left"></iconify-icon> Done &mdash; Back to Search
+        </a>
+        <button type="button" class="btn-primary-action" onclick="window.print()">
+          <iconify-icon icon="mdi:printer"></iconify-icon> Print Registration Form
+        </button>
+      </div>
+
     </div>
   </div>
 </div>
 
 <script>
 const ENROLLMENT_PAYLOAD = <?= json_encode([
-    'student_id'  => $student['applicant_id'],
-    'school_year' => $enroll['school_year'],
-    'semester'    => $enroll['semester'],
-    'year_level'  => $enroll['year_level'],
-    'type_id'     => $enroll['type_id'],
-    'section_id'  => $section_id,
-    'subject_ids' => $enroll['subject_ids'],
+    'student_id'   => $student['applicant_id'],
+    'reference_id' => $student['reference_id'],
+    'school_year'  => $enroll['school_year'],
+    'semester'     => $enroll['semester'],
+    'year_level'   => $enroll['year_level'],
+    'type_id'      => $enroll['type_id'],
+    'section_id'   => $section_id,
+    'subject_ids'  => $enroll['subject_ids'],
 ]) ?>;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
