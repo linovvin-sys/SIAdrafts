@@ -4,13 +4,12 @@
   <script src="/SIAdrafts/Frontend/Js/Admission/nav-user-dropdown.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/main.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/login.js"></script>
-  <script src="/SIAdrafts/bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js"></script>
-
+   <script src="/SIAdrafts/Frontend/Js/Admission/confirm.js"></script>
 
   
 <?php foreach ($page_scripts as $_s): ?>
   <script src="<?= htmlspecialchars($_s, ENT_QUOTES) ?>"></script>
 <?php endforeach; ?>
-  <!--<script src="/SIAdrafts/Frontend/Js/Admission/main.js"></script>-->
+  <script src="/SIAdrafts/Frontend/Js/Admission/main.js"></script>
 </body>
 </html>

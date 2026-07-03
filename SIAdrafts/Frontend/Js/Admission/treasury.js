@@ -112,6 +112,7 @@ function renderPayCard(data) {
     </div>
   `;
 
+  
   const recordBtn = document.getElementById('recordPayBtn');
   if (recordBtn) {
     recordBtn.addEventListener('click', function () {
@@ -129,28 +130,51 @@ function renderPayCard(data) {
         return;
       }
 
-      recordBtn.disabled = true;
-      recordBtn.textContent = 'Recording…';
+      if (!amount || isNaN(amt) || amt <= 0) {
+        banner.innerHTML = '<div class="t-banner error">Enter a valid amount.</div>';
+        return;
+      }
 
-      const body = new URLSearchParams({ payment_id: paymentId, amount: amount, remarks: remarks });
+      const doRecord = function () {
+        recordBtn.disabled = true;
+        recordBtn.textContent = 'Recording…';
 
-      fetch('/SIAdrafts/Backend/api/record_payment.php', { method: 'POST', body: body })
-        .then(function (res) { return res.json(); })
-        .then(function (result) {
-          if (!result.success) {
-            banner.innerHTML = '<div class="t-banner error">' + result.errors.map(escapeHtml).join('<br>') + '</div>';
+        const body = new URLSearchParams({ payment_id: paymentId, amount: amount, remarks: remarks });
+
+        fetch('/SIAdrafts/Backend/api/record_payment.php', { method: 'POST', body: body })
+          .then(function (res) { return res.json(); })
+          .then(function (result) {
+            if (!result.success) {
+              banner.innerHTML = '<div class="t-banner error">' + result.errors.map(escapeHtml).join('<br>') + '</div>';
+              recordBtn.disabled = false;
+              recordBtn.textContent = 'Record payment';
+              return;
+            }
+            fetchAndRenderByStudentId(s.student_id);
+          })
+          .catch(function () {
+            banner.innerHTML = '<div class="t-banner error">Could not reach the server. Please try again.</div>';
             recordBtn.disabled = false;
             recordBtn.textContent = 'Record payment';
-            return;
-          }
-          // Re-fetch the full card to show updated totals + history
-          fetchAndRenderByStudentId(s.student_id);
-        })
-        .catch(function () {
-          banner.innerHTML = '<div class="t-banner error">Could not reach the server. Please try again.</div>';
-          recordBtn.disabled = false;
-          recordBtn.textContent = 'Record payment';
-        });
+          });
+      };
+
+      const confirmFn = window.confirmAction || function (opts) {
+        return Promise.resolve(window.confirm(opts.title || 'Are you sure?'));
+      };
+
+      confirmFn({
+        title: 'Record this payment?',
+        html: '<div style="text-align:left;font-size:14px;line-height:1.7;">' +
+          '<div><strong>Student:</strong> ' + escapeHtml(s.full_name) + '</div>' +
+          '<div><strong>Amount:</strong> ' + fmtMoney(amt) + '</div>' +
+          (remarks ? '<div><strong>Remarks:</strong> ' + escapeHtml(remarks) + '</div>' : '') +
+          '</div>',
+        icon: 'question',
+        confirmText: 'Yes, record payment',
+      }).then(function (ok) {
+        if (ok) doRecord();
+      });
     });
   }
 }
@@ -192,58 +216,5 @@ document.querySelectorAll('.btn-pay-row').forEach(function (btn) {
     const studentName = btn.dataset.student;
     document.getElementById('studentSearchInput').value = studentName;
     fetchAndRenderByStudentId(studentName);
-  });
-});
-
-// ===== "Set Up" buttons inside the payment-setup queue table =====
-document.querySelectorAll('.btn-setup-row').forEach(function (btn) {
-  btn.addEventListener('click', function () {
-    const row = btn.closest('tr');
-    const enrollmentId = btn.dataset.enrollmentId;
-    const amountInput = row.querySelector('.setup-amount');
-    const dueDateInput = row.querySelector('.setup-due-date');
-    const amountDue = amountInput.value;
-    const dueDate = dueDateInput.value;
-
-    if (!amountDue || parseFloat(amountDue) <= 0) {
-      alert('Enter a valid amount due.');
-      amountInput.focus();
-      return;
-    }
-    if (!dueDate) {
-      alert('Pick a due date.');
-      dueDateInput.focus();
-      return;
-    }
-
-    btn.disabled = true;
-    btn.textContent = 'Setting up…';
-
-    fetch('/SIAdrafts/Backend/api/setup_payment.php', {
-      method:  'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify({
-        enrollment_id: enrollmentId,
-        amount_due:    parseFloat(amountDue),
-        due_date:      dueDate,
-      }),
-    })
-      .then(function (res) { return res.json(); })
-      .then(function (result) {
-        if (!result.success) {
-          alert(result.error || 'Could not set up payment.');
-          btn.disabled = false;
-          btn.textContent = 'Set Up';
-          return;
-        }
-        // This enrollment now has a payment row — drop it from the setup queue.
-        // It'll appear under "Pending payments" on next page load.
-        row.remove();
-      })
-      .catch(function () {
-        alert('Could not reach the server. Please try again.');
-        btn.disabled = false;
-        btn.textContent = 'Set Up';
-      });
   });
 });

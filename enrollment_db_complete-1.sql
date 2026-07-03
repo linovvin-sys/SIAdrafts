@@ -680,6 +680,7 @@ INSERT INTO `student` (`student_id`, `student_name`, `last_name`, `first_name`, 
 --
 
 CREATE TABLE `student_type` (
+  
   `type_id` int(11) NOT NULL,
   `type_name` varchar(50) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -741,13 +742,13 @@ CREATE TABLE `subject_category` (
 -- Dumping data for table `subject_category`
 --
 
-INSERT INTO `subject_category` (`category_id`, `category_name`) VALUES
-(2, 'GE ELECTIVE'),
-(1, 'GEN ED'),
-(3, 'IT'),
-(6, 'NCST'),
-(4, 'NSTP'),
-(5, 'PATHFIT');
+
+
+
+
+
+
+
 
 -- --------------------------------------------------------
 

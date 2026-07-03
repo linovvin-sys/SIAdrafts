@@ -484,4 +484,30 @@ include 'Include/header.php';
 
 </div>
 
+<?php if (isset($_GET['added']) || isset($_GET['add_error'])): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  <?php if (isset($_GET['added'])): ?>
+    Swal.fire({
+      icon: 'success',
+      title: 'User added',
+      text: 'The new account has been created.',
+      confirmButtonColor: '#1c2b4a'
+    });
+  <?php elseif (isset($_GET['add_error'])): ?>
+    Swal.fire({
+      icon: 'error',
+      title: 'Could not add user',
+      text: <?= json_encode($_GET['add_error']) ?>,
+      confirmButtonColor: '#1c2b4a'
+    });
+  <?php endif; ?>
+
+  // Strip the query string so a page refresh doesn't re-show the alert
+  const cleanUrl = window.location.pathname;
+  window.history.replaceState({}, document.title, cleanUrl);
+});
+</script>
+<?php endif; ?>
+
 <?php include 'Include/footer.php'; ?>

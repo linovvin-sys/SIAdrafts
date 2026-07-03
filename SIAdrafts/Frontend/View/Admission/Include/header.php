@@ -20,6 +20,7 @@ $_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/admission.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/login.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/treasury.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
 <body>
