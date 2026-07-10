@@ -13,14 +13,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_c
     $units = (int)($_POST['total_units'] ?? 0);
 
     if ($code === '' || $name === '') {
-        $error = "Course code and name are required.";
+        $courseError = "Course code and name are required.";
     } else {
         $stmt = $conn->prepare("INSERT INTO course (course_code, course_name, total_units) VALUES (?, ?, ?)");
         $stmt->bind_param("ssi", $code, $name, $units);
-        $stmt->execute();
 
-        header("Location: courses.php");
-        exit;
+        try {
+            $stmt->execute();
+            header("Location: courses.php");
+            exit;
+        } catch (mysqli_sql_exception $e) {
+            if ($e->getCode() === 1062) {
+                $courseError = "Course code \"$code\" already exists. Please use a different code.";
+            } else {
+                $courseError = "Could not save course. Please try again.";
+            }
+        }
     }
 }
 
@@ -65,14 +73,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') === 'add_s
     $courseId    = (int)($_POST['course_id'] ?? 0);
 
     if ($sectionName === '' || $courseId <= 0) {
-        $error = "Section name and course are required.";
+        $sectionError = "Section name and course are required.";
     } else {
         $stmt = $conn->prepare("INSERT INTO section (section_name, capacity, course_id) VALUES (?, ?, ?)");
         $stmt->bind_param("sii", $sectionName, $capacity, $courseId);
-        $stmt->execute();
 
-        header("Location: courses.php");
-        exit;
+        try {
+            $stmt->execute();
+            header("Location: courses.php");
+            exit;
+        } catch (mysqli_sql_exception $e) {
+            if ($e->getCode() === 1062) {
+                $sectionError = "Section \"$sectionName\" already exists for this course. Please use a different name.";
+            } else {
+                $sectionError = "Could not save section. Please try again.";
+            }
+        }
     }
 }
 

@@ -17,6 +17,6 @@ if (ini_get('session.use_cookies')) {
 }
 session_destroy();
 
-header('Location: /SIAdrafts/Frontend/View/index.php');
+header('Location: /SIAdrafts/Frontend/View/login.php');
 exit;
     

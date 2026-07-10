@@ -29,13 +29,11 @@ if (!$student) {
     header('Location: enrollment.php');
     exit;
 }
-
-// Section was chosen in step 3 (enrollment_subjects.php); use it directly
 // rather than re-deriving anything from the applicant record.
-$section_id   = (int)$enroll['section_id'];
+$section_id   = $enroll['section_id'] ?? null; // null for irregular
 $section_name = $enroll['section_name'] ?? null;
 
-if (!$section_name) {
+if (!$section_name && $section_id) {
     $secStmt = $conn->prepare("SELECT section_name FROM section WHERE section_id = ?");
     $secStmt->bind_param('i', $section_id);
     $secStmt->execute();
@@ -44,33 +42,62 @@ if (!$section_name) {
 }
 
 // Fetch selected subjects with schedule info
-$ids = $enroll['subject_ids'];
-$ph  = implode(',', array_fill(0, count($ids), '?'));
+$$subject_schedule = $enroll['subject_schedule'] ?? null; // [{subject_id, schedule_id}, ...] — irregular only
 
-$types  = str_repeat('i', count($ids));
-$params = array_merge([$enroll['school_year'], $enroll['semester'], $section_id], $ids);
+if ($subject_schedule) {
+    // Irregular: each subject's schedule comes from its own specific schedule_id
+    $schedule_ids = array_column($subject_schedule, 'schedule_id');
+    $ph = implode(',', array_fill(0, count($schedule_ids), '?'));
+    $types = str_repeat('i', count($schedule_ids));
 
-$stmt = $conn->prepare(
-    "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
-            sc.category_name,
-            sch.day, sch.time_start, sch.time_end,
-            CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
-            r.room_name
-     FROM subject sub
-     JOIN subject_category sc ON sub.category_id = sc.category_id
-     LEFT JOIN schedule sch ON sch.subject_id = sub.subject_id
-         AND sch.school_year = ? AND sch.semester = ? AND sch.section_id = ?
-     LEFT JOIN professor p ON sch.professor_id = p.professor_id
-     LEFT JOIN room r      ON sch.room_id      = r.room_id
-     WHERE sub.subject_id IN ($ph)
-     ORDER BY sc.category_name, sub.subject_code"
-);
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+                sc.category_name,
+                sch.day, sch.time_start, sch.time_end,
+                CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
+                r.room_name, sec.section_name AS subject_section_name
+         FROM schedule sch
+         JOIN subject sub ON sub.subject_id = sch.subject_id
+         JOIN subject_category sc ON sub.category_id = sc.category_id
+         JOIN section sec ON sec.section_id = sch.section_id
+         LEFT JOIN professor p ON sch.professor_id = p.professor_id
+         LEFT JOIN room r      ON sch.room_id = r.room_id
+         WHERE sch.schedule_id IN ($ph)
+         ORDER BY sc.category_name, sub.subject_code"
+    );
+    $stmt->bind_param($types, ...$schedule_ids);
+    $stmt->execute();
+    $subjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
 
-$bind_types = 'sii' . $types;
-$stmt->bind_param($bind_types, ...$params);
-$stmt->execute();
-$subjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
+} else {
+    // Regular / Transferee: unchanged, all subjects share one section_id
+    $ids = $enroll['subject_ids'];
+    $ph  = implode(',', array_fill(0, count($ids), '?'));
+    $types  = str_repeat('i', count($ids));
+    $params = array_merge([$enroll['school_year'], $enroll['semester'], $section_id], $ids);
+
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+                sc.category_name,
+                sch.day, sch.time_start, sch.time_end,
+                CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
+                r.room_name
+         FROM subject sub
+         JOIN subject_category sc ON sub.category_id = sc.category_id
+         LEFT JOIN schedule sch ON sch.subject_id = sub.subject_id
+             AND sch.school_year = ? AND sch.semester = ? AND sch.section_id = ?
+         LEFT JOIN professor p ON sch.professor_id = p.professor_id
+         LEFT JOIN room r      ON sch.room_id      = r.room_id
+         WHERE sub.subject_id IN ($ph)
+         ORDER BY sc.category_name, sub.subject_code"
+    );
+    $bind_types = 'sii' . $types;
+    $stmt->bind_param($bind_types, ...$params);
+    $stmt->execute();
+    $subjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+}
 
 $total_units = array_sum(array_column($subjects, 'units'));
 $sem_label   = $enroll['semester'] == 1 ? '1st Semester' : '2nd Semester';
@@ -353,14 +380,15 @@ function fmt_time(string $t): string {
 
 <script>
 const ENROLLMENT_PAYLOAD = <?= json_encode([
-    'student_id'   => $student['applicant_id'],
-    'reference_id' => $student['reference_id'],
-    'school_year'  => $enroll['school_year'],
-    'semester'     => $enroll['semester'],
-    'year_level'   => $enroll['year_level'],
-    'type_id'      => $enroll['type_id'],
-    'section_id'   => $section_id,
-    'subject_ids'  => $enroll['subject_ids'],
+    'student_id'       => $student['applicant_id'],
+    'reference_id'     => $student['reference_id'],
+    'school_year'      => $enroll['school_year'],
+    'semester'         => $enroll['semester'],
+    'year_level'       => $enroll['year_level'],
+    'type_id'          => $enroll['type_id'],
+    'section_id'       => $section_id,
+    'subject_ids'      => $enroll['subject_ids'],
+    'subject_schedule' => $enroll['subject_schedule'] ?? null,
 ]) ?>;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>

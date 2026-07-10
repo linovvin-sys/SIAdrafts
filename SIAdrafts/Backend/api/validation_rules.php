@@ -51,7 +51,7 @@ function validate_guardian_id($value) {
 function validate_reference_id($value) {
     if ($value === '') return null;
     if (!preg_match('/^REF-\d{5}-\d{3}$/', $value)) {
-        return 'Reference ID must be in the format REF-NNNNN-NNN (e.g. REF-00042-007).';
+        return 'Reference ID format looks invalid — expected REF-00000-000.';
     }
     return null;
 }
@@ -59,7 +59,7 @@ function validate_reference_id($value) {
 function validate_staff_id($value) {
     if ($value === '') return null;
     if (!preg_match('/^\d{4}-\d{4}$/', $value)) {
-        return 'Staff ID must be in the format YYYY-NNNN (e.g. 2026-0001).';
+        return 'Staff ID format looks invalid — expected YYYY-NNNN.';
     }
     return null;
 }
@@ -88,6 +88,8 @@ function validate_gpa($value) {
     return null;
 }
 
+
+
 // ---------- required-field labels, shared so both files agree on wording ----------
 function required_field_labels() {
     return [
@@ -108,11 +110,6 @@ function required_field_labels() {
     ];
 }
 
-// ---------- dispatch table: maps a form field name to its validator ----------
-// Used by validate_field.php to look up "which function checks this field."
-// Fields not listed here (selects, the readonly program field, etc.) are
-// treated as always-valid at this layer — they're either constrained by
-// the HTML itself (a <select>) or checked only for "required" elsewhere.
 function get_field_validator($field_name) {
     $labels = required_field_labels();
 

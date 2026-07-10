@@ -100,7 +100,7 @@ include 'Include/header.php';
 
                             <tr>
 
-                                <td><?= htmlspecialchars($row['reference_id']); ?></td>
+                                <td><?= htmlspecialchars($row['student_no']); ?></td>
 
                                 <td><?= htmlspecialchars($row['student_name']); ?></td>
 

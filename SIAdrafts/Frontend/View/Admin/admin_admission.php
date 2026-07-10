@@ -27,7 +27,7 @@ include 'Include/header.php';
 
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>Reference ID</th>
                             <th>Applicant Name</th>
                             <th>Program</th>
                             <th>Application Date</th>

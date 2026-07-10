@@ -455,6 +455,41 @@ document.addEventListener('DOMContentLoaded', function () {
     if (addSubjectModal) openModal(addSubjectModal);
     <?php endif; ?>
 
+    <?php if (!empty($courseError)): ?>
+    if (addCourseModal) openModal(addCourseModal);
+    <?php endif; ?>
+
+    <?php if (!empty($sectionError)): ?>
+    if (addSectionModal) openModal(addSectionModal);
+    <?php endif; ?>
+
+    <?php if (!empty($courseError)): ?>
+    Swal.fire({
+        icon: 'error',
+        title: 'Could not add course',
+        text: <?= json_encode($courseError) ?>,
+        confirmButtonColor: '#1c2b4a'
+    });
+    <?php endif; ?>
+
+    <?php if (!empty($sectionError)): ?>
+    Swal.fire({
+        icon: 'error',
+        title: 'Could not add section',
+        text: <?= json_encode($sectionError) ?>,
+        confirmButtonColor: '#1c2b4a'
+    });
+    <?php endif; ?>
+
+    <?php if (!empty($subjectError)): ?>
+    Swal.fire({
+        icon: 'error',
+        title: 'Could not add subject',
+        text: <?= json_encode($subjectError) ?>,
+        confirmButtonColor: '#1c2b4a'
+    });
+    <?php endif; ?>
+
     document.querySelectorAll('[data-close]').forEach(btn => {
         btn.addEventListener('click', () => {
             const target = document.getElementById(btn.getAttribute('data-close'));

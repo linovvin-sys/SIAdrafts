@@ -1,5 +1,5 @@
 (function () {
-  const sidEl   = document.querySelector('[name="student_id"]');
+  const sidEl   = document.querySelector('[name="reference_id"]');
   const syEl    = document.getElementById('field-sy');
   const semEl   = document.getElementById('field-sem');
   const warn    = document.getElementById('dup-warning');
@@ -16,7 +16,7 @@
     timer = setTimeout(async () => {
       try {
         const r = await fetch(
-          `/SIAdrafts/Backend/api/check_enrollment.php??student_id=${encodeURIComponent(sid)}&school_year=${encodeURIComponent(sy)}&semester=${encodeURIComponent(sem)}`
+          `/SIAdrafts/Backend/api/check_enrollment.php?reference_id=${encodeURIComponent(sid)}&school_year=${encodeURIComponent(sy)}&semester=${encodeURIComponent(sem)}`
         );
         const d = await r.json();
         if (d.exists) {

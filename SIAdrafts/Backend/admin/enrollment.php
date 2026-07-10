@@ -54,7 +54,7 @@ $enrollmentList = [];
 
 $sql = "
 SELECT
-    a.reference_id,
+    s.student_no,
     CONCAT(s.first_name, ' ', s.last_name) AS student_name,
     c.course_name,
     sec.section_name,

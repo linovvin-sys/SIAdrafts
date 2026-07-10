@@ -4,6 +4,7 @@ require_once '../../../Backend/auth.php';
 
 include '../Admission/Include/header.php';
 ?>
+<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/admission.css">
 
 <div class="admission-page">
 

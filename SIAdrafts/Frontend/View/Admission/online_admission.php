@@ -29,7 +29,7 @@ $conn->close();
 $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/online-admission.js'];
 include '../Admission/Include/header.php';
 ?>
-
+<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/admission.css">
 <main class="admission-page">
   <div class="admission-head">
     <span class="admission-eyebrow">
@@ -140,7 +140,17 @@ include '../Admission/Include/header.php';
           </div>
           <div class="col-md-4">
             <label class="form-label" for="guardian_id_type">Guardian's Valid ID Type</label>
-            <input type="text" class="form-control" id="guardian_id_type" name="guardian_id_type" required>
+            <select class="form-control" id="guardian_id_type" name="guardian_id_type" required>
+              <option value="">Select</option>
+              <option value="Philhealth ID">Philhealth ID</option>
+              <option value="Driver's License">Driver's License</option>
+              <option value="Passport">Passport</option>
+              <option value="Philippine National ID">Philippine National ID</option>
+              <option value="Voter's ID">Voter's ID</option>
+              <option value="SSS ID">SSS ID</option>
+              <option value="UMID">UMID</option>
+              <option value="Other">Other</option>
+            </select>
           </div>
           <div class="col-md-4">
             <label class="form-label" for="guardian_id_number">Guardian's ID Number</label>

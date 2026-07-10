@@ -1,13 +1,4 @@
 <?php
-/**
- * Public online admission intake.
- *
- * Deliberately has NO session_start() / login check — this is meant to be
- * filled out by the applicant themselves before ever visiting campus.
- * It never sets id_verified_by and never touches documents: those only
- * happen in person, at the walk-in verification step (confirm_admission.php).
- */
-
 require '../db.php';
 require 'validation_rules.php';
 
@@ -22,8 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-// Basic bot deterrent: a hidden field that real applicants never fill in.
-// Pair with a real CAPTCHA (e.g. reCAPTCHA) before going live publicly.
+
 if (!empty($_POST['website'])) {
     http_response_code(422);
     echo json_encode(['success' => false, 'errors' => ['Submission rejected.']]);
@@ -34,13 +24,8 @@ function clean($value) {
     return htmlspecialchars(trim($value ?? ''), ENT_QUOTES, 'UTF-8');
 }
 
-/* reference id generator — REF-NNNNN-NNN
-   NNNNN = global running sequence, never resets, taken from the highest
-           value seen across every reference_id so far.
-   NNN   = per-day counter, resets to 001 at the start of each calendar day
-           (scoped by applicants.created_at). */
+
 function generate_reference_id(mysqli $conn): string {
-    // Global running sequence — the middle group.
     $seqStmt = $conn->prepare(
         "SELECT reference_id FROM applicants
          WHERE reference_id LIKE 'REF-%'
@@ -79,8 +64,6 @@ function generate_reference_id(mysqli $conn): string {
     return "REF-{$seq_padded}-{$daily_padded}";
 }
 
-//  collect single-value fields (same shape as the old admission_process.php,
-//  minus id_verified_by — nobody has verified anything yet)
 $fields = [
     'last_name'        => clean($_POST['last_name'] ?? ''),
     'first_name'       => clean($_POST['first_name'] ?? ''),
@@ -104,6 +87,9 @@ $fields = [
     'applicant_type' => clean($_POST['applicant_type'] ?? ''),
 ];
 
+$typeMap = ['New' => 1, 'Transferee' => 3, 'Returning' => 4];
+$fields['applicant_type_id'] = $typeMap[$fields['applicant_type']] ?? 1;
+
 //  repeatable academic history rows
 $school_names   = $_POST['school_name'] ?? [];
 $school_address = $_POST['school_address'] ?? [];
@@ -123,11 +109,11 @@ for ($i = 0; $i < count($school_names); $i++) {
     ];
 }
 
-//  validation — same rules as before, minus anything document/staff related
+//  validation 
 $errors = [];
 
 $required_fields = required_field_labels();
-unset($required_fields['id_verified_by']); // not applicable — no staff present
+unset($required_fields['id_verified_by']); // not applicable kasi no staff present
 
 foreach ($required_fields as $key => $label) {
     if (($fields[$key] ?? '') === '') {
@@ -198,9 +184,7 @@ if (!empty($errors)) {
     exit;
 }
 
-//  insert, with a small retry loop in case two applicants collide on the
-//  same generated reference_id (rare, but the online form has no login to
-//  naturally serialize requests the way the staff form does)
+//  insert
 $applicant_id  = null;
 $reference_id  = null;
 $attempts_left = 5;
@@ -214,8 +198,8 @@ while ($attempts_left-- > 0) {
             contact_number, email, home_address,
             guardian_name, guardian_relationship, guardian_contact,
             guardian_id_type, guardian_id_number, id_verified_by, admission_status,
-            program, course_id, year_level, start_term, applicant_type, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',?,?,?,?,?, NOW())
+            program, course_id, year_level, start_term, applicant_type, applicant_type_id, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',?,?,?,?,?,?, NOW())
     ");
 
     if (!$stmt) {
@@ -225,14 +209,15 @@ while ($attempts_left-- > 0) {
     }
 
     $stmt->bind_param(
-        'ssssssssssssssssisss',
+        'ssssssssssssssssisssi',
         $reference_id,
         $fields['last_name'], $fields['first_name'], $fields['middle_name'],
         $fields['birth_date'], $fields['sex'], $fields['civil_status'],
         $fields['contact_number'], $fields['email'], $fields['home_address'],
         $fields['guardian_name'], $fields['guardian_relationship'], $fields['guardian_contact'],
         $fields['guardian_id_type'], $fields['guardian_id_number'],
-        $fields['program'], $fields['course_id'], $fields['year_level'], $fields['start_term'], $fields['applicant_type']
+        $fields['program'], $fields['course_id'], $fields['year_level'], $fields['start_term'], $fields['applicant_type'],
+        $fields['applicant_type_id']
     );
 
     if ($stmt->execute()) {

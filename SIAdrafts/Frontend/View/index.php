@@ -1,75 +1,372 @@
-<?php
-if (session_status() === PHP_SESSION_NONE) session_start();
-if (!empty($_SESSION['user_id'])) {
-    header('Location: dashboard.php');
-    exit;
-}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EduSchool — Admissions</title>
+<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+<style>
+  :root{
+    --ink:#1B2A4A;
+    --paper:#FAF7F0;
+    --amber:#E8A33D;
+    --sage:#7C9885;
+    --white:#FFFFFF;
+    --ink-soft: rgba(27,42,74,0.65);
+    --ink-line: rgba(27,42,74,0.12);
+    --nav-h: 76px;
+  }
 
-$page_scripts = [
-    //'/SIAdrafts/Frontend/Js/Admission/password-toggle.js',
-    //'/SIAdrafts/Frontend/Js/Admission/login-submit.js',
-    //'/SIAdrafts/Frontend/Js/Admission/login.js',
-    ];
-?>
-<?php include 'Admission/Include/header.php'; ?>
-<div class="container" style="padding-top:calc(var(--nav-h) + 56px); padding-bottom:60px;">
-  <div class="row justify-content-center">
-    <div class="col-12 col-sm-9 col-md-7 col-lg-5">
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; scroll-behavior:smooth; }
 
-      <div class="card login-card p-4 p-sm-5">
-        <div class="card-body p-0">
+  body{
+    background:
+      radial-gradient(1200px 500px at 50% 0%, rgba(232,163,61,0.10), transparent 60%),
+      var(--paper);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    color: var(--ink);
+  }
 
-          <div class="login-mark d-flex align-items-center justify-content-center mb-3">
-            <iconify-icon icon="mdi:school"></iconify-icon>
-          </div>
+  /* ---------- nav ---------- */
+  .nav-wrap{
+    position: fixed;
+    top: 18px; left: 0; right: 0;
+    z-index: 1000;
+    display: flex;
+    justify-content: center;
+    padding: 0 20px;
+  }
 
-          <h1 class="login-title h3 fw-semibold mb-2">Welcome back</h1>
-          <p class="text-ink-soft mb-4">Log in to access the enrollment system.</p>
+  .navbar{
+    width: 100%;
+    max-width: 980px;
+    height: var(--nav-h);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 14px 0 10px;
+    border-radius: 999px;
+    background: rgba(255,255,255,0.72);
+    border: 1px solid rgba(27,42,74,0.08);
+    box-shadow: 0 1px 1px rgba(27,42,74,0.03), 0 12px 30px -14px rgba(27,42,74,0.22);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+  }
 
-          <div id="login-error" class="alert-box alert-error mb-3" hidden></div>
+  .brand{
+    display:flex; align-items:center; gap:11px;
+    text-decoration:none; color: var(--ink);
+    padding: 6px 10px 6px 6px;
+  }
+  .brand-mark{
+    width: 38px; height: 38px; flex: none;
+    border-radius: 11px;
+    background: linear-gradient(155deg, var(--ink) 0%, #2c3e63 100%);
+    display:flex; align-items:center; justify-content:center;
+    position: relative;
+    box-shadow: 0 4px 10px -4px rgba(27,42,74,0.5);
+  }
+  .brand-mark::after{
+    content:""; position:absolute;
+    width: 7px; height:7px; border-radius: 50%;
+    background: var(--amber);
+    top: 6px; right: 6px;
+  }
+  .brand-mark iconify-icon{ color:#FAF7F0; font-size:19px; }
+  .brand-name{ font-weight:700; font-size:17px; letter-spacing:-0.01em; }
+  .brand-name em{ color: var(--sage); font-style:normal; }
 
-          <form id="login-form" action="/SIAdrafts/Backend/api/login.php" method="POST" autocomplete="off" novalidate>
+  .nav-links{
+    display:flex; align-items:center; gap: 6px;
+    list-style:none; margin:0; padding:0;
+  }
+  .nav-links a{
+    text-decoration:none;
+    color: var(--ink-soft);
+    font-size: 14px;
+    font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 999px;
+    transition: background .2s ease, color .2s ease;
+  }
+  .nav-links a:hover{ background: rgba(27,42,74,0.06); color: var(--ink); }
 
-            <div class="mb-3">
-              <label for="login-username" class="form-label fw-bold small">Username / Email</label>
-              <div class="input-group">
-                <span class="input-group-text">
-                  <iconify-icon icon="mdi:account-outline"></iconify-icon>
-                </span>
-                <input type="text" class="form-control" id="login-username" name="username"
-                       placeholder="Enter your username or email" required autocomplete="username">
-              </div>
-            </div>
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    text-decoration:none;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 11px 20px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    cursor:pointer;
+    transition: transform .15s ease, box-shadow .15s ease, background .2s ease;
+  }
+  .btn-login{
+    color: var(--ink);
+    border-color: var(--ink-line);
+    background: transparent;
+  }
+  .btn-login:hover{ background: rgba(27,42,74,0.06); }
+  .btn-apply{
+    color: var(--ink);
+    background: var(--amber);
+    box-shadow: 0 8px 20px -8px rgba(232,163,61,0.7);
+  }
+  .btn-apply:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px -8px rgba(232,163,61,0.8); }
 
-            <div class="mb-3">
-              <label for="login-password" class="form-label fw-bold small">Password</label>
-              <div class="input-group">
-                <span class="input-group-text">
-                  <iconify-icon icon="mdi:lock-outline"></iconify-icon>
-                </span>
-                <input type="password" class="form-control" id="login-password" name="password"
-                       placeholder="Enter your password" required autocomplete="current-password">
-                <button type="button" class="btn btn-icon border" data-target="login-password" aria-label="Show password">
-                  <iconify-icon icon="mdi:eye-outline"></iconify-icon>
-                </button>
-              </div>
-            </div>
+  /* ---------- hero ---------- */
+  .hero{
+    min-height: 100vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding: calc(var(--nav-h) + 60px) 24px 80px;
+  }
 
-            <div class="mb-4">
-              <a href="#" class="link-sage small">Forgot password?</a>
-            </div>
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size: 13px; font-weight:700;
+    letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--sage);
+    background: rgba(124,152,133,0.12);
+    padding: 8px 16px;
+    border-radius: 999px;
+    margin-bottom: 26px;
+  }
 
-            <button type="submit" id="login-btn" class="btn btn-login w-100 py-2 d-flex align-items-center justify-content-center gap-2">
-              Log in
-              <iconify-icon icon="mdi:arrow-right"></iconify-icon>
-            </button>
+  h1{
+    font-size: clamp(2.4rem, 5vw, 4.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin: 0 0 20px;
+    max-width: 15ch;
+  }
+  h1 .accent{ color: var(--amber); }
 
-          </form>
+  .lede{
+    font-size: 18px;
+    color: var(--ink-soft);
+    max-width: 46ch;
+    line-height: 1.6;
+    margin: 0 0 40px;
+  }
 
+  .hero-actions{
+    display:flex; gap: 14px; flex-wrap:wrap; justify-content:center;
+    margin-bottom: 56px;
+  }
+  .btn-lg{ padding: 15px 28px; font-size: 15px; }
+
+  .ref-note{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    display:flex; align-items:center; gap:8px;
+  }
+  .ref-note code{
+    background: var(--white);
+    border: 1px solid var(--ink-line);
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 12.5px;
+  }
+
+  /* ---------- steps ---------- */
+  .steps{
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 40px 24px 100px;
+  }
+  .steps-head{
+    text-align:center;
+    margin-bottom: 48px;
+  }
+  .steps-head h2{
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    margin: 0 0 12px;
+    letter-spacing: -0.01em;
+  }
+  .steps-head p{ color: var(--ink-soft); margin:0; }
+
+  .step-grid{
+    display:grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .step{
+    background: var(--white);
+    border: 1px solid var(--ink-line);
+    border-radius: 18px;
+    padding: 26px 22px;
+    position: relative;
+  }
+  .step-num{
+    font-size: 13px;
+    font-weight: 800;
+    color: var(--amber);
+    margin-bottom: 14px;
+  }
+  .step h3{
+    font-size: 16px;
+    margin: 0 0 8px;
+  }
+  .step p{
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    line-height: 1.55;
+    margin: 0;
+  }
+
+  /* ---------- programs ---------- */
+  .programs{
+    background: var(--ink);
+    color: var(--paper);
+    padding: 80px 24px;
+  }
+  .programs-inner{ max-width: 980px; margin:0 auto; }
+  .programs-head{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    gap: 20px; flex-wrap: wrap;
+    margin-bottom: 36px;
+  }
+  .programs-head h2{
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    margin: 0;
+    letter-spacing: -0.01em;
+  }
+  .programs-head p{
+    color: rgba(250,247,240,0.6);
+    margin: 8px 0 0;
+    max-width: 40ch;
+  }
+  .program-list{
+    display:grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+  }
+  .program-card{
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 20px;
+  }
+  .program-card iconify-icon{ font-size:22px; color: var(--amber); margin-bottom:14px; display:block; }
+  .program-card h4{ margin: 0 0 6px; font-size: 15px; }
+  .program-card p{ margin:0; font-size: 13px; color: rgba(250,247,240,0.55); }
+
+  /* ---------- footer ---------- */
+  footer{
+    padding: 40px 24px;
+    text-align:center;
+    font-size: 13px;
+    color: var(--ink-soft);
+  }
+
+  @media (max-width: 760px){
+    .nav-links{ display:none; }
+    .step-grid{ grid-template-columns: 1fr 1fr; }
+    .program-list{ grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+  <div class="nav-wrap">
+    <nav class="navbar">
+      <a class="brand" href="#top">
+        <span class="brand-mark"><iconify-icon icon="mdi:school"></iconify-icon></span>
+        <span class="brand-name">Edu<em>School</em></span>
+      </a>
+
+      <ul class="nav-links">
+        <li><a href="#steps">How it works</a></li>
+        <li><a href="#programs">Programs</a></li>
+      </ul>
+
+      <div style="display:flex; align-items:center; gap:10px;">
+        <a href="login.php" class="btn btn-login">Log in</a>
+        <a href="/SIAdrafts/Frontend/View/Admission/online_admission.php" class="btn btn-apply">Apply Now</a>
+      </div>
+    </nav>
+  </div>
+
+  <main id="top" class="hero">
+    <span class="eyebrow"><iconify-icon icon="mdi:calendar-check-outline"></iconify-icon> Admissions open for SY 2026–2027</span>
+    <h1>Start your application <span class="accent">today.</span></h1>
+    <p class="lede">Fill out the online form in about 10 minutes. We'll give you a reference number — bring it, along with your documents, when you visit us to finish enrolling.</p>
+
+    <div class="hero-actions">
+      <a href="/SIAdrafts/Frontend/View/Admission/online_admission.php" class="btn btn-apply btn-lg">
+        <iconify-icon icon="mdi:file-document-edit-outline"></iconify-icon> Apply Now
+      </a>
+    </div>
+
+    <div class="ref-note">
+      Already applied? Your reference number looks like <code>REF-00000-001</code> — keep it for your campus visit.
+    </div>
+  </main>
+
+  <section id="steps" class="steps">
+    <div class="steps-head">
+      <h2>How enrollment works</h2>
+      <p>Four steps, two of them online.</p>
+    </div>
+    <div class="step-grid">
+      <div class="step">
+        <div class="step-num">01 · Online</div>
+        <h3>Apply</h3>
+        <p>Submit your personal, guardian, and academic history details. Get a reference number instantly.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02 · On campus</div>
+        <h3>Verify documents</h3>
+        <p>Bring Form 137/SHS card, Certificate of Good Moral, PSA birth certificate, and 2x2 photos.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03 · On campus</div>
+        <h3>Enlist subjects</h3>
+        <p>Staff will confirm your section and subject load for the term.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">04 · Treasury</div>
+        <h3>Pay & confirm</h3>
+        <p>Settle your down payment to officially lock in your enrollment.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="programs" class="programs">
+    <div class="programs-inner">
+      <div class="programs-head">
+        <div>
+          <h2>Programs open for enrollment</h2>
+          <p>Pulled from the current course offering — swap in the real list from the <code style="opacity:.8">course</code> table.</p>
         </div>
       </div>
-
+      <div class="program-list">
+        <div class="program-card">
+          <iconify-icon icon="mdi:laptop"></iconify-icon>
+          <h4>BS Information Technology</h4>
+          <p>4-year program</p>
+        </div>
+        <div class="program-card">
+          <iconify-icon icon="mdi:office-building-outline"></iconify-icon>
+          <h4>BS Business Administration</h4>
+          <p>4-year program</p>
+        </div>
+        <div class="program-card">
+          <iconify-icon icon="mdi:heart-pulse"></iconify-icon>
+          <h4>BS Nursing</h4>
+          <p>4-year program</p>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
-<?php include 'Admission/Include/footer.php'; ?>
+  </section>
+
+  <footer>
+    © 2026 EduSchool. This is a preview mockup — hook up real links before shipping.
+  </footer>
+
+</body>
+</html>

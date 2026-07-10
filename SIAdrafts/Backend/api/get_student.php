@@ -20,11 +20,7 @@ if (strlen($q) < 1) {
     exit;
 }
 
-// Enrollment only ever operates against applicants who have already cleared
-// walk-in verification. A reference ID that's still pending_verification
-// won't show up here — that applicant needs to go through admission.php first.
-// display_code is whichever ID the person currently has: their student number
-// if they've enrolled before (student.student_no), otherwise their reference ID.
+
 if ($mode === 'id') {
     $stmt = $conn->prepare(
         "SELECT a.applicant_id, a.first_name, a.last_name, a.middle_name,

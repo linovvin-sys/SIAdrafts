@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app">
+        <h1>Find My balls</h1>
+        <div class="setup">
+            <h2>Enter Player Names</h2>
+            <div>
+                <input v-model="names[0]" placeholder="Player 1" />
+            </div>
+            <div>
+                <input v-model="names[1]" placehlder="Player 2" />
+            </div>
+        </div>
+
+        <div class="scoreboard">
+            <span>Round: {{ round}} / 5</span>
+            <span>{{ names[0] }} Score: {{ scores[0] }}</span>
+            <span>{{ names[1] }} Score: {{ scores[1] }}</span>
+        </div>
+        
+        <div class="message-area">
+            <div class="main-msg">
+                {{ message }}
+            </div>
+            <div v-if="phase !== 'matchOver'">
+                <div class="tries">Tries: {{ tries }}</div>
+                <div class="sub-msg">First to 3 points wins.</div>
+            </div>
+            <div v-else class="win-line">Match Winner: {{ winner }}</div>
+        </div>
+
+        <div class="card-grid">
+            <div v-for="(cup, i) in 10" @click="clickCup(i)" v-bind:class="cupClass(i)" class="cup-slot">
+                <span class="ball-emoji" v-if="ballVisible && ball === i">&#9917;</span>
+                <img src="cup.png" alt="cup" class="cup-img" />
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button v-if="phase === 'reveal'" @click="phase = 'guessing'">Start Guessing</button>
+
+            <div v-if="phase === 'roundWon' || phase === 'roundLost'">
+                <button @click="newRound">Try Again</button>
+                <button @click="nextRound">Next Round</button>
+            </div>
+
+            <div v-if="phase === 'matchOver'">
+                <button @click="resetGame">Try Again</button>
+                <button @click="phase = 'setup'">Change Players</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

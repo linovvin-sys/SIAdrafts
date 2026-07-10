@@ -79,7 +79,7 @@ switch ($role) {
         break;
     default:
         // Students and all other roles
-        $redirect = '/SIAdrafts/Frontend/View/index.php';
+        $redirect = '/SIAdrafts/Frontend/View/login.php';
         break;
 }
 

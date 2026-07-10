@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- SETUP SCREEN -->
+        <div v-if="phase==='setup'" class="setup">
+            <h1>Find My Ball</h1>
+            <div>
+                <input v-model="names[0]" placeholder="Player 1 name"  />
+            </div>
+            <div>
+                <input v-model="names[1]" placeholder="Player 2 name"  />
+            </div>
+            <button class="action" @click="startGame">Start Game</button>
+        </div>
+        <!-- GAME SCREEN -->
+        <div v-else>
+            <div class="scoreboard">
+                <h2>Enter Player names</h2>
+                <div><strong>{{ names[0] }}</strong>: {{ scores[0] }}</div>
+                <div>Round {{ round }} / 5</div>
+                <div><strong>{{ names[1] }}</strong>: {{ scores[1] }}</div>
+            </div>
+
+            <div class="message-area">
+                <div class="main-msg">{{ message }}</div>
+
+                <div v-if="phase !== 'matchOver'">
+                    <div class="msg">Tries Left: {{ tries }}</div>
+                    <div class="sub-msg">First to 3 points wins.</div>
+                </div>
+                <div v-else class="win-line">Match Winner: {{ winner }} </div>
+            </div>
+
+            <div class="cup-grid">
+                <div v-for="(cup, i) in 10" v-bind:class="cupClass(i)" v-on:click="clickCup(i)" class="cup-slot">
+                    <span class="ball-emoji" v-if="ballVisible && ball === i">&#9917;</span>
+                    <img src="cup.png" alt="cup" class="cup-img" />
+                </div>
+            </div>
+
+            <div class ="action-buttons">
+                <button v-if="phase === 'reveal'" @click="phase = 'guessing'">Start Guessing</button>
+
+                <div v-if="phase === 'roundWon' || phase === 'roundLost'">
+                    <button class="action secondary" @click="newRound">Try Again</button>
+                    <button @click="nextRound"></button>
+                </div>
+
+                <div v-if="phase === 'matchOver'">
+                    <button @click="resetGame">Play Again</button>
+                    <button @click="phase = 'setup'">Change Players</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+<script>
+    const { createApp } = Vue;
+    createApp({
+        data(){
+            return{
+                names: ['', ''],
+                scores: [0, 0],
+                round: 1,
+                phase: 'setup',
+                ball: null,
+                tries: 3,
+                wrong: [],
+                winner: ''
+            }
+        },
+        computed: {
+            hider(){
+                return this.round & 2 === 1 ? 0 : 1;
+            },
+            guesser(){
+                return 1 - this.hider;
+            },
+
+            ballVisible(){
+                return this.phase === 'reveal' || this.phase === 'roundWon' || this.phase === 'roundLost';
+            },
+            message(){
+                var h = this.names[this.hider()];
+                var g = this.names[this.guesser()];
+                if(this.phase === 'hiding'){
+                    return h + ' is hiding the ball!';
+                }else if(this.phase === 'reveal'){
+                    return h + 'placed the ball under cup.' + (this.ball + 1) + '!';
+                }else if(this.phase === 'guessing'){
+                    return this.tries < 3 ? 'Wrong guess!' : g + ', guess where the ball is!';
+                }else if(this.phase === 'roundWon'){
+                    return g + ' guessed correctly!';
+                }else if(this.phase === 'roundLost'){
+                    return g + ' guessed wrong!';
+                }else if(this.phase === 'matchOver'){
+                    return this.winner + ' wins the match!';
+                }
+            }
+        },
+        methods: {
+
+        }
+    })
+</script>
+</html>

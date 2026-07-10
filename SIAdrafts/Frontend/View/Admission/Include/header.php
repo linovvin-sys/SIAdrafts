@@ -17,7 +17,6 @@ $_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'
 <title>EduSchool</title>
 <link rel="stylesheet" href="/SIAdrafts/bootstrap-5.3.8-dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/style.css">
-<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/admission.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/login.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/treasury.css">
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
@@ -27,7 +26,7 @@ $_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'
 
   <div class="nav-wrap" id="navWrap">
     <nav class="navbar <?= !$_logged_in ? 'navbar-guest' : '' ?>">
-      <a class="brand" href="<?= $_logged_in ? 'enrollment.php' : 'index.php' ?>">
+      <a class="brand" href="<?= $_logged_in ? 'enrollment.php' : 'login.php' ?>">
         <span class="brand-mark">
           <iconify-icon icon="mdi:school" style="color:#FAF7F0; font-size:19px;"></iconify-icon>
         </span>
@@ -140,6 +139,6 @@ $_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'
         Log out <iconify-icon icon="mdi:logout" style="font-size:14px;"></iconify-icon>
       </a>
     <?php else: ?>
-      <a href="index.php" class="active">Login</a>
+      <a href="login.php" class="active">Login</a>
     <?php endif; ?>
   </div>
