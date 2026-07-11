@@ -7,36 +7,37 @@
 </head>
 <body>
     <div id="app">
-        <h1>Find My balls</h1>
+        <h1>Find my balls</h1>
         <div class="setup">
-            <h2>Enter Player Names</h2>
+            <h2>Enter player names</h2>
             <div>
-                <input v-model="names[0]" placeholder="Player 1" />
+                <input v-model="names[0]" placeholder="Player 1 name" />
             </div>
             <div>
-                <input v-model="names[1]" placehlder="Player 2" />
+                <input v-model="names[1]" placeholder="Player 2 name" />
             </div>
+            <button class="btn" v-on:click="startGame">Start Game</button>
         </div>
 
         <div class="scoreboard">
-            <span>Round: {{ round}} / 5</span>
-            <span>{{ names[0] }} Score: {{ scores[0] }}</span>
-            <span>{{ names[1] }} Score: {{ scores[1] }}</span>
+            <h2>Scoreboard</h2>
+            <div>Round: {{ round }} / 5</div>
+            <div>
+                <span>{{ names[0] }} Score: {{ scores[0] }}</span>
+                <span>{{ names[1] }} Score: {{ scores[1] }}</span>
+            </div>
         </div>
-        
         <div class="message-area">
-            <div class="main-msg">
-                {{ message }}
-            </div>
+            <div class="main-msg">{{message}}</div>
             <div v-if="phase !== 'matchOver'">
-                <div class="tries">Tries: {{ tries }}</div>
-                <div class="sub-msg">First to 3 points wins.</div>
+                <span>{{ tries }} Tries left.</span>
+                <span>First to 3 points wins.</span>
             </div>
-            <div v-else class="win-line">Match Winner: {{ winner }}</div>
+            <div v-else>Winner: {{ winner }}</div>
         </div>
 
-        <div class="card-grid">
-            <div v-for="(cup, i) in 10" @click="clickCup(i)" v-bind:class="cupClass(i)" class="cup-slot">
+        <div class="cup-grid">
+            <div v-for="(cup, i) in 10" v-bind:class="cupClass(i)" @click="clickCup(i)">
                 <span class="ball-emoji" v-if="ballVisible && ball === i">&#9917;</span>
                 <img src="cup.png" alt="cup" class="cup-img" />
             </div>
@@ -47,14 +48,82 @@
 
             <div v-if="phase === 'roundWon' || phase === 'roundLost'">
                 <button @click="newRound">Try Again</button>
-                <button @click="nextRound">Next Round</button>
+                <button @click="nextRound">Next ound</button>
             </div>
 
             <div v-if="phase === 'matchOver'">
                 <button @click="resetGame">Try Again</button>
-                <button @click="phase = 'setup'">Change Players</button>
+                <button @click="phase = 'setup'">New Game</button>
             </div>
         </div>
     </div>
 </body>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<script>
+    const { createApp } = Vue;
+    createApp({
+        data(){
+            return{
+                names: ['', ''],
+                scores: [0, 0],
+                round: 1,
+                phase: 'setup',
+                ball: null,
+                tries: 3,
+                wrong: [],
+                winner: ''
+            }
+        },
+        computed: {
+            hider(){
+                return this.round % 2 === 1 ? 0 : 1;
+            },
+            guesser(){
+                return 1 - this.hider;
+            },
+            ballVisible(){
+                return this.phase === 'reveal' || this.phase === 'roundWon' || this.phase === 'roundLost';
+            },
+            message(){
+                var h = this.nae[this.hider];
+                var g = this.names[this.guesser];
+                if(this.phase === 'setup') {
+                    return 'Enter player names to start the game.';
+                }else if (this.phase === 'hiding'){
+                    return h + 'is hiding the ball in' (this.ball + 1) + '!';
+                }else if(phase === 'guessing'){
+                    return this.tries < 3 ? g + 'choose a cup to find the ball!' : g + 'choose a cup to find the ball!';
+                }else if(this.phase === 'roundWon'){
+                    return g + ' found the ball!!';
+                }else if(phase === 'roundLost'){
+                    return g + ' did not find the ball..';
+                }else if(this.phase === 'matchOver'){
+                    return 'gameover!!' + this.winner + ' wins the game!';
+                }
+                return '';
+            },
+            methods: {
+                startGame(){
+                    this.names[0] = this.names[0].trim() || 'Player 1';
+                    this.names[1] = this.names[1].trim() || 'Player 2';
+                    this.scores = [0, 0];
+                    this.round = 1;
+                    this.newRound();
+                },
+                newRound(){
+                    this.ball=null;
+                    this.tries = 3;
+                    this.wrong = Array(10).fill(false);
+                    this.phase = 'hiding';
+                },
+                restart(){
+                    this.scores = [0, 0];
+                    this.round = 1;
+                    this.winner = '';
+                    this.newRound();
+                }
+            }
+        }
+    }).mount('#app');
+</script>
 </html>

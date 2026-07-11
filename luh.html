@@ -13,7 +13,7 @@
 
     <div class="card">
 
-      <!-- SETUP SCREEN -->
+      <!-- simula ng game -->
       <div v-if="phase === 'setup'" class="setup">
         <h2>Enter Player Names</h2>
         <div class="name-inputs">
@@ -23,7 +23,7 @@
         <button class="btn" v-on:click="startGame">Start Game</button>
       </div>
 
-      <!-- GAME SCREEN -->
+      <!-- game screen boi -->
       <div v-else>
         <div class="scoreboard">
           <span>Round: {{ round }} / 5</span>
@@ -74,7 +74,8 @@
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
 
   <script>
-    Vue.createApp({
+    const { createApp } = Vue;
+    createApp({
       data() {
         return {
           names: ['', ''], 
@@ -103,12 +104,24 @@
 
         message() {
           var h = this.names[this.hider], g = this.names[this.guesser]
-          if (this.phase === 'hiding')    return h + ': Choose a cup to hide the ball.'
-          if (this.phase === 'reveal')    return h + ' placed the ball under Cup ' + (this.ball + 1) + '.'
-          if (this.phase === 'guessing')  return this.tries < 3 ? 'Wrong cup! Try again.' : g + ': Choose a cup to find the ball.'
-          if (this.phase === 'roundWon')  return 'Congratulations! ' + g + ' found the ball!'
-          if (this.phase === 'roundLost') return 'Game Over! ' + g + ' did not find the ball.'
-          if (this.phase === 'matchOver') return this.winner + ' wins the Best of 5 match!'
+          if (this.phase === 'hiding')    {
+            return h + ': Choose a cup to hide the ball.'
+          }
+          if (this.phase === 'reveal')    {
+            return h + ' placed the ball under Cup ' + (this.ball + 1) + '.'
+          }
+          if (this.phase === 'guessing')  {
+            return this.tries < 3 ? 'Wrong cup! Try again.' : g + ': Choose a cup to find the ball.'
+          }
+          if (this.phase === 'roundWon')  {
+            return 'Congratulations! ' + g + ' found the ball!'
+          }
+          if (this.phase === 'roundLost') {
+            return 'Game Over! ' + g + ' did not find the ball.'
+          }
+          if (this.phase === 'matchOver') {
+            return this.winner + ' wins the Best of 3 match!'
+          }
           return ''
         }
       },
@@ -138,14 +151,25 @@
         },
 
         cupClass(i) {
-          if (this.wrong[i]) return 'wrong'
-          if (this.phase === 'hiding') return 'clickable'
-          if (this.phase === 'guessing') return 'clickable'
+          if (this.wrong[i]) {
+            return 'wrong'
+          }
+          if (this.phase === 'hiding') {
+            return 'clickable'
+          }
+          if (this.phase === 'guessing') {
+            return 'clickable'
+          }
           return 'disabled'
         },
 
         clickCup(i) {
-          if (this.phase === 'hiding') { this.ball = i; this.phase = 'reveal'; return }
+          if (this.phase === 'hiding') { 
+            this.ball = i; 
+            this.phase = 'reveal'; 
+            return 
+          }
+
           if (this.phase !== 'guessing' || this.wrong[i]) return
 
           if (i === this.ball) {
@@ -159,8 +183,12 @@
 
         givePoint(p, next) {
           this.scores[p]++
-          if (this.scores[p] >= 3) { this.winner = this.names[p]; this.phase = 'matchOver' }
-          else this.phase = next
+          if (this.scores[p] >= 3) { 
+            this.winner = this.names[p]; 
+            this.phase = 'matchOver';
+          }else {
+            this.phase = next
+          }
         },
 
         nextRound() {

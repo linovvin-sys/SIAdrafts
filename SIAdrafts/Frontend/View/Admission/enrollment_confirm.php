@@ -6,7 +6,7 @@ $db   = new Database();
 $conn = $db->connect();
 
 $enroll = $_SESSION['enroll'] ?? null;
-if (!$enroll || empty($enroll['subject_ids']) || empty($enroll['section_id'])) {
+if (!$enroll || empty($enroll['subject_ids']) || !array_key_exists('section_id', $enroll)) {
     header('Location: enrollment.php');
     exit;
 }
@@ -42,7 +42,7 @@ if (!$section_name && $section_id) {
 }
 
 // Fetch selected subjects with schedule info
-$$subject_schedule = $enroll['subject_schedule'] ?? null; // [{subject_id, schedule_id}, ...] — irregular only
+$subject_schedule = $enroll['subject_schedule'] ?? null; // [{subject_id, schedule_id}, ...] — irregular only
 
 if ($subject_schedule) {
     // Irregular: each subject's schedule comes from its own specific schedule_id
@@ -211,9 +211,6 @@ function fmt_time(string $t): string {
               &mdash; <?= htmlspecialchars($sem_label) ?>
             </p>
           </div>
-          <button type="button" class="btn-print no-print" onclick="window.print()">
-            <iconify-icon icon="mdi:printer"></iconify-icon> Print
-          </button>
         </div>
 
         <!-- Student info -->

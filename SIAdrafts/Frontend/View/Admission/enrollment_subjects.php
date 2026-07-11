@@ -372,29 +372,29 @@ function fmt_id(int $id): string {
               </div>
 
             </div>
-          <?php endif; ?>
 
-          <!-- Hidden form -->
-          <form id="sec-form" method="POST" action="enrollment_subjects.php" style="display:none">
-            <input type="hidden" name="section_id" :value="selectedId">
-          </form>
+            <!-- Hidden form -->
+            <form id="sec-form" method="POST" action="enrollment_subjects.php" style="display:none">
+              <input type="hidden" name="section_id" :value="selectedId">
+            </form>
 
-          <div class="d-flex justify-content-between align-items-center mt-4">
-            <a href="enrollment_profile.php?reference_id=<?= urlencode($enroll['reference_id']) ?>" class="btn-back-link">
-              <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back
-            </a>
-            <button
-              type="button"
-              class="btn-primary-action"
-              @click="proceed"
-              :disabled="!selectedId">
-              Confirm Section
-              <iconify-icon icon="mdi:arrow-right"></iconify-icon>
-            </button>
-          </div>
+            <div class="d-flex justify-content-between align-items-center mt-4">
+              <a href="enrollment_profile.php?reference_id=<?= urlencode($enroll['reference_id']) ?>" class="btn-back-link">
+                <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back
+              </a>
+              <button
+                type="button"
+                class="btn-primary-action"
+                @click="proceed"
+                :disabled="!selectedId">
+                Confirm Section
+                <iconify-icon icon="mdi:arrow-right"></iconify-icon>
+              </button>
+            </div>
 
-        </template>
-      </div>
+          </template>
+        </div>
+      <?php endif; ?>
 
     </div>
   </div>
