@@ -5,8 +5,12 @@ require_once '../../../Backend/db.php';
 $db   = new Database();
 $conn = $db->connect();
 
-$enroll = $_SESSION['enroll'] ?? null;
-if (!$enroll || empty($enroll['subject_ids']) || empty($enroll['section_id'])) {
+$enroll        = $_SESSION['enroll'] ?? null;
+$is_irregular  = !empty($enroll['is_irregular']);
+
+if (!$enroll || empty($enroll['subject_ids'])
+    || (!$is_irregular && empty($enroll['section_id']))
+    || ($is_irregular && empty($enroll['schedule_ids']))) {
     header('Location: enrollment.php');
     exit;
 }
@@ -32,10 +36,12 @@ if (!$student) {
 
 // Section was chosen in step 3 (enrollment_subjects.php); use it directly
 // rather than re-deriving anything from the applicant record.
-$section_id   = (int)$enroll['section_id'];
-$section_name = $enroll['section_name'] ?? null;
+// Irregular students aren't tied to a single section — each subject can
+// come from a different one, so there's no one section_id to look up here.
+$section_id   = $is_irregular ? null : (int)$enroll['section_id'];
+$section_name = $enroll['section_name'] ?? ($is_irregular ? 'Irregular / Mixed Sections' : null);
 
-if (!$section_name) {
+if (!$is_irregular && !$section_name) {
     $secStmt = $conn->prepare("SELECT section_name FROM section WHERE section_id = ?");
     $secStmt->bind_param('i', $section_id);
     $secStmt->execute();
@@ -43,31 +49,61 @@ if (!$section_name) {
     $secStmt->close();
 }
 
-// Fetch selected subjects with schedule info
-$ids = $enroll['subject_ids'];
-$ph  = implode(',', array_fill(0, count($ids), '?'));
+// Fetch selected subjects with schedule info.
+// Regular students: one fixed section, one join condition for all subjects.
+// Irregular students: each subject was individually paired with a specific
+// schedule_id (possibly in different sections), so we join straight off
+// those schedule_ids instead of a single section_id.
+if ($is_irregular) {
+    $schedIds = $enroll['schedule_ids'];
+    $ph       = implode(',', array_fill(0, count($schedIds), '?'));
+    $types    = str_repeat('i', count($schedIds));
 
-$types  = str_repeat('i', count($ids));
-$params = array_merge([$enroll['school_year'], $enroll['semester'], $section_id], $ids);
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+                sc.category_name,
+                sch.day, sch.time_start, sch.time_end,
+                sec.section_name,
+                CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
+                r.room_name
+         FROM schedule sch
+         JOIN subject sub          ON sub.subject_id = sch.subject_id
+         JOIN subject_category sc  ON sub.category_id = sc.category_id
+         JOIN section sec          ON sec.section_id = sch.section_id
+         LEFT JOIN professor p ON sch.professor_id = p.professor_id
+         LEFT JOIN room r      ON sch.room_id      = r.room_id
+         WHERE sch.schedule_id IN ($ph)
+         ORDER BY sc.category_name, sub.subject_code"
+    );
+    $stmt->bind_param($types, ...$schedIds);
+} else {
+    $ids = $enroll['subject_ids'];
+    $ph  = implode(',', array_fill(0, count($ids), '?'));
 
-$stmt = $conn->prepare(
-    "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
-            sc.category_name,
-            sch.day, sch.time_start, sch.time_end,
-            CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
-            r.room_name
-     FROM subject sub
-     JOIN subject_category sc ON sub.category_id = sc.category_id
-     LEFT JOIN schedule sch ON sch.subject_id = sub.subject_id
-         AND sch.school_year = ? AND sch.semester = ? AND sch.section_id = ?
-     LEFT JOIN professor p ON sch.professor_id = p.professor_id
-     LEFT JOIN room r      ON sch.room_id      = r.room_id
-     WHERE sub.subject_id IN ($ph)
-     ORDER BY sc.category_name, sub.subject_code"
-);
+    $types  = str_repeat('i', count($ids));
+    $params = array_merge([$enroll['school_year'], $enroll['semester'], $section_id], $ids);
 
-$bind_types = 'sii' . $types;
-$stmt->bind_param($bind_types, ...$params);
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+                sc.category_name,
+                sch.day, sch.time_start, sch.time_end,
+                NULL AS section_name,
+                CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
+                r.room_name
+         FROM subject sub
+         JOIN subject_category sc ON sub.category_id = sc.category_id
+         LEFT JOIN schedule sch ON sch.subject_id = sub.subject_id
+             AND sch.school_year = ? AND sch.semester = ? AND sch.section_id = ?
+         LEFT JOIN professor p ON sch.professor_id = p.professor_id
+         LEFT JOIN room r      ON sch.room_id      = r.room_id
+         WHERE sub.subject_id IN ($ph)
+         ORDER BY sc.category_name, sub.subject_code"
+    );
+
+    $bind_types = 'sii' . $types;
+    $stmt->bind_param($bind_types, ...$params);
+}
+
 $stmt->execute();
 $subjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
@@ -184,9 +220,6 @@ function fmt_time(string $t): string {
               &mdash; <?= htmlspecialchars($sem_label) ?>
             </p>
           </div>
-          <button type="button" class="btn-print no-print" onclick="window.print()">
-            <iconify-icon icon="mdi:printer"></iconify-icon> Print
-          </button>
         </div>
 
         <!-- Student info -->
@@ -223,6 +256,7 @@ function fmt_time(string $t): string {
               <tr>
                 <th>Code</th>
                 <th>Subject Name</th>
+                <?php if ($is_irregular): ?><th>Section</th><?php endif; ?>
                 <th>Units</th>
                 <th>Schedule</th>
                 <th>Room</th>
@@ -233,6 +267,7 @@ function fmt_time(string $t): string {
               <tr>
                 <td class="text-mono"><?= htmlspecialchars($sub['subject_code']) ?></td>
                 <td><?= htmlspecialchars($sub['subject_name']) ?></td>
+                <?php if ($is_irregular): ?><td><?= htmlspecialchars($sub['section_name'] ?? '—') ?></td><?php endif; ?>
                 <td class="text-center"><?= number_format((float)$sub['units'], 0) ?></td>
                 <td>
                   <?php if ($sub['day']): ?>
@@ -248,7 +283,7 @@ function fmt_time(string $t): string {
             </tbody>
             <tfoot>
               <tr>
-                <td colspan="2" class="text-end fw-bold">Total</td>
+                <td colspan="<?= $is_irregular ? 3 : 2 ?>" class="text-end fw-bold">Total</td>
                 <td class="text-center fw-bold"><?= number_format((float)$total_units, 0) ?></td>
                 <td colspan="2"></td>
               </tr>
@@ -359,8 +394,10 @@ const ENROLLMENT_PAYLOAD = <?= json_encode([
     'semester'     => $enroll['semester'],
     'year_level'   => $enroll['year_level'],
     'type_id'      => $enroll['type_id'],
+    'is_irregular' => $is_irregular,
     'section_id'   => $section_id,
     'subject_ids'  => $enroll['subject_ids'],
+    'schedule_ids' => $is_irregular ? $enroll['schedule_ids'] : null,
 ]) ?>;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
