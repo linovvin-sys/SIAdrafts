@@ -1,0 +1,75 @@
+/* Registrar module — small additions on top of Admin/admin.css */
+
+.nav-badge {
+  margin-left: auto;
+  background: #e11d48;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 3px 7px;
+  border-radius: 999px;
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+.status-pill--pending  { background: #fef3c7; color: #92400e; }
+.status-pill--approved { background: #d1fae5; color: #065f46; }
+.status-pill--rejected { background: #fee2e2; color: #991b1b; }
+
+.btn-approve {
+  background: #16a34a;
+  color: #fff;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.btn-approve:hover { background: #15803d; }
+
+.btn-reject {
+  background: #fff;
+  color: #dc2626;
+  border: 1px solid #dc2626;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-left: 6px;
+}
+.btn-reject:hover { background: #fef2f2; }
+
+.btn-remove {
+  background: transparent;
+  color: #dc2626;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.btn-remove:hover { text-decoration: underline; }
+
+.dashboard-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.dashboard-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0,0,0,.08);
+}
+.dashboard-card .value { font-size: 28px; font-weight: 700; }
+.dashboard-card .label { font-size: 13px; color: #6b7280; margin-top: 4px; }

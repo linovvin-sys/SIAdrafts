@@ -16,6 +16,7 @@ $sections = $conn->query("
     SELECT sec.section_id, sec.section_name, sec.course_id, c.course_code
     FROM section sec
     JOIN course c ON c.course_id = sec.course_id
+    WHERE sec.status = 'Approved' AND c.status = 'Approved'
     ORDER BY c.course_code, sec.section_name
 ")->fetch_all(MYSQLI_ASSOC);
 

@@ -77,6 +77,14 @@ switch ($role) {
     case 'admission':
         $redirect = '/SIAdrafts/Frontend/View/Admission/admission.php';
         break;
+        
+    case 'head registrar':
+        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
+        break;
+
+    case 'registrar staff':
+        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
+        break;
     default:
         // Students and all other roles
         $redirect = '/SIAdrafts/Frontend/View/login.php';

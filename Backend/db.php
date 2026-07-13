@@ -4,9 +4,9 @@ class Database
 {
     private $host = "localhost";
     private $username = "root";
-    private $password = "root";
-    private $database = "enrollment_db_sia_final";
-    private $port = "8889";
+    private $password = "";
+    private $database = "enrollment_db_final";
+    private $port = "3306";
 
     public $conn;
 
