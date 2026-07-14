@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Find My Ball</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/vue/3.4.21/vue.global.prod.min.js"></script>
+<style>
+  /* Bare-bones layout only. Swap in your own styling/images as needed. */
+  body{ font-family:sans-serif; text-align:center; padding:20px; }
+  .cups{ display:flex; flex-wrap:wrap; justify-content:center; gap:12px; max-width:600px; margin:20px auto; }
+  .cup-btn{ background:none; border:none; cursor:pointer; padding:0; }
+  .cup-btn img{ width:80px; height:auto; display:block; }
+  .cup-btn:disabled{ cursor:default; opacity:.5; }
+  .scoreboard{ display:flex; justify-content:center; gap:40px; margin-bottom:10px; }
+  input{ padding:8px; margin:6px; font-size:14px; }
+  button.action{ padding:10px 18px; margin-top:10px; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SETUP SCREEN -->
+  <div v-if="phase==='setup'">
+    <h1>Find My Ball</h1>
+    <div>
+      <input v-model="p1Input" placeholder="Player 1 name" @keyup.enter="startGame" />
+    </div>
+    <div>
+      <input v-model="p2Input" placeholder="Player 2 name" @keyup.enter="startGame" />
+    </div>
+    <button class="action" @click="startGame">Start Game</button>
+  </div>
+
+  <!-- GAME SCREEN -->
+  <div v-else-if="phase!=='gameover'">
+
+    <div class="scoreboard">
+      <div><strong>{{ p1Name }}</strong>: {{ scores[1] }}</div>
+      <div>Round {{ round }} / {{ maxRounds }}</div>
+      <div><strong>{{ p2Name }}</strong>: {{ scores[2] }}</div>
+    </div>
+
+    <!-- Pass-device step before hiding -->
+    <div v-if="phase==='intro'">
+      <p>Pass the device to <strong>{{ hiderName }}</strong></p>
+      <button class="action" @click="readyToHide">I'm ready to hide the ball</button>
+    </div>
+
+    <!-- Hiding phase -->
+    <div v-else-if="phase==='hiding'">
+      <p><strong>{{ hiderName }}</strong>, click a cup to hide the ball</p>
+    </div>
+
+    <!-- Confirm hidden, before passing to guesser -->
+    <div v-else-if="phase==='hidden-confirm'">
+      <p>Ball hidden under cup #{{ ballIndex + 1 }}</p>
+      <button class="action" @click="confirmHidden">Done, hide the board</button>
+    </div>
+
+    <!-- Pass-device step before guessing -->
+    <div v-else-if="phase==='pass-to-guesser'">
+      <p>Pass the device to <strong>{{ guesserName }}</strong></p>
+      <button class="action" @click="readyToGuess">I'm ready to guess</button>
+    </div>
+
+    <!-- Guessing phase -->
+    <div v-else-if="phase==='guessing'">
+      <p><strong>{{ guesserName }}</strong>, find the ball. Attempts left: {{ attemptsLeft }} / {{ maxAttempts }}</p>
+    </div>
+
+    <!-- Round result -->
+    <div v-else-if="phase==='reveal'">
+      <p v-if="roundResult==='found'"><strong>{{ guesserName }}</strong> found it! Point to {{ guesserName }}.</p>
+      <p v-else>Not found. Point to {{ hiderName }}. Ball was under cup #{{ ballIndex + 1 }}.</p>
+      <button class="action" @click="nextRound">{{ isLastAction ? 'See Final Result' : 'Next Round' }}</button>
+    </div>
+
+    <!-- Cup grid: only rendered/shown to the current active phase's player -->
+    <div class="cups" v-if="showCups">
+      <button
+        v-for="(cup, i) in cups"
+        :key="i"
+        class="cup-btn"
+        :disabled="!canPlay(i)"
+        @click="handleCupClick(i)"
+      >
+        <!-- Replace these src values with your own image paths -->
+        <img v-if="isOpen(i)" src="cup-open.png" alt="open cup" />
+        <img v-else src="cup-closed.png" alt="closed cup" />
+        <img v-if="isOpen(i) && i===ballIndex" src="ball.png" alt="ball" style="width:30px; margin-top:-45px;" />
+      </button>
+    </div>
+
+  </div>
+
+  <!-- GAME OVER SCREEN -->
+  <div v-else>
+    <h1>{{ winnerName }} Wins!</h1>
+    <p>{{ p1Name }} {{ scores[1] }} - {{ scores[2] }} {{ p2Name }}</p>
+    <button class="action" @click="playAgain">Play Again</button>
+    <button class="action" @click="newPlayers">New Players</button>
+  </div>
+
+</div>
+
+<script>
+const { createApp } = Vue;
+
+createApp({
+  data(){
+    return {
+      phase: 'setup', // setup | intro | hiding | hidden-confirm | pass-to-guesser | guessing | reveal | gameover
+      p1Input: '',
+      p2Input: '',
+      p1Name: 'Player 1',
+      p2Name: 'Player 2',
+      cups: Array.from({ length: 10 }),
+      maxAttempts: 3,
+      attemptsLeft: 3,
+      maxRounds: 5,
+      winScore: 3,
+      round: 1,
+      hiderPlayer: 1,
+      ballIndex: null,
+      guessedWrong: [],
+      roundResult: null,
+      scores: { 1: 0, 2: 0 },
+    };
+  },
+  computed: {
+    guesserPlayer(){ return this.hiderPlayer === 1 ? 2 : 1; },
+    hiderName(){ return this.hiderPlayer === 1 ? this.p1Name : this.p2Name; },
+    guesserName(){ return this.guesserPlayer === 1 ? this.p1Name : this.p2Name; },
+    winnerName(){
+      if (this.scores[1] === this.scores[2]) return 'Nobody';
+      return this.scores[1] > this.scores[2] ? this.p1Name : this.p2Name;
+    },
+    isLastAction(){
+      return this.scores[1] >= this.winScore || this.scores[2] >= this.winScore || this.round >= this.maxRounds;
+    },
+    // Only show the cup grid during phases where a player is actually meant to look at the board
+    showCups(){
+      return ['hiding', 'hidden-confirm', 'guessing', 'reveal'].includes(this.phase);
+    }
+  },
+  methods: {
+    startGame(){
+      this.p1Name = this.p1Input.trim() || 'Player 1';
+      this.p2Name = this.p2Input.trim() || 'Player 2';
+      this.scores = { 1: 0, 2: 0 };
+      this.round = 1;
+      this.hiderPlayer = 1;
+      this.beginRoundIntro();
+    },
+    beginRoundIntro(){
+      this.ballIndex = null;
+      this.guessedWrong = [];
+      this.attemptsLeft = this.maxAttempts;
+      this.roundResult = null;
+      this.phase = 'intro';
+    },
+    readyToHide(){
+      this.phase = 'hiding';
+    },
+    handleCupClick(i){
+      if (this.phase === 'hiding') this.chooseHideCup(i);
+      else if (this.phase === 'guessing') this.guessCup(i);
+    },
+    chooseHideCup(i){
+      this.ballIndex = i;
+      this.phase = 'hidden-confirm';
+    },
+    confirmHidden(){
+      this.phase = 'pass-to-guesser';
+    },
+    readyToGuess(){
+      this.phase = 'guessing';
+    },
+    guessCup(i){
+      if (this.guessedWrong.includes(i)) return;
+      if (i === this.ballIndex){
+        this.scores[this.guesserPlayer]++;
+        this.roundResult = 'found';
+        this.phase = 'reveal';
+      } else {
+        this.guessedWrong.push(i);
+        this.attemptsLeft--;
+        if (this.attemptsLeft <= 0){
+          this.scores[this.hiderPlayer]++;
+          this.roundResult = 'notfound';
+          this.phase = 'reveal';
+        }
+      }
+    },
+    nextRound(){
+      if (this.isLastAction){
+        this.phase = 'gameover';
+        return;
+      }
+      this.round++;
+      this.hiderPlayer = this.hiderPlayer === 1 ? 2 : 1;
+      this.beginRoundIntro();
+    },
+    playAgain(){
+      this.scores = { 1: 0, 2: 0 };
+      this.round = 1;
+      this.hiderPlayer = 1;
+      this.beginRoundIntro();
+    },
+    newPlayers(){
+      this.p1Input = '';
+      this.p2Input = '';
+      this.phase = 'setup';
+    },
+    // Whether cup i can be clicked right now
+    canPlay(i){
+      if (this.phase === 'hiding') return true;
+      if (this.phase === 'guessing') return !this.guessedWrong.includes(i);
+      return false;
+    },
+    // Whether cup i should render as "open" (showing what's under it)
+    isOpen(i){
+      if (this.phase === 'hidden-confirm' && i === this.ballIndex) return true;
+      if (this.phase === 'reveal' && i === this.ballIndex) return true;
+      if (this.guessedWrong.includes(i)) return true; // wrong guesses stay flipped open (and empty)
+      return false;
+    }
+  }
+}).mount('#app');
+</script>
+
+</body>
+</html>

@@ -35,13 +35,36 @@ $school_year = trim($data['school_year']  ?? '');
 $semester    = (int)($data['semester']    ?? 0);
 $year_level  = (int)($data['year_level']  ?? 0);
 $type_id     = (int)($data['type_id']     ?? 1);
-$section_id  = (int)($data['section_id']  ?? 0);
+$section_id  = !empty($data['section_id']) ? (int)$data['section_id'] : null;
+
+const TYPE_IRREGULAR = 2;
+$is_irregular = ($type_id === TYPE_IRREGULAR);
 
 $subject_ids = array_values(array_unique(
     array_filter(array_map('intval', $data['subject_ids'] ?? []))
 ));
 
-if (!$student_id || !$school_year || !$semester || !$year_level || !$type_id || !$section_id || empty($subject_ids)) {
+// Irregular: subject_ids and schedule_ids arrive as two parallel arrays
+
+$subject_schedule = [];
+if ($is_irregular) {
+    $raw_subject_ids  = $data['subject_ids']  ?? [];
+    $raw_schedule_ids = $data['schedule_ids'] ?? [];
+    if (is_array($raw_subject_ids) && is_array($raw_schedule_ids)
+        && count($raw_subject_ids) === count($raw_schedule_ids)) {
+        foreach ($raw_subject_ids as $i => $rawSid) {
+            $sid = (int)$rawSid;
+            $chd = (int)($raw_schedule_ids[$i] ?? 0);
+            if ($sid && $chd) $subject_schedule[] = ['subject_id' => $sid, 'schedule_id' => $chd];
+        }
+    }
+}
+
+$missing_common    = !$student_id || !$school_year || !$semester || !$year_level || !$type_id || empty($subject_ids);
+$missing_regular   = !$is_irregular && !$section_id;
+$missing_irregular = $is_irregular && empty($subject_schedule);
+
+if ($missing_common || $missing_regular || $missing_irregular) {
     echo json_encode(['error' => 'Missing required fields.']);
     exit;
 }
@@ -89,50 +112,125 @@ function generate_student_no(mysqli $conn): string {
 }
 
 // Resolve the applicant's course — needed to scope subject/section
-    // validation. Fetched here, not trusted from the client payload.
-    $courseStmt = $conn->prepare("SELECT course_id FROM applicants WHERE applicant_id = ? LIMIT 1");
-    if (!$courseStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
-    }
-    $courseStmt->bind_param('i', $student_id);
-    $courseStmt->execute();
-    $courseRow = $courseStmt->get_result()->fetch_assoc();
-    $courseStmt->close();
+// validation. Fetched here, not trusted from the client payload.
+$courseStmt = $conn->prepare("SELECT course_id FROM applicants WHERE applicant_id = ? LIMIT 1");
+if (!$courseStmt) {
+    throw new RuntimeException('Database error: ' . $conn->error);
+}
+$courseStmt->bind_param('i', $student_id);
+$courseStmt->execute();
+$courseRow = $courseStmt->get_result()->fetch_assoc();
+$courseStmt->close();
 
-    if (!$courseRow || !$courseRow['course_id']) {
-        throw new RuntimeException('This applicant has no program assigned.');
-    }
-    $course_id = (int)$courseRow['course_id'];
+if (!$courseRow || !$courseRow['course_id']) {
+    throw new RuntimeException('This applicant has no program assigned.');
+}
+$course_id = (int)$courseRow['course_id'];
 
 $conn->begin_transaction();
 
 try {
-    // Section must exist and actually be offering this exact subject load
-    // for this year level / semester / school year. Re-validating here
-    // (rather than trusting the client) matches the all-or-nothing section
-    // package model from the subject-selection step.
-    $secCheck = $conn->prepare(
-        "SELECT COUNT(DISTINCT sch.subject_id)
-        FROM schedule sch
-        JOIN subject sub ON sub.subject_id = sch.subject_id
-        JOIN section sec ON sec.section_id = sch.section_id
-        WHERE sch.section_id = ? AND sec.course_id = ?
-        AND sch.school_year = ? AND sch.semester = ?
-        AND sub.year_level = ? AND sub.semester = ?"
-    );
-    if (!$secCheck) {
-        throw new RuntimeException('Database error: ' . $conn->error);
-    }
-    $secCheck->bind_param('iisiii', $section_id, $course_id, $school_year, $semester, $year_level, $semester);
-    $secCheck->execute();
-    $offered_count = (int)$secCheck->get_result()->fetch_row()[0];
-    $secCheck->close();
+    $credited_subject_ids = [];
 
-    if ($offered_count === 0) {
-        throw new RuntimeException('Selected section is not offered for this year level / semester.');
-    }
-    if ($offered_count !== count($subject_ids)) {
-        throw new RuntimeException('Subject selection does not match the section\'s current offering. Please go back and reselect the section.');
+    if ($is_irregular) {
+        // Irregular: no single section to validate against. Each picked
+        // (subject_id, schedule_id) pair is independently re-verified —
+        // real, active, correct course/year/semester — and the whole set
+        // is re-checked for time overlaps server-side (never trust the
+        // client's conflict check alone).
+        $slotStmt = $conn->prepare(
+            "SELECT sch.schedule_id, sch.subject_id, sch.day, sch.time_start, sch.time_end
+             FROM schedule sch
+             JOIN subject sub ON sub.subject_id = sch.subject_id
+             JOIN section sec ON sec.section_id = sch.section_id
+             WHERE sch.schedule_id = ? AND sch.subject_id = ?
+               AND sec.course_id = ? AND sub.year_level = ? AND sub.semester = ?
+               AND sch.semester = ? AND sch.school_year = ? AND sch.is_active = 1
+             LIMIT 1"
+        );
+        if (!$slotStmt) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+
+        $validatedSlots = [];
+        foreach ($subject_schedule as $pick) {
+            $slotStmt->bind_param(
+                'iiiiiis',
+                $pick['schedule_id'], $pick['subject_id'], $course_id, $year_level, $semester, $semester, $school_year
+            );
+            $slotStmt->execute();
+            $row = $slotStmt->get_result()->fetch_assoc();
+            if (!$row) {
+                $slotStmt->close();
+                throw new RuntimeException('One or more selected subjects are no longer available. Please go back and reselect.');
+            }
+            foreach ($validatedSlots as $v) {
+                if ($v['day'] === $row['day'] &&
+                    $row['time_start'] < $v['time_end'] &&
+                    $v['time_start'] < $row['time_end']) {
+                    $slotStmt->close();
+                    throw new RuntimeException('Two selected subjects have overlapping schedules. Please go back and reselect.');
+                }
+            }
+            $validatedSlots[] = $row;
+        }
+        $slotStmt->close();
+
+        $validatedSubjectIds = array_column($validatedSlots, 'subject_id');
+        sort($validatedSubjectIds);
+        $sentSubjectIds = $subject_ids;
+        sort($sentSubjectIds);
+        if ($validatedSubjectIds !== $sentSubjectIds) {
+            throw new RuntimeException('Subject selection does not match validated schedule picks. Please go back and reselect.');
+        }
+
+        // Subject credits don't apply to the irregular path — credited
+        // subjects are only relevant to Transferee/Regular's section-package
+        // model, where a whole fixed load minus credits needs reconciling.
+
+    } else {
+        // Section must exist and actually be offering this exact subject load
+        // for this year level / semester / school year. Re-validating here
+        // (rather than trusting the client) matches the all-or-nothing section
+        // package model from the subject-selection step.
+        $secCheck = $conn->prepare(
+            "SELECT COUNT(DISTINCT sch.subject_id)
+            FROM schedule sch
+            JOIN subject sub ON sub.subject_id = sch.subject_id
+            JOIN section sec ON sec.section_id = sch.section_id
+            WHERE sch.section_id = ? AND sec.course_id = ?
+            AND sch.school_year = ? AND sch.semester = ?
+            AND sub.year_level = ? AND sub.semester = ?"
+        );
+        if (!$secCheck) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $secCheck->bind_param('iisiii', $section_id, $course_id, $school_year, $semester, $year_level, $semester);
+        $secCheck->execute();
+        $offered_count = (int)$secCheck->get_result()->fetch_row()[0];
+        $secCheck->close();
+
+        if ($offered_count === 0) {
+            throw new RuntimeException('Selected section is not offered for this year level / semester.');
+        }
+
+        // Re-derive credited subjects server-side — the session count is a
+        // convenience, not a trust boundary.
+        $creditedStmt = $conn->prepare(
+            "SELECT sch.subject_id
+            FROM schedule sch
+            JOIN applicant_subject_credit c ON c.subject_id = sch.subject_id AND c.applicant_id = ?
+            WHERE sch.section_id = ? AND sch.school_year = ? AND sch.semester = ?"
+        );
+        $creditedStmt->bind_param('iisi', $student_id, $section_id, $school_year, $semester);
+        $creditedStmt->execute();
+        $credited_subject_ids = array_map('intval', array_column($creditedStmt->get_result()->fetch_all(MYSQLI_ASSOC), 'subject_id'));
+        $creditedStmt->close();
+
+        $expected_billable = $offered_count - count($credited_subject_ids);
+        if ($expected_billable !== count($subject_ids)) {
+            throw new RuntimeException('Subject selection does not match the section\'s current offering. Please go back and reselect the section.');
+        }
     }
 
     // Duplicate guard
@@ -194,7 +292,9 @@ try {
         );
     }
     // Total units being enrolled — needed to price per-unit fee items
-    // (e.g. Tuition Fee is a rate, not a flat amount).
+    // (e.g. Tuition Fee is a rate, not a flat amount). Credited subjects
+    // are already excluded from $subject_ids by this point, so they're
+    // correctly excluded from billed units too.
     $unitsPh    = implode(',', array_fill(0, count($subject_ids), '?'));
     $unitsTypes = str_repeat('i', count($subject_ids));
     $unitsStmt  = $conn->prepare(
@@ -319,7 +419,8 @@ try {
     // Insert enrollment. Status starts as "Pending Payment" — the payment
     // row below is auto-created with amount owed, but the student still
     // needs to actually pay; record_payment.php is what moves this to
-    // "Enrolled" once treasury records the payment.
+    // "Enrolled" once treasury records the payment. section_id is NULL
+    // for irregular enrollments — their schedule lives per-subject instead.
     $ins = $conn->prepare(
         "INSERT INTO enrollment (student_id, school_year, semester, year_level, section_id, status, type_id)
          VALUES (?, ?, ?, ?, ?, 'Pending Payment', ?)"
@@ -335,21 +436,53 @@ try {
     $enrollment_id = (int)$conn->insert_id;
     $ins->close();
 
-    // Insert subjects
+    // Insert subjects. Irregular enrollments carry a per-subject schedule_id
+    // (their subjects can come from different sections); Regular/Transferee
+    // leave it NULL since their schedule is implied by enrollment.section_id.
     $sub_stmt = $conn->prepare(
-        "INSERT INTO enrollment_subject (enrollment_id, subject_id, status) VALUES (?, ?, 'Enrolled')"
+        "INSERT INTO enrollment_subject (enrollment_id, subject_id, schedule_id, status) VALUES (?, ?, ?, 'Enrolled')"
     );
     if (!$sub_stmt) {
         throw new RuntimeException('Database error: ' . $conn->error);
     }
+
+    $scheduleBySubject = [];
+    if ($is_irregular) {
+        foreach ($subject_schedule as $pick) {
+            $scheduleBySubject[$pick['subject_id']] = $pick['schedule_id'];
+        }
+    }
+
     foreach ($subject_ids as $sid) {
-        $sub_stmt->bind_param('ii', $enrollment_id, $sid);
+        $schedule_id = $scheduleBySubject[$sid] ?? null;
+        $sub_stmt->bind_param('iii', $enrollment_id, $sid, $schedule_id);
         if (!$sub_stmt->execute()) {
             $sub_stmt->close();
             throw new RuntimeException('Database error: ' . $conn->error);
         }
     }
     $sub_stmt->close();
+
+    // Credited subjects also get recorded — not billed, no schedule, but
+    // kept on the academic record so it's clear the full curriculum is
+    // accounted for, not just what's being paid this term.
+    if (!empty($credited_subject_ids)) {
+        $credit_sub_stmt = $conn->prepare(
+            "INSERT INTO enrollment_subject (enrollment_id, subject_id, schedule_id, status)
+             VALUES (?, ?, NULL, 'Credited')"
+        );
+        if (!$credit_sub_stmt) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        foreach ($credited_subject_ids as $sid) {
+            $credit_sub_stmt->bind_param('ii', $enrollment_id, $sid);
+            if (!$credit_sub_stmt->execute()) {
+                $credit_sub_stmt->close();
+                throw new RuntimeException('Database error: ' . $conn->error);
+            }
+        }
+        $credit_sub_stmt->close();
+    }
 
     // Auto-create the payment row from the (now per-unit-resolved) fee items
     $amount_due = round(array_sum(array_column($feeItems, 'amount')), 2);

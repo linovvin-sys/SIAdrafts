@@ -106,6 +106,21 @@ if ($is_irregular) {
 
 $stmt->execute();
 $subjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$credited_subjects = [];
+if (!empty($enroll['credited_subject_ids'])) {
+    $cids = $enroll['credited_subject_ids'];
+    $ph = implode(',', array_fill(0, count($cids), '?'));
+    $types = str_repeat('i', count($cids));
+    $credStmt = $conn->prepare(
+        "SELECT subject_code, subject_name, units FROM subject WHERE subject_id IN ($ph) ORDER BY subject_code"
+    );
+    $credStmt->bind_param($types, ...$cids);
+    $credStmt->execute();
+    $credited_subjects = $credStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $credStmt->close();
+}
+
 $stmt->close();
 
 $total_units = array_sum(array_column($subjects, 'units'));
@@ -290,6 +305,30 @@ function fmt_time(string $t): string {
             </tfoot>
           </table>
         </div>
+        <!-- credited subjects table -->
+        <?php if (!empty($credited_subjects)): ?>
+          <div class="reg-section">
+            <h3 class="reg-section-title">Credited Subjects (Not Billed)</h3>
+            <table class="reg-table">
+              <thead>
+                <tr><th>Code</th><th>Subject Name</th><th>Units</th></tr>
+              </thead>
+              <tbody>
+                <?php foreach ($credited_subjects as $cs): ?>
+                <tr>
+                  <td class="text-mono"><?= htmlspecialchars($cs['subject_code']) ?></td>
+                  <td><?= htmlspecialchars($cs['subject_name']) ?></td>
+                  <td class="text-center"><?= number_format((float)$cs['units'], 0) ?></td>
+                </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+            <div class="alert-box alert-info mb-3">
+              <iconify-icon icon="mdi:information-outline"></iconify-icon>
+              These subjects were already completed at the applicant's previous school and are not included in this term's units or fees.
+            </div>
+          </div>
+          <?php endif; ?>
 
         <!-- Fee breakdown preview -->
         <div class="reg-section">

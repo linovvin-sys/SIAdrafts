@@ -134,6 +134,25 @@ foreach ($docs_submitted as $doc) {
 }
 $docStmt->close();
 
+$credited_subject_ids = array_map('intval', $_POST['credited_subjects'] ?? []);
+
+if (!empty($credited_subject_ids)) {
+    $creditStmt = $conn->prepare("
+        INSERT INTO applicant_subject_credit (applicant_id, subject_id, credited_by)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE credited_by = VALUES(credited_by)
+    ");
+    foreach ($credited_subject_ids as $sid) {
+        $creditStmt->bind_param('iis', $applicant_id, $sid, $verifying_staff_id);
+        if (!$creditStmt->execute()) {
+            $conn->rollback();
+            http_response_code(500);
+            echo json_encode(['success' => false, 'errors' => ['Database error (subject credits): ' . $creditStmt->error]]);
+            exit;
+        }
+    }
+    $creditStmt->close();
+}
 $conn->commit();
 $conn->close();
 
@@ -146,5 +165,6 @@ echo json_encode([
         'guardian'    => $applicant['guardian_name'] . ' (' . $applicant['guardian_relationship'] . ')',
         'verified_by' => $verifying_staff_id,
         'documents'   => $docs_submitted,
+        'credited_subjects' => count($credited_subject_ids),
     ],
 ]);

@@ -79,6 +79,23 @@ include '../Admission/Include/header.php';
           </div>
         </div>
 
+        <div class="form-section" v-if="applicant.applicant_type === 'Transferee' && creditableSubjects.length">
+          <div class="section-head">
+            <span class="section-num"><iconify-icon icon="mdi:file-check-outline"></iconify-icon></span>
+            <div>
+              <h2>Subject Credits</h2>
+              <p>Check off any subjects already satisfied at the applicant's previous school, based on their Transcript of Records.</p>
+            </div>
+          </div>
+
+          <div class="subject-credit-list">
+            <div class="doc-item" v-for="sub in creditableSubjects" :key="sub.subject_id">
+              <input type="checkbox" :id="'cr_'+sub.subject_id" v-model="creditedSubjectIds" :value="sub.subject_id">
+              <label :for="'cr_'+sub.subject_id">{{ sub.subject_code }} — {{ sub.subject_name }} ({{ sub.year_level }}Y, Sem {{ sub.semester }})</label>
+            </div>
+          </div>
+        </div>
+
         <div v-if="confirmError" class="alert-box alert-error mt-3">{{ confirmError }}</div>
 
         <div class="form-actions">

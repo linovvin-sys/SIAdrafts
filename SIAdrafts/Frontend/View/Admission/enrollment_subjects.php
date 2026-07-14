@@ -150,11 +150,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_irregular) {
             if (empty($subject_ids)) {
                 $post_error = 'That section has no subjects configured yet.';
             } else {
-                $_SESSION['enroll']['section_id']   = $section_id;
-                $_SESSION['enroll']['section_name'] = $secRow['section_name'];
-                $_SESSION['enroll']['subject_ids']  = $subject_ids;
-                header('Location: enrollment_confirm.php');
-                exit;
+                // Exclude any subjects this applicant has already been credited for
+                // (checked off during document verification at admission).
+                $appStmt = $conn->prepare("SELECT applicant_id FROM applicants WHERE reference_id = ?");
+                $appStmt->bind_param('s', $enroll['reference_id']);
+                $appStmt->execute();
+                $appRow = $appStmt->get_result()->fetch_assoc();
+                $appStmt->close();
+
+                $credited_subject_ids = [];
+                if ($appRow) {
+                    $credStmt = $conn->prepare("SELECT subject_id FROM applicant_subject_credit WHERE applicant_id = ?");
+                    $credStmt->bind_param('i', $appRow['applicant_id']);
+                    $credStmt->execute();
+                    $credited_subject_ids = array_map('intval', array_column($credStmt->get_result()->fetch_all(MYSQLI_ASSOC), 'subject_id'));
+                    $credStmt->close();
+                }
+
+                $billable_subject_ids = array_values(array_diff($subject_ids, $credited_subject_ids));
+                $credited_in_section  = array_values(array_intersect($subject_ids, $credited_subject_ids));
+
+                if (empty($billable_subject_ids)) {
+                    $post_error = 'All subjects in this section are already credited. Please contact the registrar.';
+                } else {
+                    $_SESSION['enroll']['section_id']           = $section_id;
+                    $_SESSION['enroll']['section_name']         = $secRow['section_name'];
+                    $_SESSION['enroll']['subject_ids']          = $billable_subject_ids;
+                    $_SESSION['enroll']['credited_subject_ids'] = $credited_in_section;
+                    header('Location: enrollment_confirm.php');
+                    exit;
+                }
             }
         }
     }

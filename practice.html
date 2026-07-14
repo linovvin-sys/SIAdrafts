@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app">
+        <h1>Find My Balls</h1>
+        <div v-if="phase === 'setup' && phase !== 'matchOver'">
+            <h2>Enter Player Names</h2>
+            <input v-model="names[0]" placeholder="player 1">
+            <input v-model="names[1]" placeholder="player 2">
+            <button @click="startGame">Start Game</button>
+        </div>
+
+        <div v-else>
+            <div class="scoreboard">
+                <span>{{ names[0] }}: {{ scores[0] }}</span>
+                <span>{{ names[1] }}: {{ scores[1] }}</span>
+            </div>
+        </div>
+
+        <div>
+            <template v-if="phase !== 'setup'">
+                <h3>{{ message }}</h3>
+                <template v-if="phase !== 'matchOver'">
+                    <span>Round: {{ round }} / 5</span>
+                    <span>Tries: {{ tries }}</span>
+                </template>
+                <template v-else>
+                    <span>Winner: {{ winner }}</span>
+                </template>
+            </template>
+        </div>
+
+        <div class="cup-grid" v-if="phase !== 'setup'">
+            <div v-for="(cup, i) in 10" :class="cupClass(i)" @click="clickCup(i)">
+                <span v-if="ballVisible && ball === i">&#9917;</span>
+                <img src="cup.png" alt="cup">
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            <button v-if="phase === 'reveal'" @click="phase = 'guessing'">Start Guessing</button>
+            <template v-if="phase === 'roundWon' || phase === 'roundLost'">
+                <button @click="newRound">Try Again</button>
+                <button @click="nextRound">Next Round</button>
+            </template>
+
+            <template v-if="phase === 'matchOver'">
+                <button @click="restart">Restart</button>
+                <button @click="phase = 'setup'">Change Players</button>
+            </template>
+        </div>
+    </div>
+</body>
+<script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+<script>
+    const { createApp } = Vue;
+    createApp({
+        data(){
+            return{
+                names: ['', ''],
+                scores: [0, 0],
+                round: 1,
+                phase: 'setup',
+                ball: null,
+                tries: 3,
+                wrong: [],
+                winner: ''
+            }
+        },
+        computed: {
+            hider(){
+                return this.round % 2 === 1 ? 0 : 1;
+            },
+            guesser(){
+                return 1 - this.hider;
+            },
+            ballVisible(){
+                return this.phase === "roundLost" || this.phase === "roundWon" || this.phase === "reveal"
+            },
+            message(){
+                var h = this.names[this.hider];
+                var g = this.names[this.guesser];
+                if(this.phase === "hiding"){
+                    return h + ", choose a cup to hide your ball";
+                }else if(this.phase === "reveal"){
+                    return h + " placed the ball under cup " + (this.ball + 1);
+                }else if(this.phase === "guessing"){
+                    return this.tries < 3 ? "Wrong cup try again." : g + " Choose a cup to guess."
+                }else if(this.phase === "roundLost"){
+                    return g = "Lost this round, points given to " + h;
+                }else if(this.phase === "roundWon"){
+                    return "Congratulations!" + g + " won the round!";
+                }else if(this.phase === "machOver"){
+                    return this.winner + " is the winner of the match.";
+                }
+                return '';
+            }
+        },
+        methods: {
+            startGame(){
+                this.names[0] = this.names[0].trim() || "Player 1";
+                this.names[1] = this.names[1].trim() || "Player 2";
+                this.scores = [0, 0];
+                this.round = 1;
+                this.newRound();
+            },
+            newRound(){
+                this.tries = 3;
+                this.wrong = Array(10).fill(false);
+                this.ball = null;
+                this.phase = "hiding";
+            },
+            restart(){
+                this.scores = [0,0];
+                this.round = 1;
+                this.winner = '';
+                this.newRound();
+            },
+            cupClass(i){
+                if(this.wrong[i]){
+                    return "wrong";
+                }
+                if(this.phase === "hiding" || this.phase === "guessing"){
+                    return "clickable";
+                }
+                return "disabled";
+            },
+            clickCup(i){
+                if(this.phase === "hiding"){
+                    this.ball = i;
+                    this.phase = "reveal";
+                    return;
+                }
+                if(this.phase !== "guessing" || this.wrong[i]){
+                    return;
+                }
+                if(i === this.ball){
+                    this.givePoint(this.guesser, "roundWon");
+                }else{
+                    this.wrong[i] = true;
+                    this.tries--;
+                    if(this.tries === 0){
+                        this.givePoint(this.hider, "roundLost");
+                    }
+                }
+            },
+            givePoint(p, next){
+                this.scores[p]++
+                if(this.scores[p] >= 3){
+                    this.winner = this.names[p];
+                    this.phase = "matchOver";
+                }else{
+                    this.phase = next;
+                }
+            },
+            nextRound(){
+                if(this.round === 5){
+                    this.winner = this.scores[0] > this.scores[1]
+                        ? "Nobody won (Tie)"
+                        : this.names[this.score[0] > this.scores[1] ? 0 : 1]
+                    this.phase = "matchOver";
+                }else{
+                    this.round++;
+                    this.newRound();
+                }
+            }
+        }
+    }).mount('#app');
+</script>
+</html>

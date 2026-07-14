@@ -14,6 +14,8 @@ if (document.getElementById('confirm-app')) {
         'Birth Certificate (PSA)',
         '2x2 ID Photos',
       ],
+      creditableSubjects: [],
+      creditedSubjectIds: [],
     }),
     methods: {
       async search() {
@@ -27,19 +29,36 @@ if (document.getElementById('confirm-app')) {
 
         this.searching = true;
         try {
-          const r = await fetch(`/SIAdrafts/Backend/api/get_applicant.php?reference_id=${encodeURIComponent(ref)}`);
-          const d = await r.json();
-          if (!r.ok || d.error) {
+            const r = await fetch(`/SIAdrafts/Backend/api/get_applicant.php?reference_id=${encodeURIComponent(ref)}`);
+            const d = await r.json();
+            if (!r.ok || d.error) {
             this.lookupError = d.error || 'Could not find that reference ID.';
             return;
-          }
-          this.applicant = d.applicant;
+            }
+            this.applicant = d.applicant;
+
+            if (this.applicant.applicant_type === 'Transferee') {
+                try {
+                    const cr = await fetch(`/SIAdrafts/Backend/api/get_creditable_subjects.php?reference_id=${encodeURIComponent(ref)}`);
+                    const cd = await cr.json();
+                    if (cd.error) {
+                    console.warn('Could not load creditable subjects:', cd.error);
+                    } else {
+                    this.creditableSubjects  = cd.subjects || [];
+                    this.creditedSubjectIds  = cd.already_credited || [];
+                    }
+                } catch (err) {
+                    console.error('Creditable subjects fetch failed:', err);
+                }
+            }
+        
+
         } catch (_) {
-          this.lookupError = 'Connection error. Please try again.';
+            this.lookupError = 'Connection error. Please try again.';
         } finally {
-          this.searching = false;
+            this.searching = false;
         }
-      },
+        },
 
       async confirm() {
         this.confirmError = '';
@@ -68,6 +87,7 @@ if (document.getElementById('confirm-app')) {
           const body = new FormData();
           body.append('reference_id', this.referenceId.trim());
           this.checkedDocs.forEach(doc => body.append('docs[]', doc));
+          this.creditedSubjectIds.forEach(sid => body.append('credited_subjects[]', sid));
 
           const r = await fetch('/SIAdrafts/Backend/api/confirm_admission.php', {
             method: 'POST',

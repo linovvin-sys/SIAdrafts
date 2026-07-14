@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Find My Balls</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <div id="app">
+    <h1>Find My Balls</h1>
+
+    <div class="card">
+
+      <!-- SETUP SCREEN -->
+      <div v-if="phase === 'setup'" class="setup">
+        <h2>Enter Player Names</h2>
+        <div class="name-inputs">
+          <input v-model="names[0]" placeholder="Player 1" />
+          <input v-model="names[1]" placeholder="Player 2" />
+        </div>
+        <button class="btn" v-on:click="startGame">Start Game</button>
+      </div>
+
+      <!-- GAME SCREEN -->
+      <div v-else>
+        <div class="scoreboard">
+          <span>Round: {{ round }} / 5</span>
+          <span>{{ names[0] }} Score: {{ scores[0] }}</span>
+          <span>{{ names[1] }} Score: {{ scores[1] }}</span>
+        </div>
+
+        <div class="message-area">
+          <div class="main-msg">{{ message }}</div>
+
+          <template v-if="phase !== 'matchOver'">
+            <div class="tries">Tries Left: {{ tries }}</div>
+            <div class="sub-msg">First to 3 points wins.</div>
+          </template>
+          <div v-else class="win-line">Match Winner: {{ winner }}</div>
+        </div>
+
+        <div class="cup-grid">
+          <div
+            v-for="(cup, i) in 10"
+            class="cup-slot"
+            v-bind:class="cupClass(i)"
+            v-on:click="clickCup(i)"
+          >
+            <span class="ball-emoji" v-if="ballVisible && ball === i">&#9917;</span>
+            <img src="cup.png" alt="cup" class="cup-img" />
+          </div>
+        </div>
+
+        <div class="action-buttons">
+          <button v-if="phase === 'reveal'" class="btn" v-on:click="phase = 'guessing'">Start Guessing</button>
+
+          <template v-if="phase === 'roundWon' || phase === 'roundLost'">
+            <button class="btn secondary" v-on:click="newRound">Try Again</button>
+            <button class="btn" v-on:click="nextRound">Next Round</button>
+          </template>
+
+          <template v-if="phase === 'matchOver'">
+            <button class="btn" v-on:click="restart">Try Again</button>
+            <button class="btn secondary" v-on:click="phase = 'setup'">Change Players</button>
+          </template>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+
+  <script>
+    Vue.createApp({
+      data() {
+        return {
+          names: ['', ''], scores: [0, 0], round: 1,
+          phase: 'setup', ball: null, tries: 3, wrong: [], winner: ''
+        }
+      },
+
+      computed: {
+        // odd rounds -> player 0 hides; guesser is just the other player
+        hider()   { return this.round % 2 === 1 ? 0 : 1 },
+        guesser() { return 1 - this.hider },
+
+        ballVisible() {
+          return this.phase === 'reveal' || this.phase === 'roundWon' || this.phase === 'roundLost'
+        },
+
+        message() {
+          var h = this.names[this.hider], g = this.names[this.guesser]
+          if (this.phase === 'hiding')    return h + ': Choose a cup to hide the ball.'
+          if (this.phase === 'reveal')    return h + ' placed the ball under Cup ' + (this.ball + 1) + '.'
+          if (this.phase === 'guessing')  return this.tries < 3 ? 'Wrong cup! Try again.' : g + ': Choose a cup to find the ball.'
+          if (this.phase === 'roundWon')  return 'Congratulations! ' + g + ' found the ball!'
+          if (this.phase === 'roundLost') return 'Game Over! ' + g + ' did not find the ball.'
+          if (this.phase === 'matchOver') return this.winner + ' wins the Best of 5 match!'
+          return ''
+        }
+      },
+
+      methods: {
+        startGame() {
+          this.names[0] = this.names[0].trim() || 'Player 1'
+          this.names[1] = this.names[1].trim() || 'Player 2'
+          this.scores = [0, 0]
+          this.round = 1
+          this.newRound()
+        },
+
+        newRound() {
+          this.ball = null
+          this.tries = 3
+          this.wrong = Array(10).fill(false)
+          this.phase = 'hiding'
+        },
+
+        // Replay the whole match with the SAME player names
+        restart() {
+          this.scores = [0, 0]
+          this.round = 1
+          this.winner = ''
+          this.newRound()
+        },
+
+        cupClass(i) {
+          if (this.wrong[i]) return 'wrong'
+          if (this.phase === 'hiding') return 'clickable'
+          if (this.phase === 'guessing') return 'clickable'
+          return 'disabled'
+        },
+
+        clickCup(i) {
+          if (this.phase === 'hiding') { this.ball = i; this.phase = 'reveal'; return }
+          if (this.phase !== 'guessing' || this.wrong[i]) return
+
+          if (i === this.ball) {
+            this.givePoint(this.guesser, 'roundWon')
+          } else {
+            this.wrong[i] = true
+            this.tries--
+            if (this.tries === 0) this.givePoint(this.hider, 'roundLost')
+          }
+        },
+
+        givePoint(p, next) {
+          this.scores[p]++
+          if (this.scores[p] >= 3) { this.winner = this.names[p]; this.phase = 'matchOver' }
+          else this.phase = next
+        },
+
+        nextRound() {
+          if (this.round === 5) {
+            this.winner = this.scores[0] === this.scores[1]
+              ? 'Nobody (tie)'
+              : this.names[this.scores[0] > this.scores[1] ? 0 : 1]
+            this.phase = 'matchOver'
+          } else {
+            this.round++
+            this.newRound()
+          }
+        }
+      }
+    }).mount('#app')
+  </script>
+</body>
+</html>
