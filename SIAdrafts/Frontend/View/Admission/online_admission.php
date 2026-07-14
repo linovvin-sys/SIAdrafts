@@ -20,7 +20,7 @@ $conn = $db->connect();
 
 // Populate the program dropdown from the course table.
 $courses = [];
-$courseResult = $conn->query("SELECT course_id, course_name FROM course ORDER BY course_name ASC");
+$courseResult = $conn->query("SELECT course_id, course_name FROM course WHERE status = 'Approved' ORDER BY course_name ASC");
 if ($courseResult) {
     $courses = $courseResult->fetch_all(MYSQLI_ASSOC);
 }

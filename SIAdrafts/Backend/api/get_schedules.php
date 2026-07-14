@@ -15,11 +15,14 @@ $conn = $db->connect();
 // Optional filters — default to nothing (return everything) if not passed.
 $school_year = trim($_GET['school_year'] ?? '');
 $semester    = (int)($_GET['semester'] ?? 0);
+// status: defaults to 'Approved' only, so Pending/Rejected registrar
+// submissions never show up as live schedules here. Pass status=all to bypass.
+$status_filter = trim($_GET['status'] ?? 'Approved');
 
 $sql = "
     SELECT
         sch.schedule_id, sch.subject_id, sch.professor_id, sch.section_id, sch.room_id,
-        sch.day, sch.time_start, sch.time_end, sch.school_year, sch.semester,
+        sch.day, sch.time_start, sch.time_end, sch.school_year, sch.semester, sch.status,
         sub.subject_code, sub.subject_name, sub.year_level,
         sec.section_name, sec.course_id,
         c.course_code,
@@ -46,6 +49,11 @@ if ($semester) {
     $conds[]  = 'sch.semester = ?';
     $params[] = $semester;
     $types   .= 'i';
+}
+if ($status_filter !== 'all') {
+    $conds[]  = 'sch.status = ?';
+    $params[] = $status_filter;
+    $types   .= 's';
 }
 if ($conds) {
     $sql .= ' WHERE ' . implode(' AND ', $conds);
