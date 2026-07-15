@@ -160,7 +160,7 @@
             },
             nextRound(){
                 if(this.round === 5){
-                    this.winner = this.scores[0] > this.scores[1]
+                    this.winner = this.scores[0] === this.scores[1]
                         ? "Nobody won (Tie)"
                         : this.names[this.score[0] > this.scores[1] ? 0 : 1]
                     this.phase = "matchOver";

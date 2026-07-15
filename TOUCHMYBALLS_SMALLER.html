@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lab Exam</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.js"></script>
+    <style>
+        .cup:hover{
+            border: 3px solid red !important;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div id="app" class="container py-4">
+        <h2 class="text-center font-weight-bold mb-4 text-danger">Find My Balls</h2>
+        
+        <!-- SETUP -->
+        <div v-if="screen === 'setup'" class="card p-4 mx-auto" style="max-width: 600px;">
+            <h5 class="text-center mb-3">Enter Player Names</h5>
+            <form @submit.prevent="startGame">
+                <div class="row mb-3">
+                    <div class="col">
+                        <input type="text" class="form-control" placeholder="Player 1" v-model="p1Name" required>
+                    </div>
+                    <div class="col">
+                        <input type="text" class="form-control" placeholder="Player 2" v-model="p2Name" required>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <button class="btn btn-danger px-4">Start Game</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- GAME SCREEN -->
+        <div v-if="screen === 'game'">
+            <!-- SCORE BAR -->
+            <div class="card text-center mb-3">
+                <div class="card-body py-2 px-4">
+                    <span class="mr-3 font-weight-normal">Round {{round}}/5</span>
+                    <span class="mr-3 font-weight-normal">{{p1Name}} Score: {{p1Score}}</span>
+                    <span class="font-weight-normal">{{p2Name}} Score: {{p2Score}}</span>
+                </div>
+            </div>
+
+            <!-- GAME CARD -->
+            <div class="card py-4 px-6">
+
+                <!-- Message -->
+                <div class="text-center mb-3">
+                    <h5 class="font-weight-bold">{{message}}</h5>
+                    <p class="mb-1" v-if="phase === 'hide' || phase === 'seek' || phase === 'nofound'">
+                        Tries Left: {{tries}}
+                    </p>
+                    <small class="text-muted">First to 3 points wins.</small>
+                    <p class="text-success font-weight-bold" v-if="phase === 'gameover'">Match Winner: {{winner}}</p>
+                </div>
+
+                <!-- ROW 1 -->
+                <div class="d-flex justify-content-center g-3 mb-3">
+                    <div v-for="i in 5" :key="i" class="cup d-flex align-items-center justify-content-center rounded border"
+                        style="width: 100px; height: 100px; cursor: pointer;"
+                        :class="cups[i - 1] !== 'hidden' ? 'border-secondary' : 'border-white'"
+                        @click="clickCup(i - 1)">
+                        <img :src="getImage(i - 1)" style="width: 75px; height: 85px; object-fit: contain;">
+                    </div>
+                </div>
+
+                <!-- ROW 2 -->
+                <div class="d-flex justify-content-center g-3 mb-3">
+                    <div v-for="i in 5" :key="i + 5" 
+                        class="cup d-flex align-items-center justify-content-center rounded border"
+                        style="width: 100px; height: 100px; cursor: pointer;"
+                        :class="cups[i + 4] !== 'hidden' ? 'border-secondary' : 'border-white'"
+                        @click="clickCup(i + 4)">
+                        <img :src="getImage(i + 4)" style="width: 75px; height: 85px; object-fit: contain;">
+                    </div>
+                </div>
+
+                <!-- BUTTONS -->
+                <div class="d-flex justify-content-center g-2">
+                    <button @click="tryAgain" class="btn btn-danger text-white px-4">
+                        Try Again
+                    </button>
+                    <button @click="nextRound" v-if="phase === 'nofound' || phase === 'result'" class="btn btn-danger text-white px-4">
+                        Next Round
+                    </button>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+
+    <script>
+        const {createApp, ref} = Vue;
+
+        createApp({
+            setup(){
+                var screen = ref('setup');
+                var phase = ref('hide');
+                var message = ref('');
+
+                var p1Name = ref("");
+                var p2Name = ref("");
+                var p1Score = ref(0);
+                var p2Score = ref(0);
+
+                var hider = ref("");
+                var seeker = ref("");
+                var round = ref(1);
+                var tries = ref(3);
+                var ballIndex = ref(-1);
+                var winner = ref("");
+
+                // CUPS
+                const defaultCups = ['hidden','hidden','hidden','hidden','hidden','hidden','hidden','hidden','hidden','hidden']
+                var cups = ref([...defaultCups])
+
+                // FUNCTIONS
+                function resetCups(){
+                    cups.value = [...defaultCups]
+                }
+
+                function revealCups(){
+                    for(let i = 0; i < 10; i++){
+                        cups.value[i] = i === ballIndex.value ? 'found' : 'empty'
+                    }
+                }
+
+                function addPoint(player){
+                    if(player === p1Name.value) p1Score.value++;
+                    else p2Score.value++;
+                }
+
+                function swapPlayers(){
+                    let temp = hider.value;
+                    hider.value = seeker.value;
+                    seeker.value = temp;
+                }
+
+                function startGame(){
+                    p1Score.value = 0;
+                    p2Score.value = 0;
+                    round.value = 1;
+                    tries.value = 3;
+                    ballIndex.value = -1;
+                    hider.value = p1Name.value;
+                    seeker.value = p2Name.value;
+                    screen.value = 'game';
+                    phase.value = 'hide';
+                    message.value = hider.value + ": Choose a cup to hide the ball."
+                    resetCups();
+                }
+
+                function getImage(i){
+                    if (cups.value[i] === 'empty') return 'cup_wrong.png'
+                    if (cups.value[i] === 'found') return 'cup_ball.png'
+                    return 'cup.png'
+                }
+
+                function clickCup(i){
+                    if(phase.value === 'hide'){
+                        ballIndex.value = i;
+                        cups.value[i] = 'found';
+                        message.value = hider.value + " placed the ball under Cup " + (i +1) + '.';
+                        phase.value = 'handoff';
+
+                        setTimeout(function(){
+                            cups.value[i] = 'hidden'
+                            phase.value = 'seek'
+                            message.value = seeker.value + ": Choose a cup. You have " + tries.value + " tries."
+                        }, 1000);
+                    }
+
+                    if(phase.value === 'seek'){
+                        if(cups.value[i] !== 'hidden'){
+                            return
+                        }
+
+                        if(i === ballIndex.value){
+                            cups.value[i] = 'found'
+                            addPoint(seeker.value);
+                            checkWin();
+
+                            if(phase.value !== 'gameover'){
+                                phase.value = 'result';
+                                message.value = seeker.value + " found the ball!";
+                                revealCups();
+                            }
+                        }else{
+                            cups.value[i] = 'empty';
+                            tries.value--;
+                            message.value = "Wrong cup! Try again."
+
+                            if(tries.value === 0){
+                                addPoint(hider.value);
+                                revealCups();
+                                checkWin();
+
+                                if(phase.value !== 'gameover'){
+                                    phase.value = 'nofound'
+                                    message.value = "Game Over! " + seeker.value + " did not find the ball.";
+                                }
+                            }
+                        }
+                    }
+                }
+
+                function checkWin(){
+                    if(p1Score.value >= 3 || p2Score.value >= 3){
+                        phase.value = 'gameover';
+
+                        winner.value = p1Score.value > p2Score.value ? p1Name.value : p2Name.value;
+                        message.value = winner.value + " wins the Best of 5 match!";
+                    }
+                }
+
+                function nextRound(){
+                    round.value++
+                    swapPlayers()
+                    tries.value = 3
+                    ballIndex.value = -1
+                    phase.value = 'hide'
+                    message.value = hider.value + ": Choose a cup to hide the ball." 
+                    resetCups();
+                }
+
+                function tryAgain(){
+                    startGame();
+                }
+
+                return{
+                    screen, phase, message,
+                    p1Name, p2Name, p1Score, p2Score,
+                    hider, seeker, round, tries, ballIndex, winner,
+                    cups,
+                    startGame, getImage, clickCup,
+                    nextRound, tryAgain,
+                }
+            }
+
+        }).mount('#app');
+    </script>
+</body>
+</html>

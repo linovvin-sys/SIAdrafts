@@ -16,6 +16,32 @@ if ($isHead) {
     $pendingCount = (int)($res->fetch_assoc()['cnt'] ?? 0);
     $db->close();
 }
+
+// Pending readmission requests — Head Registrar only, same pattern as
+// the schedule-approval badge above.
+$pendingReadmissionCount = 0;
+if ($isHead) {
+    require_once __DIR__ . '/../../../../Backend/db.php';
+    $db   = new Database();
+    $conn = $db->connect();
+    $res  = $conn->query("SELECT COUNT(*) AS cnt FROM readmission_request WHERE status = 'Pending'");
+    $pendingReadmissionCount = (int)($res->fetch_assoc()['cnt'] ?? 0);
+    $db->close();
+}
+
+// Unread message count for whoever's logged in — both roles can receive.
+$unreadCount = 0;
+if (!empty($_SESSION['user_id'])) {
+    require_once __DIR__ . '/../../../../Backend/db.php';
+    $db   = new Database();
+    $conn = $db->connect();
+    $msgStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM messages WHERE recipient_id = ? AND read_at IS NULL");
+    $msgStmt->bind_param('i', $_SESSION['user_id']);
+    $msgStmt->execute();
+    $unreadCount = (int)($msgStmt->get_result()->fetch_assoc()['cnt'] ?? 0);
+    $msgStmt->close();
+    $db->close();
+}
 ?>
 <!-- ===== SIDEBAR ===== -->
 <aside class="sidebar">
@@ -67,6 +93,32 @@ if ($isHead) {
     </a>
 
     <?php if ($isHead): ?>
+    <a href="<?= $root ?>View/Registrar/pending_readmissions.php" class="nav-item<?= ($activePage ?? '') === 'readmission' ? ' active' : '' ?>" data-page="readmission">
+      <span class="nav-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </span>
+      <span class="nav-text">Readmissions</span>
+      <?php if ($pendingReadmissionCount > 0): ?>
+        <span class="nav-badge"><?= $pendingReadmissionCount ?></span>
+      <?php endif; ?>
+    </a>
+    <?php else: ?>
+    <a href="<?= $root ?>View/Registrar/readmission_request.php" class="nav-item<?= ($activePage ?? '') === 'readmission' ? ' active' : '' ?>" data-page="readmission">
+      <span class="nav-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </span>
+      <span class="nav-text">Readmission Request</span>
+    </a>
     <a href="<?= $root ?>View/Registrar/pending_approval.php" class="nav-item<?= ($activePage ?? '') === 'pending' ? ' active' : '' ?>" data-page="pending">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -80,6 +132,24 @@ if ($isHead) {
       <?php endif; ?>
     </a>
     <?php endif; ?>
+
+  </nav>
+
+  <!-- COMMUNICATION -->
+  <nav class="nav-section">
+    <div class="nav-label">Communication</div>
+
+    <a href="<?= $root ?>View/Registrar/messages.php" class="nav-item<?= ($activePage ?? '') === 'messages' ? ' active' : '' ?>" data-page="messages">
+      <span class="nav-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 4h16v12H7l-3 3z"/>
+        </svg>
+      </span>
+      <span class="nav-text">Messages</span>
+      <?php if ($unreadCount > 0): ?>
+        <span class="nav-badge"><?= $unreadCount ?></span>
+      <?php endif; ?>
+    </a>
 
   </nav>
 

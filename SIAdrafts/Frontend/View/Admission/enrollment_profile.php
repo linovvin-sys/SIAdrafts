@@ -68,9 +68,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // --- GET: resolve student from URL params ---
 if (!$student && $_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['reference_id'])) {
-        $rid  = trim($_GET['reference_id']);  // string, no int cast
-        $stmt = $conn->prepare($student_query . " WHERE a.reference_id = ?");
-        $stmt->bind_param('s', $rid);
+      $rid  = trim($_GET['reference_id']);
+      $stmt = $conn->prepare(
+          $student_query . "
+          LEFT JOIN student s ON s.applicant_id = a.applicant_id
+          WHERE a.reference_id = ? OR s.student_id = ?"
+      );
+      $stmt->bind_param('ss', $rid, $rid);
         $stmt->execute();
         $student = $stmt->get_result()->fetch_assoc() ?: null;
         $stmt->close();
