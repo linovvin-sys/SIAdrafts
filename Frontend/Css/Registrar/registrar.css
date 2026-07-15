@@ -73,3 +73,41 @@
 }
 .dashboard-card .value { font-size: 28px; font-weight: 700; }
 .dashboard-card .label { font-size: 13px; color: #6b7280; margin-top: 4px; }
+
+/* ---- Add / Drop Subject ---- */
+.addrop-search-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  max-width: 480px;
+}
+.addrop-empty {
+  margin-top: 14px;
+  font-size: 13px;
+  color: #6b7280;
+}
+.student-info-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 18px;
+}
+.info-item .info-label {
+  font-size: 12px;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: .03em;
+  margin-bottom: 4px;
+}
+.info-item .info-value {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+.addrop-schedule-preview {
+  font-size: 13px;
+  color: #4b5563;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px 10px;
+}
