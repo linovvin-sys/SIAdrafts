@@ -52,7 +52,7 @@ if ($is_shifting && !$new_course_id) {
 }
 
 $stmt = $conn->prepare(
-    "SELECT student_id FROM student WHERE student_no = ? LIMIT 1"
+    "SELECT student_id, applicant_id FROM student WHERE student_no = ? LIMIT 1"
 );
 $stmt->bind_param('s', $student_no);
 $stmt->execute();
@@ -63,37 +63,43 @@ if (!$student) {
     echo json_encode(['success' => false, 'error' => 'No student found with that Student ID.']);
     exit;
 }
-$student_id = (int)$student['student_id'];
+$student_id    = (int)$student['student_id'];
+$applicant_id  = (int)$student['applicant_id'];
 
 // Block students who are currently enrolled — readmission is only for
 // students who have previously stopped out (LOA, dropped, etc.)
+// NOTE: enrollment.student_id is misleadingly named — its FK actually
+// references applicants.applicant_id, not student.student_id.
 $statusStmt = $conn->prepare(
-    "SELECT status FROM enrollment
-     WHERE student_id = ?
-     ORDER BY school_year DESC, semester DESC, created_at DESC
+    "SELECT e.status, est.is_active
+     FROM enrollment e
+     LEFT JOIN enrollment_status_type est ON est.status_name = e.status
+     WHERE e.student_id = ?
+     ORDER BY e.school_year DESC, e.semester DESC, e.created_at DESC
      LIMIT 1"
 );
-$statusStmt->bind_param('i', $student_id);
+$statusStmt->bind_param('i', $applicant_id);
 $statusStmt->execute();
 $latestEnrollment = $statusStmt->get_result()->fetch_assoc();
 $statusStmt->close();
 
-if ($latestEnrollment && $latestEnrollment['status'] === 'Enrolled') {
-    echo json_encode(['success' => false, 'error' => 'This student is currently enrolled and is not eligible for readmission.']);
+if ($latestEnrollment && (int)$latestEnrollment['is_active'] === 1) {
+    echo json_encode(['success' => false, 'error' => 'This student has an active enrollment (' . $latestEnrollment['status'] . ') and is not eligible for readmission.']);
     exit;
 }
 
-// Block a duplicate request for the same student in the same school year/semester
+// Block a duplicate *pending* request for the same student/term.
+// A previously rejected request shouldn't block refiling.
 $dupStmt = $conn->prepare(
     "SELECT request_id FROM readmission_request
-     WHERE student_id = ? AND requested_school_year = ? AND requested_semester = ?
+     WHERE student_id = ? AND requested_school_year = ? AND requested_semester = ? AND status = 'Pending'
      LIMIT 1"
 );
 $dupStmt->bind_param('isi', $student_id, $school_year, $semester);
 $dupStmt->execute();
 if ($dupStmt->get_result()->fetch_assoc()) {
     $dupStmt->close();
-    echo json_encode(['success' => false, 'error' => 'A readmission request already exists for this student for that school year and semester.']);
+    echo json_encode(['success' => false, 'error' => 'This student already has a pending readmission request for that school year and semester.']);
     exit;
 }
 $dupStmt->close();
