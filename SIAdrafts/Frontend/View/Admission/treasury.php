@@ -28,7 +28,25 @@ $queueStmt = $conn->prepare(
 $queueStmt->execute();
 $queue = $queueStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $queueStmt->close();
- 
+
+// ---- Queue: pending add/drop subject-change fees ----
+$feeQueueStmt = $conn->prepare(
+    "SELECT scf.fee_id, scf.action, scf.units, scf.amount,
+            sub.subject_code, sub.subject_name,
+            COALESCE(s.student_no, a.reference_id) AS display_id, a.first_name, a.last_name
+     FROM subject_change_fee scf
+     JOIN enrollment_subject es ON es.enrollment_subject_id = scf.enrollment_subject_id
+     JOIN subject sub           ON sub.subject_id = es.subject_id
+     JOIN enrollment e          ON e.enrollment_id = scf.enrollment_id
+     JOIN applicants a          ON a.applicant_id = e.student_id
+     LEFT JOIN student s        ON s.applicant_id = a.applicant_id
+     WHERE scf.status = 'Pending'
+     ORDER BY scf.created_at ASC"
+);
+$feeQueueStmt->execute();
+$feeQueue = $feeQueueStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$feeQueueStmt->close();
+
 // ---- Queue: enrollments awaiting payment setup (no payment row yet) ----
 // As of the fee-schedule automation, save_enrollment.php auto-creates the
 // payment row (with amount + due date pulled from fee_schedule) at the
@@ -185,8 +203,40 @@ function student_fullname_t(array $s): string {
           </tbody>
         </table>
       <?php endif; ?>
+
+      <?php if (!empty($feeQueue)): ?>
+        <h3 style="margin:24px 0 12px;">Pending Subject-Change Fees</h3>
+        <table class="queue-table">
+          <thead>
+            <tr>
+              <th>Student</th>
+              <th>ID</th>
+              <th>Subject</th>
+              <th>Action</th>
+              <th>Amount</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($feeQueue as $row): ?>
+              <tr>
+                <td><?= htmlspecialchars(student_fullname_t($row)) ?></td>
+                <td><?= htmlspecialchars(fmt_id_t($row['display_id'])) ?></td>
+                <td><?= htmlspecialchars($row['subject_code'] . ' — ' . $row['subject_name']) ?> (<?= htmlspecialchars($row['units']) ?> units)</td>
+                <td><span class="status-pill <?= $row['action'] === 'Add' ? 'down' : 'unpaid' ?>"><?= htmlspecialchars($row['action']) ?></span></td>
+                <td>₱<?= number_format((float)$row['amount'], 2) ?></td>
+                <td>
+                  <button class="btn-pay-row" data-fee-id="<?= (int)$row['fee_id'] ?>" data-student="<?= htmlspecialchars(student_fullname_t($row), ENT_QUOTES) ?>">
+                    Pay
+                  </button>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      <?php endif; ?>
     </div>
- 
+
     <!-- ===== SETUP QUEUE VIEW (legacy fallback — enrollments with no
          payment row, e.g. created before fee-schedule automation) ===== -->
     <div id="setupPanel" style="display:none;">

@@ -49,7 +49,8 @@ $statusStmt->execute();
 $latestEnrollment = $statusStmt->get_result()->fetch_assoc();
 $statusStmt->close();
 
-if ($latestEnrollment && $latestEnrollment['status'] === 'Enrolled') {
+$activeStatuses = ['Enrolled', 'Pending Payment'];
+if ($latestEnrollment && in_array($latestEnrollment['status'], $activeStatuses, true)) {
     echo json_encode(['error' => 'This student is currently enrolled and is not eligible for readmission.']);
     exit;
 }

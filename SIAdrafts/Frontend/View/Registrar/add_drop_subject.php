@@ -58,7 +58,8 @@ include 'Include/header.php';
               <th>Units</th>
               <th>Schedule</th>
               <th>Professor</th>
-              <th style="width:90px;"></th>
+              <th>Status</th>
+              <th style="width:140px;"></th>
             </tr>
           </thead>
           <tbody id="enrolledSubjectsBody">

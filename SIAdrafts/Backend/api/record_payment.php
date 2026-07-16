@@ -17,7 +17,6 @@ if (empty($_SESSION['user_id'])) {
 
 $payment_id = $_POST['payment_id'] ?? '';
 $amount     = $_POST['amount'] ?? '';
-$remarks    = trim($_POST['remarks'] ?? '');
 
 $errors = [];
 
@@ -96,8 +95,8 @@ try {
     // Save payment transaction
     $stmt = $conn->prepare("
         INSERT INTO payment_transactions
-        (payment_id, amount, paid_at, remarks, received_by)
-        VALUES (?, ?, NOW(), ?, ?)
+        (payment_id, amount, paid_at, received_by)
+        VALUES (?, ?, NOW(), ?)
     ");
 
     if (!$stmt) {
@@ -105,15 +104,18 @@ try {
     }
 
     $stmt->bind_param(
-        "idsi",
+        "idi",
         $payment_id,
         $amount,
-        $remarks,
         $received_by
     );
 
     $stmt->execute();
     $stmt->close();
+
+    // OR/receipt number is just the transaction's own auto-increment ID,
+    // zero-padded — no separate sequence or manual entry needed.
+    $orNumber = sprintf('OR-%06d', $conn->insert_id);
 
     // Compute totals
     $newDownpayment = (float)$payment['downpayment'] + $amount;
@@ -202,7 +204,8 @@ try {
         "success" => true,
         "payment_status" => $paymentStatus,
         "applicant_status" => $applicantStatus,
-        "balance" => $newBalance
+        "balance" => $newBalance,
+        "or_number" => $orNumber
     ]);
 
 } catch (Exception $e) {

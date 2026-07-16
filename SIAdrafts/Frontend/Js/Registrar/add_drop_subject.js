@@ -105,9 +105,32 @@ document.addEventListener('DOMContentLoaded', function () {
     renderSubjects(data.subjects || []);
   }
 
+  const FEE_PER_UNIT = 50;
+
+  function feeLabel(units) {
+    return '₱' + (Number(units) * FEE_PER_UNIT).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function statusCell(sub) {
+    if (sub.status === 'Pending Payment') {
+      return `<span class="status-pill status-pill--pending">Pending add fee (${feeLabel(sub.units)})</span>`;
+    }
+    if (sub.status === 'Pending Drop') {
+      return `<span class="status-pill status-pill--pending">Pending drop fee (${feeLabel(sub.units)})</span>`;
+    }
+    return `<span class="status-pill status-pill--approved">Enrolled</span>`;
+  }
+
+  function actionCell(sub) {
+    if (sub.status === 'Pending Payment' || sub.status === 'Pending Drop') {
+      return `<button type="button" class="btn-outline" data-cancel-fee="${sub.enrollment_subject_id}">Cancel</button>`;
+    }
+    return `<button type="button" class="btn-remove" data-drop-subject="${sub.enrollment_subject_id}">Drop (${feeLabel(sub.units)})</button>`;
+  }
+
   function renderSubjects(subjects) {
     if (!subjects.length) {
-      subjectsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No subjects currently enrolled.</td></tr>`;
+      subjectsBody.innerHTML = `<tr><td colspan="7" style="text-align:center;">No subjects currently enrolled.</td></tr>`;
       return;
     }
     subjectsBody.innerHTML = subjects.map(sub => `
@@ -117,7 +140,8 @@ document.addEventListener('DOMContentLoaded', function () {
         <td>${esc(sub.units)}</td>
         <td>${esc(scheduleLabel(sub))}</td>
         <td>${esc(sub.professor_name) || '—'}</td>
-        <td><button type="button" class="btn-remove" data-drop-subject="${sub.enrollment_subject_id}">Drop</button></td>
+        <td>${statusCell(sub)}</td>
+        <td>${actionCell(sub)}</td>
       </tr>
     `).join('');
   }
@@ -144,31 +168,54 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ----- Drop subject -----
   subjectsBody.addEventListener('click', async (e) => {
-    const btn = e.target.closest('[data-drop-subject]');
-    if (!btn) return;
-    const enrollment_subject_id = btn.getAttribute('data-drop-subject');
+    const dropBtn = e.target.closest('[data-drop-subject]');
+    if (dropBtn) {
+      const enrollment_subject_id = dropBtn.getAttribute('data-drop-subject');
+      const row = dropBtn.closest('tr');
+      const units = row.children[2].textContent;
 
-    const confirmResult = await Swal.fire({
-      icon: 'warning',
-      title: 'Drop this subject?',
-      text: 'The student will be removed from this subject.',
-      showCancelButton: true,
-      confirmButtonText: 'Drop',
-      confirmButtonColor: '#dc2626',
-    });
-    if (!confirmResult.isConfirmed) return;
+      const confirmResult = await Swal.fire({
+        icon: 'warning',
+        title: 'Drop this subject?',
+        html: `A drop fee of <strong>${feeLabel(units)}</strong> (${units} units &times; ₱50) must be paid at Treasury before the drop is finalized.`,
+        showCancelButton: true,
+        confirmButtonText: 'Request drop',
+        confirmButtonColor: '#dc2626',
+      });
+      if (!confirmResult.isConfirmed) return;
 
-    const result = await postJSON('drop_subject_registrar.php', { enrollment_subject_id });
-    if (result.error) {
-      Swal.fire({ icon: 'error', title: 'Could not drop subject', text: result.error });
+      const result = await postJSON('drop_subject_registrar.php', { enrollment_subject_id });
+      if (result.error) {
+        Swal.fire({ icon: 'error', title: 'Could not drop subject', text: result.error });
+        return;
+      }
+      Swal.fire({ icon: 'success', title: result.message || 'Drop requested', timer: 1600, showConfirmButton: false })
+        .then(() => doSearch());
       return;
     }
-    const row = btn.closest('tr');
-    row.remove();
-    if (!subjectsBody.querySelector('tr')) {
-      subjectsBody.innerHTML = `<tr><td colspan="6" style="text-align:center;">No subjects currently enrolled.</td></tr>`;
+
+    const cancelBtn = e.target.closest('[data-cancel-fee]');
+    if (cancelBtn) {
+      const enrollment_subject_id = cancelBtn.getAttribute('data-cancel-fee');
+
+      const confirmResult = await Swal.fire({
+        icon: 'warning',
+        title: 'Cancel this pending request?',
+        text: 'The pending fee will be cancelled.',
+        showCancelButton: true,
+        confirmButtonText: 'Cancel request',
+        confirmButtonColor: '#dc2626',
+      });
+      if (!confirmResult.isConfirmed) return;
+
+      const result = await postJSON('cancel_subject_fee.php', { enrollment_subject_id });
+      if (result.error) {
+        Swal.fire({ icon: 'error', title: 'Could not cancel request', text: result.error });
+        return;
+      }
+      Swal.fire({ icon: 'success', title: result.message || 'Request cancelled', timer: 1200, showConfirmButton: false })
+        .then(() => doSearch());
     }
-    Swal.fire({ icon: 'success', title: 'Subject dropped', timer: 1200, showConfirmButton: false });
   });
 
   // ----- Add subject -----
@@ -191,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
       data.subjects.map(s => {
         const scheduleId = s.schedule_id ?? '';
         const scheduleText = scheduleLabel(s);
-        return `<option value="${s.subject_id}" data-schedule-id="${scheduleId}" data-schedule-text="${esc(scheduleText)}">${esc(s.subject_code)} - ${esc(s.subject_name)} (${esc(s.units)} units)</option>`;
+        return `<option value="${s.subject_id}" data-schedule-id="${scheduleId}" data-schedule-text="${esc(scheduleText)}" data-units="${esc(s.units)}">${esc(s.subject_code)} - ${esc(s.subject_name)} (${esc(s.units)} units)</option>`;
       }).join('');
   });
 
@@ -201,7 +248,8 @@ document.addEventListener('DOMContentLoaded', function () {
       addScheduleInfo.style.display = 'none';
       return;
     }
-    addScheduleText.textContent = opt.getAttribute('data-schedule-text');
+    const units = opt.getAttribute('data-units');
+    addScheduleText.textContent = opt.getAttribute('data-schedule-text') + ` — Add fee: ${feeLabel(units)}`;
     addScheduleInfo.style.display = '';
   });
 

@@ -113,28 +113,36 @@ include 'Include/header.php';
 
     <div class="stats-grid">
       <div class="stat-card">
-        <div class="stat-icon purple">📘</div>
+        <div class="stat-icon purple">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+        </div>
         <div>
           <div class="stat-value"><?= $totalCourses ?></div>
           <div class="stat-label">Courses</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon blue">🏫</div>
+        <div class="stat-icon blue">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+        </div>
         <div>
           <div class="stat-value"><?= $totalSections ?></div>
           <div class="stat-label">Sections</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon green">✅</div>
+        <div class="stat-icon green">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+        </div>
         <div>
           <div class="stat-value"><?= $totalApproved ?></div>
           <div class="stat-label">Approved Schedules</div>
         </div>
       </div>
       <div class="stat-card">
-        <div class="stat-icon gold">⏳</div>
+        <div class="stat-icon gold">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </div>
         <div>
           <div class="stat-value"><?= $totalPending ?></div>
           <div class="stat-label"><?= $isHead ? 'Awaiting Your Approval' : 'Your Pending Submissions' ?></div>

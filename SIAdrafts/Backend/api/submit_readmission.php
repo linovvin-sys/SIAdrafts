@@ -66,14 +66,14 @@ if (!$student) {
 $student_id    = (int)$student['student_id'];
 $applicant_id  = (int)$student['applicant_id'];
 
-// Block students who are currently enrolled — readmission is only for
+// Block students who currently have an active enrollment (Enrolled, or
+// Pending Payment on their current term) — readmission is only for
 // students who have previously stopped out (LOA, dropped, etc.)
 // NOTE: enrollment.student_id is misleadingly named — its FK actually
 // references applicants.applicant_id, not student.student_id.
 $statusStmt = $conn->prepare(
-    "SELECT e.status, est.is_active
+    "SELECT e.status
      FROM enrollment e
-     LEFT JOIN enrollment_status_type est ON est.status_name = e.status
      WHERE e.student_id = ?
      ORDER BY e.school_year DESC, e.semester DESC, e.created_at DESC
      LIMIT 1"
@@ -83,7 +83,8 @@ $statusStmt->execute();
 $latestEnrollment = $statusStmt->get_result()->fetch_assoc();
 $statusStmt->close();
 
-if ($latestEnrollment && (int)$latestEnrollment['is_active'] === 1) {
+$activeStatuses = ['Enrolled', 'Pending Payment'];
+if ($latestEnrollment && in_array($latestEnrollment['status'], $activeStatuses, true)) {
     echo json_encode(['success' => false, 'error' => 'This student has an active enrollment (' . $latestEnrollment['status'] . ') and is not eligible for readmission.']);
     exit;
 }

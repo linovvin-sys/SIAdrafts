@@ -101,7 +101,7 @@ $stmt->close();
 
 // Payment history
 $stmt = $conn->prepare(
-    "SELECT t.amount, t.paid_at, t.remarks, u.first_name, u.last_name
+    "SELECT t.transaction_id, t.amount, t.paid_at, u.first_name, u.last_name
      FROM payment_transactions t
      LEFT JOIN users u ON u.user_id = t.received_by
      WHERE t.payment_id = ?
@@ -110,6 +110,21 @@ $stmt = $conn->prepare(
 $stmt->bind_param('i', $payment['payment_id']);
 $stmt->execute();
 $history = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+$stmt->close();
+
+// Pending add/drop subject fees for this enrollment.
+$stmt = $conn->prepare(
+    "SELECT scf.fee_id, scf.action, scf.units, scf.amount,
+            sub.subject_code, sub.subject_name
+     FROM subject_change_fee scf
+     JOIN enrollment_subject es ON es.enrollment_subject_id = scf.enrollment_subject_id
+     JOIN subject sub           ON sub.subject_id = es.subject_id
+     WHERE scf.enrollment_id = ? AND scf.status = 'Pending'
+     ORDER BY scf.created_at ASC"
+);
+$stmt->bind_param('i', $payment['enrollment_id']);
+$stmt->execute();
+$pendingFees = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();
 
 $conn->close();
@@ -121,7 +136,8 @@ echo json_encode([
         'student_id' => $student['display_id'],
         'full_name'  => $full_name,
     ],
-    'payment'   => $payment,
-    'breakdown' => $breakdown,
-    'history'   => $history,
+    'payment'      => $payment,
+    'breakdown'    => $breakdown,
+    'history'      => $history,
+    'pending_fees' => $pendingFees,
 ]);

@@ -21,6 +21,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 $db   = new Database();
 $conn = $db->connect();
 
+define('ADDROP_FEE_PER_UNIT', 50.00);
+
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true) ?? $_POST;
 
@@ -31,26 +33,83 @@ if (!$enrollment_subject_id) {
     exit;
 }
 
-$stmt = $conn->prepare(
-    "UPDATE enrollment_subject SET status = 'Dropped' WHERE enrollment_subject_id = ?"
-);
-if (!$stmt) {
+$staffStmt = $conn->prepare("SELECT staff_id FROM users WHERE user_id = ? LIMIT 1");
+$staffStmt->bind_param('i', $_SESSION['user_id']);
+$staffStmt->execute();
+$staffRow = $staffStmt->get_result()->fetch_assoc();
+$staffStmt->close();
+
+if (!$staffRow || empty($staffRow['staff_id'])) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    echo json_encode(['error' => 'Your account is missing a StaffID.']);
     exit;
 }
-$stmt->bind_param('i', $enrollment_subject_id);
+$requested_by = $staffRow['staff_id'];
+
+$esStmt = $conn->prepare(
+    "SELECT es.enrollment_id, es.status, sub.units
+     FROM enrollment_subject es
+     JOIN subject sub ON sub.subject_id = es.subject_id
+     WHERE es.enrollment_subject_id = ?
+     LIMIT 1"
+);
+$esStmt->bind_param('i', $enrollment_subject_id);
+$esStmt->execute();
+$es = $esStmt->get_result()->fetch_assoc();
+$esStmt->close();
+
+if (!$es) {
+    echo json_encode(['error' => 'Subject enrollment record not found.']);
+    exit;
+}
+if ($es['status'] === 'Dropped' || $es['status'] === 'Pending Drop') {
+    echo json_encode(['error' => 'This subject is already dropped or pending drop.']);
+    exit;
+}
+
+$units  = (float)$es['units'];
+$amount = round($units * ADDROP_FEE_PER_UNIT, 2);
+
+$conn->begin_transaction();
 
 try {
+    // Subject moves to "Pending Drop" — it only becomes Dropped once
+    // Treasury records the drop fee (see record_subject_fee_payment.php).
+    $stmt = $conn->prepare(
+        "UPDATE enrollment_subject SET status = 'Pending Drop' WHERE enrollment_subject_id = ?"
+    );
+    if (!$stmt) {
+        throw new Exception($conn->error);
+    }
+    $stmt->bind_param('i', $enrollment_subject_id);
     $stmt->execute();
     if ($stmt->affected_rows === 0) {
-        echo json_encode(['error' => 'Subject enrollment record not found.']);
-        exit;
+        throw new Exception('Subject enrollment record not found.');
     }
-    echo json_encode(['success' => true, 'message' => 'Subject dropped.']);
-} catch (mysqli_sql_exception $e) {
+    $stmt->close();
+
+    $feeStmt = $conn->prepare(
+        "INSERT INTO subject_change_fee
+            (enrollment_subject_id, enrollment_id, action, units, amount, requested_by)
+         VALUES (?, ?, 'Drop', ?, ?, ?)"
+    );
+    if (!$feeStmt) {
+        throw new Exception($conn->error);
+    }
+    $feeStmt->bind_param('iidds', $enrollment_subject_id, $es['enrollment_id'], $units, $amount, $requested_by);
+    $feeStmt->execute();
+    $feeStmt->close();
+
+    $conn->commit();
+
+    echo json_encode([
+        'success'    => true,
+        'fee_amount' => $amount,
+        'message'    => 'Drop requested — pending ₱' . number_format($amount, 2) . ' payment at Treasury.',
+    ]);
+} catch (Exception $e) {
+    $conn->rollback();
     echo json_encode(['error' => 'Could not drop subject. Please try again.']);
 }
 
-$stmt->close();
 $db->close();

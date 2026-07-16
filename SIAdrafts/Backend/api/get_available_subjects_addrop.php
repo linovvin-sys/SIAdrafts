@@ -23,7 +23,7 @@ if (!$enrollment_id) {
 }
 
 $stmt = $conn->prepare(
-    "SELECT e.school_year, e.semester, e.section_id, sec.course_id
+    "SELECT e.school_year, e.semester, e.year_level, e.section_id, sec.course_id
      FROM enrollment e
      LEFT JOIN section sec ON sec.section_id = e.section_id
      WHERE e.enrollment_id = ?
@@ -39,9 +39,12 @@ if (!$enr || !$enr['course_id']) {
     exit;
 }
 
-// Subjects that belong to the student's course, are not already active on
-// this enrollment, matched with a schedule (if one has been set for their
-// section/school year/semester) so the staff member can see when it meets.
+// Subjects that belong to the student's course AND match their current
+// year level / semester (same rule save_enrollment.php enforces at initial
+// enrollment — even irregular students can't mix in subjects from other
+// year levels/semesters), that aren't already active on this enrollment,
+// matched with a schedule (if one has been set for their section/school
+// year/semester) so the staff member can see when it meets.
 $stmt = $conn->prepare(
     "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
             sch.schedule_id, sch.day, sch.time_start, sch.time_end,
@@ -54,6 +57,8 @@ $stmt = $conn->prepare(
          AND sch.status      = 'Approved'
      LEFT JOIN professor p ON p.professor_id = sch.professor_id
      WHERE sub.course_id = ?
+       AND sub.year_level = ?
+       AND sub.semester   = ?
        AND sub.subject_id NOT IN (
            SELECT subject_id FROM enrollment_subject
            WHERE enrollment_id = ? AND status != 'Dropped'
@@ -61,11 +66,13 @@ $stmt = $conn->prepare(
      ORDER BY sub.subject_code"
 );
 $stmt->bind_param(
-    'siiii',
+    'siiiiii',
     $enr['school_year'],
     $enr['semester'],
     $enr['section_id'],
     $enr['course_id'],
+    $enr['year_level'],
+    $enr['semester'],
     $enrollment_id
 );
 $stmt->execute();
