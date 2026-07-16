@@ -28,7 +28,9 @@ if (!users_can_message($conn, $my_id, $with_id)) {
 }
 
 $stmt = $conn->prepare(
-    "SELECT message_id, sender_id, recipient_id, body, sent_at, read_at
+    "SELECT message_id, sender_id, recipient_id, body,
+            attachment_name, attachment_type, attachment_size,
+            sent_at, read_at
      FROM messages
      WHERE (sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?)
      ORDER BY sent_at ASC"

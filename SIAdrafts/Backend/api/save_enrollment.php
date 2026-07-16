@@ -30,7 +30,6 @@ if (!is_array($data)) {
 }
 
 $student_id  = (int)($data['student_id']  ?? 0);
-error_log("Applicant ID received: " . $student_id);
 $school_year = trim($data['school_year']  ?? '');
 $semester    = (int)($data['semester']    ?? 0);
 $year_level  = (int)($data['year_level']  ?? 0);

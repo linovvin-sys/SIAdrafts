@@ -41,7 +41,9 @@ while (true) {
     }
 
     $stmt = $conn->prepare(
-        "SELECT message_id, sender_id, recipient_id, body, sent_at
+        "SELECT message_id, sender_id, recipient_id, body,
+                attachment_name, attachment_type, attachment_size,
+                sent_at
          FROM messages
          WHERE ((sender_id = ? AND recipient_id = ?) OR (sender_id = ? AND recipient_id = ?))
            AND message_id > ?

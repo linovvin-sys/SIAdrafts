@@ -35,8 +35,7 @@
 
         <div v-if="phase !== 'setup'">
             <div v-for="(cup, i) in 10" :class="cupClass(i)" @click="clickCup(i)">
-                <span v-if="ballVisible && ball === i">&#9917;</span>
-                <img src="cup.png" alt="cup">
+                <img :src="cupImage(i)" alt="cup">
             </div>
         </div>
 
@@ -125,6 +124,15 @@
                     return 'clickable'
                 }
                 return 'disabled';
+            },
+            cupImage(i){
+                if(this.wrong[i]){
+                    return 'cup_wrong.png';
+                }
+                if(this.ballVisible && i === this.ball){
+                    return 'cup_ball.png';
+                }
+                return 'cup.png';
             },
             clickCup(i){
                 if(this.phase === 'hiding'){

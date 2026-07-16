@@ -1,6 +1,8 @@
 <?php
 // Single source of truth for who's allowed to message whom.
-// Currently: only Head Registrar (5) <-> Registrar Staff (6).
+// Currently: Head Registrar (5) and Registrar Staff (6) can message
+// across the two roles, and can also message peers within their own
+// role (e.g. one Registrar Staff member to another).
 // Add more allowed pairs here later if Treasury/Admission gets added.
 
 const ROLE_HEAD_REGISTRAR    = 5;
@@ -8,6 +10,8 @@ const ROLE_REGISTRAR_STAFF   = 6;
 
 const ALLOWED_MESSAGE_ROLE_PAIRS = [
     [ROLE_HEAD_REGISTRAR, ROLE_REGISTRAR_STAFF],
+    [ROLE_HEAD_REGISTRAR, ROLE_HEAD_REGISTRAR],
+    [ROLE_REGISTRAR_STAFF, ROLE_REGISTRAR_STAFF],
 ];
 
 function roles_can_message(int $roleA, int $roleB): bool {
@@ -53,17 +57,41 @@ function get_allowed_contacts(mysqli $conn, int $userId): array {
         if ($myRole === $r1) $counterpartRoles[] = $r2;
         if ($myRole === $r2) $counterpartRoles[] = $r1;
     }
+    $counterpartRoles = array_values(array_unique($counterpartRoles));
     if (empty($counterpartRoles)) return [];
 
     $ph = implode(',', array_fill(0, count($counterpartRoles), '?'));
     $types = str_repeat('i', count($counterpartRoles));
     $stmt = $conn->prepare(
         "SELECT user_id, staff_id, first_name, last_name, role_id
-         FROM users WHERE role_id IN ($ph) ORDER BY last_name, first_name"
+         FROM users WHERE role_id IN ($ph) AND user_id != ?
+         ORDER BY last_name, first_name"
     );
-    $stmt->bind_param($types, ...$counterpartRoles);
+    $params = [...$counterpartRoles, $userId];
+    $stmt->bind_param($types . 'i', ...$params);
     $stmt->execute();
     $contacts = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     return $contacts;
+}
+
+// Returns [sender_id => unread_count] for every unread message sent to
+// $userId, so the contacts list can show a badge per conversation.
+function get_unread_counts(mysqli $conn, int $userId): array {
+    $stmt = $conn->prepare(
+        "SELECT sender_id, COUNT(*) AS unread
+         FROM messages
+         WHERE recipient_id = ? AND read_at IS NULL
+         GROUP BY sender_id"
+    );
+    $stmt->bind_param('i', $userId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $counts = [];
+    foreach ($rows as $row) {
+        $counts[(int)$row['sender_id']] = (int)$row['unread'];
+    }
+    return $counts;
 }

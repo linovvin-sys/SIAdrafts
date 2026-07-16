@@ -3,6 +3,7 @@ header('Content-Type: application/json');
 session_start();
 require_once '../db.php';
 require_once 'can_message.php';
+require_once 'message_attachments.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -23,8 +24,14 @@ $sender_id    = (int)$_SESSION['user_id'];
 $recipient_id = (int)($_POST['recipient_id'] ?? 0);
 $body         = trim($_POST['body'] ?? '');
 
-if (!$recipient_id || $body === '') {
-    echo json_encode(['success' => false, 'error' => 'Recipient and message body are required.']);
+$attachment = store_message_attachment($_FILES['attachment'] ?? []);
+if (isset($attachment['error'])) {
+    echo json_encode(['success' => false, 'error' => $attachment['error']]);
+    exit;
+}
+
+if (!$recipient_id || ($body === '' && empty($attachment))) {
+    echo json_encode(['success' => false, 'error' => 'A message or an attachment is required.']);
     exit;
 }
 
@@ -39,10 +46,25 @@ if (!users_can_message($conn, $sender_id, $recipient_id)) {
     exit;
 }
 
+$attachment_path = $attachment['path'] ?? null;
+$attachment_name = $attachment['name'] ?? null;
+$attachment_type = $attachment['type'] ?? null;
+$attachment_size = $attachment['size'] ?? null;
+
 $stmt = $conn->prepare(
-    "INSERT INTO messages (sender_id, recipient_id, body) VALUES (?, ?, ?)"
+    "INSERT INTO messages (sender_id, recipient_id, body, attachment_path, attachment_name, attachment_type, attachment_size)
+     VALUES (?, ?, ?, ?, ?, ?, ?)"
 );
-$stmt->bind_param('iis', $sender_id, $recipient_id, $body);
+$stmt->bind_param(
+    'iissssi',
+    $sender_id,
+    $recipient_id,
+    $body,
+    $attachment_path,
+    $attachment_name,
+    $attachment_type,
+    $attachment_size
+);
 
 if (!$stmt->execute()) {
     http_response_code(500);
@@ -55,7 +77,10 @@ $stmt->close();
 $conn->close();
 
 echo json_encode([
-    'success'    => true,
-    'message_id' => $message_id,
-    'sent_at'    => date('Y-m-d H:i:s'),
+    'success'         => true,
+    'message_id'      => $message_id,
+    'sent_at'         => date('Y-m-d H:i:s'),
+    'attachment_name' => $attachment_name,
+    'attachment_type' => $attachment_type,
+    'attachment_size' => $attachment_size,
 ]);

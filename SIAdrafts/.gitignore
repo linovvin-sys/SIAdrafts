@@ -1,0 +1,5 @@
+.DS_Store
+*.log
+Backend/config.php
+Backend/uploads/messages/*
+!Backend/uploads/messages/.gitkeep
