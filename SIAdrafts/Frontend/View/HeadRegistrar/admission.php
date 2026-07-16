@@ -3,6 +3,8 @@ $pageTitle = "ADMISSION";
 $activePage = "admission";
 
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/require_role.php';
+require_role(['Head Registrar']);
 require_once __DIR__ . '/../../../Backend/admin/admission.php';
 
 include 'Include/header.php';
@@ -85,7 +87,7 @@ include 'Include/header.php';
                                 </td>
 
                                 <td>
-                                    <a href="admin_admission_view.php?id=<?= $row['reference_id']; ?>"
+                                    <a href="admission_view.php?id=<?= $row['reference_id']; ?>"
                                        class="btn btn-outline"
                                        style="padding:4px 10px;font-size:12px">
                                         View

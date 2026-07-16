@@ -58,7 +58,7 @@ if (!empty($_SESSION['user_id'])) {
   <nav class="nav-section">
     <div class="nav-label">Main</div>
 
-    <a href="<?= $root ?>View/Registrar/registrar_dashboard.php" class="nav-item<?= ($activePage ?? '') === 'dashboard' ? ' active' : '' ?>" data-page="dashboard">
+    <a href="<?= $root ?>View/HeadRegistrar/registrar_dashboard.php" class="nav-item<?= ($activePage ?? '') === 'dashboard' ? ' active' : '' ?>" data-page="dashboard">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
           <path d="M0 0h24v24H0z" fill="none"/>
@@ -74,7 +74,7 @@ if (!empty($_SESSION['user_id'])) {
   <nav class="nav-section">
     <div class="nav-label">Admissions</div>
 
-    <a href="<?= $root ?>View/Registrar/admission.php" class="nav-item<?= ($activePage ?? '') === 'admission' ? ' active' : '' ?>" data-page="admission">
+    <a href="<?= $root ?>View/HeadRegistrar/admission.php" class="nav-item<?= ($activePage ?? '') === 'admission' ? ' active' : '' ?>" data-page="admission">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
           <path d="M0 0h24v24H0z" fill="none"/>
@@ -84,7 +84,7 @@ if (!empty($_SESSION['user_id'])) {
       <span class="nav-text">Admission</span>
     </a>
 
-    <a href="<?= $root ?>View/Registrar/enrollment.php" class="nav-item<?= ($activePage ?? '') === 'enrollment' ? ' active' : '' ?>" data-page="enrollment">
+    <a href="<?= $root ?>View/HeadRegistrar/enrollment.php" class="nav-item<?= ($activePage ?? '') === 'enrollment' ? ' active' : '' ?>" data-page="enrollment">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
           <path d="M0 0h24v24H0z" fill="none"/>
@@ -94,7 +94,7 @@ if (!empty($_SESSION['user_id'])) {
       <span class="nav-text">Enrollment</span>
     </a>
 
-    <a href="<?= $root ?>View/Registrar/total_enrolees.php" class="nav-item<?= ($activePage ?? '') === 'total_enrolees' ? ' active' : '' ?>" data-page="total_enrolees">
+    <a href="<?= $root ?>View/HeadRegistrar/total_enrolees.php" class="nav-item<?= ($activePage ?? '') === 'total_enrolees' ? ' active' : '' ?>" data-page="total_enrolees">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
           <path d="M0 0h24v24H0z" fill="none"/>
@@ -110,7 +110,7 @@ if (!empty($_SESSION['user_id'])) {
   <nav class="nav-section">
     <div class="nav-label">Management</div>
 
-    <a href="<?= $root ?>View/Registrar/courses.php" class="nav-item<?= ($activePage ?? '') === 'courses' ? ' active' : '' ?>" data-page="courses">
+    <a href="<?= $root ?>View/HeadRegistrar/courses.php" class="nav-item<?= ($activePage ?? '') === 'courses' ? ' active' : '' ?>" data-page="courses">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none">
           <path stroke="currentColor" stroke-width="2" d="M16 2h-4v5.5L14 6l2 1.5z"/>
@@ -120,7 +120,7 @@ if (!empty($_SESSION['user_id'])) {
       <span class="nav-text">Course &amp; Section</span>
     </a>
 
-    <a href="<?= $root ?>View/Registrar/schedule.php" class="nav-item<?= ($activePage ?? '') === 'schedule' ? ' active' : '' ?>" data-page="schedule">
+    <a href="<?= $root ?>View/HeadRegistrar/schedule.php" class="nav-item<?= ($activePage ?? '') === 'schedule' ? ' active' : '' ?>" data-page="schedule">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
           <path d="M0 0h24v24H0z" fill="none"/>
@@ -130,7 +130,7 @@ if (!empty($_SESSION['user_id'])) {
       <span class="nav-text">Schedule</span>
     </a>
 
-    <a href="<?= $root ?>View/Registrar/add_drop_subject.php" class="nav-item<?= ($activePage ?? '') === 'addDrop' ? ' active' : '' ?>" data-page="addDrop">
+    <a href="<?= $root ?>View/HeadRegistrar/add_drop_subject.php" class="nav-item<?= ($activePage ?? '') === 'addDrop' ? ' active' : '' ?>" data-page="addDrop">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -145,7 +145,7 @@ if (!empty($_SESSION['user_id'])) {
 
 
     <!-- Readmission Request: both roles are permitted by require_role() on the page itself. -->
-    <a href="<?= $root ?>View/Registrar/readmission_request.php" class="nav-item<?= ($activePage ?? '') === 'readmission' ? ' active' : '' ?>" data-page="readmission">
+    <a href="<?= $root ?>View/HeadRegistrar/readmission_request.php" class="nav-item<?= ($activePage ?? '') === 'readmission' ? ' active' : '' ?>" data-page="readmission">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
@@ -157,13 +157,38 @@ if (!empty($_SESSION['user_id'])) {
       <span class="nav-text">Readmission Request</span>
     </a>
 
+    <?php if ($isHead): ?>
+    <a href="<?= $root ?>View/HeadRegistrar/pending_approval.php" class="nav-item<?= ($activePage ?? '') === 'pending' ? ' active' : '' ?>" data-page="pending">
+      <span class="nav-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </span>
+      <span class="nav-text">Pending Approvals</span>
+      <?php if ($pendingCount > 0): ?>
+        <span class="nav-badge"><?= $pendingCount ?></span>
+      <?php endif; ?>
+    </a>
+
+    <?php /* TODO: pending_readmissions.php does not exist yet -- this link 404s.
+             Restore once the Head Registrar readmission-review page is built.
+    <a href="<?= $root ?>View/HeadRegistrar/pending_readmissions.php" class="nav-item<?= ($activePage ?? '') === 'pendingReadmission' ? ' active' : '' ?>" data-page="pendingReadmission">
+      <span class="nav-text">Readmissions</span>
+      <?php if ($pendingReadmissionCount > 0): ?>
+        <span class="nav-badge"><?= $pendingReadmissionCount ?></span>
+      <?php endif; ?>
+    </a>
+    */ ?>
+    <?php endif; ?>
+
   </nav>
 
   <!-- COMMUNICATION -->
   <nav class="nav-section">
     <div class="nav-label">Communication</div>
 
-    <a href="<?= $root ?>View/Registrar/messages.php" class="nav-item<?= ($activePage ?? '') === 'messages' ? ' active' : '' ?>" data-page="messages">
+    <a href="<?= $root ?>View/HeadRegistrar/messages.php" class="nav-item<?= ($activePage ?? '') === 'messages' ? ' active' : '' ?>" data-page="messages">
       <span class="nav-icon">
         <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M4 4h16v12H7l-3 3z"/>

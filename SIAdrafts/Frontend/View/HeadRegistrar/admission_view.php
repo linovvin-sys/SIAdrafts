@@ -3,6 +3,8 @@ $pageTitle = "ADMISSION";
 $activePage = "admission";
 
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/require_role.php';
+require_role(['Head Registrar']);
 require_once __DIR__ . '/../../../Backend/admin/admission_view.php';
 
 include 'Include/header.php';
@@ -19,7 +21,7 @@ include 'Include/header.php';
             <div class="panel">
                 <div class="panel-body" style="text-align:center;">
                     <p class="text-muted">No admission record found for this ID.</p>
-                    <a href="admin_admission.php" class="btn btn-outline mt-24">&larr; Back to Admission Records</a>
+                    <a href="admission.php" class="btn btn-outline mt-24">&larr; Back to Admission Records</a>
                 </div>
             </div>
 
@@ -54,7 +56,7 @@ include 'Include/header.php';
                 <div class="panel-header no-print">
                     <span class="panel-title">Admission Registration Form</span>
                     <div style="display:flex; gap:10px;">
-                        <a href="admin_admission.php" class="btn btn-outline">&larr; Back</a>
+                        <a href="admission.php" class="btn btn-outline">&larr; Back</a>
                         <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print</button>
                     </div>
                 </div>

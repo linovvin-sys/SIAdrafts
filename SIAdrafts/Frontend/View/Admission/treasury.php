@@ -9,7 +9,7 @@ $db = new Database();
 $conn = $db->connect();
 include '../Admission/Include/header.php';
 
- 
+
 // ---- Queue: all payment rows not yet fully paid ----
 $queueStmt = $conn->prepare(
     // Show student.student_no (the official ID), falling back to
@@ -51,6 +51,10 @@ $setupStmt->execute();
 $setupQueue = $setupStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $setupStmt->close();
 
+// Revenue tab data — this opens/closes its own DB connection, so it must
+// run after the queue/setup queries above are done with $conn.
+require_once __DIR__ . '/../../../Backend/admin/revenue.php';
+
 function fmt_id_t($id): string {
     // Now receives student.student_no ("2026-00001") when the student is
     // enrolled, falling back to applicants.reference_id if no student row
@@ -74,15 +78,71 @@ function student_fullname_t(array $s): string {
   </div>
  
   <div class="treasury-tabs">
-    <button class="t-tab active" id="tabQueue">Pending payments</button>
+    <button class="t-tab active" id="tabRevenue">Revenue</button>
+    <button class="t-tab" id="tabQueue">Pending payments</button>
     <button class="t-tab" id="tabSetup">Needs payment setup<?= count($setupQueue) ? ' (' . count($setupQueue) . ')' : '' ?></button>
     <button class="t-tab" id="tabSearch">Search a student</button>
   </div>
  
   <div class="treasury-card">
- 
+
+    <!-- ===== REVENUE VIEW ===== -->
+    <div id="revenuePanel">
+      <div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:24px;">
+        <div class="stat-card">
+          <div class="stat-icon green">💰</div>
+          <div><div class="stat-value">₱<?= number_format($revenue['total'], 2) ?></div><div class="stat-label">Total Revenue</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon gold">📈</div>
+          <div><div class="stat-value">₱<?= number_format($revenue['collected'], 2) ?></div><div class="stat-label">Collected</div></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon blue">⏳</div>
+          <div><div class="stat-value">₱<?= number_format($revenue['outstanding'], 2) ?></div><div class="stat-label">Outstanding</div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Revenue by Course</span>
+          <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_revenue_csv.php">Export CSV</a>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Course</th>
+                <th>Enrolled</th>
+                <th>Fee / Student</th>
+                <th>Total Expected</th>
+                <th>Collected</th>
+                <th>Balance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($revenueByCourse)): ?>
+              <tr>
+                <td colspan="6" style="text-align:center; padding:32px; color:#888;">No payment records yet.</td>
+              </tr>
+              <?php else: foreach ($revenueByCourse as $row): ?>
+              <tr>
+                <td><?= htmlspecialchars($row['course_name']) ?></td>
+                <td><?= (int)$row['enrolled'] ?></td>
+                <td>₱<?= number_format($row['fee_per_student'], 2) ?></td>
+                <td>₱<?= number_format($row['total_expected'], 2) ?></td>
+                <td>₱<?= number_format($row['collected'], 2) ?></td>
+                <td>₱<?= number_format($row['balance'], 2) ?></td>
+              </tr>
+              <?php endforeach; endif; ?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
     <!-- ===== QUEUE VIEW ===== -->
-    <div id="queuePanel">
+    <div id="queuePanel" style="display:none;">
       <?php if (empty($queue)): ?>
         <div class="empty-queue">
           <p>No pending payments right now.</p>
@@ -179,7 +239,7 @@ function student_fullname_t(array $s): string {
       </div>
       <div id="payResult" class="pay-result"></div>
     </div>
- 
+
   </div>
 </div>
 

@@ -3,13 +3,18 @@ document.addEventListener('DOMContentLoaded', init);
 const API_BASE = '/SIAdrafts/Backend/api/';
 let rows = [];
 let options = { sections: [], subjects: [], rooms: [], professors: [] };
+const collapsedGroups = new Set();
+const COURSE_COLORS = ['blue', 'purple', 'green', 'orange', 'red', 'teal'];
 
 const filterCourse = document.getElementById('filterCourse');
+const filterYear = document.getElementById('filterYear');
 const filterDay = document.getElementById('filterDay');
 const filterStatus = document.getElementById('filterStatus');
 const searchInput = document.getElementById('searchSchedule');
 const scheduleBody = document.getElementById('scheduleBody');
 const emptyState = document.getElementById('emptyState');
+const scheduleTable = document.getElementById('scheduleTable');
+const isHead = scheduleTable.dataset.isHead === '1';
 
 async function init() {
   bindModalOpenClose();
@@ -18,8 +23,10 @@ async function init() {
   populateFormDropdowns();
   render();
 
-  [filterCourse, filterDay, filterStatus].forEach(el => el.addEventListener('change', render));
+  [filterCourse, filterYear, filterDay, filterStatus].forEach(el => el.addEventListener('change', render));
   searchInput.addEventListener('input', render);
+
+  scheduleBody.addEventListener('click', onBodyClick);
 
   const confirmBtn = document.getElementById('confirmAddSchedule');
   if (confirmBtn) confirmBtn.addEventListener('click', submitSchedule);
@@ -94,12 +101,14 @@ function populateFormDropdowns() {
 
 function render() {
   const course = filterCourse.value;
+  const year = filterYear.value;
   const day = filterDay.value;
   const status = filterStatus.value;
   const search = searchInput.value.toLowerCase();
 
   const filtered = rows.filter(r => {
     if (course && r.course_code !== course) return false;
+    if (year && String(r.year_level) !== year) return false;
     if (day && r.day !== day) return false;
     if (status && r.status !== status) return false;
     if (search && !(`${r.subject_name} ${r.room_name}`.toLowerCase().includes(search))) return false;
@@ -109,20 +118,184 @@ function render() {
   scheduleBody.innerHTML = '';
   emptyState.style.display = filtered.length ? 'none' : 'block';
 
-  filtered.forEach(r => scheduleBody.appendChild(buildRow(r)));
+  buildGroups(filtered).forEach(group => {
+    scheduleBody.appendChild(buildGroupRow(group));
+    const collapsed = collapsedGroups.has(group.key);
+    group.children.forEach(child => scheduleBody.appendChild(buildChildRow(group, child, collapsed)));
+  });
 }
 
-function buildRow(r) {
+// Groups rows by course + year level, then by subject + section (merging
+// same subject/section across multiple days into one row with day badges).
+function buildGroups(filtered) {
+  const groups = new Map();
+
+  filtered.forEach(r => {
+    const gKey = `${r.course_code || '—'}|${r.year_level || ''}`;
+    if (!groups.has(gKey)) {
+      groups.set(gKey, {
+        key: gKey,
+        course_code: r.course_code || '—',
+        year_level: r.year_level,
+        children: new Map(),
+      });
+    }
+    const group = groups.get(gKey);
+
+    const cKey = `${r.subject_id}|${r.section_id}`;
+    if (!group.children.has(cKey)) {
+      group.children.set(cKey, {
+        subject_code: r.subject_code,
+        subject_name: r.subject_name,
+        section_name: r.section_name,
+        room_name: r.room_name,
+        professor_name: r.professor_name,
+        status: r.status,
+        time_start: r.time_start,
+        time_end: r.time_end,
+        days: new Set(),
+        schedule_ids: [],
+      });
+    }
+    const child = group.children.get(cKey);
+    child.days.add(r.day);
+    child.schedule_ids.push(r.schedule_id);
+  });
+
+  const sorted = [...groups.values()].sort((a, b) =>
+    a.course_code.localeCompare(b.course_code) || (a.year_level || 0) - (b.year_level || 0));
+  sorted.forEach(g => {
+    g.children = [...g.children.values()].sort((a, b) => (a.subject_code || '').localeCompare(b.subject_code || ''));
+  });
+  return sorted;
+}
+
+function courseColor(code) {
+  let h = 0;
+  for (let i = 0; i < code.length; i++) h = (h * 31 + code.charCodeAt(i)) >>> 0;
+  return COURSE_COLORS[h % COURSE_COLORS.length];
+}
+
+function yearLabel(year) {
+  const n = parseInt(year, 10);
+  if (!n) return 'Year —';
+  const suffix = n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th';
+  return `${n}${suffix} Year`;
+}
+
+// No lecture/lab column exists in the schema — inferred from naming
+// convention (subject code/name containing "lab"), same heuristic used
+// wherever this distinction shows up in the curriculum.
+function subjectType(code, name) {
+  return /lab/i.test(code || '') || /lab/i.test(name || '') ? 'Lab' : 'Lec';
+}
+
+function buildGroupRow(group) {
   const tr = document.createElement('tr');
-  const statusClass = 'status-pill--' + (r.status || 'approved').toLowerCase();
+  tr.className = 'section-group-row';
+  tr.dataset.groupToggle = group.key;
+  const collapsed = collapsedGroups.has(group.key);
+  const colspan = isHead ? 8 : 7;
+
   tr.innerHTML = `
-    <td>${escHtml(r.course_code || '')} ${escHtml(r.section_name || '')}</td>
-    <td>${escHtml(r.subject_code || '')} — ${escHtml(r.subject_name || '')}${r.professor_name ? '<br><span style="color:#888;font-size:12px">' + escHtml(r.professor_name) + '</span>' : ''}</td>
-    <td>${escHtml(r.room_name || '')}</td>
-    <td>${escHtml((r.day || '').slice(0, 3))}</td>
-    <td>${formatTime(r.time_start)} – ${formatTime(r.time_end)}</td>
-    <td><span class="status-pill ${statusClass}">${escHtml(r.status || 'Approved')}</span></td>`;
+    <td class="expand-cell"><span class="expand-arrow">${collapsed ? '▸' : '▾'}</span></td>
+    <td colspan="${colspan}">
+      <div class="group-label">
+        <span class="course-badge ${courseColor(group.course_code)}">${escHtml(group.course_code)}</span>
+        <span class="year-label">${escHtml(yearLabel(group.year_level))}</span>
+        <span class="group-meta">${group.children.length} subject${group.children.length === 1 ? '' : 's'}</span>
+      </div>
+    </td>`;
   return tr;
+}
+
+function buildChildRow(group, child, collapsed) {
+  const tr = document.createElement('tr');
+  tr.className = 'subject-row';
+  tr.dataset.group = group.key;
+  tr.style.display = collapsed ? 'none' : '';
+
+  const statusClass = 'status-pill--' + (child.status || 'approved').toLowerCase();
+  const type = subjectType(child.subject_code, child.subject_name);
+  const typeClass = type === 'Lab' ? 'type-lab' : 'type-lec';
+  const dayBadges = [...child.days]
+    .sort((a, b) => DAY_ORDER.indexOf(a) - DAY_ORDER.indexOf(b))
+    .map(d => `<span class="day-badge">${escHtml(d.slice(0, 3))}</span>`)
+    .join('');
+
+  let cells = `
+    <td class="child-indent-cell"><span class="child-arrow">↳</span></td>
+    <td></td>
+    <td>
+      <div class="subject-name">${escHtml(child.subject_code || '')} — ${escHtml(child.subject_name || '')}</div>
+      <span class="sec-tag">${escHtml(child.section_name || '')}</span>
+      ${child.professor_name ? `<div class="group-meta">${escHtml(child.professor_name)}</div>` : ''}
+    </td>
+    <td><span class="type-badge ${typeClass}">${type}</span></td>
+    <td class="room-cell">${escHtml(child.room_name || '—')}</td>
+    <td>${dayBadges}</td>
+    <td class="time-cell">${formatTime(child.time_start)} –<br><span>${formatTime(child.time_end)}</span></td>
+    <td><span class="status-pill ${statusClass}">${escHtml(child.status || 'Approved')}</span></td>`;
+
+  if (isHead) {
+    cells += `
+    <td class="actions-cell">
+      <button type="button" class="action-btn btn-danger" data-delete-ids="${child.schedule_ids.join(',')}">Delete</button>
+    </td>`;
+  }
+
+  tr.innerHTML = cells;
+  return tr;
+}
+
+const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+function onBodyClick(e) {
+  const toggleRow = e.target.closest('[data-group-toggle]');
+  if (toggleRow) {
+    const key = toggleRow.dataset.groupToggle;
+    if (collapsedGroups.has(key)) collapsedGroups.delete(key);
+    else collapsedGroups.add(key);
+    render();
+    return;
+  }
+
+  const deleteBtn = e.target.closest('[data-delete-ids]');
+  if (deleteBtn) {
+    deleteSchedules(deleteBtn.dataset.deleteIds.split(',').map(Number));
+  }
+}
+
+async function deleteSchedules(ids) {
+  const confirm = await Swal.fire({
+    icon: 'warning',
+    title: 'Delete this schedule?',
+    text: 'This removes it for every day it meets. This cannot be undone.',
+    showCancelButton: true,
+    confirmButtonText: 'Delete',
+    confirmButtonColor: '#dc2626',
+  });
+  if (!confirm.isConfirmed) return;
+
+  try {
+    const res = await fetch(API_BASE + 'delete_schedule.php', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ids }),
+    });
+    const result = await res.json();
+
+    if (result.error) {
+      Swal.fire({ icon: 'error', title: 'Could not delete schedule', text: result.error });
+      return;
+    }
+
+    rows = rows.filter(r => !ids.includes(r.schedule_id));
+    render();
+    Swal.fire({ icon: 'success', title: 'Schedule deleted', timer: 1200, showConfirmButton: false });
+  } catch (_) {
+    Swal.fire({ icon: 'error', title: 'Network error', text: 'Please try again.' });
+  }
 }
 
 async function submitSchedule() {
