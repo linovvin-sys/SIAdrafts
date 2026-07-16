@@ -2,36 +2,27 @@
 const tabQueue = document.getElementById('tabQueue');
 const tabSetup = document.getElementById('tabSetup');
 const tabSearch = document.getElementById('tabSearch');
+const tabRevenue = document.getElementById('tabRevenue');
 const queuePanel = document.getElementById('queuePanel');
 const setupPanel = document.getElementById('setupPanel');
 const searchPanel = document.getElementById('searchPanel');
+const revenuePanel = document.getElementById('revenuePanel');
 
-tabQueue.addEventListener('click', function () {
-  tabQueue.classList.add('active');
-  tabSetup.classList.remove('active');
-  tabSearch.classList.remove('active');
-  queuePanel.style.display = 'block';
-  setupPanel.style.display = 'none';
-  searchPanel.classList.remove('active');
-});
+function showTab(tab) {
+  tabQueue.classList.toggle('active', tab === tabQueue);
+  tabSetup.classList.toggle('active', tab === tabSetup);
+  tabSearch.classList.toggle('active', tab === tabSearch);
+  tabRevenue.classList.toggle('active', tab === tabRevenue);
+  queuePanel.style.display = tab === tabQueue ? 'block' : 'none';
+  setupPanel.style.display = tab === tabSetup ? 'block' : 'none';
+  searchPanel.classList.toggle('active', tab === tabSearch);
+  revenuePanel.style.display = tab === tabRevenue ? 'block' : 'none';
+}
 
-tabSetup.addEventListener('click', function () {
-  tabSetup.classList.add('active');
-  tabQueue.classList.remove('active');
-  tabSearch.classList.remove('active');
-  setupPanel.style.display = 'block';
-  queuePanel.style.display = 'none';
-  searchPanel.classList.remove('active');
-});
-
-tabSearch.addEventListener('click', function () {
-  tabSearch.classList.add('active');
-  tabQueue.classList.remove('active');
-  tabSetup.classList.remove('active');
-  queuePanel.style.display = 'none';
-  setupPanel.style.display = 'none';
-  searchPanel.classList.add('active');
-});
+tabQueue.addEventListener('click', function () { showTab(tabQueue); });
+tabSetup.addEventListener('click', function () { showTab(tabSetup); });
+tabSearch.addEventListener('click', function () { showTab(tabSearch); });
+tabRevenue.addEventListener('click', function () { showTab(tabRevenue); });
 
 function escapeHtml(str) {
   const div = document.createElement('div');

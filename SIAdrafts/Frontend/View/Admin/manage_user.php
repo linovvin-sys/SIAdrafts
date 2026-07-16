@@ -15,6 +15,43 @@ include 'Include/header.php';
 
     <main class="page-content">
 
+        <!-- Statistics -->
+        <div class="stats-grid">
+
+            <div class="stat-card">
+                <div class="stat-icon gold">👥</div>
+                <div>
+                    <div class="stat-value"><?= $userStats['total']; ?></div>
+                    <div class="stat-label">Total Users</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon green">✅</div>
+                <div>
+                    <div class="stat-value"><?= $userStats['active']; ?></div>
+                    <div class="stat-label">Active</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon blue">💤</div>
+                <div>
+                    <div class="stat-value"><?= $userStats['inactive']; ?></div>
+                    <div class="stat-label">Inactive</div>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon purple">🏷️</div>
+                <div>
+                    <div class="stat-value"><?= count($userStats['roles']); ?></div>
+                    <div class="stat-label">Roles in Use</div>
+                </div>
+            </div>
+
+        </div>
+
         <div class="panel">
 
             <div class="panel-header">
@@ -24,9 +61,30 @@ include 'Include/header.php';
                 </button>
             </div>
 
+            <div class="panel-body" style="padding:16px 24px 0;">
+                <div class="user-filter-bar">
+                    <input type="text" class="form-input" id="userSearch" placeholder="Search name, email, or staff ID…">
+                    <div class="select-wrapper">
+                        <select class="form-input form-select" id="userRoleFilter">
+                            <option value="">All Roles</option>
+                            <?php foreach (array_keys($userStats['roles']) as $roleName): ?>
+                                <option value="<?= htmlspecialchars($roleName) ?>"><?= htmlspecialchars($roleName) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="select-wrapper">
+                        <select class="form-input form-select" id="userStatusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="Active">Active</option>
+                            <option value="Inactive">Inactive</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
             <div class="panel-body" style="padding:0;">
 
-                <table class="data-table">
+                <table class="data-table" id="userTable">
 
                     <thead>
                         <tr>
@@ -40,7 +98,7 @@ include 'Include/header.php';
                         </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody id="userTableBody">
 
                     <?php if (!empty($users)): ?>
 
@@ -63,7 +121,7 @@ include 'Include/header.php';
                             }
                             ?>
 
-                            <tr>
+                            <tr data-role="<?= htmlspecialchars($row['role_name']) ?>" data-status="<?= htmlspecialchars($row['status_name']) ?>" data-search="<?= htmlspecialchars(strtolower($row['full_name'] . ' ' . $row['email'] . ' ' . ($row['staff_id'] ?? ''))) ?>">
 
                                 <td><?= htmlspecialchars($row['staff_id'] ?? '—'); ?></td>
 
@@ -119,6 +177,10 @@ include 'Include/header.php';
                     </tbody>
 
                 </table>
+
+                <div class="empty-state" id="userEmptyState" style="display:none;">
+                    <p>No users match your filters.</p>
+                </div>
 
             </div>
 
@@ -225,11 +287,12 @@ include 'Include/header.php';
                                 required>
 
                             <option value="">Select role</option>
-                            <option value="Administrator">System Administrator</option>
+                            <option value="Admin">System Administrator</option>
+                            <option value="Head Registrar">Head Registrar</option>
+                            <option value="Registrar Staff">Registrar Staff</option>
                             <option value="Admission">Admission Staff</option>
                             <option value="Treasury">Cashier</option>
-                            <option value="Teacher">Teacher</option>
-                            <option value="Staff">Staff</option>
+                            <option value="Staff">Staff (Enrollment)</option>
 
                         </select>
                     </div>
@@ -242,6 +305,7 @@ include 'Include/header.php';
 
                         <input type="password"
                                name="password"
+                               id="userPassword"
                                class="form-input"
                                minlength="8"
                                required>
@@ -407,11 +471,12 @@ include 'Include/header.php';
                                 required>
 
                             <option value="">Select role</option>
-                            <option value="Administrator">System Administrator</option>
+                            <option value="Admin">System Administrator</option>
+                            <option value="Head Registrar">Head Registrar</option>
+                            <option value="Registrar Staff">Registrar Staff</option>
                             <option value="Admission">Admission Staff</option>
                             <option value="Treasury">Cashier</option>
-                            <option value="Teacher">Teacher</option>
-                            <option value="Staff">Staff</option>
+                            <option value="Staff">Staff (Enrollment)</option>
 
                         </select>
                     </div>

@@ -56,6 +56,11 @@ $_SESSION['role_id']   = $user['role_id'];
 $_SESSION['role_name'] = $user['role_name'];
 $_SESSION['full_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
 
+$loginStmt = $conn->prepare("UPDATE users SET last_login = NOW() WHERE user_id = ?");
+$loginStmt->bind_param('i', $user['user_id']);
+$loginStmt->execute();
+$loginStmt->close();
+
 $db->close();
 
 // Determine redirect based on role
@@ -79,7 +84,7 @@ switch ($role) {
         break;
         
     case 'head registrar':
-        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
+        $redirect = '/SIAdrafts/Frontend/View/HeadRegistrar/registrar_dashboard.php';
         break;
 
     case 'registrar staff':

@@ -27,7 +27,7 @@ SELECT
     u.phone_number,
     r.role_name,
     s.status_name,
-    u.updated_at AS last_login
+    u.last_login
 
 FROM users u
 
@@ -46,4 +46,26 @@ if ($result) {
     while ($row = $result->fetch_assoc()) {
         $users[] = $row;
     }
+}
+
+/* ==========================
+   Summary stats for the header cards
+   (aggregated from $users — no extra queries needed)
+========================== */
+
+$userStats = [
+    'total'    => count($users),
+    'active'   => 0,
+    'inactive' => 0,
+    'roles'    => [],
+];
+
+foreach ($users as $u) {
+    if (strtolower($u['status_name']) === 'active') {
+        $userStats['active']++;
+    } else {
+        $userStats['inactive']++;
+    }
+    $role = $u['role_name'];
+    $userStats['roles'][$role] = ($userStats['roles'][$role] ?? 0) + 1;
 }

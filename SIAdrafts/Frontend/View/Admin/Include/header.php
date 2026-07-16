@@ -8,6 +8,6 @@
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/schedule.css">
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/modal.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
 <body>

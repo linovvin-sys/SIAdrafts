@@ -5,7 +5,7 @@ $pageScript = "schedule";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff']);
+require_role(['Head Registrar']);
 
 $isHead = current_user_is(['Head Registrar']);
 

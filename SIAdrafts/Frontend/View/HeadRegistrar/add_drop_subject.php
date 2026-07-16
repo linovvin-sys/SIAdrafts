@@ -5,7 +5,7 @@ $pageScript = "add_drop_subject";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff']);
+require_role(['Head Registrar']);
 
 include 'Include/header.php';
 ?>
