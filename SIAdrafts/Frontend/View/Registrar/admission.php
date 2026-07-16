@@ -1,6 +1,7 @@
 <?php
 $pageTitle = "ADMISSION";
 $activePage = "admission";
+$pageScript = "admission";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
@@ -20,7 +21,40 @@ include 'Include/header.php';
 
             <div class="panel-header">
                 <span class="panel-title">All Admission Records</span>
-                
+
+            </div>
+
+            <?php
+                // Build the "Date Applied" dropdown from whatever months actually
+                // appear in the data, newest first — no fixed/guessed list.
+                $admissionDateOptions = [];
+                foreach ($admissions as $row) {
+                    $ym = date('Y-m', strtotime($row['created_at']));
+                    $admissionDateOptions[$ym] = date('F Y', strtotime($row['created_at']));
+                }
+                krsort($admissionDateOptions);
+            ?>
+
+            <div class="panel-body" style="padding:16px 24px 0;">
+                <div class="filter-bar">
+                    <input type="text" class="form-input" id="admissionSearch" placeholder="Search reference ID, name, program, or course code…">
+                    <div class="select-wrapper">
+                        <select class="form-input form-select" id="admissionStatusFilter">
+                            <option value="">All Statuses</option>
+                            <option value="Pending">Pending</option>
+                            <option value="Downpayment Paid">Downpayment Paid</option>
+                            <option value="Fully Paid">Fully Paid</option>
+                        </select>
+                    </div>
+                    <div class="select-wrapper">
+                        <select class="form-input form-select" id="admissionDateFilter">
+                            <option value="">All Dates</option>
+                            <?php foreach ($admissionDateOptions as $value => $label): ?>
+                                <option value="<?= htmlspecialchars($value) ?>"><?= htmlspecialchars($label) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
             </div>
 
             <div class="panel-body" style="padding:0;">
@@ -38,7 +72,7 @@ include 'Include/header.php';
                         </tr>
                     </thead>
 
-                    <tbody>
+                    <tbody id="admissionBody">
 
                     <?php if (!empty($admissions)): ?>
 
@@ -68,9 +102,12 @@ include 'Include/header.php';
                                     default:
                                         $badge = 'secondary';
                                 }
+
+                                $admissionSearchKey = strtolower($row['reference_id'] . ' ' . $row['applicant_name'] . ' ' . $row['program'] . ' ' . ($row['course_code'] ?? ''));
+                                $admissionDateKey = date('Y-m', strtotime($row['created_at']));
                             ?>
 
-                            <tr>
+                            <tr data-status="<?= htmlspecialchars($row['status']) ?>" data-date="<?= htmlspecialchars($admissionDateKey) ?>" data-search="<?= htmlspecialchars($admissionSearchKey) ?>">
 
                                 <td><?= $row['reference_id']; ?></td>
 
@@ -111,6 +148,10 @@ include 'Include/header.php';
                     </tbody>
 
                 </table>
+
+                <div class="empty-state" id="admissionEmptyState" style="display:none;">
+                    <p>No admission records match your filters.</p>
+                </div>
 
             </div>
 

@@ -12,9 +12,10 @@ $db   = new Database();
 $conn = $db->connect();
 
 $courses = $conn->query("
-    SELECT course_id, course_code, course_name, total_units, status
-    FROM course
-    ORDER BY course_name
+    SELECT c.course_id, c.course_code, c.course_name, c.total_units, c.status,
+           (SELECT COUNT(*) FROM subject WHERE course_id = c.course_id) AS subject_count
+    FROM course c
+    ORDER BY c.course_name
 ")->fetch_all(MYSQLI_ASSOC);
 
 $sections = $conn->query("
@@ -48,35 +49,55 @@ include 'Include/header.php';
           <span class="panel-title">Courses</span>
           <button type="button" class="btn btn-primary" data-open="addCourseModal">+ Add Course</button>
         </div>
+
+        <div class="panel-body" style="padding:16px 24px 0;">
+          <div class="filter-bar">
+            <input type="text" class="form-input" id="courseSearch" placeholder="Search code or course name…">
+          </div>
+        </div>
+
         <div class="panel-body" style="padding:0;">
-          <table class="data-table" id="courseTable">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Course Name</th>
-                <th>Units</th>
-                <th>Status</th>
-                <?php if ($isHead): ?><th style="width:80px"></th><?php endif; ?>
-              </tr>
-            </thead>
-            <tbody>
-              <?php if (!empty($courses)): ?>
-                <?php foreach ($courses as $row): ?>
-                  <tr data-row-id="<?= (int)$row['course_id'] ?>">
-                    <td><?= htmlspecialchars($row['course_code']) ?></td>
-                    <td><?= htmlspecialchars($row['course_name']) ?></td>
-                    <td><?= htmlspecialchars($row['total_units']) ?></td>
-                    <td><span class="status-pill status-pill--<?= strtolower($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span></td>
-                    <?php if ($isHead): ?>
-                      <td><button type="button" class="btn-remove" data-remove-course="<?= (int)$row['course_id'] ?>">Remove</button></td>
-                    <?php endif; ?>
-                  </tr>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <tr><td colspan="<?= $isHead ? 5 : 4 ?>" style="text-align:center;">No courses found.</td></tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
+          <div class="table-wrap">
+            <table class="data-table" id="courseTable">
+              <thead>
+                <tr>
+                  <th>Code</th>
+                  <th>Course Name</th>
+                  <th>Units</th>
+                  <th>Status</th>
+                  <th style="width:150px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="courseListBody">
+                <?php if (!empty($courses)): ?>
+                  <?php foreach ($courses as $row): ?>
+                    <tr data-row-id="<?= (int)$row['course_id'] ?>" data-search="<?= htmlspecialchars(strtolower($row['course_code'] . ' ' . $row['course_name'])) ?>">
+                      <td><?= htmlspecialchars($row['course_code']) ?></td>
+                      <td><?= htmlspecialchars($row['course_name']) ?></td>
+                      <td>
+                        <?= htmlspecialchars($row['total_units']) ?>
+                        <div class="text-muted"><?= (int)$row['subject_count'] ?> subject<?= (int)$row['subject_count'] === 1 ? '' : 's' ?></div>
+                      </td>
+                      <td><span class="status-pill status-pill--<?= strtolower($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span></td>
+                      <td>
+                        <div class="row-actions">
+                          <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px" data-view-course="<?= (int)$row['course_id'] ?>" data-course-label="<?= htmlspecialchars($row['course_code'] . ' — ' . $row['course_name']) ?>">View</button>
+                          <?php if ($isHead): ?>
+                            <button type="button" class="btn-remove" data-remove-course="<?= (int)$row['course_id'] ?>">Remove</button>
+                          <?php endif; ?>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr><td colspan="5" style="text-align:center;">No courses found.</td></tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="courseListEmptyState" style="display:none;">
+            <p>No courses match your search.</p>
+          </div>
         </div>
       </div>
 
@@ -86,35 +107,52 @@ include 'Include/header.php';
           <span class="panel-title">Sections</span>
           <button type="button" class="btn btn-primary" data-open="addSectionModal">+ Add Section</button>
         </div>
+
+        <div class="panel-body" style="padding:16px 24px 0;">
+          <div class="filter-bar">
+            <input type="text" class="form-input" id="sectionSearch" placeholder="Search section or course…">
+          </div>
+        </div>
+
         <div class="panel-body" style="padding:0;">
-          <table class="data-table" id="sectionTable">
-            <thead>
-              <tr>
-                <th>Section</th>
-                <th>Course</th>
-                <th>Capacity</th>
-                <th>Status</th>
-                <?php if ($isHead): ?><th style="width:80px"></th><?php endif; ?>
-              </tr>
-            </thead>
-            <tbody>
-              <?php if (!empty($sections)): ?>
-                <?php foreach ($sections as $row): ?>
-                  <tr data-row-id="<?= (int)$row['section_id'] ?>">
-                    <td><?= htmlspecialchars($row['section_name']) ?></td>
-                    <td><?= htmlspecialchars($row['course_code'] ?? '—') ?></td>
-                    <td><?= htmlspecialchars($row['capacity']) ?></td>
-                    <td><span class="status-pill status-pill--<?= strtolower($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span></td>
-                    <?php if ($isHead): ?>
-                      <td><button type="button" class="btn-remove" data-remove-section="<?= (int)$row['section_id'] ?>">Remove</button></td>
-                    <?php endif; ?>
-                  </tr>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <tr><td colspan="<?= $isHead ? 5 : 4 ?>" style="text-align:center;">No sections found.</td></tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
+          <div class="table-wrap">
+            <table class="data-table" id="sectionTable">
+              <thead>
+                <tr>
+                  <th>Section</th>
+                  <th>Course</th>
+                  <th>Capacity</th>
+                  <th>Status</th>
+                  <th style="width:150px">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="sectionListBody">
+                <?php if (!empty($sections)): ?>
+                  <?php foreach ($sections as $row): ?>
+                    <tr data-row-id="<?= (int)$row['section_id'] ?>" data-search="<?= htmlspecialchars(strtolower($row['section_name'] . ' ' . ($row['course_code'] ?? ''))) ?>">
+                      <td><?= htmlspecialchars($row['section_name']) ?></td>
+                      <td><?= htmlspecialchars($row['course_code'] ?? '—') ?></td>
+                      <td><?= htmlspecialchars($row['capacity']) ?></td>
+                      <td><span class="status-pill status-pill--<?= strtolower($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span></td>
+                      <td>
+                        <div class="row-actions">
+                          <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px" data-view-section="<?= (int)$row['section_id'] ?>" data-section-label="<?= htmlspecialchars($row['section_name']) ?>">View</button>
+                          <?php if ($isHead): ?>
+                            <button type="button" class="btn-remove" data-remove-section="<?= (int)$row['section_id'] ?>">Remove</button>
+                          <?php endif; ?>
+                        </div>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr><td colspan="5" style="text-align:center;">No sections found.</td></tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
+          </div>
+          <div class="empty-state" id="sectionListEmptyState" style="display:none;">
+            <p>No sections match your search.</p>
+          </div>
         </div>
       </div>
 
@@ -197,6 +235,84 @@ include 'Include/header.php';
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" data-close="addSectionModal">Cancel</button>
           <button type="button" class="btn btn-primary" id="confirmAddSection">Save Section</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Course Modal -->
+    <div id="viewCourseModal" class="modal-overlay">
+      <div class="modal-box" style="max-width:640px;">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <div class="modal-icon">📘</div>
+            <div>
+              <div class="modal-title">Subjects</div>
+              <div class="modal-subtitle" id="viewCourseLabel"></div>
+            </div>
+          </div>
+          <button type="button" class="modal-close" data-close="viewCourseModal">✕</button>
+        </div>
+
+        <div class="modal-body" style="max-height:60vh; overflow-y:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Subject Name</th>
+                <th>Year / Sem</th>
+                <th>Units</th>
+              </tr>
+            </thead>
+            <tbody id="viewCourseBody">
+              <tr><td colspan="4" style="text-align:center;">Loading…</td></tr>
+            </tbody>
+            <tfoot>
+              <tr style="background:#faf7f2">
+                <td colspan="3"><strong>Total Units</strong></td>
+                <td><strong id="viewCourseTotalUnits">—</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="viewCourseModal">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- View Section Modal -->
+    <div id="viewSectionModal" class="modal-overlay">
+      <div class="modal-box" style="max-width:640px;">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <div class="modal-icon">🏫</div>
+            <div>
+              <div class="modal-title">Enrolled Students</div>
+              <div class="modal-subtitle" id="viewSectionLabel"></div>
+            </div>
+          </div>
+          <button type="button" class="modal-close" data-close="viewSectionModal">✕</button>
+        </div>
+
+        <div class="modal-body" style="max-height:60vh; overflow-y:auto;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Student No.</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Contact No.</th>
+              </tr>
+            </thead>
+            <tbody id="viewSectionBody">
+              <tr><td colspan="4" style="text-align:center;">Loading…</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="viewSectionModal">Close</button>
         </div>
       </div>
     </div>

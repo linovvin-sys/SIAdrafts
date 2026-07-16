@@ -182,6 +182,19 @@ include 'Include/header.php';
         <div class="panel-header">
           <span class="panel-title">Recent Schedule Submissions</span>
         </div>
+        <div class="panel-body" style="padding:16px 24px 0;">
+          <div class="filter-bar">
+            <input type="text" class="form-input" id="scheduleSearch" placeholder="Search subject, section, or submitter…">
+            <div class="select-wrapper">
+              <select class="form-input form-select" id="scheduleStatusFilter">
+                <option value="">All Statuses</option>
+                <option value="Pending">Pending</option>
+                <option value="Approved">Approved</option>
+                <option value="Rejected">Rejected</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <div class="panel-body" style="padding:0;">
           <table class="data-table">
             <thead>
@@ -192,10 +205,14 @@ include 'Include/header.php';
                 <th>Status</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="recentSchedulesBody">
               <?php if (!empty($recentSchedules)): ?>
                 <?php foreach ($recentSchedules as $row): ?>
-                  <tr>
+                  <?php
+                    $scheduleSearchKey = strtolower($row['subject_code'] . ' ' . $row['subject_name'] . ' '
+                        . $row['course_code'] . ' ' . $row['section_name'] . ' ' . ($row['requested_by_name'] ?? ''));
+                  ?>
+                  <tr data-status="<?= htmlspecialchars($row['status']) ?>" data-search="<?= htmlspecialchars($scheduleSearchKey) ?>">
                     <td>
                       <?= htmlspecialchars($row['subject_code'] . ' — ' . $row['subject_name']) ?>
                       <div class="text-muted"><?= htmlspecialchars($row['course_code'] . ' ' . $row['section_name']) ?></div>
@@ -210,6 +227,9 @@ include 'Include/header.php';
               <?php endif; ?>
             </tbody>
           </table>
+          <div class="empty-state" id="scheduleEmptyState" style="display:none;">
+            <p>No submissions match your filters.</p>
+          </div>
         </div>
       </div>
 
@@ -218,6 +238,18 @@ include 'Include/header.php';
         <div class="panel-header">
           <span class="panel-title">Registrar Staff Accounts</span>
           <span class="text-muted" style="font-size:12px;"><?= count($registrarStaff) ?> account<?= count($registrarStaff) === 1 ? '' : 's' ?></span>
+        </div>
+        <div class="panel-body" style="padding:16px 24px 0;">
+          <div class="filter-bar">
+            <input type="text" class="form-input" id="staffSearch" placeholder="Search name, username, or email…">
+            <div class="select-wrapper">
+              <select class="form-input form-select" id="staffStatusFilter">
+                <option value="">All Statuses</option>
+                <option value="Active">Active</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="panel-body" style="padding:0;">
           <table class="data-table">
@@ -229,11 +261,14 @@ include 'Include/header.php';
                 <th>Last Login</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="registrarStaffBody">
               <?php if (!empty($registrarStaff)): ?>
                 <?php foreach ($registrarStaff as $row): ?>
-                  <?php $badge = strtolower($row['status_name']) === 'active' ? 'success' : 'pending'; ?>
-                  <tr>
+                  <?php
+                    $badge = strtolower($row['status_name']) === 'active' ? 'success' : 'pending';
+                    $staffSearchKey = strtolower($row['full_name'] . ' ' . $row['username'] . ' ' . $row['email']);
+                  ?>
+                  <tr data-status="<?= htmlspecialchars($row['status_name']) ?>" data-search="<?= htmlspecialchars($staffSearchKey) ?>">
                     <td>
                       <?= htmlspecialchars($row['full_name']) ?>
                       <div class="text-muted"><?= htmlspecialchars($row['email']) ?></div>
@@ -248,6 +283,9 @@ include 'Include/header.php';
               <?php endif; ?>
             </tbody>
           </table>
+          <div class="empty-state" id="staffEmptyState" style="display:none;">
+            <p>No accounts match your filters.</p>
+          </div>
         </div>
       </div>
       <?php else: ?>

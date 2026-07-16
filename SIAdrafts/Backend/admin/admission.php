@@ -9,13 +9,15 @@ $admissions = [];
 
 $sql = "
 SELECT
-    reference_id,
-    CONCAT(first_name, ' ', last_name) AS applicant_name,
-    program,
-    created_at,
-    status
-FROM applicants
-ORDER BY created_at DESC
+    a.reference_id,
+    CONCAT(a.first_name, ' ', a.last_name) AS applicant_name,
+    a.program,
+    c.course_code,
+    a.created_at,
+    a.status
+FROM applicants a
+LEFT JOIN course c ON LOWER(c.course_name) = LOWER(a.program)
+ORDER BY a.created_at DESC
 ";
 
 $result = $conn->query($sql);

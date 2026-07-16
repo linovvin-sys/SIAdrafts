@@ -58,6 +58,8 @@ SELECT
     CONCAT(s.first_name, ' ', s.last_name) AS student_name,
     c.course_name,
     sec.section_name,
+    e.year_level,
+    e.semester,
     COALESCE(p.payment_status, 'No Payment') AS payment_status,
     e.status
 

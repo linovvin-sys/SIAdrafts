@@ -402,10 +402,21 @@ a {
 }
 
 /* ===== TABLES ===== */
+.table-wrap {
+  overflow-x: auto;
+}
+
 .data-table {
   width: 100%;
   border-collapse: collapse;
   font-size: 14px;
+}
+
+.row-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
 .data-table th {
@@ -459,7 +470,8 @@ a {
 .badge-danger    { background: rgba(239,68,68,0.12);  color: #b91c1c; }
 .badge-secondary { background: rgba(107,114,128,0.12); color: #4b5563; }
 
-/* ===== USER FILTER BAR (manage user) ===== */
+/* ===== FILTER BAR (search + dropdown, reused across list/table panels) ===== */
+.filter-bar,
 .user-filter-bar {
   display: flex;
   align-items: center;
@@ -467,10 +479,12 @@ a {
   flex-wrap: wrap;
   padding-bottom: 16px;
 }
+.filter-bar input[type="text"],
 .user-filter-bar #userSearch {
   flex: 1;
   min-width: 220px;
 }
+.filter-bar .select-wrapper,
 .user-filter-bar .select-wrapper {
   min-width: 170px;
 }

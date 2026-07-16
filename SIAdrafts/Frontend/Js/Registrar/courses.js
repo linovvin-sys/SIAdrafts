@@ -9,6 +9,32 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.style.overflow = '';
   }
 
+  function wireListSearch(searchId, bodyId, emptyId) {
+    const searchEl = document.getElementById(searchId);
+    const body     = document.getElementById(bodyId);
+    const emptyEl  = document.getElementById(emptyId);
+    if (!searchEl || !body) return;
+
+    const rows = [...body.querySelectorAll('tr[data-search]')];
+    if (!rows.length) return;
+
+    searchEl.addEventListener('input', () => {
+      const search = searchEl.value.trim().toLowerCase();
+      let visible = 0;
+
+      rows.forEach(row => {
+        const show = !search || row.dataset.search.includes(search);
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+
+      if (emptyEl) emptyEl.style.display = visible ? 'none' : 'block';
+    });
+  }
+
+  wireListSearch('courseSearch', 'courseListBody', 'courseListEmptyState');
+  wireListSearch('sectionSearch', 'sectionListBody', 'sectionListEmptyState');
+
   document.querySelectorAll('[data-open]').forEach(btn => {
     btn.addEventListener('click', () => {
       const target = document.getElementById(btn.getAttribute('data-open'));
@@ -132,6 +158,95 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
       btn.closest('tr').remove();
+    });
+  });
+
+  function escHtml(s) {
+    return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function ordinalYear(n) {
+    const suffix = n === 1 ? 'st' : n === 2 ? 'nd' : n === 3 ? 'rd' : 'th';
+    return n ? `${n}${suffix} Yr` : '—';
+  }
+
+  // ----- View Course (subjects + units) -----
+  document.querySelectorAll('[data-view-course]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const course_id = btn.getAttribute('data-view-course');
+      document.getElementById('viewCourseLabel').textContent = btn.getAttribute('data-course-label') || '';
+
+      const modal = document.getElementById('viewCourseModal');
+      const body  = document.getElementById('viewCourseBody');
+      const totalEl = document.getElementById('viewCourseTotalUnits');
+      body.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading…</td></tr>';
+      totalEl.textContent = '—';
+      openModal(modal);
+
+      try {
+        const res = await fetch(`${API}get_course_subjects.php?course_id=${course_id}`);
+        const data = await res.json();
+
+        if (data.error) {
+          body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#b91c1c;">${escHtml(data.error)}</td></tr>`;
+          return;
+        }
+
+        if (!data.subjects.length) {
+          body.innerHTML = '<tr><td colspan="4" style="text-align:center;">No subjects assigned to this course yet.</td></tr>';
+          totalEl.textContent = '0';
+          return;
+        }
+
+        body.innerHTML = data.subjects.map(s => `
+          <tr>
+            <td>${escHtml(s.subject_code)}</td>
+            <td>${escHtml(s.subject_name)}</td>
+            <td>${ordinalYear(s.year_level)} · Sem ${escHtml(s.semester)}</td>
+            <td>${escHtml(s.units)}</td>
+          </tr>`).join('');
+        totalEl.textContent = data.total_units;
+      } catch (_) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#b91c1c;">Network error. Please try again.</td></tr>';
+      }
+    });
+  });
+
+  // ----- View Section (enrolled students + their subjects) -----
+  document.querySelectorAll('[data-view-section]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const section_id = btn.getAttribute('data-view-section');
+      document.getElementById('viewSectionLabel').textContent = btn.getAttribute('data-section-label') || '';
+
+      const modal = document.getElementById('viewSectionModal');
+      const body  = document.getElementById('viewSectionBody');
+      body.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading…</td></tr>';
+      openModal(modal);
+
+      try {
+        const res = await fetch(`${API}get_section_roster.php?section_id=${section_id}`);
+        const data = await res.json();
+
+        if (data.error) {
+          body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#b91c1c;">${escHtml(data.error)}</td></tr>`;
+          return;
+        }
+
+        if (!data.students.length) {
+          body.innerHTML = '<tr><td colspan="4" style="text-align:center;">No students in this section yet.</td></tr>';
+          return;
+        }
+
+        body.innerHTML = data.students.map(st => `
+          <tr>
+            <td>${escHtml(st.student_no)}</td>
+            <td>${escHtml(st.last_name)}, ${escHtml(st.first_name)}${st.middle_name ? ' ' + escHtml(st.middle_name) : ''}</td>
+            <td>${escHtml(st.email || '—')}</td>
+            <td>${escHtml(st.contact_number || '—')}</td>
+          </tr>`).join('');
+      } catch (_) {
+        body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#b91c1c;">Network error. Please try again.</td></tr>';
+      }
     });
   });
 
