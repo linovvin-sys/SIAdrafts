@@ -12,11 +12,30 @@ if (document.getElementById('confirm-app')) {
         'Form 137 / SHS Card',
         'Certificate of Good Moral',
         'Birth Certificate (PSA)',
+        'Birth Certificate (NSO)',
         '2x2 ID Photos',
+        'Form 138',
       ],
+      requiredGroups: {
+        'Form 137 / SHS Card': 'form_137',
+        'Certificate of Good Moral': 'good_moral',
+        'Birth Certificate (PSA)': 'birth_cert',
+        'Birth Certificate (NSO)': 'birth_cert',
+        '2x2 ID Photos': 'photo_2x2',
+        'Form 138': 'form_138',
+      },
       creditableSubjects: [],
       creditedSubjectIds: [],
+      authorizationNote: '',
     }),
+    mounted() {
+      const params = new URLSearchParams(window.location.search);
+      const ref = params.get('ref');
+      if (ref) {
+        this.referenceId = ref;
+        this.search();
+      }
+    },
     methods: {
       async search() {
         this.lookupError  = '';
@@ -63,7 +82,12 @@ if (document.getElementById('confirm-app')) {
       async confirm() {
         this.confirmError = '';
 
-        const missing = this.requiredDocs.filter(d => !this.checkedDocs.includes(d));
+        const checkedGroups = this.checkedDocs.map(d => this.requiredGroups[d]);
+        const allGroups = [...new Set(Object.values(this.requiredGroups))];
+        const missingGroups = allGroups.filter(g => !checkedGroups.includes(g));
+        const missing = missingGroups.map(g => {
+          return Object.keys(this.requiredGroups).find(k => this.requiredGroups[k] === g);
+        });
         if (missing.length) {
           this.confirmError = 'Missing required documents: ' + missing.join(', ') + '.';
           return;
@@ -112,6 +136,57 @@ if (document.getElementById('confirm-app')) {
           this.confirmError = 'Connection error. Please try again.';
         } finally {
           this.confirming = false;
+        }
+      },
+
+      csrfToken() {
+        return document.getElementById('confirm-app').dataset.csrf || '';
+      },
+
+      async setAuthorization() {
+        if (!this.authorizationNote || !this.authorizationNote.trim()) return;
+        const body = new URLSearchParams({
+          csrf_token: this.csrfToken(),
+          applicant_id: this.applicant.applicant_id,
+          action: 'set',
+          note: this.authorizationNote,
+        });
+        const res = await fetch('/SIAdrafts/Backend/api/update_admission_authorization.php', { method: 'POST', body });
+        const data = await res.json();
+        if (data.success) {
+          this.applicant.authorization_note = this.authorizationNote;
+          this.applicant.cleared_at = null;
+          this.authorizationNote = '';
+        } else {
+          Swal.fire({ icon: 'error', title: 'Could not save', text: (data.errors || []).join(' ') });
+        }
+      },
+      async clearAuthorization() {
+        const body = new URLSearchParams({
+          csrf_token: this.csrfToken(),
+          applicant_id: this.applicant.applicant_id,
+          action: 'clear',
+        });
+        const res = await fetch('/SIAdrafts/Backend/api/update_admission_authorization.php', { method: 'POST', body });
+        const data = await res.json();
+        if (data.success) {
+          this.applicant.cleared_at = new Date().toISOString();
+        } else {
+          Swal.fire({ icon: 'error', title: 'Could not clear', text: (data.errors || []).join(' ') });
+        }
+      },
+      async reviewDuplicate(action) {
+        const body = new URLSearchParams({
+          csrf_token: this.csrfToken(),
+          applicant_id: this.applicant.applicant_id,
+          action: action,
+        });
+        const res = await fetch('/SIAdrafts/Backend/api/update_duplicate_match.php', { method: 'POST', body });
+        const data = await res.json();
+        if (data.success) {
+          this.applicant.duplicate_match_status = action === 'confirm' ? 'confirmed' : 'dismissed';
+        } else {
+          Swal.fire({ icon: 'error', title: 'Could not update', text: (data.errors || []).join(' ') });
         }
       },
     },
