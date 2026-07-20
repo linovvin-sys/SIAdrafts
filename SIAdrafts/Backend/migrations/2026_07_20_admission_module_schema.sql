@@ -1,3 +1,10 @@
+-- start_term is superseded by school_year/semester (auto-derived from settings)
+-- but is kept, not dropped, since Registrar/HeadRegistrar admission_view.php
+-- still read it (out of this sub-project's scope) — relaxed to nullable so
+-- new applications (which no longer supply it) can insert successfully.
+ALTER TABLE applicants
+  MODIFY COLUMN start_term VARCHAR(20) NULL;
+
 ALTER TABLE applicants
   ADD COLUMN nationality VARCHAR(50) NOT NULL DEFAULT 'Filipino' AFTER sex,
   ADD COLUMN school_year VARCHAR(9) NULL AFTER applicant_type,
