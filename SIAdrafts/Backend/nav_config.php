@@ -31,5 +31,6 @@ return [
         ['label' => 'Pending Approval', 'page' => 'pending', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/pending_approval.php', 'icon' => 'approval', 'badge' => 'pending'],
         ['label' => 'Readmission Request', 'page' => 'readmission', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/readmission_request.php', 'icon' => 'readmission'],
         ['label' => 'Messages', 'page' => 'messages', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/messages.php', 'icon' => 'messages', 'badge' => 'unread'],
+        ['label' => 'Settings', 'page' => 'settings', 'url' => '/SIAdrafts/Frontend/View/Admin/settings.php', 'icon' => 'settings'],
     ],
 ];

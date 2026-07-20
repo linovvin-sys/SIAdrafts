@@ -14,6 +14,7 @@ $extraCss = $extraCss ?? [];
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css" />
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/schedule.css" />
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/modal.css" />
+  <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Registrar/registrar.css" />
   <?php foreach ($extraCss as $href): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars($href, ENT_QUOTES) ?>" />
   <?php endforeach; ?>

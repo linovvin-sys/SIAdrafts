@@ -2,9 +2,22 @@
 
 require_once __DIR__ . '/db.php';
 
-function get_setting(string $key): ?string
+/**
+ * Shared per-request cache for get_setting()/set_setting(), keyed by setting_key.
+ * Returns the static cache array by reference so both functions read/write
+ * the same store and stay in sync within a request.
+ *
+ * @return array<string, ?string>
+ */
+function &_settings_cache(): array
 {
     static $cache = [];
+    return $cache;
+}
+
+function get_setting(string $key): ?string
+{
+    $cache = &_settings_cache();
     if (array_key_exists($key, $cache)) {
         return $cache[$key];
     }
@@ -34,4 +47,7 @@ function set_setting(string $key, string $value, int $userId): void
     $stmt->execute();
     $stmt->close();
     $db->close();
+
+    $cache = &_settings_cache();
+    $cache[$key] = $value;
 }
