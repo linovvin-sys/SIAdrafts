@@ -28,11 +28,13 @@ if ($ref === '' || $ref_error !== null) {
 
 $stmt = $conn->prepare("
     SELECT applicant_id, reference_id, last_name, first_name, middle_name,
-           birth_date, sex, civil_status, contact_number, email, home_address,
+           birth_date, sex, nationality, civil_status, contact_number, email, home_address,
            guardian_name, guardian_relationship, guardian_contact,
            guardian_id_type, guardian_id_number,
-           program, year_level, start_term, applicant_type,
-           admission_status, verified_at
+           program, year_level, school_year, semester, applicant_type,
+           admission_status, verified_at,
+           possible_duplicate_student_id, duplicate_match_status,
+           authorization_note, authorized_by, authorized_at, cleared_by, cleared_at
     FROM applicants
     WHERE reference_id = ?
     LIMIT 1
