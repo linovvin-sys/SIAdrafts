@@ -8,12 +8,12 @@ require_once '../../../Backend/require_role.php';
 require_role([ROLE_ADMIN]);
 require_once __DIR__ . '/../../../Backend/admin/dashboard.php';
 
-include 'Include/header.php';
+include '../Include/header.php';
 ?>
 
 <div class="app-layout">
 
-    <?php include 'Include/sidebar.php'; ?>
+    <?php include '../Include/sidebar.php'; ?>
 
     <main class="page-content">
 
@@ -328,4 +328,4 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<?php include 'Include/footer.php'; ?>
+<?php include '../Include/footer.php'; ?>

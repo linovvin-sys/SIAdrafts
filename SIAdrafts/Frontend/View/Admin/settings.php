@@ -13,11 +13,11 @@ $currentSchoolYear = get_setting('current_school_year');
 $currentSemester   = get_setting('current_semester');
 $token             = csrf_token();
 
-include 'Include/header.php';
+include '../Include/header.php';
 ?>
 
 <div class="app-layout">
-    <?php include 'Include/sidebar.php'; ?>
+    <?php include '../Include/sidebar.php'; ?>
 
     <main class="page-content">
       <div class="card p-4" style="max-width: 480px;">
@@ -69,4 +69,4 @@ document.getElementById('settingsForm').addEventListener('submit', async functio
 });
 </script>
 
-<?php include 'Include/footer.php'; ?>
+<?php include '../Include/footer.php'; ?>
