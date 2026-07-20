@@ -64,6 +64,7 @@ This spec covers the foundational work that the four module-specific sub-project
 - New `Backend/csrf.php`: `csrf_token(): string` (generates/returns a per-session token) and `csrf_verify(): void` (checks the submitted token against session, sends 419/403 JSON and exits on mismatch).
 - Applied to every endpoint created or modified across this entire program of work (Foundation and all four module sub-projects going forward). Forms/AJAX calls in touched views include a hidden `csrf_token` field or `X-CSRF-Token` header sourced from `csrf_token()`.
 - Untouched legacy endpoints are unaffected by this phase — explicitly tracked as follow-up debt, not silently inconsistent.
+- **Known gap (deferred):** the write endpoints modified by the RBAC audit (Tasks 8-9) — `record_payment.php`, `save_enrollment.php`, `confirm_admission.php`, `setup_payment.php`, `record_subject_fee_payment.php`, `delete_schedule.php`, `save_schedule.php`, `submit_readmission.php`, `send_message.php` — were NOT retrofitted with `csrf_verify()` in this phase. Doing so requires coordinated frontend JS changes at each call site (adding the token to each AJAX call/form). This is tracked as follow-up debt for a later sub-project, not something already covered by "foundation."
 
 ### 5. Composer, PHPMailer & Mail
 
