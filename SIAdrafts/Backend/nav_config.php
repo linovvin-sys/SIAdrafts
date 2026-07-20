@@ -28,7 +28,7 @@ return [
         ['label' => 'Course & Section', 'page' => 'courses', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/courses.php', 'icon' => 'course'],
         ['label' => 'Schedule', 'page' => 'schedule', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/schedule.php', 'icon' => 'schedule'],
         ['label' => 'Add/Drop Subject', 'page' => 'addDrop', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/add_drop_subject.php', 'icon' => 'addDrop'],
-        ['label' => 'Pending Approval', 'page' => 'pending_approval', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/pending_approval.php', 'icon' => 'approval', 'badge' => 'pending'],
+        ['label' => 'Pending Approval', 'page' => 'pending', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/pending_approval.php', 'icon' => 'approval', 'badge' => 'pending'],
         ['label' => 'Readmission Request', 'page' => 'readmission', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/readmission_request.php', 'icon' => 'readmission'],
         ['label' => 'Messages', 'page' => 'messages', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/messages.php', 'icon' => 'messages', 'badge' => 'unread'],
     ],
