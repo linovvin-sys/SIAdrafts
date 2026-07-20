@@ -1,5 +1,7 @@
 <?php
-$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/admission-confirm.js'];
+$pageTitle  = "ADMISSION";
+$activePage = "admission";
+
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
@@ -7,8 +9,14 @@ require_role([ROLE_ADMISSION, ROLE_ADMIN]);
 require_once '../../../Backend/csrf.php';
 $csrfToken = csrf_token();
 
-include '../Admission/Include/header.php';
+include '../Include/header.php';
 ?>
+
+<div class="app-layout">
+
+<?php include '../Include/sidebar.php'; ?>
+
+<main class="page-content">
 
 <div class="admission-page">
 
@@ -144,6 +152,13 @@ include '../Admission/Include/header.php';
   </div>
 </div>
 
+</main>
+
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<?php include '../Admission/Include/footer.php' ?>
+<?php
+$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/admission-confirm.js'];
+include '../Include/footer.php';
+?>

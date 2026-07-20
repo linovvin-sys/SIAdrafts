@@ -1,12 +1,22 @@
 <?php
+$pageTitle  = "ENROLLMENT";
+$activePage = "enrollment";
+
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
 
 // Show success flash if returning from a completed enrollment
 $enrolled_ref = isset($_GET['enrolled'], $_GET['ref']) ? (int)$_GET['ref'] : null;
-
-$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment.js'];
 ?>
-<?php include '../Admission/Include/header.php' ?>
+<?php include '../Include/header.php' ?>
+
+<div class="app-layout">
+
+<?php include '../Include/sidebar.php'; ?>
+
+<main class="page-content">
 
 <div class="container" style="padding-top:calc(var(--nav-h) + 56px); padding-bottom:60px;">
   <div class="row justify-content-center">
@@ -83,5 +93,12 @@ $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment.js'];
   </div>
 </div>
 
+</main>
+
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<?php include '../Admission/Include/footer.php' ?>
+<?php
+$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment.js'];
+include '../Include/footer.php';
+?>
