@@ -1,3 +1,12 @@
+<?php
+require_once __DIR__ . '/../../Backend/db.php';
+$db   = new Database();
+$conn = $db->connect();
+$courses = [];
+$res = $conn->query("SELECT course_id, course_code, course_name, total_units FROM course WHERE status = 'Approved' ORDER BY course_name ASC");
+if ($res) $courses = $res->fetch_all(MYSQLI_ASSOC);
+$db->close();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -345,21 +354,20 @@
         </div>
       </div>
       <div class="program-list">
-        <div class="program-card">
-          <iconify-icon icon="mdi:laptop"></iconify-icon>
-          <h4>BS Information Technology</h4>
-          <p>4-year program</p>
-        </div>
-        <div class="program-card">
-          <iconify-icon icon="mdi:office-building-outline"></iconify-icon>
-          <h4>BS Business Administration</h4>
-          <p>4-year program</p>
-        </div>
-        <div class="program-card">
-          <iconify-icon icon="mdi:heart-pulse"></iconify-icon>
-          <h4>BS Nursing</h4>
-          <p>4-year program</p>
-        </div>
+        <?php if (empty($courses)): ?>
+          <p style="color:rgba(250,247,240,0.6);">No programs currently open for enrollment.</p>
+        <?php else: ?>
+          <?php foreach ($courses as $c): ?>
+            <div class="program-card">
+              <iconify-icon icon="mdi:school-outline"></iconify-icon>
+              <h4><?= htmlspecialchars($c['course_name']) ?></h4>
+              <p><?= (int)$c['total_units'] ?> total units</p>
+              <button type="button" class="btn btn-apply" style="margin-top:12px;" onclick="openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
+                Apply Now
+              </button>
+            </div>
+          <?php endforeach; ?>
+        <?php endif; ?>
       </div>
     </div>
   </section>
@@ -367,6 +375,27 @@
   <footer>
     © 2026 EduSchool. This is a preview mockup — hook up real links before shipping.
   </footer>
+
+  <div id="applyModal" style="display:none; position:fixed; inset:0; background:rgba(27,42,74,0.5); z-index:2000; align-items:center; justify-content:center;">
+    <div style="background:var(--white); border-radius:18px; padding:28px; max-width:420px; width:90%;">
+      <h3 id="applyModalTitle" style="margin:0 0 10px;">Apply for this program?</h3>
+      <p style="color:var(--ink-soft); margin:0 0 20px;">You'll be taken to the application form with this program pre-selected.</p>
+      <div style="display:flex; gap:10px; justify-content:flex-end;">
+        <button type="button" class="btn btn-login" onclick="closeApplyModal()">Cancel</button>
+        <a id="applyModalConfirm" href="#" class="btn btn-apply">Continue</a>
+      </div>
+    </div>
+  </div>
+  <script>
+    function openApplyModal(courseId, courseName) {
+      document.getElementById('applyModalTitle').textContent = 'Apply for ' + courseName + '?';
+      document.getElementById('applyModalConfirm').href = '/SIAdrafts/Frontend/View/Admission/online_admission.php?course_id=' + courseId;
+      document.getElementById('applyModal').style.display = 'flex';
+    }
+    function closeApplyModal() {
+      document.getElementById('applyModal').style.display = 'none';
+    }
+  </script>
 
 </body>
 </html>
