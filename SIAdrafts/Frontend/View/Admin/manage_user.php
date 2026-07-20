@@ -4,6 +4,9 @@ $activePage = "manage_user";
 
 
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_ADMIN]);
 require_once __DIR__ . '/../../../Backend/admin/manage_user.php';
 
 include 'Include/header.php';
