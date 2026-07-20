@@ -69,14 +69,9 @@ include '../Include/header.php';
           <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_enrolees_csv.php">Export Report</a>
         </div>
 
-        <div class="panel-body" style="padding:16px 24px 0;">
-          <div class="filter-bar">
-            <input type="text" class="form-input" id="courseSearch" placeholder="Search course…">
-          </div>
-        </div>
-
         <div class="panel-body" style="padding:0">
-          <table class="data-table">
+          <div class="table-responsive">
+          <table class="data-table" id="enroleesTable">
             <thead>
               <tr>
                 <th>Course</th>
@@ -116,6 +111,10 @@ include '../Include/header.php';
                   </td>
                 </tr>
                 <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+            <?php if (!empty($byCourse)): ?>
+            <tfoot>
                 <tr style="background:#faf7f2">
                   <td><strong>Grand Total</strong></td>
                   <td><strong><?= $grand['y1'] ?></strong></td>
@@ -125,11 +124,9 @@ include '../Include/header.php';
                   <td><strong><?= $grand['total'] ?></strong></td>
                   <td><strong>100%</strong></td>
                 </tr>
-              <?php endif; ?>
-            </tbody>
+            </tfoot>
+            <?php endif; ?>
           </table>
-          <div class="empty-state" id="courseEmptyState" style="display:none;">
-            <p>No courses match your search.</p>
           </div>
         </div>
       </div>
