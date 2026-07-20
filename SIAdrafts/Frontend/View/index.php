@@ -6,6 +6,19 @@ $courses = [];
 $res = $conn->query("SELECT course_id, course_code, course_name, total_units FROM course WHERE status = 'Approved' ORDER BY course_name ASC");
 if ($res) $courses = $res->fetch_all(MYSQLI_ASSOC);
 $db->close();
+
+function course_monogram(string $name): string {
+    $stop = ['of', 'in', 'and', 'the', 'for'];
+    $words = preg_split('/\s+/', trim($name));
+    $letters = '';
+    foreach ($words as $w) {
+        $w = preg_replace('/[^A-Za-z]/', '', $w);
+        if ($w === '' || in_array(strtolower($w), $stop, true)) continue;
+        $letters .= strtoupper($w[0]);
+        if (strlen($letters) >= 3) break;
+    }
+    return $letters ?: strtoupper(substr($name, 0, 2));
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -62,28 +75,28 @@ $db->close();
       <p>Four steps, in order — two of them completed online, two on campus.</p>
     </div>
     <div class="e-steps">
-      <div class="e-step">
+      <div class="e-step e-reveal" style="transition-delay:0ms">
         <div class="e-step-num">01</div>
         <div>
           <h3>Apply</h3>
           <p>Submit your personal, guardian, and academic history details online. Receive a reference number instantly.</p>
         </div>
       </div>
-      <div class="e-step">
+      <div class="e-step e-reveal" style="transition-delay:80ms">
         <div class="e-step-num">02</div>
         <div>
           <h3>Verify documents</h3>
           <p>Bring your Form 137/SHS card, Certificate of Good Moral, PSA birth certificate, and 2x2 photos to campus.</p>
         </div>
       </div>
-      <div class="e-step">
+      <div class="e-step e-reveal" style="transition-delay:160ms">
         <div class="e-step-num">03</div>
         <div>
           <h3>Enlist subjects</h3>
           <p>Our staff will confirm your section and subject load for the term.</p>
         </div>
       </div>
-      <div class="e-step">
+      <div class="e-step e-reveal" style="transition-delay:240ms">
         <div class="e-step-num">04</div>
         <div>
           <h3>Pay &amp; confirm</h3>
@@ -104,14 +117,13 @@ $db->close();
       <?php if (empty($courses)): ?>
         <p style="color:var(--ink-soft);">No programs currently open for enrollment.</p>
       <?php else: ?>
-        <?php foreach ($courses as $c): ?>
-          <div class="e-program-row">
-            <div>
-              <div class="e-program-name"><?= htmlspecialchars($c['course_name']) ?></div>
-              <div class="e-program-meta"><?= (int)$c['total_units'] ?> total units</div>
-            </div>
-            <button type="button" class="e-program-apply" onclick="openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
-              Apply →
+        <?php foreach ($courses as $i => $c): ?>
+          <div class="e-program-card e-reveal" style="transition-delay:<?= $i * 70 ?>ms" onclick="openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
+            <div class="e-program-monogram"><?= htmlspecialchars(course_monogram($c['course_name'])) ?></div>
+            <div class="e-program-name"><?= htmlspecialchars($c['course_name']) ?></div>
+            <div class="e-program-meta"><?= (int)$c['total_units'] ?> Total Units</div>
+            <button type="button" class="e-program-apply" onclick="event.stopPropagation(); openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
+              Apply <span class="e-arrow">→</span>
             </button>
           </div>
         <?php endforeach; ?>
@@ -127,15 +139,15 @@ $db->close();
     </div>
     <!-- PLACEHOLDER: replace with real testimonials before this goes live -->
     <div class="e-quotes">
-      <blockquote class="e-quote">
+      <blockquote class="e-quote e-reveal" style="transition-delay:0ms">
         <p>"The online form took less time than I expected, and I had my reference number right away."</p>
         <cite>— J. Mercado, BS Criminology, 1st Year</cite>
       </blockquote>
-      <blockquote class="e-quote">
+      <blockquote class="e-quote e-reveal" style="transition-delay:100ms">
         <p>"Knowing the fee breakdown ahead of time meant no surprises when I got to Treasury."</p>
         <cite>— A. Reyes, Transferee</cite>
       </blockquote>
-      <blockquote class="e-quote">
+      <blockquote class="e-quote e-reveal" style="transition-delay:200ms">
         <p>"Admissions staff walked me through document verification without any back-and-forth."</p>
         <cite>— K. Santos, Returning Student</cite>
       </blockquote>
@@ -149,28 +161,28 @@ $db->close();
       <div class="e-heading-rule" data-rule></div>
     </div>
     <div class="e-faq">
-      <div class="e-faq-item">
+      <div class="e-faq-item e-reveal" style="transition-delay:0ms">
         <button type="button" class="e-faq-btn">
           <span>Do I need to bring documents to apply online?</span>
           <span class="e-faq-mark">+</span>
         </button>
         <div class="e-faq-body">No — the online form only needs your details. You can upload requirements now or mark them "submit at campus" and bring them in person.</div>
       </div>
-      <div class="e-faq-item">
+      <div class="e-faq-item e-reveal" style="transition-delay:60ms">
         <button type="button" class="e-faq-btn">
           <span>How long does the whole process take?</span>
           <span class="e-faq-mark">+</span>
         </button>
         <div class="e-faq-body">The online form takes about ten minutes. The on-campus steps (document verification, enlistment, and payment) depend on how busy the line is that day.</div>
       </div>
-      <div class="e-faq-item">
+      <div class="e-faq-item e-reveal" style="transition-delay:120ms">
         <button type="button" class="e-faq-btn">
           <span>I lost my reference number — what do I do?</span>
           <span class="e-faq-mark">+</span>
         </button>
         <div class="e-faq-body">Visit the Admissions counter with a valid ID and the staff can look up your application by name and birth date.</div>
       </div>
-      <div class="e-faq-item">
+      <div class="e-faq-item e-reveal" style="transition-delay:180ms">
         <button type="button" class="e-faq-btn">
           <span>Can I change my program after applying?</span>
           <span class="e-faq-mark">+</span>
@@ -180,7 +192,7 @@ $db->close();
     </div>
   </section>
 
-  <section class="e-cta-band">
+  <section class="e-cta-band e-reveal">
     <h2>Ready to start?</h2>
     <p>Your reference number is a few minutes away.</p>
     <a href="/SIAdrafts/Frontend/View/Admission/online_admission.php" class="e-btn">Apply Now</a>
@@ -251,6 +263,31 @@ $db->close();
       }, { threshold: 0.6 });
 
       rules.forEach(function (r) { observer.observe(r); });
+    })();
+
+    // Scroll reveal — fade+rise, staggered via each element's own
+    // transition-delay (set inline per group). Defaults to visible (CSS
+    // .e-reveal has opacity:0 only as a progressive enhancement) if
+    // IntersectionObserver isn't available.
+    (function () {
+      var items = document.querySelectorAll('.e-reveal');
+      if (!items.length) return;
+
+      if (!('IntersectionObserver' in window) || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        items.forEach(function (el) { el.classList.add('in'); });
+        return;
+      }
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15 });
+
+      items.forEach(function (el) { observer.observe(el); });
     })();
   </script>
 
