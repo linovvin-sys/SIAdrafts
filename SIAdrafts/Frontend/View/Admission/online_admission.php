@@ -14,6 +14,8 @@ ndex<?php
  */
 
 require_once '../../../Backend/db.php';
+require_once '../../../Backend/requirements.php';
+require_once '../../../Backend/api/validation_rules.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -25,6 +27,17 @@ if ($courseResult) {
     $courses = $courseResult->fetch_all(MYSQLI_ASSOC);
 }
 $conn->close();
+
+// Optional course lock, arrived via the landing page's "Apply Now" flow.
+$lockedCourseId = 0;
+if (isset($_GET['course_id']) && ctype_digit((string)$_GET['course_id'])) {
+    $lockedCourseId = (int)$_GET['course_id'];
+    $lockedValid = false;
+    foreach ($courses as $c) {
+        if ((int)$c['course_id'] === $lockedCourseId) { $lockedValid = true; break; }
+    }
+    if (!$lockedValid) $lockedCourseId = 0;
+}
 
 $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/online-admission.js'];
 include '../Admission/Include/header.php';
@@ -44,7 +57,7 @@ include '../Admission/Include/header.php';
 
   <!-- TODO: confirm this matches the real route to online_admission_process.php
        (it lives under Backend/api/, this page lives under Frontend/.../Admission/Online/) -->
-  <form id="admissionForm" action="/SIAdrafts/Backend/api/online_admission_process.php" novalidate>
+  <form id="admissionForm" action="/SIAdrafts/Backend/api/online_admission_process.php" enctype="multipart/form-data" novalidate>
 
     <!-- Honeypot: real applicants never see or fill this in.
          Swap in a real CAPTCHA before this goes fully public. -->
@@ -102,6 +115,14 @@ include '../Admission/Include/header.php';
               <option value="Separated">Separated</option>
             </select>
           </div>
+          <div class="col-md-4">
+            <label class="form-label" for="nationality">Nationality</label>
+            <select class="form-control" id="nationality" name="nationality" required>
+              <?php foreach (NATIONALITY_OPTIONS as $nat): ?>
+                <option value="<?= htmlspecialchars($nat) ?>"><?= htmlspecialchars($nat) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
           <div class="col-md-6">
             <label class="form-label" for="contact_number">Contact Number</label>
             <input type="tel" class="form-control" id="contact_number" name="contact_number" placeholder="09XXXXXXXXX" required>
@@ -132,7 +153,12 @@ include '../Admission/Include/header.php';
           </div>
           <div class="col-md-6">
             <label class="form-label" for="guardian_relationship">Relationship to Applicant</label>
-            <input type="text" class="form-control" id="guardian_relationship" name="guardian_relationship" required>
+            <select class="form-control" id="guardian_relationship" name="guardian_relationship" required>
+              <option value="">Select</option>
+              <?php foreach (RELATIONSHIP_OPTIONS as $rel): ?>
+                <option value="<?= htmlspecialchars($rel) ?>"><?= htmlspecialchars($rel) ?></option>
+              <?php endforeach; ?>
+            </select>
           </div>
           <div class="col-md-4">
             <label class="form-label" for="guardian_contact">Guardian's Contact Number</label>
@@ -168,16 +194,29 @@ include '../Admission/Include/header.php';
           </div>
         </div>
         <div class="row g-3">
-          <div class="col-md-6">
+          <div class="col-md-6" id="programFieldWrap">
             <label class="form-label" for="course_id">Program</label>
-            <select class="form-control" id="course_id" name="course_id" required>
-              <option value="">Select a program</option>
-              <?php foreach ($courses as $course): ?>
-                <option value="<?= (int)$course['course_id'] ?>">
-                  <?= htmlspecialchars($course['course_name']) ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
+            <?php if ($lockedCourseId): ?>
+              <?php
+                $lockedName = '';
+                foreach ($courses as $c) {
+                    if ((int)$c['course_id'] === $lockedCourseId) { $lockedName = $c['course_name']; break; }
+                }
+              ?>
+              <input type="text" class="form-control" value="<?= htmlspecialchars($lockedName) ?>" disabled id="programDisplay">
+              <input type="hidden" name="course_id" id="course_id" value="<?= $lockedCourseId ?>">
+              <button type="button" class="btn-link" id="unlockProgramBtn" style="padding:4px 0;">Not your program? Change</button>
+              <template id="programOptionsTemplate"><option value="">Select a program</option><?php foreach ($courses as $course): ?><option value="<?= (int)$course['course_id'] ?>"><?= htmlspecialchars($course['course_name']) ?></option><?php endforeach; ?></template>
+            <?php else: ?>
+              <select class="form-control" id="course_id" name="course_id" required>
+                <option value="">Select a program</option>
+                <?php foreach ($courses as $course): ?>
+                  <option value="<?= (int)$course['course_id'] ?>">
+                    <?= htmlspecialchars($course['course_name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            <?php endif; ?>
           </div>
           <div class="col-md-3">
             <label class="form-label" for="year_level">Year Level</label>
@@ -197,10 +236,6 @@ include '../Admission/Include/header.php';
               <option value="Transferee">Transferee</option>
               <option value="Returning">Returning</option>
             </select>
-          </div>
-          <div class="col-md-6">
-            <label class="form-label" for="start_term">Preferred Start Term</label>
-            <input type="text" class="form-control" id="start_term" name="start_term" placeholder="e.g. SY 2026-2027, 1st Semester" required>
           </div>
         </div>
       </section>
@@ -243,6 +278,42 @@ include '../Admission/Include/header.php';
         </div>
 
         <button type="button" class="btn-add-row" id="addHistoryRow">+ Add another school</button>
+      </section>
+
+      <section class="form-section">
+        <div class="section-head">
+          <span class="section-num">5</span>
+          <div>
+            <h2>Requirements</h2>
+            <p>Upload now if you have them ready, or mark them to bring at campus — nothing here blocks your application.</p>
+          </div>
+        </div>
+
+        <?php
+          $renderedGroups = [];
+          foreach (REQUIREMENT_DEFINITIONS as $req):
+            $groupAlreadyRendered = isset($renderedGroups[$req['group']]);
+            $renderedGroups[$req['group']] = true;
+        ?>
+          <div class="row g-2 align-items-center requirement-row" data-group="<?= htmlspecialchars($req['group']) ?>" style="margin-bottom:10px;">
+            <div class="col-md-4">
+              <?php if ($groupAlreadyRendered): ?>
+                <label class="form-label" style="opacity:.6;">or — <?= htmlspecialchars($req['label']) ?></label>
+              <?php else: ?>
+                <label class="form-label"><?= htmlspecialchars($req['label']) ?></label>
+              <?php endif; ?>
+            </div>
+            <div class="col-md-4">
+              <input type="file" class="form-control requirement-file" name="requirement_file[<?= htmlspecialchars($req['key']) ?>]" accept="application/pdf,image/*">
+            </div>
+            <div class="col-md-4">
+              <label class="form-check-label" style="font-size:13px;">
+                <input type="checkbox" class="requirement-later" name="requirement_status[<?= htmlspecialchars($req['key']) ?>]" value="later">
+                I'll submit this at campus
+              </label>
+            </div>
+          </div>
+        <?php endforeach; ?>
       </section>
 
       <div class="form-actions">
