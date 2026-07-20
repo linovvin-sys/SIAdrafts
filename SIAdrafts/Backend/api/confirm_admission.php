@@ -53,19 +53,29 @@ if ($reference_id === '' || $ref_error !== null) {
     exit;
 }
 
+require '../requirements.php';
+
 $docs_submitted = array_map('htmlspecialchars', $_POST['docs'] ?? []);
 
-$required_docs = [
-    'Form 137 / SHS Card',
-    'Certificate of Good Moral',
-    'Birth Certificate (PSA)',
-    '2x2 ID Photos',
-];
-$missing_required = array_diff($required_docs, $docs_submitted);
+$labelToKey = [];
+foreach (REQUIREMENT_DEFINITIONS as $def) {
+    $labelToKey[$def['label']] = $def['key'];
+}
+$submittedKeys = [];
+foreach ($docs_submitted as $label) {
+    if (isset($labelToKey[$label])) $submittedKeys[] = $labelToKey[$label];
+}
+$missingGroups = missing_requirement_groups($submittedKeys);
 
 $errors = [];
-if (!empty($missing_required)) {
-    $errors[] = 'Missing required documents: ' . implode(', ', $missing_required) . '.';
+if (!empty($missingGroups)) {
+    $missingLabels = [];
+    foreach ($missingGroups as $groupKey) {
+        foreach (REQUIREMENT_DEFINITIONS as $def) {
+            if ($def['group'] === $groupKey) { $missingLabels[] = $def['label']; break; }
+        }
+    }
+    $errors[] = 'Missing required documents: ' . implode(', ', $missingLabels) . '.';
 }
 
 // look up the applicant, and lock the row for the duration of this

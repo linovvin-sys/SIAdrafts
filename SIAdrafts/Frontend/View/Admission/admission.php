@@ -1,6 +1,11 @@
 <?php
 $page_scripts = ['/SIAdrafts/Frontend/Js/Admission/admission-confirm.js'];
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_ADMISSION, ROLE_ADMIN]);
+require_once '../../../Backend/csrf.php';
+$csrfToken = csrf_token();
 
 include '../Admission/Include/header.php';
 ?>
@@ -16,7 +21,7 @@ include '../Admission/Include/header.php';
     <p>Ask the applicant for their reference ID (given after their online application), pull up their record, and check off the physical documents they hand over today.</p>
   </div>
 
-  <div id="confirm-app" class="admission-card" style="padding:32px;">
+  <div id="confirm-app" class="admission-card" style="padding:32px;" data-csrf="<?= htmlspecialchars($csrfToken, ENT_QUOTES) ?>">
 
     <div class="row g-3 align-items-end mb-3">
       <div class="col-md-8">
@@ -44,7 +49,7 @@ include '../Admission/Include/header.php';
           <span class="section-num"><iconify-icon icon="mdi:account"></iconify-icon></span>
           <div>
             <h2>{{ applicant.full_name }}</h2>
-            <p>{{ applicant.program }} &middot; Year {{ applicant.year_level }} &middot; {{ applicant.start_term }}</p>
+            <p>{{ applicant.program }} &middot; Year {{ applicant.year_level }} &middot; {{ applicant.school_year }} Sem {{ applicant.semester }}</p>
           </div>
         </div>
         <div class="row g-2">
@@ -55,6 +60,34 @@ include '../Admission/Include/header.php';
           <div class="col-md-6"><strong>Guardian contact:</strong> {{ applicant.guardian_contact }}</div>
           <div class="col-md-6"><strong>Guardian ID:</strong> {{ applicant.guardian_id_type }} — {{ applicant.guardian_id_number }}</div>
           <div class="col-md-6"><strong>Status:</strong> {{ applicant.admission_status }}</div>
+        </div>
+      </div>
+
+      <div v-if="applicant.duplicate_match_status === 'pending_review'" class="alert-box alert-warning mb-3">
+        Possible returning student — a matching record was found.
+        <button type="button" class="btn btn-outline" style="margin-left:8px;" @click="reviewDuplicate('confirm')">Confirm match</button>
+        <button type="button" class="btn btn-outline" style="margin-left:8px;" @click="reviewDuplicate('dismiss')">Dismiss</button>
+      </div>
+
+      <div class="form-section">
+        <div class="section-head">
+          <span class="section-num"><iconify-icon icon="mdi:shield-check-outline"></iconify-icon></span>
+          <div>
+            <h2>Admission Authorization</h2>
+            <p>Optional staff note authorizing this applicant to proceed, if applicable.</p>
+          </div>
+        </div>
+        <div v-if="applicant.authorization_note && !applicant.cleared_at" class="alert-box alert-info mb-2">
+          {{ applicant.authorization_note }}
+          <button type="button" class="btn btn-outline" style="margin-left:8px;" @click="clearAuthorization">Clear</button>
+        </div>
+        <div v-else class="row g-2">
+          <div class="col-md-9">
+            <input type="text" class="form-control" v-model="authorizationNote" placeholder="e.g. Authorized pending PSA submission">
+          </div>
+          <div class="col-md-3">
+            <button type="button" class="btn btn-submit w-100" @click="setAuthorization">Save note</button>
+          </div>
         </div>
       </div>
 
