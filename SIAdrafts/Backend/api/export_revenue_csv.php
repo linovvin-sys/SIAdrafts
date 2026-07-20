@@ -1,12 +1,16 @@
 <?php
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 
 if (empty($_SESSION['user_id'])) {
     http_response_code(401);
     echo 'Unauthorized.';
     exit;
 }
+
+require_role([ROLE_TREASURY, ROLE_ADMIN], true);
 
 $db   = new Database();
 $conn = $db->connect();
