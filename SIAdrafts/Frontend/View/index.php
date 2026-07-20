@@ -51,16 +51,16 @@ function course_monogram(string $name): string {
   </div>
 
   <main id="top" class="e-hero">
-    <span class="e-eyebrow">Admissions Open — SY 2026–2027</span>
-    <h1>Begin your <em>education</em>, one form at a time.</h1>
-    <p class="e-lede">Fill out the online application in about ten minutes. We'll issue a reference number — bring it, along with your documents, when you visit us to complete enrollment.</p>
+    <span class="e-eyebrow e-reveal" style="transition-delay:0ms">Admissions Open — SY 2026–2027</span>
+    <h1 class="e-reveal" style="transition-delay:80ms">Begin your <em>education</em>, one form at a time.</h1>
+    <p class="e-lede e-reveal" style="transition-delay:180ms">Fill out the online application in about ten minutes. We'll issue a reference number — bring it, along with your documents, when you visit us to complete enrollment.</p>
 
-    <div class="e-hero-actions">
+    <div class="e-hero-actions e-reveal" style="transition-delay:280ms">
       <a href="/SIAdrafts/Frontend/View/Admission/online_admission.php" class="e-btn">Apply Now</a>
-      <a href="#steps" class="e-link" style="text-decoration:none; color:var(--ink); border-bottom:1px solid var(--line); padding-bottom:3px; font-size:13.5px; font-weight:500;">See how it works</a>
+      <a href="#steps" class="e-link">See how it works</a>
     </div>
 
-    <div class="e-ref-note">
+    <div class="e-ref-note e-reveal" style="transition-delay:360ms">
       Already applied? Your reference number looks like <code>REF-00000-001</code> — keep it for your campus visit.
     </div>
   </main>
@@ -75,28 +75,28 @@ function course_monogram(string $name): string {
       <p>Four steps, in order — two of them completed online, two on campus.</p>
     </div>
     <div class="e-steps">
-      <div class="e-step e-reveal" style="transition-delay:0ms">
+      <div class="e-step e-reveal e-reveal--right" style="transition-delay:0ms">
         <div class="e-step-num">01</div>
         <div>
           <h3>Apply</h3>
           <p>Submit your personal, guardian, and academic history details online. Receive a reference number instantly.</p>
         </div>
       </div>
-      <div class="e-step e-reveal" style="transition-delay:80ms">
+      <div class="e-step e-reveal e-reveal--right" style="transition-delay:80ms">
         <div class="e-step-num">02</div>
         <div>
           <h3>Verify documents</h3>
           <p>Bring your Form 137/SHS card, Certificate of Good Moral, PSA birth certificate, and 2x2 photos to campus.</p>
         </div>
       </div>
-      <div class="e-step e-reveal" style="transition-delay:160ms">
+      <div class="e-step e-reveal e-reveal--right" style="transition-delay:160ms">
         <div class="e-step-num">03</div>
         <div>
           <h3>Enlist subjects</h3>
           <p>Our staff will confirm your section and subject load for the term.</p>
         </div>
       </div>
-      <div class="e-step e-reveal" style="transition-delay:240ms">
+      <div class="e-step e-reveal e-reveal--right" style="transition-delay:240ms">
         <div class="e-step-num">04</div>
         <div>
           <h3>Pay &amp; confirm</h3>
@@ -118,7 +118,7 @@ function course_monogram(string $name): string {
         <p style="color:var(--ink-soft);">No programs currently open for enrollment.</p>
       <?php else: ?>
         <?php foreach ($courses as $i => $c): ?>
-          <div class="e-program-card e-reveal" style="transition-delay:<?= $i * 70 ?>ms" onclick="openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
+          <div class="e-program-card e-reveal e-reveal--zoom" style="transition-delay:<?= $i * 70 ?>ms" onclick="openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
             <div class="e-program-monogram"><?= htmlspecialchars(course_monogram($c['course_name'])) ?></div>
             <div class="e-program-name"><?= htmlspecialchars($c['course_name']) ?></div>
             <div class="e-program-meta"><?= (int)$c['total_units'] ?> Total Units</div>
@@ -139,15 +139,15 @@ function course_monogram(string $name): string {
     </div>
     <!-- PLACEHOLDER: replace with real testimonials before this goes live -->
     <div class="e-quotes">
-      <blockquote class="e-quote e-reveal" style="transition-delay:0ms">
+      <blockquote class="e-quote e-reveal e-reveal--left" style="transition-delay:0ms">
         <p>"The online form took less time than I expected, and I had my reference number right away."</p>
         <cite>— J. Mercado, BS Criminology, 1st Year</cite>
       </blockquote>
-      <blockquote class="e-quote e-reveal" style="transition-delay:100ms">
+      <blockquote class="e-quote e-reveal e-reveal--right" style="transition-delay:120ms">
         <p>"Knowing the fee breakdown ahead of time meant no surprises when I got to Treasury."</p>
         <cite>— A. Reyes, Transferee</cite>
       </blockquote>
-      <blockquote class="e-quote e-reveal" style="transition-delay:200ms">
+      <blockquote class="e-quote e-reveal e-reveal--left" style="transition-delay:240ms">
         <p>"Admissions staff walked me through document verification without any back-and-forth."</p>
         <cite>— K. Santos, Returning Student</cite>
       </blockquote>
@@ -161,28 +161,28 @@ function course_monogram(string $name): string {
       <div class="e-heading-rule" data-rule></div>
     </div>
     <div class="e-faq">
-      <div class="e-faq-item e-reveal" style="transition-delay:0ms">
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:0ms">
         <button type="button" class="e-faq-btn">
           <span>Do I need to bring documents to apply online?</span>
           <span class="e-faq-mark">+</span>
         </button>
         <div class="e-faq-body">No — the online form only needs your details. You can upload requirements now or mark them "submit at campus" and bring them in person.</div>
       </div>
-      <div class="e-faq-item e-reveal" style="transition-delay:60ms">
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:60ms">
         <button type="button" class="e-faq-btn">
           <span>How long does the whole process take?</span>
           <span class="e-faq-mark">+</span>
         </button>
         <div class="e-faq-body">The online form takes about ten minutes. The on-campus steps (document verification, enlistment, and payment) depend on how busy the line is that day.</div>
       </div>
-      <div class="e-faq-item e-reveal" style="transition-delay:120ms">
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:120ms">
         <button type="button" class="e-faq-btn">
           <span>I lost my reference number — what do I do?</span>
           <span class="e-faq-mark">+</span>
         </button>
         <div class="e-faq-body">Visit the Admissions counter with a valid ID and the staff can look up your application by name and birth date.</div>
       </div>
-      <div class="e-faq-item e-reveal" style="transition-delay:180ms">
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:180ms">
         <button type="button" class="e-faq-btn">
           <span>Can I change my program after applying?</span>
           <span class="e-faq-mark">+</span>
@@ -192,7 +192,7 @@ function course_monogram(string $name): string {
     </div>
   </section>
 
-  <section class="e-cta-band e-reveal">
+  <section class="e-cta-band e-reveal e-reveal--zoom">
     <h2>Ready to start?</h2>
     <p>Your reference number is a few minutes away.</p>
     <a href="/SIAdrafts/Frontend/View/Admission/online_admission.php" class="e-btn">Apply Now</a>
