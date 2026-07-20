@@ -32,6 +32,57 @@ document.getElementById('addHistoryRow').addEventListener('click', function () {
   rows.appendChild(block);
 });
 
+const unlockBtn = document.getElementById('unlockProgramBtn');
+if (unlockBtn) {
+  unlockBtn.addEventListener('click', function () {
+    const wrap = document.getElementById('programFieldWrap');
+    const template = document.getElementById('programOptionsTemplate');
+    const select = document.createElement('select');
+    select.className = 'form-control';
+    select.id = 'course_id';
+    select.name = 'course_id';
+    select.required = true;
+    select.innerHTML = template ? template.innerHTML : '<option value="">Select a program</option>';
+    wrap.innerHTML = '<label class="form-label" for="course_id">Program</label>';
+    wrap.appendChild(select);
+  });
+}
+
+document.querySelectorAll('.requirement-row').forEach(function (row) {
+  const fileInput = row.querySelector('.requirement-file');
+  const laterCheckbox = row.querySelector('.requirement-later');
+  if (!fileInput || !laterCheckbox) return;
+
+  laterCheckbox.addEventListener('change', function () {
+    fileInput.disabled = laterCheckbox.checked;
+    if (laterCheckbox.checked) fileInput.value = '';
+  });
+  fileInput.addEventListener('change', function () {
+    if (fileInput.files.length > 0) {
+      laterCheckbox.checked = false;
+    }
+  });
+});
+
+function suggestApplicantType() {
+  const typeSelect = document.getElementById('applicant_type');
+  if (!typeSelect || typeSelect.dataset.userChanged === 'true') return;
+  const hasHistory = Array.from(document.querySelectorAll('input[name="school_name[]"]'))
+    .some(function (input) { return input.value.trim() !== ''; });
+  typeSelect.value = hasHistory ? 'Transferee' : 'New';
+}
+
+const applicantTypeSelect = document.getElementById('applicant_type');
+if (applicantTypeSelect) {
+  applicantTypeSelect.addEventListener('change', function () {
+    this.dataset.userChanged = 'true';
+  });
+}
+
+document.getElementById('historyRows').addEventListener('input', function (e) {
+  if (e.target.name === 'school_name[]') suggestApplicantType();
+});
+
 const form = document.getElementById('admissionForm');
 const banner = document.getElementById('formBanner');
 const refBanner = document.getElementById('referenceBanner');
@@ -55,7 +106,7 @@ function renderReferenceSlip(referenceId, summary) {
     '<div class="reference-slip" id="printableSlip">' +
       '<div class="banner-title">Your reference ID: <strong>' + escapeHtml(referenceId) + '</strong></div>' +
       '<p>' + escapeHtml(summary.name) + ' &middot; ' + escapeHtml(summary.program) + '</p>' +
-      '<p>Intended start: ' + escapeHtml(summary.start_term) + '</p>' +
+      '<p>Term: ' + escapeHtml(summary.school_year) + '</p>' +
       '<p>Bring this reference ID and your physical documents to the admissions counter to complete your application.</p>' +
       '<button type="button" class="btn" id="printSlipBtn">Print this slip</button>' +
     '</div>';
