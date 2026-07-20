@@ -2,6 +2,8 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -11,6 +13,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized.']);
     exit;
 }
+
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
