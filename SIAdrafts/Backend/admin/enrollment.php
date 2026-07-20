@@ -1,6 +1,9 @@
 <?php
 
 require_once __DIR__ . '/../db.php';
+require_once __DIR__ . '/../roles.php';
+require_once __DIR__ . '/../require_role.php';
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR, ROLE_ADMIN], true);
 
 $db = new Database();
 $conn = $db->connect();

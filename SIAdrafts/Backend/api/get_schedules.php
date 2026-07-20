@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user_id'])) {
@@ -8,6 +10,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['error' => 'Unauthorized.']);
     exit;
 }
+
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR], true);
 
 $db   = new Database();
 $conn = $db->connect();

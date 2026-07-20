@@ -23,12 +23,12 @@ function initials(string $first, string $last): string {
     return mb_strtoupper($f . $l) ?: '?';
 }
 
-include 'Include/header.php';
+include '../Include/header.php';
 ?>
 
 <div class="app-layout">
 
-  <?php include 'Include/sidebar.php'; ?>
+  <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
 
@@ -101,4 +101,10 @@ include 'Include/header.php';
   const CURRENT_USER_ID = <?= (int)$_SESSION['user_id'] ?>;
 </script>
 
-<?php include 'Include/footer.php' ?>
+<?php
+$extraScripts = [
+    'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+    '/SIAdrafts/Frontend/Js/Registrar/' . ($pageScript ?? 'registrar') . '.js',
+];
+include '../Include/footer.php';
+?>

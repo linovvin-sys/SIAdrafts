@@ -2,6 +2,7 @@
 session_start();
 header('Content-Type: application/json');
 require_once '../db.php';
+require_once '../roles.php';
 require_once '../require_role.php';
 
 if (empty($_SESSION['user_id'])) {
@@ -11,7 +12,7 @@ if (empty($_SESSION['user_id'])) {
 }
 
 // Only Registrar staff/head may look up students for add/drop.
-require_role(['Head Registrar', 'Registrar Staff'], true);
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR], true);
 
 $db   = new Database();
 $conn = $db->connect();

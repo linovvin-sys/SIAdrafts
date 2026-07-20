@@ -2,6 +2,8 @@
 session_start();
 header('Content-Type: application/json');
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 require_once 'validation_rules.php';
 
 if (empty($_SESSION['user_id'])) {
@@ -9,6 +11,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['error' => 'Unauthorized.']);
     exit;
 }
+
+require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN], true);
 
 $db   = new Database();
 $conn = $db->connect();

@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 require_once 'can_message.php';
 require_once 'message_attachments.php';
 
@@ -8,6 +10,8 @@ if (empty($_SESSION['user_id'])) {
     http_response_code(401);
     exit('Unauthorized.');
 }
+
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR, ROLE_ADMIN], true);
 
 $my_id      = (int)$_SESSION['user_id'];
 $message_id = (int)($_GET['message_id'] ?? 0);

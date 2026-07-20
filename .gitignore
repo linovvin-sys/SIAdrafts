@@ -3,3 +3,5 @@
 Backend/config.php
 Backend/uploads/messages/*
 !Backend/uploads/messages/.gitkeep
+SIAdrafts/vendor/
+SIAdrafts/.env

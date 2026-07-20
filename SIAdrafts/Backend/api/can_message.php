@@ -5,13 +5,17 @@
 // role (e.g. one Registrar Staff member to another).
 // Add more allowed pairs here later if Treasury/Admission gets added.
 
-const ROLE_HEAD_REGISTRAR    = 5;
-const ROLE_REGISTRAR_STAFF   = 6;
+// Named MSG_* (rather than ROLE_*) to avoid a fatal "constant already
+// defined" collision with the ROLE_HEAD_REGISTRAR / ROLE_REGISTRAR_STAFF
+// role-name string constants in ../roles.php (Task 4/9) — this file's
+// constants are numeric users.role_id values, a different thing entirely.
+const MSG_ROLE_HEAD_REGISTRAR  = 5;
+const MSG_ROLE_REGISTRAR_STAFF = 6;
 
 const ALLOWED_MESSAGE_ROLE_PAIRS = [
-    [ROLE_HEAD_REGISTRAR, ROLE_REGISTRAR_STAFF],
-    [ROLE_HEAD_REGISTRAR, ROLE_HEAD_REGISTRAR],
-    [ROLE_REGISTRAR_STAFF, ROLE_REGISTRAR_STAFF],
+    [MSG_ROLE_HEAD_REGISTRAR, MSG_ROLE_REGISTRAR_STAFF],
+    [MSG_ROLE_HEAD_REGISTRAR, MSG_ROLE_HEAD_REGISTRAR],
+    [MSG_ROLE_REGISTRAR_STAFF, MSG_ROLE_REGISTRAR_STAFF],
 ];
 
 function roles_can_message(int $roleA, int $roleB): bool {

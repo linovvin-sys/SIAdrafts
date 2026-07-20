@@ -1,4 +1,8 @@
 <?php
+require_once __DIR__ . '/../roles.php';
+require_once __DIR__ . '/../require_role.php';
+require_role([ROLE_ADMIN], true);
+
 /**
  * Generates the next sequential StaffID for the current year.
  * Format: YYYY-NNNN (e.g. 2026-0001, 2026-0002, ...)
