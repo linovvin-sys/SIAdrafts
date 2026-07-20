@@ -10,6 +10,8 @@
 
 require '../db.php';
 require 'validation_rules.php';
+require '../requirements.php';
+require '../settings.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -87,6 +89,7 @@ $fields = [
     'middle_name'      => clean($_POST['middle_name'] ?? ''),
     'birth_date'       => clean($_POST['birth_date'] ?? ''),
     'sex'              => clean($_POST['sex'] ?? ''),
+    'nationality'      => clean($_POST['nationality'] ?? ''),
     'civil_status'     => clean($_POST['civil_status'] ?? ''),
     'contact_number'   => clean($_POST['contact_number'] ?? ''),
     'email'            => clean($_POST['email'] ?? ''),
@@ -100,7 +103,6 @@ $fields = [
 
     'course_id'      => (int)($_POST['course_id'] ?? 0),
     'year_level'     => clean($_POST['year_level'] ?? ''),
-    'start_term'     => clean($_POST['start_term'] ?? ''),
     'applicant_type' => clean($_POST['applicant_type'] ?? ''),
 ];
 
@@ -128,6 +130,7 @@ $errors = [];
 
 $required_fields = required_field_labels();
 unset($required_fields['id_verified_by']); // not applicable — no staff present
+unset($required_fields['start_term']); // superseded by automatic school_year/semester (see below)
 
 foreach ($required_fields as $key => $label) {
     if (($fields[$key] ?? '') === '') {
@@ -146,6 +149,8 @@ $check = [
     validate_birth_date($fields['birth_date']),
     validate_guardian_id($fields['guardian_id_number']),
     validate_address($fields['home_address']),
+    validate_nationality($fields['nationality']),
+    validate_relationship($fields['guardian_relationship']),
 ];
 
 $fields['program'] = '';
@@ -192,6 +197,75 @@ if (empty($history)) {
     $errors[] = 'At least one academic history entry is required.';
 }
 
+//  requirements: each is either an uploaded file or "submit at campus" —
+//  never required, never blocks submission.
+$requirementRows = []; // ['key' => ..., 'status' => 'submitted_online'|'will_submit_later', 'file_path' => ...|null]
+$uploadDir = __DIR__ . '/../uploads/requirements/';
+
+foreach (REQUIREMENT_DEFINITIONS as $req) {
+    $key = $req['key'];
+    $later = ($_POST['requirement_status'][$key] ?? '') === 'later';
+
+    if ($later) {
+        $requirementRows[] = ['key' => $key, 'status' => 'will_submit_later', 'file_path' => null];
+        continue;
+    }
+
+    if (!empty($_FILES['requirement_file']['name'][$key])) {
+        $tmpPath  = $_FILES['requirement_file']['tmp_name'][$key];
+        $errCode  = $_FILES['requirement_file']['error'][$key];
+        $origName = $_FILES['requirement_file']['name'][$key];
+        $fileError = null;
+
+        if ($errCode !== UPLOAD_ERR_OK) {
+            $fileError = 'Upload failed for ' . $req['label'] . '.';
+        } else {
+            $mime = mime_content_type($tmpPath);
+            $allowedMimes = ['application/pdf', 'image/jpeg', 'image/png'];
+            if (!in_array($mime, $allowedMimes, true)) {
+                $fileError = $req['label'] . ' must be a PDF, JPG, or PNG file.';
+            } elseif (filesize($tmpPath) > 5 * 1024 * 1024) {
+                $fileError = $req['label'] . ' file is too large (max 5MB).';
+            } else {
+                $ext = pathinfo($origName, PATHINFO_EXTENSION);
+                $storedName = $key . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
+                if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
+                if (move_uploaded_file($tmpPath, $uploadDir . $storedName)) {
+                    $requirementRows[] = ['key' => $key, 'status' => 'submitted_online', 'file_path' => 'requirements/' . $storedName];
+                } else {
+                    $fileError = 'Could not save the uploaded file for ' . $req['label'] . '.';
+                }
+            }
+        }
+
+        if ($fileError !== null) {
+            $errors[] = $fileError;
+        }
+    }
+    // else: no file, not marked "later" — simply not recorded; not an error.
+}
+
+$fields['school_year'] = get_setting('current_school_year') ?? '';
+$fields['semester']    = (int)(get_setting('current_semester') ?? 1);
+
+$possible_duplicate_student_id = null;
+$duplicate_match_status = 'none';
+
+$dupStmt = $conn->prepare("
+    SELECT student_id FROM student
+    WHERE last_name = ? AND first_name = ? AND birth_date = ?
+    LIMIT 1
+");
+$dupStmt->bind_param('sss', $fields['last_name'], $fields['first_name'], $fields['birth_date']);
+$dupStmt->execute();
+$dupRow = $dupStmt->get_result()->fetch_assoc();
+$dupStmt->close();
+
+if ($dupRow) {
+    $possible_duplicate_student_id = (int)$dupRow['student_id'];
+    $duplicate_match_status = 'pending_review';
+}
+
 if (!empty($errors)) {
     http_response_code(422);
     echo json_encode(['success' => false, 'errors' => $errors]);
@@ -210,12 +284,13 @@ while ($attempts_left-- > 0) {
 
     $stmt = $conn->prepare("
         INSERT INTO applicants
-            (reference_id, last_name, first_name, middle_name, birth_date, sex, civil_status,
+            (reference_id, last_name, first_name, middle_name, birth_date, sex, nationality, civil_status,
             contact_number, email, home_address,
             guardian_name, guardian_relationship, guardian_contact,
             guardian_id_type, guardian_id_number, id_verified_by, admission_status,
-            program, course_id, year_level, start_term, applicant_type, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',?,?,?,?,?, NOW())
+            program, course_id, year_level, school_year, semester, applicant_type,
+            possible_duplicate_student_id, duplicate_match_status, created_at)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',?,?,?,?,?,?,?,?, NOW())
     ");
 
     if (!$stmt) {
@@ -225,14 +300,15 @@ while ($attempts_left-- > 0) {
     }
 
     $stmt->bind_param(
-        'ssssssssssssssssisss',
+        'sssssssssssssssssissisis',
         $reference_id,
         $fields['last_name'], $fields['first_name'], $fields['middle_name'],
-        $fields['birth_date'], $fields['sex'], $fields['civil_status'],
+        $fields['birth_date'], $fields['sex'], $fields['nationality'], $fields['civil_status'],
         $fields['contact_number'], $fields['email'], $fields['home_address'],
         $fields['guardian_name'], $fields['guardian_relationship'], $fields['guardian_contact'],
         $fields['guardian_id_type'], $fields['guardian_id_number'],
-        $fields['program'], $fields['course_id'], $fields['year_level'], $fields['start_term'], $fields['applicant_type']
+        $fields['program'], $fields['course_id'], $fields['year_level'], $fields['school_year'], $fields['semester'],
+        $fields['applicant_type'], $possible_duplicate_student_id, $duplicate_match_status
     );
 
     if ($stmt->execute()) {
@@ -266,14 +342,30 @@ foreach ($history as $row) {
 }
 $histStmt->close();
 
+if (!empty($requirementRows)) {
+    $reqStmt = $conn->prepare("
+        INSERT INTO applicant_documents (applicant_id, document_name, file_path, status, source)
+        VALUES (?, ?, ?, ?, 'applicant')
+    ");
+    foreach ($requirementRows as $row) {
+        $label = '';
+        foreach (REQUIREMENT_DEFINITIONS as $def) {
+            if ($def['key'] === $row['key']) { $label = $def['label']; break; }
+        }
+        $reqStmt->bind_param('isss', $applicant_id, $label, $row['file_path'], $row['status']);
+        $reqStmt->execute();
+    }
+    $reqStmt->close();
+}
+
 $conn->close();
 
 echo json_encode([
     'success'      => true,
     'reference_id' => $reference_id,
     'summary'      => [
-        'name'       => trim($fields['first_name'] . ' ' . $fields['middle_name'] . ' ' . $fields['last_name']),
-        'program'    => $fields['program'] . ' — ' . $fields['year_level'],
-        'start_term' => $fields['start_term'],
+        'name'        => trim($fields['first_name'] . ' ' . $fields['middle_name'] . ' ' . $fields['last_name']),
+        'program'     => $fields['program'] . ' — ' . $fields['year_level'],
+        'school_year' => $fields['school_year'] . ' — Semester ' . $fields['semester'],
     ],
 ]);
