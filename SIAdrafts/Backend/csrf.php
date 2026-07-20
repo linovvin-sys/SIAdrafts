@@ -21,6 +21,7 @@ function csrf_verify(): void
     $expected = $_SESSION['csrf_token'] ?? '';
 
     if ($expected === '' || !hash_equals($expected, $submitted)) {
+        error_log('CSRF verification failed for ' . ($_SERVER['REQUEST_URI'] ?? 'unknown'));
         http_response_code(419);
         header('Content-Type: application/json');
         echo json_encode(['error' => 'Invalid or missing CSRF token.']);
