@@ -28,6 +28,17 @@ $sections = $conn->query("
 // Only approved courses may be picked when creating a new section.
 $approvedCourses = array_values(array_filter($courses, fn($c) => $c['status'] === 'Approved'));
 
+$subjects = $conn->query("
+    SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+           sc.category_name, c.course_code
+    FROM subject sub
+    LEFT JOIN subject_category sc ON sc.category_id = sub.category_id
+    LEFT JOIN course c ON c.course_id = sub.course_id
+    ORDER BY c.course_code, sub.subject_code
+")->fetch_all(MYSQLI_ASSOC);
+
+$categories = $conn->query("SELECT category_id, category_name FROM subject_category ORDER BY category_name")->fetch_all(MYSQLI_ASSOC);
+
 $db->close();
 
 $isHead = current_user_is(['Head Registrar']);
@@ -48,12 +59,6 @@ include '../Include/header.php';
         <div class="panel-header">
           <span class="panel-title">Courses</span>
           <button type="button" class="btn btn-primary" data-open="addCourseModal">+ Add Course</button>
-        </div>
-
-        <div class="panel-body" style="padding:16px 24px 0;">
-          <div class="filter-bar">
-            <input type="text" class="form-input" id="courseSearch" placeholder="Search code or course name…">
-          </div>
         </div>
 
         <div class="panel-body" style="padding:0;">
@@ -95,9 +100,6 @@ include '../Include/header.php';
               </tbody>
             </table>
           </div>
-          <div class="empty-state" id="courseListEmptyState" style="display:none;">
-            <p>No courses match your search.</p>
-          </div>
         </div>
       </div>
 
@@ -106,12 +108,6 @@ include '../Include/header.php';
         <div class="panel-header">
           <span class="panel-title">Sections</span>
           <button type="button" class="btn btn-primary" data-open="addSectionModal">+ Add Section</button>
-        </div>
-
-        <div class="panel-body" style="padding:16px 24px 0;">
-          <div class="filter-bar">
-            <input type="text" class="form-input" id="sectionSearch" placeholder="Search section or course…">
-          </div>
         </div>
 
         <div class="panel-body" style="padding:0;">
@@ -150,12 +146,46 @@ include '../Include/header.php';
               </tbody>
             </table>
           </div>
-          <div class="empty-state" id="sectionListEmptyState" style="display:none;">
-            <p>No sections match your search.</p>
-          </div>
         </div>
       </div>
 
+    </div>
+
+    <!-- Subjects -->
+    <div class="panel" style="margin-top:24px;">
+      <div class="panel-header">
+        <span class="panel-title">Subjects</span>
+        <button type="button" class="btn btn-primary" data-open="addSubjectModal">+ Add Subject</button>
+      </div>
+
+      <div class="panel-body" style="padding:16px 24px 0;">
+        <div class="filter-bar">
+          <input type="text" class="form-input" id="subjectSearch" placeholder="Search code, subject name, or course…">
+        </div>
+      </div>
+
+      <div class="panel-body">
+        <div class="subject-card-grid" id="subjectCardGrid">
+          <?php if (!empty($subjects)): ?>
+            <?php foreach ($subjects as $s): ?>
+              <div class="subject-card" data-search="<?= htmlspecialchars(strtolower($s['subject_code'] . ' ' . $s['subject_name'] . ' ' . ($s['course_code'] ?? ''))) ?>">
+                <div class="subject-card-top">
+                  <span class="subject-card-code"><?= htmlspecialchars($s['subject_code']) ?></span>
+                  <span class="subject-card-category"><?= htmlspecialchars($s['category_name'] ?? 'Uncategorized') ?></span>
+                </div>
+                <div class="subject-card-name"><?= htmlspecialchars($s['subject_name']) ?></div>
+                <div class="subject-card-footer">
+                  <span><?= htmlspecialchars($s['units']) ?> unit<?= (float)$s['units'] == 1 ? '' : 's' ?></span>
+                  <span><?= htmlspecialchars($s['course_code'] ?? '—') ?></span>
+                </div>
+              </div>
+            <?php endforeach; ?>
+          <?php endif; ?>
+        </div>
+        <div class="empty-state" id="subjectListEmptyState" style="display:<?= empty($subjects) ? 'block' : 'none' ?>;">
+          <p>No subjects found.</p>
+        </div>
+      </div>
     </div>
 
     <!-- Add Course Modal -->
@@ -239,6 +269,88 @@ include '../Include/header.php';
       </div>
     </div>
 
+    <!-- Add Subject Modal -->
+    <div id="addSubjectModal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <div class="modal-icon">📗</div>
+            <div>
+              <div class="modal-title">Add Subject</div>
+              <div class="modal-subtitle">Create a new subject</div>
+            </div>
+          </div>
+          <button type="button" class="modal-close" data-close="addSubjectModal">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">Course<span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select id="newSubjectCourse" class="form-input form-select" required>
+                <option value="">-- Select Course --</option>
+                <?php foreach ($approvedCourses as $c): ?>
+                  <option value="<?= (int)$c['course_id'] ?>">
+                    <?= htmlspecialchars($c['course_code']) ?> - <?= htmlspecialchars($c['course_name']) ?>
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subject Code<span class="required">*</span></label>
+            <input type="text" id="newSubjectCode" class="form-input" placeholder="e.g. CS101" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Subject Name<span class="required">*</span></label>
+            <input type="text" id="newSubjectName" class="form-input" placeholder="e.g. Introduction to Programming" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Units</label>
+            <input type="number" id="newSubjectUnits" class="form-input" value="3" min="0" step="0.5" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Category<span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select id="newSubjectCategory" class="form-input form-select" required>
+                <option value="">-- Select Category --</option>
+                <?php foreach ($categories as $cat): ?>
+                  <option value="<?= (int)$cat['category_id'] ?>"><?= htmlspecialchars($cat['category_name']) ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year Level<span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select id="newSubjectYearLevel" class="form-input form-select" required>
+                <option value="">-- Select Year Level --</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Semester<span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select id="newSubjectSemester" class="form-input form-select" required>
+                <option value="">-- Select Semester --</option>
+                <option value="1">1st Semester</option>
+                <option value="2">2nd Semester</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="addSubjectModal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmAddSubject">Save Subject</button>
+        </div>
+      </div>
+    </div>
+
     <!-- View Course Modal -->
     <div id="viewCourseModal" class="modal-overlay">
       <div class="modal-box" style="max-width:640px;">
@@ -254,25 +366,13 @@ include '../Include/header.php';
         </div>
 
         <div class="modal-body" style="max-height:60vh; overflow-y:auto;">
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Code</th>
-                <th>Subject Name</th>
-                <th>Year / Sem</th>
-                <th>Units</th>
-              </tr>
-            </thead>
-            <tbody id="viewCourseBody">
-              <tr><td colspan="4" style="text-align:center;">Loading…</td></tr>
-            </tbody>
-            <tfoot>
-              <tr style="background:#faf7f2">
-                <td colspan="3"><strong>Total Units</strong></td>
-                <td><strong id="viewCourseTotalUnits">—</strong></td>
-              </tr>
-            </tfoot>
-          </table>
+          <div class="subject-card-grid" id="viewCourseBody">
+            <p style="text-align:center;">Loading…</p>
+          </div>
+          <div class="modal-total-units">
+            <strong>Total Units</strong>
+            <strong id="viewCourseTotalUnits">—</strong>
+          </div>
         </div>
 
         <div class="modal-footer">

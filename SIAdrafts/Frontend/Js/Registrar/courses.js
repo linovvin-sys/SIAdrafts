@@ -9,22 +9,25 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.style.overflow = '';
   }
 
-  function wireListSearch(searchId, bodyId, emptyId) {
-    const searchEl = document.getElementById(searchId);
-    const body     = document.getElementById(bodyId);
-    const emptyEl  = document.getElementById(emptyId);
-    if (!searchEl || !body) return;
+  if (document.getElementById('courseTable')) initDataTable('#courseTable', { order: [] });
+  if (document.getElementById('sectionTable')) initDataTable('#sectionTable', { order: [] });
 
-    const rows = [...body.querySelectorAll('tr[data-search]')];
-    if (!rows.length) return;
+  function wireCardSearch(searchId, gridId, emptyId) {
+    const searchEl = document.getElementById(searchId);
+    const grid      = document.getElementById(gridId);
+    const emptyEl   = document.getElementById(emptyId);
+    if (!searchEl || !grid) return;
+
+    const cards = [...grid.querySelectorAll('.subject-card[data-search]')];
+    if (!cards.length) return;
 
     searchEl.addEventListener('input', () => {
       const search = searchEl.value.trim().toLowerCase();
       let visible = 0;
 
-      rows.forEach(row => {
-        const show = !search || row.dataset.search.includes(search);
-        row.style.display = show ? '' : 'none';
+      cards.forEach(card => {
+        const show = !search || card.dataset.search.includes(search);
+        card.style.display = show ? '' : 'none';
         if (show) visible++;
       });
 
@@ -32,8 +35,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  wireListSearch('courseSearch', 'courseListBody', 'courseListEmptyState');
-  wireListSearch('sectionSearch', 'sectionListBody', 'sectionListEmptyState');
+  wireCardSearch('subjectSearch', 'subjectCardGrid', 'subjectListEmptyState');
 
   document.querySelectorAll('[data-open]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -115,6 +117,33 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // ----- Add Subject -----
+  const confirmAddSubject = document.getElementById('confirmAddSubject');
+  if (confirmAddSubject) {
+    confirmAddSubject.addEventListener('click', async () => {
+      const course_id    = document.getElementById('newSubjectCourse').value;
+      const subject_code = document.getElementById('newSubjectCode').value.trim();
+      const subject_name = document.getElementById('newSubjectName').value.trim();
+      const units         = document.getElementById('newSubjectUnits').value;
+      const category_id  = document.getElementById('newSubjectCategory').value;
+      const year_level    = document.getElementById('newSubjectYearLevel').value;
+      const semester       = document.getElementById('newSubjectSemester').value;
+
+      if (!course_id || !subject_code || !subject_name || !category_id || !year_level || !semester) {
+        Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Course, subject code, subject name, category, year level, and semester are required.' });
+        return;
+      }
+
+      const result = await postJSON('save_subject.php', { course_id, subject_code, subject_name, units, category_id, year_level, semester });
+      if (result.error) {
+        Swal.fire({ icon: 'error', title: 'Could not add subject', text: result.error });
+        return;
+      }
+      Swal.fire({ icon: 'success', title: result.message || 'Subject added', timer: 1500, showConfirmButton: false })
+        .then(() => location.reload());
+    });
+  }
+
   // ----- Remove Course (Head Registrar only — button only renders for that role) -----
   document.querySelectorAll('[data-remove-course]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -179,7 +208,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const modal = document.getElementById('viewCourseModal');
       const body  = document.getElementById('viewCourseBody');
       const totalEl = document.getElementById('viewCourseTotalUnits');
-      body.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading…</td></tr>';
+      body.innerHTML = '<p style="text-align:center;">Loading…</p>';
       totalEl.textContent = '—';
       openModal(modal);
 
@@ -188,26 +217,31 @@ document.addEventListener('DOMContentLoaded', function () {
         const data = await res.json();
 
         if (data.error) {
-          body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#b91c1c;">${escHtml(data.error)}</td></tr>`;
+          body.innerHTML = `<p style="text-align:center;color:#b91c1c;">${escHtml(data.error)}</p>`;
           return;
         }
 
         if (!data.subjects.length) {
-          body.innerHTML = '<tr><td colspan="4" style="text-align:center;">No subjects assigned to this course yet.</td></tr>';
+          body.innerHTML = '<p style="text-align:center;">No subjects assigned to this course yet.</p>';
           totalEl.textContent = '0';
           return;
         }
 
         body.innerHTML = data.subjects.map(s => `
-          <tr>
-            <td>${escHtml(s.subject_code)}</td>
-            <td>${escHtml(s.subject_name)}</td>
-            <td>${ordinalYear(s.year_level)} · Sem ${escHtml(s.semester)}</td>
-            <td>${escHtml(s.units)}</td>
-          </tr>`).join('');
+          <div class="subject-card">
+            <div class="subject-card-top">
+              <span class="subject-card-code">${escHtml(s.subject_code)}</span>
+              <span class="subject-card-category">${escHtml(s.category_name || 'Uncategorized')}</span>
+            </div>
+            <div class="subject-card-name">${escHtml(s.subject_name)}</div>
+            <div class="subject-card-footer">
+              <span>${escHtml(s.units)} unit${Number(s.units) === 1 ? '' : 's'}</span>
+              <span>${ordinalYear(s.year_level)} · Sem ${escHtml(s.semester)}</span>
+            </div>
+          </div>`).join('');
         totalEl.textContent = data.total_units;
       } catch (_) {
-        body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#b91c1c;">Network error. Please try again.</td></tr>';
+        body.innerHTML = '<p style="text-align:center;color:#b91c1c;">Network error. Please try again.</p>';
       }
     });
   });

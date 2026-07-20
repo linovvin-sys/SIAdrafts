@@ -1,36 +1,27 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-  const searchEl = document.getElementById('admissionSearch');
+  const table = document.getElementById('admissionTable');
+  if (!table) return;
+
+  const dt = initDataTable('#admissionTable', { order: [[3, 'desc']] });
+
   const statusEl = document.getElementById('admissionStatusFilter');
   const dateEl   = document.getElementById('admissionDateFilter');
-  const body     = document.getElementById('admissionBody');
-  const emptyEl  = document.getElementById('admissionEmptyState');
 
-  if (!body) return;
+  $.fn.dataTable.ext.search.push(function (settings, searchRow, index, rowData, counter) {
+    if (settings.nTable.id !== 'admissionTable') return true;
+    const row = dt.row(index).node();
+    if (!row) return true;
 
-  const rows = [...body.querySelectorAll('tr[data-search]')];
-  if (!rows.length) return;
-
-  function apply() {
-    const search = (searchEl?.value || '').trim().toLowerCase();
     const status = statusEl?.value || '';
     const date   = dateEl?.value || '';
-    let visible = 0;
 
-    rows.forEach(row => {
-      const matchesSearch = !search || row.dataset.search.includes(search);
-      const matchesStatus = !status || row.dataset.status === status;
-      const matchesDate   = !date || row.dataset.date === date;
-      const show = matchesSearch && matchesStatus && matchesDate;
-      row.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
+    if (status && row.dataset.status !== status) return false;
+    if (date && row.dataset.date !== date) return false;
+    return true;
+  });
 
-    if (emptyEl) emptyEl.style.display = visible ? 'none' : 'block';
-  }
-
-  if (searchEl) searchEl.addEventListener('input', apply);
-  if (statusEl) statusEl.addEventListener('change', apply);
-  if (dateEl) dateEl.addEventListener('change', apply);
+  if (statusEl) statusEl.addEventListener('change', () => dt.draw());
+  if (dateEl) dateEl.addEventListener('change', () => dt.draw());
 
 });

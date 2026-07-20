@@ -79,7 +79,6 @@ include '../Include/header.php';
 
             <div class="panel-body" style="padding:16px 24px 0;">
                 <div class="filter-bar">
-                    <input type="text" class="form-input" id="enrollmentSearch" placeholder="Search student ID, name, course, or section…">
                     <div class="select-wrapper">
                         <select class="form-input form-select" id="enrollmentStatusFilter">
                             <option value="">All Statuses</option>
@@ -115,8 +114,8 @@ include '../Include/header.php';
             </div>
 
             <div class="panel-body" style="padding:0;">
-
-                <table class="data-table">
+                <div class="table-responsive">
+                <table class="data-table" id="enrollmentTable">
 
                     <thead>
                         <tr>
@@ -201,9 +200,6 @@ include '../Include/header.php';
                     </tbody>
 
                 </table>
-
-                <div class="empty-state" id="enrollmentEmptyState" style="display:none;">
-                    <p>No enrolled students match your filters.</p>
                 </div>
 
             </div>

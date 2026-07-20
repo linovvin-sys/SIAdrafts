@@ -199,36 +199,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  /* ===== USER SEARCH / FILTER ===== */
-  const userSearch      = document.getElementById('userSearch');
-  const userRoleFilter  = document.getElementById('userRoleFilter');
-  const userStatusFilter = document.getElementById('userStatusFilter');
-  const userTableBody   = document.getElementById('userTableBody');
-  const userEmptyState  = document.getElementById('userEmptyState');
-
-  if (userTableBody) {
-    const filterUsers = () => {
-      const search = (userSearch?.value || '').trim().toLowerCase();
-      const role   = userRoleFilter?.value || '';
-      const status = userStatusFilter?.value || '';
-      const rows = [...userTableBody.querySelectorAll('tr[data-search]')];
-      let visible = 0;
-
-      rows.forEach(row => {
-        const matchesSearch = !search || row.dataset.search.includes(search);
-        const matchesRole   = !role || row.dataset.role === role;
-        const matchesStatus = !status || row.dataset.status === status;
-        const show = matchesSearch && matchesRole && matchesStatus;
-        row.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-
-      if (userEmptyState) userEmptyState.style.display = visible ? 'none' : 'block';
-    };
-
-    if (userSearch) userSearch.addEventListener('input', filterUsers);
-    if (userRoleFilter) userRoleFilter.addEventListener('change', filterUsers);
-    if (userStatusFilter) userStatusFilter.addEventListener('change', filterUsers);
-  }
+  // User table search/filter (role, status, free-text) is handled by
+  // DataTables directly in manage_user.php's inline script — see
+  // initDataTable('#userTable', ...) there.
 
 }); // end DOMContentLoaded
