@@ -1,4 +1,23 @@
 <?php
+const NATIONALITY_OPTIONS = ['Filipino', 'American', 'Chinese', 'Korean', 'Japanese', 'Indian', 'Other'];
+const RELATIONSHIP_OPTIONS = ['Parent', 'Mother', 'Father', 'Guardian', 'Sibling', 'Grandparent', 'Other'];
+
+function validate_nationality($value) {
+    if ($value === '') return null;
+    if (!in_array($value, NATIONALITY_OPTIONS, true)) {
+        return 'Nationality must be one of the listed options.';
+    }
+    return null;
+}
+
+function validate_relationship($value) {
+    if ($value === '') return null;
+    if (!in_array($value, RELATIONSHIP_OPTIONS, true)) {
+        return "Guardian's relationship must be one of the listed options.";
+    }
+    return null;
+}
+
 function validate_name($value, $label) {
     if ($value === '') return null;
     if (!preg_match("/^[A-Za-zÀ-ÿ' \-\.]{2,100}$/u", $value)) {
@@ -128,6 +147,8 @@ function get_field_validator($field_name) {
         'guardian_id_number'  => fn($v) => validate_guardian_id($v),
         'home_address'        => fn($v) => validate_address($v),
         'id_verified_by'      => fn($v) => validate_staff_id($v),
+        'nationality'           => fn($v) => validate_nationality($v),
+        'guardian_relationship' => fn($v) => validate_relationship($v),
     ];
 
     return $map[$field_name] ?? null;
