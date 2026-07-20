@@ -1,5 +1,11 @@
 <?php
+$pageTitle  = "ENROLLMENT";
+$activePage = "enrollment";
+
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -186,7 +192,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_irregular) {
 }
 
 $sem_label    = $enroll['semester'] == 1 ? '1st Semester' : '2nd Semester';
-$page_scripts = $is_irregular
+$extraScripts = $is_irregular
     ? ['/SIAdrafts/Frontend/Js/Admission/irregular-subject-picker.js']
     : ['/SIAdrafts/Frontend/Js/Admission/section-picker.js'];
 
@@ -195,8 +201,13 @@ function fmt_id(int $id): string {
     return strlen($s) >= 5 ? substr($s, 0, 4) . '-' . substr($s, 4) : $s;
 }
 ?>
-<?php include '../Admission/Include/header.php'; ?>
+<?php include '../Include/header.php'; ?>
 
+<div class="app-layout">
+
+<?php include '../Include/sidebar.php'; ?>
+
+<main class="page-content">
 
 <div class="container" style="padding-top: calc(var(--nav-h) + 40px); padding-bottom: 60px;">
   <div class="row justify-content-center">
@@ -440,6 +451,10 @@ function fmt_id(int $id): string {
   </div>
 </div>
 
+</main>
+
+</div>
+
 <script>
 const ENROLL_META = {
   year_level:  <?= (int)$enroll['year_level'] ?>,
@@ -450,4 +465,4 @@ const ENROLL_META = {
 };
 </script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<?php include '../Admission/Include/footer.php' ?>
+<?php include '../Include/footer.php' ?>

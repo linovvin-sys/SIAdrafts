@@ -1,5 +1,11 @@
 <?php
+$pageTitle  = "ENROLLMENT";
+$activePage = "enrollment";
+
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -183,7 +189,7 @@ if ($feeSchedule) {
 
 $preview_due_date = date('F j, Y', strtotime('+' . PAYMENT_DUE_DAYS . ' days'));
 
-$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment-finalize.js'];
+$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment-finalize.js'];
 
 function fmt_id(string $id): string {
     return $id; // already formatted as 2026-XXXXX
@@ -203,7 +209,13 @@ function fmt_time(string $t): string {
     return ($hr > 12 ? $hr - 12 : ($hr ?: 12)) . ':' . $m . ($hr >= 12 ? 'PM' : 'AM');
 }
 ?>
-<?php include '../Admission/Include/header.php'; ?>
+<?php include '../Include/header.php'; ?>
+
+<div class="app-layout">
+
+<?php include '../Include/sidebar.php'; ?>
+
+<main class="page-content">
 
 <div class="container" style="padding-top: calc(var(--nav-h) + 40px); padding-bottom: 60px;" id="confirm-app" v-cloak>
   <div class="row justify-content-center">
@@ -425,6 +437,10 @@ function fmt_time(string $t): string {
   </div>
 </div>
 
+</main>
+
+</div>
+
 <script>
 const ENROLLMENT_PAYLOAD = <?= json_encode([
     'student_id'   => $student['applicant_id'],
@@ -440,4 +456,4 @@ const ENROLLMENT_PAYLOAD = <?= json_encode([
 ]) ?>;
 </script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<?php include '../Admission/Include/footer.php';?>
+<?php include '../Include/footer.php';?>

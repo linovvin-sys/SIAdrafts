@@ -1,11 +1,15 @@
 <?php
+$pageTitle  = "ENROLLMENT";
+$activePage = "enrollment";
+
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
 $conn = $db->connect();
-
-$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/dup-enrollment-check.js'];
 
 $student       = null;
 $students_list = null;
@@ -138,7 +142,13 @@ function student_fullname(array $s): string {
         : '';
 }
 ?>
-<?php include '../Admission/Include/header.php' ?>
+<?php include '../Include/header.php' ?>
+
+<div class="app-layout">
+
+<?php include '../Include/sidebar.php'; ?>
+
+<main class="page-content">
 
 <div class="container" style="padding-top: calc(var(--nav-h) + 40px); padding-bottom: 60px;">
   <div class="row justify-content-center">
@@ -294,4 +304,11 @@ function student_fullname(array $s): string {
   </div>
 </div>
 
-<?php include '../Admission/Include/footer.php' ?>
+</main>
+
+</div>
+
+<?php
+$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/dup-enrollment-check.js'];
+include '../Include/footer.php';
+?>

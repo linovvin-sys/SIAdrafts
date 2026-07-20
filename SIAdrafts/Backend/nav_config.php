@@ -8,7 +8,20 @@
  *   - a group:       ['group' => 'Label', 'icon' => ..., 'items' => [ <plain link>, ... ]]
  * Groups render as a collapsible dropdown in the sidebar; single links render flat.
  */
+
+// 'admission' and 'staff' are two distinct DB roles that both operate the
+// same Admission-module pages (see Backend/api/login.php's redirect switch),
+// so they share one nav array rather than duplicating it.
+$admissionNav = [
+    ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Admission/dashboard.php', 'icon' => 'dashboard'],
+    ['label' => 'Admission', 'page' => 'admission', 'url' => '/SIAdrafts/Frontend/View/Admission/admission.php', 'icon' => 'admission'],
+    ['label' => 'Enrollment', 'page' => 'enrollment', 'url' => '/SIAdrafts/Frontend/View/Admission/enrollment.php', 'icon' => 'enrollment'],
+    ['label' => 'Total Enrolees', 'page' => 'total_enrolees', 'url' => '/SIAdrafts/Frontend/View/Admission/total_enrolees.php', 'icon' => 'enrolees'],
+];
+
 return [
+    'admission' => $admissionNav,
+    'staff'     => $admissionNav,
     'admin' => [
         ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php', 'icon' => 'dashboard'],
         ['label' => 'Manage User', 'page' => 'manage_user', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_user.php', 'icon' => 'users'],
