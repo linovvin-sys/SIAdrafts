@@ -3,7 +3,6 @@ session_start();
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../roles.php';
 require_once __DIR__ . '/../require_role.php';
-require_once __DIR__ . '/generate_staff_id.php';
 
 if (empty($_SESSION['user_id'])) {
     http_response_code(401);
@@ -11,6 +10,11 @@ if (empty($_SESSION['user_id'])) {
 }
 
 require_role([ROLE_ADMIN], true);
+
+// Included only after this file's own session/role checks have passed,
+// so generate_staff_id.php's own require_role() guard (kept for when it
+// is requested directly) never gets a chance to fire first here.
+require_once __DIR__ . '/generate_staff_id.php';
 
 $db   = new Database();
 $conn = $db->connect();
