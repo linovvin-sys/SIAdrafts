@@ -1,6 +1,8 @@
 <?php
 session_start();
 require '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 require 'validation_rules.php';
 
 $db   = new Database();
@@ -13,6 +15,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'errors' => ['Unauthorized.']]);
     exit;
 }
+
+require_role([ROLE_ADMISSION, ROLE_ADMIN], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

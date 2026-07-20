@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 
 header('Content-Type: application/json');
 
@@ -9,6 +11,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['success' => false, 'error' => 'Unauthorized.']);
     exit;
 }
+
+require_role([ROLE_ADMIN], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
