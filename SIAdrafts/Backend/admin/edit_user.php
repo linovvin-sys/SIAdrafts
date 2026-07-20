@@ -2,6 +2,9 @@
 session_start();
 
 require_once "../db.php";   // Change this if your db.php is in another folder
+require_once __DIR__ . '/../roles.php';
+require_once __DIR__ . '/../require_role.php';
+require_role([ROLE_ADMIN], true);
 
 // Optional: Allow only admins
 /*
