@@ -37,7 +37,6 @@ include '../Include/header.php';
 
             <div class="panel-body" style="padding:16px 24px 0;">
                 <div class="filter-bar">
-                    <input type="text" class="form-input" id="admissionSearch" placeholder="Search reference ID, name, program, or course code…">
                     <div class="select-wrapper">
                         <select class="form-input form-select" id="admissionStatusFilter">
                             <option value="">All Statuses</option>
@@ -58,8 +57,8 @@ include '../Include/header.php';
             </div>
 
             <div class="panel-body" style="padding:0;">
-
-                <table class="data-table">
+                <div class="table-responsive">
+                <table class="data-table" id="admissionTable">
 
                     <thead>
                         <tr>
@@ -148,9 +147,6 @@ include '../Include/header.php';
                     </tbody>
 
                 </table>
-
-                <div class="empty-state" id="admissionEmptyState" style="display:none;">
-                    <p>No admission records match your filters.</p>
                 </div>
 
             </div>

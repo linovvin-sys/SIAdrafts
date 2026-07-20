@@ -1,43 +1,34 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-  const searchEl  = document.getElementById('enrollmentSearch');
+  const table = document.getElementById('enrollmentTable');
+  if (!table) return;
+
+  const dt = initDataTable('#enrollmentTable', { order: [] });
+
   const statusEl  = document.getElementById('enrollmentStatusFilter');
   const yearEl    = document.getElementById('enrollmentYearFilter');
   const semEl     = document.getElementById('enrollmentSemFilter');
   const sectionEl = document.getElementById('enrollmentSectionFilter');
-  const body      = document.getElementById('enrollmentBody');
-  const emptyEl   = document.getElementById('enrollmentEmptyState');
 
-  if (!body) return;
+  $.fn.dataTable.ext.search.push(function (settings, searchRow, index, rowData, counter) {
+    if (settings.nTable.id !== 'enrollmentTable') return true;
+    const row = dt.row(index).node();
+    if (!row) return true;
 
-  const rows = [...body.querySelectorAll('tr[data-search]')];
-  if (!rows.length) return;
-
-  function apply() {
-    const search  = (searchEl?.value || '').trim().toLowerCase();
     const status  = statusEl?.value || '';
     const year    = yearEl?.value || '';
     const sem     = semEl?.value || '';
     const section = sectionEl?.value || '';
-    let visible = 0;
 
-    rows.forEach(row => {
-      const matchesSearch  = !search || row.dataset.search.includes(search);
-      const matchesStatus  = !status || row.dataset.status === status;
-      const matchesYear    = !year || row.dataset.year === year;
-      const matchesSem     = !sem || row.dataset.sem === sem;
-      const matchesSection = !section || row.dataset.section === section;
-      const show = matchesSearch && matchesStatus && matchesYear && matchesSem && matchesSection;
-      row.style.display = show ? '' : 'none';
-      if (show) visible++;
-    });
+    if (status && row.dataset.status !== status) return false;
+    if (year && row.dataset.year !== year) return false;
+    if (sem && row.dataset.sem !== sem) return false;
+    if (section && row.dataset.section !== section) return false;
+    return true;
+  });
 
-    if (emptyEl) emptyEl.style.display = visible ? 'none' : 'block';
-  }
-
-  [searchEl, statusEl, yearEl, semEl, sectionEl].forEach(el => {
-    if (!el) return;
-    el.addEventListener(el.tagName === 'SELECT' ? 'change' : 'input', apply);
+  [statusEl, yearEl, semEl, sectionEl].forEach(el => {
+    if (el) el.addEventListener('change', () => dt.draw());
   });
 
 });

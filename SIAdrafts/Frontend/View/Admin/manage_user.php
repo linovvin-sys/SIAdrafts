@@ -66,7 +66,6 @@ include '../Include/header.php';
 
             <div class="panel-body" style="padding:16px 24px 0;">
                 <div class="user-filter-bar">
-                    <input type="text" class="form-input" id="userSearch" placeholder="Search name, email, or staff ID…">
                     <div class="select-wrapper">
                         <select class="form-input form-select" id="userRoleFilter">
                             <option value="">All Roles</option>
@@ -180,10 +179,6 @@ include '../Include/header.php';
                     </tbody>
 
                 </table>
-
-                <div class="empty-state" id="userEmptyState" style="display:none;">
-                    <p>No users match your filters.</p>
-                </div>
 
             </div>
 
@@ -551,6 +546,28 @@ include '../Include/header.php';
     </div>
 
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const table = initDataTable('#userTable', { order: [] });
+
+  $.fn.dataTable.ext.search.push(function (settings, searchRow, index, rowData, counter) {
+    if (settings.nTable.id !== 'userTable') return true;
+    const row = table.row(index).node();
+    if (!row) return true;
+
+    const role   = document.getElementById('userRoleFilter').value;
+    const status = document.getElementById('userStatusFilter').value;
+
+    if (role && row.dataset.role !== role) return false;
+    if (status && row.dataset.status !== status) return false;
+    return true;
+  });
+
+  document.getElementById('userRoleFilter').addEventListener('change', () => table.draw());
+  document.getElementById('userStatusFilter').addEventListener('change', () => table.draw());
+});
+</script>
 
 <?php if (isset($_GET['added']) || isset($_GET['add_error'])): ?>
 <script>

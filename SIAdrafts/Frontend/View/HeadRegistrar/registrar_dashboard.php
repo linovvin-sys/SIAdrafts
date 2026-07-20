@@ -184,7 +184,6 @@ include '../Include/header.php';
         </div>
         <div class="panel-body" style="padding:16px 24px 0;">
           <div class="filter-bar">
-            <input type="text" class="form-input" id="scheduleSearch" placeholder="Search subject, section, or submitter…">
             <div class="select-wrapper">
               <select class="form-input form-select" id="scheduleStatusFilter">
                 <option value="">All Statuses</option>
@@ -196,7 +195,7 @@ include '../Include/header.php';
           </div>
         </div>
         <div class="panel-body" style="padding:0;">
-          <table class="data-table">
+          <table class="data-table" id="recentSchedulesTable">
             <thead>
               <tr>
                 <th>Subject / Section</th>
@@ -227,9 +226,6 @@ include '../Include/header.php';
               <?php endif; ?>
             </tbody>
           </table>
-          <div class="empty-state" id="scheduleEmptyState" style="display:none;">
-            <p>No submissions match your filters.</p>
-          </div>
         </div>
       </div>
 
@@ -241,7 +237,6 @@ include '../Include/header.php';
         </div>
         <div class="panel-body" style="padding:16px 24px 0;">
           <div class="filter-bar">
-            <input type="text" class="form-input" id="staffSearch" placeholder="Search name, username, or email…">
             <div class="select-wrapper">
               <select class="form-input form-select" id="staffStatusFilter">
                 <option value="">All Statuses</option>
@@ -252,7 +247,7 @@ include '../Include/header.php';
           </div>
         </div>
         <div class="panel-body" style="padding:0;">
-          <table class="data-table">
+          <table class="data-table" id="registrarStaffTable">
             <thead>
               <tr>
                 <th>Name</th>
@@ -283,9 +278,6 @@ include '../Include/header.php';
               <?php endif; ?>
             </tbody>
           </table>
-          <div class="empty-state" id="staffEmptyState" style="display:none;">
-            <p>No accounts match your filters.</p>
-          </div>
         </div>
       </div>
       <?php else: ?>

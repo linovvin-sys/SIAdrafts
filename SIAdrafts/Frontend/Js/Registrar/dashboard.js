@@ -1,48 +1,26 @@
 document.addEventListener('DOMContentLoaded', function () {
 
-  function wireFilter({ searchId, statusId, bodyId, emptyId }) {
-    const searchEl = document.getElementById(searchId);
+  function wireTableFilter({ tableId, statusId }) {
+    const tableEl = document.getElementById(tableId);
+    if (!tableEl) return;
+
+    const dt = initDataTable('#' + tableId, { order: [] });
     const statusEl = document.getElementById(statusId);
-    const body     = document.getElementById(bodyId);
-    const emptyEl  = document.getElementById(emptyId);
 
-    if (!body) return;
+    $.fn.dataTable.ext.search.push(function (settings, searchRow, index, rowData, counter) {
+      if (settings.nTable.id !== tableId) return true;
+      const row = dt.row(index).node();
+      if (!row) return true;
 
-    const rows = [...body.querySelectorAll('tr[data-search]')];
-    if (!rows.length) return;
-
-    function apply() {
-      const search = (searchEl?.value || '').trim().toLowerCase();
       const status = statusEl?.value || '';
-      let visible = 0;
+      if (status && row.dataset.status !== status) return false;
+      return true;
+    });
 
-      rows.forEach(row => {
-        const matchesSearch = !search || row.dataset.search.includes(search);
-        const matchesStatus = !status || row.dataset.status === status;
-        const show = matchesSearch && matchesStatus;
-        row.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-
-      if (emptyEl) emptyEl.style.display = visible ? 'none' : 'block';
-    }
-
-    if (searchEl) searchEl.addEventListener('input', apply);
-    if (statusEl) statusEl.addEventListener('change', apply);
+    if (statusEl) statusEl.addEventListener('change', () => dt.draw());
   }
 
-  wireFilter({
-    searchId: 'scheduleSearch',
-    statusId: 'scheduleStatusFilter',
-    bodyId: 'recentSchedulesBody',
-    emptyId: 'scheduleEmptyState',
-  });
-
-  wireFilter({
-    searchId: 'staffSearch',
-    statusId: 'staffStatusFilter',
-    bodyId: 'registrarStaffBody',
-    emptyId: 'staffEmptyState',
-  });
+  wireTableFilter({ tableId: 'recentSchedulesTable', statusId: 'scheduleStatusFilter' });
+  wireTableFilter({ tableId: 'registrarStaffTable', statusId: 'staffStatusFilter' });
 
 });
