@@ -78,13 +78,20 @@ $db->close();
     display:flex; align-items:center; justify-content:center;
     position: relative;
     box-shadow: 0 4px 10px -4px rgba(27,42,74,0.5);
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1), box-shadow .3s ease;
+  }
+  .brand:hover .brand-mark{
+    transform: rotate(-8deg) scale(1.08);
+    box-shadow: 0 6px 16px -4px rgba(27,42,74,0.6);
   }
   .brand-mark::after{
     content:""; position:absolute;
     width: 7px; height:7px; border-radius: 50%;
     background: var(--amber);
     top: 6px; right: 6px;
+    transition: transform .3s ease;
   }
+  .brand:hover .brand-mark::after{ transform: scale(1.3); }
   .brand-mark iconify-icon{ color:#FAF7F0; font-size:19px; }
   .brand-name{ font-weight:700; font-size:17px; letter-spacing:-0.01em; }
   .brand-name em{ color: var(--sage); font-style:normal; }
@@ -94,6 +101,7 @@ $db->close();
     list-style:none; margin:0; padding:0;
   }
   .nav-links a{
+    position: relative;
     text-decoration:none;
     color: var(--ink-soft);
     font-size: 14px;
@@ -102,7 +110,19 @@ $db->close();
     border-radius: 999px;
     transition: background .2s ease, color .2s ease;
   }
-  .nav-links a:hover{ background: rgba(27,42,74,0.06); color: var(--ink); }
+  .nav-links a::after{
+    content:"";
+    position:absolute;
+    left: 16px; right: 16px; bottom: 6px;
+    height: 2px;
+    border-radius: 2px;
+    background: var(--amber);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform .3s cubic-bezier(.16,1,.3,1);
+  }
+  .nav-links a:hover{ color: var(--ink); }
+  .nav-links a:hover::after{ transform: scaleX(1); }
 
   .btn{
     display:inline-flex; align-items:center; gap:8px;
@@ -115,6 +135,8 @@ $db->close();
     cursor:pointer;
     transition: transform .15s ease, box-shadow .15s ease, background .2s ease;
   }
+  .btn iconify-icon{ transition: transform .3s cubic-bezier(.16,1,.3,1); }
+  .btn:hover iconify-icon{ transform: translateX(3px); }
   .btn-login{
     color: var(--ink);
     border-color: var(--ink-line);
@@ -126,7 +148,8 @@ $db->close();
     background: var(--amber);
     box-shadow: 0 8px 20px -8px rgba(232,163,61,0.7);
   }
-  .btn-apply:hover{ transform: translateY(-1px); box-shadow: 0 12px 24px -8px rgba(232,163,61,0.8); }
+  .btn-apply:hover{ transform: translateY(-2px); box-shadow: 0 14px 28px -8px rgba(232,163,61,0.85); }
+  .btn-apply:active{ transform: translateY(0); }
 
   /* ---------- hero ---------- */
   .hero{
@@ -262,7 +285,8 @@ $db->close();
     border-radius: 16px;
     padding: 20px;
   }
-  .program-card iconify-icon{ font-size:22px; color: var(--amber); margin-bottom:14px; display:block; }
+  .program-card iconify-icon{ font-size:22px; color: var(--amber); margin-bottom:14px; display:block; transition: transform .35s cubic-bezier(.34,1.56,.64,1); }
+  .program-card:hover iconify-icon{ transform: scale(1.18) rotate(-6deg); }
   .program-card h4{ margin: 0 0 6px; font-size: 15px; }
   .program-card p{ margin:0; font-size: 13px; color: rgba(250,247,240,0.55); }
 
@@ -329,6 +353,10 @@ $db->close();
     color: var(--amber);
     display:block;
     margin-bottom: 16px;
+    transition: transform .35s cubic-bezier(.34,1.56,.64,1);
+  }
+  .feature-card:hover iconify-icon{
+    transform: scale(1.18) rotate(-6deg);
   }
   .feature-card h4{
     font-size: 15.5px;
@@ -376,7 +404,9 @@ $db->close();
     color: var(--paper);
     display:flex; align-items:center; justify-content:center;
     font-size: 13px; font-weight:700; flex:none;
+    transition: transform .3s cubic-bezier(.34,1.56,.64,1);
   }
+  .testimonial-card:hover .testimonial-avatar{ transform: scale(1.12); }
   .testimonial-name{ font-size: 13px; font-weight:700; color: var(--ink); }
   .testimonial-role{ font-size: 12px; color: var(--ink-soft); }
 
@@ -459,20 +489,21 @@ $db->close();
 
   <section class="stats">
     <div class="stats-grid">
+      <?php $courseCount = count($courses) ?: 4; ?>
       <div class="stat-tile glass-card" data-aos="zoom-in">
-        <div class="stat-num"><?= count($courses) ?: '4' ?>+</div>
+        <div class="stat-num" data-count-to="<?= (int)$courseCount ?>" data-count-suffix="+">0+</div>
         <div class="stat-label">Programs Open</div>
       </div>
       <div class="stat-tile glass-card" data-aos="zoom-in" data-aos-delay="100">
-        <div class="stat-num">4</div>
+        <div class="stat-num" data-count-to="4">0</div>
         <div class="stat-label">Simple Steps</div>
       </div>
       <div class="stat-tile glass-card" data-aos="zoom-in" data-aos-delay="200">
-        <div class="stat-num">~10</div>
+        <div class="stat-num" data-count-to="10" data-count-prefix="~">~0</div>
         <div class="stat-label">Minutes to Apply</div>
       </div>
       <div class="stat-tile glass-card" data-aos="zoom-in" data-aos-delay="300">
-        <div class="stat-num">100%</div>
+        <div class="stat-num" data-count-to="100" data-count-suffix="%">0%</div>
         <div class="stat-label">Online First Step</div>
       </div>
     </div>
@@ -672,12 +703,50 @@ $db->close();
     }
 
     document.querySelectorAll('.glass-accordion-btn').forEach(function (btn) {
+      var body = btn.nextElementSibling;
       btn.addEventListener('click', function () {
-        btn.closest('.glass-accordion-item').classList.toggle('open');
-        var body = btn.nextElementSibling;
-        body.style.display = (body.style.display === 'block') ? 'none' : 'block';
+        var item = btn.closest('.glass-accordion-item');
+        var isOpen = item.classList.toggle('open');
+        body.style.maxHeight = isOpen ? body.scrollHeight + 'px' : '0px';
       });
     });
+
+    // Count-up animation for the stats strip, fires once each tile
+    // scrolls into view.
+    (function () {
+      var tiles = document.querySelectorAll('.stat-num[data-count-to]');
+      if (!tiles.length || !('IntersectionObserver' in window)) return;
+
+      function animateCount(el) {
+        var target = parseFloat(el.dataset.countTo);
+        var prefix = el.dataset.countPrefix || '';
+        var suffix = el.dataset.countSuffix || '';
+        var duration = 1100;
+        var start = null;
+
+        function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+
+        function step(ts) {
+          if (start === null) start = ts;
+          var progress = Math.min((ts - start) / duration, 1);
+          var value = Math.round(target * easeOutCubic(progress));
+          el.textContent = prefix + value + suffix;
+          if (progress < 1) requestAnimationFrame(step);
+        }
+        requestAnimationFrame(step);
+      }
+
+      var observer = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            animateCount(entry.target);
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.6 });
+
+      tiles.forEach(function (el) { observer.observe(el); });
+    })();
   </script>
 
   <script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>

@@ -98,12 +98,39 @@
 }
 
 .glass-card {
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
 }
 
 .glass-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 14px 40px rgba(31, 38, 135, 0.16), 0 4px 12px rgba(27, 42, 74, 0.08);
+  transform: translateY(-5px);
+  border-color: rgba(232, 163, 61, 0.45);
+  box-shadow: 0 18px 44px rgba(31, 38, 135, 0.18), 0 6px 16px rgba(27, 42, 74, 0.08);
+}
+
+.glass-card--dark:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Signature interaction: a soft diagonal light sweep on hover, the one
+   consistent "premium" cue every glass surface shares. */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 47%, rgba(255, 255, 255, 0.35) 53%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.glass-card:hover::before {
+  transform: translateX(120%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card--dark::before {
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 47%, rgba(255, 255, 255, 0.12) 53%, transparent 70%);
 }
 
 /* ---------- glass buttons ---------- */
@@ -176,15 +203,32 @@
 }
 
 .glass-accordion-item .glass-accordion-body {
-  display: none;
-  padding: 0 22px 18px;
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 22px;
   color: rgba(27, 42, 74, 0.7);
   font-size: 14px;
   line-height: 1.6;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.4s ease;
+}
+
+.glass-accordion-item.open .glass-accordion-body {
+  padding: 0 22px 18px;
+  opacity: 1;
+}
+
+.glass-accordion-item .glass-accordion-btn {
+  transition: color 0.2s ease;
+}
+
+.glass-accordion-item:hover .glass-accordion-btn,
+.glass-accordion-item.open .glass-accordion-btn {
+  color: var(--orb-amber, #E8A33D);
 }
 
 .glass-accordion-item .glass-accordion-icon {
-  transition: transform 0.25s ease;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
   flex: none;
 }
 
