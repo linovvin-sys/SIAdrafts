@@ -2,6 +2,8 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 
 
 $db   = new Database();
@@ -15,6 +17,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['error' => 'Unauthorized.']);
     exit;
 }
+
+require_role([ROLE_STAFF, ROLE_ADMISSION, ROLE_ADMIN], true);
 
 $student_id  = (int)trim($_GET['student_id']  ?? 0);
 $school_year = trim($_GET['school_year'] ?? '');

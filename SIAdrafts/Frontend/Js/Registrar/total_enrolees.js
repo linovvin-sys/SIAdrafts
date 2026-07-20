@@ -1,5 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
 
+  // Pages migrated to the DataTables baseline (Task 13) render the course
+  // table with id="enroleesTable" and get search/sort/pagination for free
+  // via initDataTable(). Skip the legacy manual filter below in that case
+  // to avoid two competing search UIs on the same table.
+  if (document.getElementById('enroleesTable')) {
+    initDataTable('#enroleesTable', {
+      order: [[0, 'asc']],
+    });
+    return;
+  }
+
   const searchEl = document.getElementById('courseSearch');
   const body     = document.getElementById('courseBody');
   const emptyEl  = document.getElementById('courseEmptyState');

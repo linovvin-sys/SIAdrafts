@@ -2,6 +2,8 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 require_once 'can_message.php';
 
 $db   = new Database();
@@ -12,6 +14,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['error' => 'Unauthorized.']);
     exit;
 }
+
+require_role(ROLES_ALL_STAFF, true);
 
 $my_id   = (int)$_SESSION['user_id'];
 $with_id = (int)($_GET['with'] ?? 0);

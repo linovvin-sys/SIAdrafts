@@ -102,12 +102,12 @@ if ($isHead) {
 
 $db->close();
 
-include 'Include/header.php';
+include '../Include/header.php';
 ?>
 
 <div class="app-layout">
 
-  <?php include 'Include/sidebar.php'; ?>
+  <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
 
@@ -381,4 +381,10 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 </script>
 
-<?php include 'Include/footer.php'; ?>
+<?php
+$extraScripts = [
+    'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+    '/SIAdrafts/Frontend/Js/Registrar/' . ($pageScript ?? 'registrar') . '.js',
+];
+include '../Include/footer.php';
+?>

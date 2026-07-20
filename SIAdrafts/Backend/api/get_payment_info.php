@@ -2,6 +2,8 @@
 header('Content-Type: application/json');
 session_start();
 require_once '../db.php';
+require_once '../roles.php';
+require_once '../require_role.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -13,6 +15,8 @@ if (empty($_SESSION['user_id'])) {
     echo json_encode(['error' => 'Unauthorized.']);
     exit;
 }
+
+require_role([ROLE_TREASURY, ROLE_STAFF, ROLE_ADMIN], true);
 
 $q = trim($_GET['q'] ?? '');
 if ($q === '') {

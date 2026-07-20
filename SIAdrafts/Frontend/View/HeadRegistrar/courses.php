@@ -32,12 +32,12 @@ $db->close();
 
 $isHead = current_user_is(['Head Registrar']);
 
-include 'Include/header.php';
+include '../Include/header.php';
 ?>
 
 <div class="app-layout">
 
-  <?php include 'Include/sidebar.php'; ?>
+  <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
 
@@ -320,4 +320,10 @@ include 'Include/header.php';
   </main>
 </div>
 
-<?php include 'Include/footer.php'; ?>
+<?php
+$extraScripts = [
+    'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
+    '/SIAdrafts/Frontend/Js/Registrar/' . ($pageScript ?? 'registrar') . '.js',
+];
+include '../Include/footer.php';
+?>
