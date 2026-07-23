@@ -33,6 +33,13 @@ function course_monogram(string $name): string {
 </head>
 <body class="editorial-body">
 
+  <div class="e-parallax-layer" aria-hidden="true">
+    <div class="e-blob e-blob--1" data-speed="0.08"></div>
+    <div class="e-blob e-blob--2" data-speed="0.14"></div>
+    <div class="e-blob e-blob--3" data-speed="0.05"></div>
+    <div class="e-blob e-blob--4" data-speed="0.18"></div>
+  </div>
+
   <div class="e-nav-wrap">
     <nav class="e-navbar">
       <a class="e-brand" href="#top">Edu<em>School</em></a>
@@ -288,6 +295,37 @@ function course_monogram(string $name): string {
       }, { threshold: 0.15 });
 
       items.forEach(function (el) { observer.observe(el); });
+    })();
+
+    // Scroll parallax — fixed blob layer drifts at a fraction of scroll
+    // speed per blob (via each blob's data-speed), giving a sense of
+    // depth behind the content. Skipped entirely under
+    // prefers-reduced-motion, matching the reveal/rule scripts above.
+    (function () {
+      var blobs = document.querySelectorAll('.e-blob');
+      if (!blobs.length) return;
+
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return;
+      }
+
+      var ticking = false;
+
+      function applyParallax() {
+        var scrollY = window.scrollY;
+        blobs.forEach(function (blob) {
+          var speed = parseFloat(blob.getAttribute('data-speed')) || 0;
+          blob.style.transform = 'translateY(' + (scrollY * speed) + 'px)';
+        });
+        ticking = false;
+      }
+
+      window.addEventListener('scroll', function () {
+        if (!ticking) {
+          window.requestAnimationFrame(applyParallax);
+          ticking = true;
+        }
+      }, { passive: true });
     })();
   </script>
 
