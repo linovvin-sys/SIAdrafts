@@ -1,414 +1,245 @@
 /*
- * Glass theme — landing page only (index.php). Modern institutional
- * glassmorphism: navy/blue/gold palette, Poppins/Open Sans, frosted
- * glass panels over photography, 3D scroll-driven entrances via GSAP
- * ScrollTrigger (loaded from CDN in index.php).
+ * Glass theme — a Bootstrap/vanilla-CSS-compatible layer of glassmorphism
+ * utility classes (.glass-nav, .glass-card, .glass-btn, .glass-orb, ...).
+ * Additive only: nothing here overrides a framework's own source files.
+ * Apply these classes alongside existing component classes.
  */
 
 :root {
-  --g-primary: #1E3A5F;
-  --g-primary-soft: rgba(30, 58, 95, 0.85);
-  --g-secondary: #2563EB;
-  --g-accent: #A16207;
-  --g-bg: #F8FAFC;
-  --g-fg: #0F172A;
-  --g-fg-soft: rgba(15, 23, 42, 0.68);
-  --g-muted: #E9EEF5;
-  --g-border: #CBD5E1;
+  --glass-blur: 14px;
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-border-dark: rgba(255, 255, 255, 0.14);
+  --glass-radius: 16px;
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(27, 42, 74, 0.06);
+  --glass-bg-light: rgba(255, 255, 255, 0.55);
+  --glass-bg-lighter: rgba(255, 255, 255, 0.7);
+  --glass-bg-dark: rgba(255, 255, 255, 0.08);
 
-  --g-glass-blur: 18px;
-  --g-glass-border: rgba(255, 255, 255, 0.4);
-  --g-glass-bg: rgba(255, 255, 255, 0.6);
-  --g-glass-bg-strong: rgba(255, 255, 255, 0.78);
-  --g-glass-shadow: 0 20px 60px -20px rgba(15, 23, 42, 0.35);
-
-  --g-nav-h: 84px;
-  --g-font-display: 'Poppins', -apple-system, sans-serif;
-  --g-font-body: 'Open Sans', -apple-system, sans-serif;
+  /* Accent orbs: brand amber, plus two new hues that read as fresh
+     without abandoning the existing ink/amber/sage identity. */
+  --orb-amber: #E8A33D;
+  --orb-indigo: #6366F1;
+  --orb-rose: #F472B6;
 }
 
-*{ box-sizing: border-box; }
-html, body{ margin: 0; scroll-behavior: smooth; }
-html{ background: var(--g-bg); }
+/* ---------- background orbs ---------- */
 
-body.glass-body{
-  background: transparent;
-  color: var(--g-fg);
-  font-family: var(--g-font-body);
-  overflow-x: hidden;
-}
-
-/* ---------- background orbs (behind everything, glow through glass) ---------- */
-
-.g-scene-canvas{
+.glass-bg-orbs {
   position: fixed;
   inset: 0;
   z-index: -1;
-  width: 100vw;
-  height: 100vh;
+  overflow: hidden;
   pointer-events: none;
 }
 
-/* ---------- glass utility ---------- */
-
-.g-glass{
-  background: var(--g-glass-bg);
-  backdrop-filter: blur(var(--g-glass-blur));
-  -webkit-backdrop-filter: blur(var(--g-glass-blur));
-  border: 1px solid var(--g-glass-border);
-  border-radius: 18px;
-  box-shadow: var(--g-glass-shadow);
-}
-.g-glass-strong{ background: var(--g-glass-bg-strong); }
-.g-glass-dark{
-  background: rgba(15, 23, 42, 0.42);
-  border-color: rgba(255, 255, 255, 0.18);
-  color: #fff;
-}
-
-/* ---------- nav ---------- */
-
-.g-nav-wrap{
-  position: sticky; top: 0; z-index: 1000;
-  padding: 14px 0;
-}
-.g-nav-wrap.scrolled .g-navbar{
-  background: var(--g-glass-bg-strong);
-  box-shadow: 0 8px 30px -18px rgba(15, 23, 42, 0.4);
-}
-.g-navbar{
-  max-width: 1200px;
-  margin: 0 auto;
-  height: 64px;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 0 24px;
-  background: var(--g-glass-bg);
-  backdrop-filter: blur(var(--g-glass-blur));
-  -webkit-backdrop-filter: blur(var(--g-glass-blur));
-  border: 1px solid var(--g-glass-border);
-  border-radius: 16px;
-  box-shadow: var(--g-glass-shadow);
-  transition: background 0.3s ease, box-shadow 0.3s ease;
-}
-
-.g-brand{
-  display: flex; align-items: baseline; gap: 6px;
-  text-decoration: none; color: var(--g-primary);
-  font-family: var(--g-font-display);
-  font-size: 20px;
-  font-weight: 600;
-}
-.g-brand em{ color: var(--g-accent); font-style: normal; }
-
-.g-link{
-  text-decoration: none;
-  color: var(--g-fg);
-  font-size: 14px;
-  font-weight: 600;
-  transition: color 0.25s ease;
-}
-.g-link:hover{ color: var(--g-secondary); }
-
-.g-nav-links{ display: flex; align-items: center; gap: 28px; list-style: none; margin: 0; padding: 0; }
-.g-nav-links a{
-  text-decoration: none;
-  color: var(--g-fg-soft);
-  font-size: 14px;
-  font-weight: 600;
-  transition: color 0.25s ease;
-}
-.g-nav-links a:hover{ color: var(--g-primary); }
-
-.g-nav-actions{ display: flex; align-items: center; gap: 16px; }
-
-/* ---------- buttons ---------- */
-
-.g-btn{
-  display: inline-flex; align-items: center; gap: 8px;
-  text-decoration: none;
-  font-family: var(--g-font-body);
-  font-weight: 700;
-  font-size: 14px;
-  padding: 13px 28px;
-  border: none;
-  border-radius: 12px;
-  background: var(--g-secondary);
-  color: #fff;
-  cursor: pointer;
-  box-shadow: 0 12px 24px -10px rgba(37, 99, 235, 0.55);
-  transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
-}
-.g-btn:hover{ transform: translateY(-2px); box-shadow: 0 16px 30px -10px rgba(37, 99, 235, 0.65); }
-.g-btn:active{ transform: translateY(0); }
-.g-btn .g-arrow{ transition: transform 0.25s ease; }
-.g-btn:hover .g-arrow{ transform: translateX(3px); }
-
-.g-btn-glass{
-  background: rgba(255, 255, 255, 0.18);
-  backdrop-filter: blur(var(--g-glass-blur));
-  -webkit-backdrop-filter: blur(var(--g-glass-blur));
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  color: #fff;
-  box-shadow: none;
-}
-.g-btn-glass:hover{ background: rgba(255, 255, 255, 0.28); }
-
-.g-btn-outline{
-  background: transparent;
-  color: var(--g-primary);
-  border: 1px solid var(--g-border);
-  box-shadow: none;
-}
-.g-btn-outline:hover{ background: var(--g-muted); box-shadow: none; }
-
-/* ---------- eyebrow ---------- */
-
-.g-eyebrow{
-  display: inline-block;
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--g-accent);
-  margin-bottom: 14px;
-}
-.g-eyebrow--on-dark{ color: #F2C94C; }
-
-/* ---------- 3D scroll-reveal (GSAP hooks; CSS sets the starting/base state) ---------- */
-
-.g-tilt{
-  perspective: 1200px;
-}
-.g-tilt-in{
-  transform-style: preserve-3d;
-  will-change: transform, opacity;
-}
-
-@media (prefers-reduced-motion: reduce){
-  .g-tilt-in{ opacity: 1 !important; transform: none !important; }
-}
-
-/* ---------- hero ---------- */
-
-.g-hero{
-  position: relative;
-  min-height: 92vh;
-  display: flex;
-  align-items: center;
-  overflow: hidden;
-  margin-top: -108px;
-  padding-top: 108px;
-}
-.g-hero-inner{
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 60px 24px 100px;
-  width: 100%;
-}
-.g-hero-card{
-  max-width: 640px;
-  padding: 48px 44px;
-  color: #fff;
-}
-.g-hero-card h1{
-  font-family: var(--g-font-display);
-  font-weight: 600;
-  font-size: clamp(2.2rem, 5vw, 3.4rem);
-  line-height: 1.15;
-  margin: 0 0 20px;
-}
-.g-hero-card h1 em{ font-style: normal; color: #F2C94C; }
-.g-hero-lede{
-  font-size: 17px;
-  line-height: 1.7;
-  color: rgba(255,255,255,0.88);
-  max-width: 50ch;
-  margin: 0 0 32px;
-}
-.g-hero-actions{ display: flex; gap: 16px; align-items: center; flex-wrap: wrap; margin-bottom: 28px; }
-.g-ref-note{
-  font-size: 13px;
-  color: rgba(255,255,255,0.72);
-  border-top: 1px solid rgba(255,255,255,0.25);
-  padding-top: 18px;
-  max-width: 50ch;
-}
-.g-ref-note code{ font-weight: 700; color: #fff; }
-
-/* ---------- section shell ---------- */
-
-.g-section{ max-width: 1200px; margin: 0 auto; padding: 100px 24px; }
-.g-section-head{ margin-bottom: 52px; max-width: 60ch; }
-.g-section-head h2{
-  font-family: var(--g-font-display);
-  font-weight: 600;
-  font-size: clamp(1.8rem, 3.2vw, 2.5rem);
-  margin: 0;
-  color: var(--g-primary);
-}
-.g-section-head p{ color: var(--g-fg-soft); margin: 14px 0 0; font-size: 15.5px; line-height: 1.65; }
-
-/* ---------- steps ---------- */
-
-.g-steps{ display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; }
-.g-step{
-  padding: 32px 26px;
-}
-.g-step-num{
-  font-family: var(--g-font-display);
-  font-weight: 700;
-  font-size: 15px;
-  color: #fff;
-  background: var(--g-secondary);
-  width: 40px; height: 40px;
+.glass-orb {
+  position: absolute;
   border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
+  filter: blur(70px);
+  opacity: 0.35;
+  will-change: transform;
+  animation: glass-orb-drift 26s ease-in-out infinite;
 }
-.g-step h3{ font-family: var(--g-font-display); font-weight: 600; font-size: 17px; margin: 0 0 10px; color: var(--g-primary); }
-.g-step p{ font-size: 14px; color: var(--g-fg-soft); line-height: 1.6; margin: 0; }
 
-/* ---------- programs ---------- */
+.glass-orb--amber {
+  width: 480px; height: 480px;
+  top: -120px; left: -80px;
+  background: var(--orb-amber);
+  animation-duration: 30s;
+}
 
-.g-program-list{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-.g-program-card{
+.glass-orb--indigo {
+  width: 420px; height: 420px;
+  top: 30%; right: -140px;
+  background: var(--orb-indigo);
+  animation-duration: 24s;
+  animation-delay: -6s;
+}
+
+.glass-orb--rose {
+  width: 380px; height: 380px;
+  bottom: -100px; left: 20%;
+  background: var(--orb-rose);
+  animation-duration: 28s;
+  animation-delay: -12s;
+}
+
+@keyframes glass-orb-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(30px, 40px) scale(1.06); }
+  66%  { transform: translate(-25px, 20px) scale(0.97); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* ---------- glass surfaces ---------- */
+
+.glass-nav,
+.glass-card,
+.glass-modal {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-nav {
+  background: var(--glass-bg-lighter);
+}
+
+/* Dark-section variant (e.g. panels sitting on the ink-navy programs
+   section) — lower-opacity white fill so it reads as glass over a dark
+   backdrop rather than a light card floating incorrectly. */
+.glass-card--dark {
+  background: var(--glass-bg-dark);
+  border-color: var(--glass-border-dark);
+  color: #FAF7F0;
+}
+
+.glass-card {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  padding: 30px 26px;
-  cursor: pointer;
-  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s ease;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
 }
-.g-program-card:hover{ transform: translateY(-8px); box-shadow: 0 28px 60px -24px rgba(15,23,42,0.45); }
-.g-program-monogram{
-  font-family: var(--g-font-display);
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(232, 163, 61, 0.45);
+  box-shadow: 0 18px 44px rgba(31, 38, 135, 0.18), 0 6px 16px rgba(27, 42, 74, 0.08);
+}
+
+.glass-card--dark:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Signature interaction: a soft diagonal light sweep on hover, the one
+   consistent "premium" cue every glass surface shares. */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 47%, rgba(255, 255, 255, 0.35) 53%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.glass-card:hover::before {
+  transform: translateX(120%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card--dark::before {
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 47%, rgba(255, 255, 255, 0.12) 53%, transparent 70%);
+}
+
+/* ---------- glass buttons ---------- */
+
+.glass-btn {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.18), 0 8px 24px -8px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Primary CTA keeps its solid brand-amber fill for conversion clarity,
+   but still picks up a soft glass-style glow on hover/focus. */
+.glass-btn-primary:hover,
+.glass-btn-primary:focus-visible {
+  box-shadow: 0 0 24px rgba(232, 163, 61, 0.55), 0 8px 20px -8px rgba(232, 163, 61, 0.8);
+}
+
+/* ---------- glass form controls ---------- */
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+/* ---------- accordion (FAQ) glass skin ---------- */
+
+.glass-accordion-item {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius) !important;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.glass-accordion-item .glass-accordion-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 18px 22px;
   font-weight: 700;
   font-size: 15px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--g-primary), var(--g-secondary));
-  width: 48px; height: 48px;
-  border-radius: 12px;
-  display: flex; align-items: center; justify-content: center;
-  margin-bottom: 20px;
-}
-.g-program-name{ font-family: var(--g-font-display); font-size: 18px; font-weight: 600; margin: 0 0 6px; color: var(--g-primary); }
-.g-program-meta{ font-size: 12.5px; color: var(--g-fg-soft); letter-spacing: 0.02em; text-transform: uppercase; margin-bottom: 22px; }
-.g-program-apply{
-  margin-top: auto;
-  display: inline-flex; align-items: center; gap: 8px;
-  text-decoration: none; color: var(--g-secondary); font-size: 14px; font-weight: 700;
-  background: none; border: none; padding: 0; cursor: pointer; font-family: var(--g-font-body);
-}
-.g-program-apply .g-arrow{ display: inline-block; transition: transform 0.3s ease; }
-.g-program-card:hover .g-program-apply .g-arrow{ transform: translateX(5px); }
-
-/* ---------- feature band (photo + glass stat cards) ---------- */
-
-.g-feature-band{
-  position: relative;
-  margin: 0 24px;
-  border-radius: 28px;
-  overflow: hidden;
-  min-height: 480px;
+  color: var(--ink, #1B2A4A);
+  cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
 }
-.g-feature-bg{
-  position: absolute; inset: 0; z-index: -1;
-  background-size: cover; background-position: center;
-}
-.g-feature-bg::after{
-  content: "";
-  position: absolute; inset: 0;
-  background: linear-gradient(100deg, rgba(15,23,42,0.88) 0%, rgba(30,58,95,0.55) 55%, rgba(30,58,95,0.25) 100%);
-}
-.g-feature-inner{ max-width: 1200px; margin: 0 auto; padding: 70px 40px; width: 100%; }
-.g-feature-card{ max-width: 480px; padding: 40px; color: #fff; }
-.g-feature-card h2{ font-family: var(--g-font-display); font-weight: 600; font-size: clamp(1.6rem, 3vw, 2.2rem); margin: 0 0 16px; }
-.g-feature-card p{ color: rgba(255,255,255,0.85); line-height: 1.7; margin: 0 0 8px; font-size: 15px; }
 
-.g-stat-row{ display: flex; gap: 16px; margin-top: 32px; flex-wrap: wrap; }
-.g-stat{ padding: 18px 22px; min-width: 130px; }
-.g-stat-num{ font-family: var(--g-font-display); font-weight: 700; font-size: 26px; color: #fff; margin-bottom: 4px; }
-.g-stat-label{ font-size: 12px; color: rgba(255,255,255,0.75); text-transform: uppercase; letter-spacing: 0.04em; }
-
-/* ---------- testimonials ---------- */
-
-.g-quotes{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 22px; }
-.g-quote{ padding: 32px 28px; }
-.g-quote-mark{ font-family: var(--g-font-display); font-size: 40px; color: var(--g-secondary); opacity: 0.5; line-height: 1; margin-bottom: 12px; }
-.g-quote p{ font-size: 15px; line-height: 1.65; color: var(--g-fg); margin: 0 0 16px; }
-.g-quote cite{ font-style: normal; font-size: 13px; font-weight: 700; color: var(--g-primary); }
-
-/* ---------- FAQ ---------- */
-
-.g-faq{ max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-.g-faq-item{ padding: 4px 24px; overflow: hidden; }
-.g-faq-btn{
-  width: 100%; text-align: left;
-  background: transparent; border: none;
-  padding: 20px 0;
-  font-family: var(--g-font-body);
-  font-weight: 700; font-size: 15px;
-  color: var(--g-primary);
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: space-between; gap: 16px;
-}
-.g-faq-mark{
-  font-family: var(--g-font-display);
-  font-size: 20px;
-  color: var(--g-secondary);
-  flex: none;
-  transition: transform 0.35s ease;
-}
-.g-faq-item.open .g-faq-mark{ transform: rotate(135deg); }
-.g-faq-body{
-  max-height: 0; overflow: hidden; opacity: 0;
-  font-size: 14px; line-height: 1.7; color: var(--g-fg-soft);
-  transition: max-height 0.35s ease, opacity 0.3s ease, padding 0.35s ease;
-}
-.g-faq-item.open .g-faq-body{ padding: 0 0 22px; opacity: 1; }
-
-/* ---------- CTA band ---------- */
-
-.g-cta-band{
-  position: relative;
-  margin: 0 24px 100px;
-  border-radius: 28px;
+.glass-accordion-item .glass-accordion-body {
+  max-height: 0;
   overflow: hidden;
-  padding: 90px 40px;
-  text-align: center;
-}
-.g-cta-bg{ position: absolute; inset: 0; z-index: -1; background-size: cover; background-position: center; }
-.g-cta-bg::after{ content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(15,23,42,0.55), rgba(30,58,95,0.88)); }
-.g-cta-band h2{ font-family: var(--g-font-display); font-weight: 600; font-size: clamp(1.7rem, 3vw, 2.3rem); margin: 0 0 14px; color: #fff; }
-.g-cta-band p{ color: rgba(255,255,255,0.85); margin: 0 0 30px; }
-
-/* ---------- footer ---------- */
-
-.g-footer{ padding: 40px 24px; text-align: center; font-size: 12.5px; color: var(--g-fg-soft); }
-
-/* ---------- modal ---------- */
-
-.g-modal-overlay{
-  display: none; position: fixed; inset: 0; z-index: 2000;
-  align-items: center; justify-content: center;
-  background: rgba(15, 23, 42, 0.55);
-}
-.g-modal-box{ padding: 32px; max-width: 420px; width: 90%; }
-.g-modal-box h3{ font-family: var(--g-font-display); font-weight: 600; margin: 0 0 10px; font-size: 20px; color: var(--g-primary); }
-.g-modal-box p{ color: var(--g-fg-soft); margin: 0 0 26px; font-size: 14px; line-height: 1.6; }
-
-@media (max-width: 980px){
-  .g-steps{ grid-template-columns: repeat(2, 1fr); }
-  .g-program-list{ grid-template-columns: repeat(2, 1fr); }
-  .g-quotes{ grid-template-columns: 1fr; }
+  padding: 0 22px;
+  color: rgba(27, 42, 74, 0.7);
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.4s ease;
 }
 
-@media (max-width: 760px){
-  .g-nav-links{ display: none; }
-  .g-steps{ grid-template-columns: 1fr; }
-  .g-program-list{ grid-template-columns: 1fr; }
-  .g-hero-card{ padding: 32px 24px; }
-  .g-feature-inner, .g-cta-band{ padding-left: 24px; padding-right: 24px; }
+.glass-accordion-item.open .glass-accordion-body {
+  padding: 0 22px 18px;
+  opacity: 1;
+}
+
+.glass-accordion-item .glass-accordion-btn {
+  transition: color 0.2s ease;
+}
+
+.glass-accordion-item:hover .glass-accordion-btn,
+.glass-accordion-item.open .glass-accordion-btn {
+  color: var(--orb-amber, #E8A33D);
+}
+
+.glass-accordion-item .glass-accordion-icon {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  flex: none;
+}
+
+.glass-accordion-item.open .glass-accordion-icon {
+  transform: rotate(180deg);
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-orb {
+    animation: none;
+  }
 }
