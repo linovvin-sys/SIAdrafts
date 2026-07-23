@@ -33,12 +33,7 @@ function course_monogram(string $name): string {
 </head>
 <body class="glass-body">
 
-  <div class="g-orb-layer" aria-hidden="true">
-    <div class="g-orb g-orb--1" data-speed="0.08"></div>
-    <div class="g-orb g-orb--2" data-speed="0.14"></div>
-    <div class="g-orb g-orb--3" data-speed="0.05"></div>
-    <div class="g-orb g-orb--4" data-speed="0.18"></div>
-  </div>
+  <canvas id="gScene" class="g-scene-canvas" aria-hidden="true"></canvas>
 
   <div class="g-nav-wrap" id="gNavWrap">
     <nav class="g-navbar">
@@ -241,6 +236,7 @@ function course_monogram(string $name): string {
     </div>
   </div>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
   <script>
@@ -275,28 +271,109 @@ function course_monogram(string $name): string {
 
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Scroll parallax — fixed orb layer drifts at a fraction of scroll
-    // speed per orb (via each orb's data-speed), giving depth behind the
-    // glass panels. Skipped entirely under prefers-reduced-motion.
+    // 3D background scene — a handful of floating Three.js shapes (in the
+    // navy/blue/gold palette) that rotate and drift as the page scrolls,
+    // giving a real WebGL depth/POV-shift effect rather than a flat blur.
+    // Falls back to no canvas at all (page still works fine without it)
+    // if Three.js failed to load or the browser has no WebGL, and freezes
+    // rotation under prefers-reduced-motion.
     (function () {
-      var orbs = document.querySelectorAll('.g-orb');
-      if (!orbs.length || reducedMotion) return;
+      var canvas = document.getElementById('gScene');
+      if (!canvas || typeof THREE === 'undefined') return;
 
-      var ticking = false;
-      function applyParallax() {
-        var scrollY = window.scrollY;
-        orbs.forEach(function (orb) {
-          var speed = parseFloat(orb.getAttribute('data-speed')) || 0;
-          orb.style.transform = 'translateY(' + (scrollY * speed) + 'px)';
-        });
-        ticking = false;
+      var renderer;
+      try {
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+      } catch (e) {
+        return; // no WebGL support
       }
-      window.addEventListener('scroll', function () {
-        if (!ticking) {
-          window.requestAnimationFrame(applyParallax);
-          ticking = true;
-        }
-      }, { passive: true });
+
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+      camera.position.set(0, 0, 14);
+
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.setSize(window.innerWidth, window.innerHeight);
+
+      scene.add(new THREE.AmbientLight(0xffffff, 0.65));
+      var key = new THREE.DirectionalLight(0xffffff, 0.9);
+      key.position.set(5, 8, 6);
+      scene.add(key);
+      var rim = new THREE.DirectionalLight(0x2563eb, 0.5);
+      rim.position.set(-6, -4, -4);
+      scene.add(rim);
+
+      var palette = [0x2563eb, 0xa16207, 0x1e3a5f];
+      var geometries = [
+        new THREE.IcosahedronGeometry(1.3, 0),
+        new THREE.TorusKnotGeometry(0.9, 0.28, 120, 16),
+        new THREE.OctahedronGeometry(1.1, 0),
+        new THREE.IcosahedronGeometry(0.8, 1)
+      ];
+
+      var shapes = geometries.map(function (geo, i) {
+        var mat = new THREE.MeshStandardMaterial({
+          color: palette[i % palette.length],
+          metalness: 0.25,
+          roughness: 0.35,
+          flatShading: true
+        });
+        var mesh = new THREE.Mesh(geo, mat);
+        var angle = (i / geometries.length) * Math.PI * 2;
+        var radius = 6.5;
+        mesh.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.6 - i * 3, -i * 2);
+        mesh.userData.spin = { x: 0.08 + i * 0.02, y: 0.05 + i * 0.015 };
+        scene.add(mesh);
+        return mesh;
+      });
+
+      function resize() {
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+      }
+      window.addEventListener('resize', resize, { passive: true });
+
+      var scrollProgress = 0;
+      var targetProgress = 0;
+      function readScroll() {
+        var max = document.documentElement.scrollHeight - window.innerHeight;
+        targetProgress = max > 0 ? window.scrollY / max : 0;
+      }
+      window.addEventListener('scroll', readScroll, { passive: true });
+      readScroll();
+
+      if (reducedMotion) {
+        // Render a single static frame at the current scroll position —
+        // no continuous animation loop, honoring reduced-motion.
+        shapes.forEach(function (mesh, i) {
+          mesh.rotation.set(0.4 * i, 0.6 * i, 0);
+        });
+        camera.position.y = -targetProgress * 6;
+        renderer.render(scene, camera);
+        return;
+      }
+
+      var clock = new THREE.Clock();
+      function tick() {
+        var dt = clock.getDelta();
+        scrollProgress += (targetProgress - scrollProgress) * 0.06;
+
+        shapes.forEach(function (mesh) {
+          mesh.rotation.x += mesh.userData.spin.x * dt;
+          mesh.rotation.y += mesh.userData.spin.y * dt;
+        });
+
+        // Camera drifts downward and yaws slightly as the user scrolls,
+        // reading as a shifting point-of-view through the shape field.
+        camera.position.y = -scrollProgress * 10;
+        camera.rotation.z = scrollProgress * 0.15;
+        camera.lookAt(0, camera.position.y - 2, 0);
+
+        renderer.render(scene, camera);
+        requestAnimationFrame(tick);
+      }
+      tick();
     })();
 
     // GSAP ScrollTrigger — 3D tilt-in entrance for cards/panels, plus a
