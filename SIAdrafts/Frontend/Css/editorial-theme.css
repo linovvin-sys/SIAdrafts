@@ -23,7 +23,7 @@ html, body{ margin: 0; scroll-behavior: smooth; }
 html{ background: var(--paper); }
 
 body.editorial-body{
-  background: rgba(247, 244, 236, 0.86);
+  background: transparent;
   color: var(--ink);
   font-family: var(--font-body);
 }
