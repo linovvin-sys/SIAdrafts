@@ -7,3 +7,4 @@ SIAdrafts/vendor/
 SIAdrafts/.env
 SIAdrafts/Backend/uploads/requirements/*
 !SIAdrafts/Backend/uploads/requirements/.gitkeep
+.superpowers/
