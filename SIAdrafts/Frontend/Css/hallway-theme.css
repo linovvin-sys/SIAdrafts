@@ -1,0 +1,335 @@
+/*
+ * Hallway of Windows — landing page only (index.php). One continuous 3D
+ * corridor (three.js, pinned canvas) with real transmission-material glass
+ * panes set into the walls; flat CSS glassmorphism cards slide over each
+ * pane as it comes into focus. Glass appears in both registers on purpose
+ * -- that doubling is the whole concept, not two separate effects.
+ */
+
+:root {
+  --hw-bg: #F7F9FC;
+  --hw-ink: #131B3A;
+  --hw-ink-soft: rgba(19, 27, 58, 0.68);
+  --hw-glass-tint: 234, 242, 255;
+  --hw-accent: #E8A33D;
+  --hw-secondary: #6B8F71;
+  --hw-secondary-text: #50705B; /* darkened for 4.5:1+ as text on --hw-bg; --hw-secondary itself stays true to spec for non-text use */
+
+  --hw-font-display: 'Fraunces', Georgia, serif;
+  --hw-font-body: 'Inter', -apple-system, sans-serif;
+  --hw-font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}
+
+*{ box-sizing: border-box; }
+html, body{ margin: 0; scroll-behavior: smooth; }
+html{ background: var(--hw-bg); }
+
+body.hw-body{
+  background: transparent;
+  color: var(--hw-ink);
+  font-family: var(--hw-font-body);
+  overflow-x: hidden;
+}
+
+/* ---------- pinned 3D canvas ---------- */
+
+.hw-canvas{
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  width: 100vw;
+  height: 100vh;
+  pointer-events: none;
+  background: linear-gradient(180deg, #0d1530 0%, #131B3A 55%, #0d1530 100%);
+}
+
+/* Mobile / low-power fallback: the canvas renders one static frame only
+   (see script), so it never costs a continuous render loop on phones. */
+@media (max-width: 760px){
+  .hw-canvas{ opacity: 0.9; }
+}
+
+/* ---------- glass UI card (the flat register of "glass") ---------- */
+
+.hw-card{
+  position: relative;
+  background: rgba(var(--hw-glass-tint), 0.12);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+/* Guardrail: blur alone often fails contrast against a busy/bright scene
+   behind it, so every card gets a dark scrim behind its text layer. */
+.hw-card::before{
+  content: "";
+  position: absolute; inset: 0;
+  background: rgba(13, 21, 48, 0.82);
+  z-index: 0;
+}
+.hw-card > *{ position: relative; z-index: 1; }
+
+.hw-card, .hw-card *{ color: #F7F9FC; }
+.hw-card .hw-eyebrow{ color: var(--hw-accent); }
+
+/* ---------- focus states (guardrail: default rings vanish on glass) ---------- */
+
+a:focus-visible, button:focus-visible{
+  outline: 2px solid var(--hw-accent);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ---------- nav ---------- */
+
+.hw-nav-wrap{
+  position: sticky; top: 0; z-index: 1000;
+  padding: 14px 0;
+}
+.hw-navbar{
+  max-width: 1180px;
+  margin: 0 auto;
+  height: 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px;
+  background: rgba(var(--hw-glass-tint), 0.14);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 16px;
+}
+.hw-brand{
+  display: flex; align-items: baseline; gap: 6px;
+  text-decoration: none; color: #fff;
+  font-family: var(--hw-font-display);
+  font-style: italic;
+  font-size: 20px;
+  font-weight: 500;
+}
+.hw-brand em{ color: var(--hw-accent); font-style: italic; }
+.hw-nav-links{ display: flex; align-items: center; gap: 26px; list-style: none; margin: 0; padding: 0; }
+.hw-nav-links a{ text-decoration: none; color: rgba(255,255,255,0.82); font-size: 13.5px; font-weight: 600; letter-spacing: 0.01em; }
+.hw-nav-links a:hover{ color: #fff; }
+.hw-nav-actions{ display: flex; align-items: center; gap: 16px; }
+.hw-link{ text-decoration: none; color: rgba(255,255,255,0.82); font-size: 13.5px; font-weight: 600; }
+.hw-link:hover{ color: #fff; }
+
+/* ---------- buttons ---------- */
+
+.hw-btn{
+  display: inline-flex; align-items: center; gap: 8px;
+  text-decoration: none;
+  font-family: var(--hw-font-body);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 13px 26px;
+  border: none;
+  border-radius: 10px;
+  background: var(--hw-accent);
+  color: #131B3A;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  box-shadow: 0 10px 24px -10px rgba(232, 163, 61, 0.7);
+}
+.hw-btn:hover{ transform: translateY(-2px); }
+.hw-btn-glass{
+  background: rgba(255,255,255,0.14);
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.35);
+  box-shadow: none;
+}
+.hw-btn-glass:hover{ background: rgba(255,255,255,0.22); }
+.hw-btn-outline{
+  background: transparent;
+  color: var(--hw-ink);
+  border: 1px solid rgba(19,27,58,0.3);
+  box-shadow: none;
+}
+
+/* ---------- utility type ---------- */
+
+.hw-eyebrow{
+  display: block;
+  font-family: var(--hw-font-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.hw-stat{ font-family: var(--hw-font-mono); }
+
+/* ---------- hallway scroll driver ---------- */
+
+.hw-hallway{
+  position: relative;
+  height: 600vh; /* scroll distance the camera travels through */
+}
+.hw-hallway-track{
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+}
+
+.hw-window-stop{
+  position: absolute;
+  left: 0; right: 0;
+  display: flex;
+  padding: 0 8vw;
+}
+.hw-window-stop.hw-align-left{ justify-content: flex-start; }
+.hw-window-stop.hw-align-right{ justify-content: flex-end; }
+.hw-window-stop.hw-align-center{ justify-content: center; }
+
+.hw-window-stop .hw-card{
+  max-width: 460px;
+  padding: 40px 38px;
+  opacity: 0;
+}
+
+.hw-hero-stop{ top: 0; height: 100vh; align-items: center; }
+.hw-hero-stop .hw-card{ max-width: 560px; }
+
+.hw-scroll-cue{
+  position: absolute;
+  bottom: 46px; left: 50%; transform: translateX(-50%);
+  font-family: var(--hw-font-mono);
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.7);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.hw-scroll-cue::after{
+  content: "";
+  width: 1px; height: 34px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.8), transparent);
+  animation: hw-scroll-cue-pulse 1.8s ease-in-out infinite;
+}
+@keyframes hw-scroll-cue-pulse{
+  0%, 100%{ opacity: 0.3; }
+  50%{ opacity: 1; }
+}
+
+h1.hw-h1{
+  font-family: var(--hw-font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(2rem, 4.4vw, 3.1rem);
+  line-height: 1.15;
+  margin: 0 0 18px;
+}
+.hw-card h2{
+  font-family: var(--hw-font-display);
+  font-weight: 500;
+  font-size: clamp(1.5rem, 2.6vw, 2rem);
+  margin: 0 0 14px;
+}
+.hw-card p{ font-size: 15px; line-height: 1.65; margin: 0 0 8px; color: rgba(247,249,252,0.88); }
+.hw-card .hw-stat-row{ display: flex; gap: 22px; margin-top: 18px; }
+.hw-card .hw-stat-num{ font-family: var(--hw-font-mono); font-size: 22px; color: var(--hw-accent); }
+.hw-card .hw-stat-label{ font-family: var(--hw-font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: rgba(255,255,255,0.65); }
+
+/* ---------- mission / about (flat section, no glass, breathing room) ---------- */
+
+.hw-mission{ max-width: 760px; margin: 0 auto; padding: 140px 28px; text-align: center; }
+.hw-mission .hw-eyebrow{ color: var(--hw-secondary-text); justify-content: center; display: flex; }
+.hw-mission h2{
+  font-family: var(--hw-font-display);
+  font-style: italic;
+  font-weight: 500;
+  font-size: clamp(1.7rem, 3.2vw, 2.4rem);
+  color: var(--hw-ink);
+  margin: 0 0 20px;
+  line-height: 1.35;
+}
+.hw-mission p{ color: var(--hw-ink-soft); font-size: 16px; line-height: 1.75; margin: 0; }
+
+/* ---------- testimonials (glass carousel over blurred photo) ---------- */
+
+.hw-testimonial-band{
+  position: relative;
+  margin: 0 0 0;
+  padding: 130px 28px;
+  background: radial-gradient(circle at 30% 20%, rgba(107,143,113,0.25), transparent 60%),
+              radial-gradient(circle at 80% 80%, rgba(232,163,61,0.2), transparent 55%),
+              var(--hw-ink);
+  display: flex;
+  justify-content: center;
+}
+.hw-testimonial-card{
+  max-width: 620px;
+  padding: 44px 40px;
+  text-align: center;
+}
+.hw-testimonial-card .hw-quote-mark{
+  font-family: var(--hw-font-display);
+  font-style: italic;
+  font-size: 46px;
+  color: var(--hw-accent);
+  line-height: 1;
+  margin-bottom: 10px;
+}
+.hw-testimonial-card p{ font-family: var(--hw-font-display); font-style: italic; font-size: clamp(1.1rem, 2vw, 1.35rem); line-height: 1.55; margin: 0 0 16px; }
+.hw-testimonial-card cite{ font-style: normal; font-family: var(--hw-font-mono); font-size: 12px; color: rgba(255,255,255,0.7); }
+.hw-testimonial-dots{ display: flex; gap: 8px; justify-content: center; margin-top: 26px; }
+.hw-testimonial-dots button{
+  width: 8px; height: 8px; border-radius: 50%;
+  border: none; padding: 0; cursor: pointer;
+  background: rgba(255,255,255,0.3);
+}
+.hw-testimonial-dots button.active{ background: var(--hw-accent); }
+
+/* ---------- footer (deliberately flat: no glass, no 3D) ---------- */
+
+.hw-footer{
+  background: var(--hw-bg);
+  padding: 48px 28px;
+  text-align: center;
+  font-size: 12.5px;
+  color: var(--hw-ink-soft);
+}
+
+/* ---------- modal ---------- */
+
+.hw-modal-overlay{
+  display: none; position: fixed; inset: 0; z-index: 2000;
+  align-items: center; justify-content: center;
+  background: rgba(13, 21, 48, 0.6);
+}
+.hw-modal-box{ padding: 32px; max-width: 420px; width: 90%; }
+.hw-modal-box h3{ font-family: var(--hw-font-display); font-weight: 500; margin: 0 0 10px; font-size: 20px; }
+.hw-modal-box p{ margin: 0 0 26px; font-size: 14px; line-height: 1.6; }
+
+@media (prefers-reduced-motion: reduce){
+  .hw-scroll-cue::after{ animation: none; }
+}
+
+/* Reduced-motion / small-screen fallback: set on <body> by the scene
+   script. Degrades the pinned crossfade hallway to a plain stacked
+   column -- no sticky camera track, no live per-frame WebGL render loop,
+   just one static frame behind normally-flowing cards. */
+body.hw-reduced .hw-hallway{ height: auto; }
+body.hw-reduced .hw-hallway-track{ position: static; height: auto; display: block; padding: 60px 6vw; }
+body.hw-reduced .hw-window-stop{
+  position: static;
+  display: flex;
+  justify-content: center !important;
+  padding: 0;
+  margin-bottom: 32px;
+}
+body.hw-reduced .hw-window-stop .hw-card{ opacity: 1 !important; max-width: 620px; }
+body.hw-reduced .hw-scroll-cue{ display: none; }
+
+@media (max-width: 900px){
+  .hw-window-stop{ padding: 0 6vw; justify-content: center !important; }
+  .hw-window-stop .hw-card{ max-width: 90vw; }
+}
+
+@media (max-width: 640px){
+  .hw-nav-links{ display: none; }
+  .hw-hallway{ height: 480vh; }
+}
