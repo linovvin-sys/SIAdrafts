@@ -54,7 +54,6 @@ function course_monogram(string $name): string {
   </div>
 
   <main id="top" class="g-hero">
-    <div class="g-hero-bg" style="background-image:url('/SIAdrafts/Frontend/Images/landing/hero.jpg')"></div>
     <div class="g-hero-inner">
       <div class="g-hero-card g-glass g-glass-dark g-tilt-in">
         <span class="g-eyebrow g-eyebrow--on-dark">Admissions Open — SY 2026–2027</span>
@@ -271,12 +270,12 @@ function course_monogram(string $name): string {
 
     var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // 3D background scene — a handful of floating Three.js shapes (in the
-    // navy/blue/gold palette) that rotate and drift as the page scrolls,
-    // giving a real WebGL depth/POV-shift effect rather than a flat blur.
-    // Falls back to no canvas at all (page still works fine without it)
-    // if Three.js failed to load or the browser has no WebGL, and freezes
-    // rotation under prefers-reduced-motion.
+    // 3D showcase scene — a stylized low-poly school building (built from
+    // primitive Three.js geometry: no external model files) that the
+    // camera orbits and pushes in around as the page scrolls, revealing
+    // it from a sequence of angles rather than sitting static. Falls back
+    // to no canvas at all if Three.js failed to load or WebGL is
+    // unavailable, and to a single static frame under prefers-reduced-motion.
     (function () {
       var canvas = document.getElementById('gScene');
       if (!canvas || typeof THREE === 'undefined') return;
@@ -289,43 +288,119 @@ function course_monogram(string $name): string {
       }
 
       var scene = new THREE.Scene();
-      var camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-      camera.position.set(0, 0, 14);
+      var camera = new THREE.PerspectiveCamera(42, window.innerWidth / window.innerHeight, 0.1, 100);
 
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(window.innerWidth, window.innerHeight);
 
-      scene.add(new THREE.AmbientLight(0xffffff, 0.65));
-      var key = new THREE.DirectionalLight(0xffffff, 0.9);
-      key.position.set(5, 8, 6);
+      scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+      var key = new THREE.DirectionalLight(0xffffff, 1.0);
+      key.position.set(8, 12, 8);
       scene.add(key);
-      var rim = new THREE.DirectionalLight(0x2563eb, 0.5);
-      rim.position.set(-6, -4, -4);
+      var rim = new THREE.DirectionalLight(0x2563eb, 0.4);
+      rim.position.set(-8, -3, -6);
       scene.add(rim);
 
-      var palette = [0x2563eb, 0xa16207, 0x1e3a5f];
-      var geometries = [
-        new THREE.IcosahedronGeometry(1.3, 0),
-        new THREE.TorusKnotGeometry(0.9, 0.28, 120, 16),
-        new THREE.OctahedronGeometry(1.1, 0),
-        new THREE.IcosahedronGeometry(0.8, 1)
-      ];
+      var navy = 0x1e3a5f, navyLight = 0x27507f, gold = 0xa16207, cream = 0xf1ede2, glass = 0x9fc4ff, sage = 0x5f7a63, bark = 0x5b4636, ground = 0x16233a;
 
-      var shapes = geometries.map(function (geo, i) {
-        var mat = new THREE.MeshStandardMaterial({
-          color: palette[i % palette.length],
-          metalness: 0.25,
-          roughness: 0.35,
-          flatShading: true
-        });
-        var mesh = new THREE.Mesh(geo, mat);
-        var angle = (i / geometries.length) * Math.PI * 2;
-        var radius = 6.5;
-        mesh.position.set(Math.cos(angle) * radius, Math.sin(angle) * radius * 0.6 - i * 3, -i * 2);
-        mesh.userData.spin = { x: 0.08 + i * 0.02, y: 0.05 + i * 0.015 };
-        scene.add(mesh);
-        return mesh;
+      function block(w, h, d, color) {
+        var mat = new THREE.MeshStandardMaterial({ color: color, roughness: 0.6, metalness: 0.1, flatShading: true });
+        return new THREE.Mesh(new THREE.BoxGeometry(w, h, d), mat);
+      }
+
+      var building = new THREE.Group();
+
+      // Ground disc + entrance plaza
+      var groundMesh = new THREE.Mesh(
+        new THREE.CylinderGeometry(13, 13, 0.3, 40),
+        new THREE.MeshStandardMaterial({ color: ground, roughness: 0.9, flatShading: true })
+      );
+      groundMesh.position.y = -0.15;
+      building.add(groundMesh);
+
+      // Entrance steps (three stacked, narrowing)
+      [ [9, 0.35, 5.5, 0.2], [7.6, 0.35, 4.6, 0.55], [6.4, 0.35, 3.8, 0.9] ].forEach(function (s) {
+        var step = block(s[0], s[1], s[2], cream);
+        step.position.set(0, s[3], 3.6);
+        building.add(step);
       });
+
+      // Main block
+      var main = block(10, 4.2, 6, navy);
+      main.position.set(0, 1.2 + 2.1, 0);
+      building.add(main);
+
+      // Side wings (slightly lower, lighter navy)
+      var wingL = block(3.4, 3.2, 5.2, navyLight);
+      wingL.position.set(-6.5, 1.2 + 1.6, 0.2);
+      building.add(wingL);
+      var wingR = wingL.clone();
+      wingR.position.x = 6.5;
+      building.add(wingR);
+
+      // Front portico columns
+      for (var i = -2; i <= 2; i++) {
+        var col = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.28, 0.28, 3.6, 10),
+          new THREE.MeshStandardMaterial({ color: cream, roughness: 0.4, flatShading: true })
+        );
+        col.position.set(i * 1.9, 1.2 + 1.8, 3.2);
+        building.add(col);
+      }
+
+      // Triangular pediment above the portico (extruded triangle)
+      var pedimentShape = new THREE.Shape();
+      pedimentShape.moveTo(-5.4, 0);
+      pedimentShape.lineTo(5.4, 0);
+      pedimentShape.lineTo(0, 2.1);
+      pedimentShape.closePath();
+      var pediment = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(pedimentShape, { depth: 1.2, bevelEnabled: false }),
+        new THREE.MeshStandardMaterial({ color: gold, roughness: 0.5, flatShading: true })
+      );
+      pediment.position.set(0, 1.2 + 4.2, 2.6);
+      building.add(pediment);
+
+      // Window grids on the two wings
+      [-6.5, 6.5].forEach(function (wx) {
+        for (var row = 0; row < 2; row++) {
+          for (var col2 = -1; col2 <= 1; col2++) {
+            var win = block(0.7, 0.9, 0.08, glass);
+            win.material.roughness = 0.15;
+            win.position.set(wx + col2 * 1.0, 1.2 + 0.9 + row * 1.3, 2.65);
+            building.add(win);
+          }
+        }
+      });
+
+      // Flagpole + flag
+      var pole = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.05, 0.05, 3, 8),
+        new THREE.MeshStandardMaterial({ color: cream, roughness: 0.4 })
+      );
+      pole.position.set(0, 1.2 + 4.2 + 2.1 + 1.4, 2.6);
+      building.add(pole);
+      var flag = block(0.9, 0.55, 0.02, gold);
+      flag.position.set(0.5, pole.position.y + 1.1, 2.6);
+      building.add(flag);
+
+      // Two low-poly trees flanking the plaza
+      [-9.5, 9.5].forEach(function (tx) {
+        var trunk = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.18, 0.22, 1.4, 8),
+          new THREE.MeshStandardMaterial({ color: bark, roughness: 0.8, flatShading: true })
+        );
+        trunk.position.set(tx, 0.7, 5.5);
+        building.add(trunk);
+        var foliage = new THREE.Mesh(
+          new THREE.IcosahedronGeometry(1.1, 0),
+          new THREE.MeshStandardMaterial({ color: sage, roughness: 0.7, flatShading: true })
+        );
+        foliage.position.set(tx, 2.1, 5.5);
+        building.add(foliage);
+      });
+
+      scene.add(building);
 
       function resize() {
         camera.aspect = window.innerWidth / window.innerHeight;
@@ -333,6 +408,29 @@ function course_monogram(string $name): string {
         renderer.setSize(window.innerWidth, window.innerHeight);
       }
       window.addEventListener('resize', resize, { passive: true });
+
+      // Scroll-driven camera path: five waypoints (position + look-at)
+      // spanning the full scroll range, orbiting and pushing in around
+      // the building rather than sitting on one fixed angle.
+      var waypoints = [
+        { pos: [0, 5, 24], look: [0, 3, 0] },
+        { pos: [15, 3.5, 11], look: [2, 2.5, 0] },
+        { pos: [0, 2, 8], look: [0, 2.5, 3] },
+        { pos: [-16, 4, 12], look: [-2, 2.5, 0] },
+        { pos: [0, 13, 21], look: [0, 1, 0] }
+      ];
+
+      function sampleWaypoints(t) {
+        var segCount = waypoints.length - 1;
+        var scaled = Math.min(Math.max(t, 0), 1) * segCount;
+        var idx = Math.min(Math.floor(scaled), segCount - 1);
+        var localT = scaled - idx;
+        var a = waypoints[idx], b = waypoints[idx + 1];
+        return {
+          pos: [0, 1, 2].map(function (k) { return a.pos[k] + (b.pos[k] - a.pos[k]) * localT; }),
+          look: [0, 1, 2].map(function (k) { return a.look[k] + (b.look[k] - a.look[k]) * localT; })
+        };
+      }
 
       var scrollProgress = 0;
       var targetProgress = 0;
@@ -346,10 +444,9 @@ function course_monogram(string $name): string {
       if (reducedMotion) {
         // Render a single static frame at the current scroll position —
         // no continuous animation loop, honoring reduced-motion.
-        shapes.forEach(function (mesh, i) {
-          mesh.rotation.set(0.4 * i, 0.6 * i, 0);
-        });
-        camera.position.y = -targetProgress * 6;
+        var still = sampleWaypoints(targetProgress);
+        camera.position.set(still.pos[0], still.pos[1], still.pos[2]);
+        camera.lookAt(still.look[0], still.look[1], still.look[2]);
         renderer.render(scene, camera);
         return;
       }
@@ -359,16 +456,11 @@ function course_monogram(string $name): string {
         var dt = clock.getDelta();
         scrollProgress += (targetProgress - scrollProgress) * 0.06;
 
-        shapes.forEach(function (mesh) {
-          mesh.rotation.x += mesh.userData.spin.x * dt;
-          mesh.rotation.y += mesh.userData.spin.y * dt;
-        });
+        building.rotation.y += 0.05 * dt; // slow idle turntable, independent of scroll
 
-        // Camera drifts downward and yaws slightly as the user scrolls,
-        // reading as a shifting point-of-view through the shape field.
-        camera.position.y = -scrollProgress * 10;
-        camera.rotation.z = scrollProgress * 0.15;
-        camera.lookAt(0, camera.position.y - 2, 0);
+        var frame = sampleWaypoints(scrollProgress);
+        camera.position.set(frame.pos[0], frame.pos[1], frame.pos[2]);
+        camera.lookAt(frame.look[0], frame.look[1], frame.look[2]);
 
         renderer.render(scene, camera);
         requestAnimationFrame(tick);
@@ -398,12 +490,6 @@ function course_monogram(string $name): string {
             scrollTrigger: { trigger: el, start: 'top 88%' }
           }
         );
-      });
-
-      gsap.to('.g-hero-bg', {
-        yPercent: 12,
-        ease: 'none',
-        scrollTrigger: { trigger: '.g-hero', start: 'top top', end: 'bottom top', scrub: true }
       });
     })();
   </script>

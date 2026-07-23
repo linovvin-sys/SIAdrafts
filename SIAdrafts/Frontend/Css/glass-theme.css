@@ -199,20 +199,6 @@ body.glass-body{
   margin-top: -108px;
   padding-top: 108px;
 }
-.g-hero-bg{
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-size: cover;
-  background-position: center;
-  transform: scale(1.08);
-  will-change: transform;
-}
-.g-hero-bg::after{
-  content: "";
-  position: absolute; inset: 0;
-  background: linear-gradient(180deg, rgba(15,23,42,0.72) 0%, rgba(30,58,95,0.82) 55%, rgba(15,23,42,0.9) 100%);
-}
 .g-hero-inner{
   max-width: 1200px;
   margin: 0 auto;
