@@ -42,8 +42,8 @@ include '../Include/header.php';
           <tbody id="pendingCourseBody"></tbody>
         </table>
         <div class="empty-state" id="emptyCourseState" style="display:none">
-          <div class="empty-icon">✅</div>
-          <p>No pending courses right now.</p>
+          <div class="empty-state-icon">✓</div>
+          <p class="empty-state-text">No pending courses — new submissions from Registrar Staff will show up here.</p>
         </div>
       </div>
     </div>
@@ -67,8 +67,8 @@ include '../Include/header.php';
           <tbody id="pendingSectionBody"></tbody>
         </table>
         <div class="empty-state" id="emptySectionState" style="display:none">
-          <div class="empty-icon">✅</div>
-          <p>No pending sections right now.</p>
+          <div class="empty-state-icon">✓</div>
+          <p class="empty-state-text">No pending sections — new submissions from Registrar Staff will show up here.</p>
         </div>
       </div>
     </div>
@@ -94,8 +94,8 @@ include '../Include/header.php';
           <tbody id="pendingBody"></tbody>
         </table>
         <div class="empty-state" id="emptyState" style="display:none">
-          <div class="empty-icon">✅</div>
-          <p>No pending schedules right now.</p>
+          <div class="empty-state-icon">✓</div>
+          <p class="empty-state-text">No pending schedules — new submissions from Registrar Staff will show up here.</p>
         </div>
       </div>
     </div>

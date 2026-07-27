@@ -1,4 +1,4 @@
-ndex<?php
+<?php
 /**
  * Public online admission form (page, not an API endpoint).
  *
@@ -251,7 +251,7 @@ include '../Admission/Include/header.php';
 
         <div id="historyRows">
           <div class="history-row">
-            <span class="row-tag">Previous 0</span>
+            <span class="row-tag">School 1</span>
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">School name</label>

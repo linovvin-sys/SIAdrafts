@@ -49,13 +49,14 @@ $iconMap = [
     'approval'    => 'bi-check2-square',
     'readmission' => 'bi-arrow-repeat',
     'messages'    => 'bi-chat-dots-fill',
+    'notifications' => 'bi-bell-fill',
 ];
 ?>
 <!-- ===== SIDEBAR ===== -->
-<aside class="sidebar">
+<aside class="sidebar" id="appSidebar">
 
   <div class="sidebar-brand" id="sidebar-toggle" title="Toggle sidebar">
-    <div class="brand-icon">🎓</div>
+    <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
     <div class="brand-name">Edu<span>School</span></div>
   </div>
 
@@ -240,13 +241,46 @@ $iconMap = [
       setGroupHeight(group);
     });
   });
+
+  // Mobile drawer: hamburger opens the sidebar as an off-canvas panel;
+  // overlay click or Escape closes it. Desktop behavior is untouched.
+  document.addEventListener('DOMContentLoaded', function () {
+    var toggle = document.getElementById('menuToggle');
+    var sidebar = document.getElementById('appSidebar');
+    var overlay = document.getElementById('sidebarOverlay');
+    if (!toggle || !sidebar || !overlay) return;
+
+    function setOpen(open) {
+      sidebar.classList.toggle('mobile-open', open);
+      overlay.classList.toggle('visible', open);
+      toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+      if (open) sidebar.querySelector('.nav-item')?.focus?.();
+    }
+    toggle.addEventListener('click', function () {
+      setOpen(!sidebar.classList.contains('mobile-open'));
+    });
+    overlay.addEventListener('click', function () { setOpen(false); });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && sidebar.classList.contains('mobile-open')) {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+  });
 </script>
+
+<div class="sidebar-overlay" id="sidebarOverlay"></div>
 
 <div class="main-content">
   <header class="top-header">
-    <h1 class="header-title" id="page-title"><?= htmlspecialchars($pageTitle ?? '', ENT_QUOTES) ?></h1>
+    <div style="display:flex; align-items:center; gap:10px; min-width:0;">
+      <button class="menu-toggle" id="menuToggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="appSidebar">
+        <i class="bi bi-list"></i>
+      </button>
+      <h1 class="header-title" id="page-title"><?= htmlspecialchars($pageTitle ?? '', ENT_QUOTES) ?></h1>
+    </div>
     <div class="header-actions">
-      <button class="btn-notif">🔔<?php if ($pendingCount > 0): ?><span class="notif-dot"></span><?php endif; ?></button>
+      <button class="btn-notif" aria-label="Notifications"><i class="bi bi-bell"></i><?php if ($pendingCount > 0): ?><span class="notif-dot"></span><?php endif; ?></button>
       <div class="avatar-wrapper" id="avatarWrapper">
         <div class="header-avatar" id="avatarBtn"><?= $initials ?></div>
         <div class="avatar-dropdown" id="avatarDropdown">

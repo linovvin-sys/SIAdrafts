@@ -200,6 +200,13 @@ function fmt_id(int $id): string {
     $s = (string)$id;
     return strlen($s) >= 5 ? substr($s, 0, 4) . '-' . substr($s, 4) : $s;
 }
+// Same fix as enrollment.php / enrollment_profile.php: this page's
+// markup uses the Admission section's own theme classes but includes
+// the shared header, which doesn't load that theme by default.
+$extraCss = [
+    '/SIAdrafts/Frontend/Css/Admission/style.css',
+    '/SIAdrafts/Frontend/Css/Admission/login.css',
+];
 ?>
 <?php include '../Include/header.php'; ?>
 

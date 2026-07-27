@@ -108,16 +108,16 @@ include '../Include/header.php';
 
                             <tr data-status="<?= htmlspecialchars($row['status']) ?>" data-date="<?= htmlspecialchars($admissionDateKey) ?>" data-search="<?= htmlspecialchars($admissionSearchKey) ?>">
 
-                                <td><?= $row['reference_id']; ?></td>
+                                <td class="mono"><?= $row['reference_id']; ?></td>
 
                                 <td><?= htmlspecialchars($row['applicant_name']); ?></td>
 
                                 <td><?= htmlspecialchars($row['program']); ?></td>
 
-                                <td><?= date('M d, Y', strtotime($row['created_at'])); ?></td>
+                                <td class="mono"><?= date('M d, Y', strtotime($row['created_at'])); ?></td>
 
                                 <td>
-                                    <span class="badge badge-<?= $badge; ?>">
+                                    <span class="stamp <?= $badge === 'success' ? 'approved' : ($badge === 'pending' ? 'pending' : ($badge === 'danger' ? 'rejected' : '')) ?>">
                                         <?= htmlspecialchars($row['status']); ?>
                                     </span>
                                 </td>

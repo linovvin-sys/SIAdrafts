@@ -15,12 +15,25 @@ $_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>EduSchool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/SIAdrafts/bootstrap-5.3.8-dist/css/bootstrap.min.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/style.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/admission.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/login.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/treasury.css">
-<?php if (($_role ?? '') === 'Treasury'): ?>
+<?php
+// admin.css carries the shared design-system classes (rd-stat-card,
+// stamp, surface-1/2, mono, ledger, etc.) used by the pages below that
+// have been rebuilt on it. It's scoped to just those pages -- not
+// loaded unconditionally for the whole Admission section -- because its
+// universal `body`/`*` reset would otherwise cascade onto pages like
+// login.php and online_admission.php that haven't been reviewed against
+// it and have their own tuned base styles.
+$_designSystemPages = ['enrollment.php', 'treasury.php'];
+if (in_array($_cur, $_designSystemPages, true)):
+?>
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css">
 <?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>

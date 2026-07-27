@@ -141,6 +141,15 @@ function student_fullname(array $s): string {
         ? $ln . ', ' . $fn . ($mn ? ' ' . $mn : '')
         : '';
 }
+// This page's markup (.enroll-card, .wizard-steps, .btn-primary-action,
+// alert-* boxes, etc.) uses the Admission section's own theme classes,
+// but includes the shared Include/header.php (same as enrollment.php)
+// which doesn't load them by default -- see enrollment.php for the
+// same fix and full explanation.
+$extraCss = [
+    '/SIAdrafts/Frontend/Css/Admission/style.css',
+    '/SIAdrafts/Frontend/Css/Admission/login.css',
+];
 ?>
 <?php include '../Include/header.php' ?>
 

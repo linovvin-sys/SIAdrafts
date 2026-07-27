@@ -2,6 +2,21 @@ document.addEventListener('DOMContentLoaded', init);
 
 const API_BASE = '/SIAdrafts/Backend/api/';
 
+// Shimmer placeholder rows shown while a queue is being fetched, so the
+// panel never sits as a bare empty table during load.
+function showSkeleton(bodyId, cols) {
+  const body = document.getElementById(bodyId);
+  if (!body) return;
+  body.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
+    const tr = document.createElement('tr');
+    tr.className = 'skeleton-row';
+    tr.setAttribute('aria-hidden', 'true');
+    tr.innerHTML = `<td colspan="${cols}"><div class="skeleton-line" style="width:${85 - i * 18}%"></div></td>`;
+    body.appendChild(tr);
+  }
+}
+
 async function init() {
   await Promise.all([
     loadPendingCourses(),
@@ -15,14 +30,16 @@ async function init() {
 async function loadPendingCourses() {
   const body = document.getElementById('pendingCourseBody');
   const empty = document.getElementById('emptyCourseState');
-  body.innerHTML = '';
+  showSkeleton('pendingCourseBody', 5);
   try {
     const r = await fetch(API_BASE + 'get_pending_courses.php');
     const d = await r.json();
     const list = d.pending || [];
+    body.innerHTML = '';
     empty.style.display = list.length ? 'none' : 'block';
     list.forEach(item => body.appendChild(buildCourseRow(item)));
   } catch (_) {
+    body.innerHTML = '';
     empty.style.display = 'block';
   }
 }
@@ -52,14 +69,16 @@ function buildCourseRow(item) {
 async function loadPendingSections() {
   const body = document.getElementById('pendingSectionBody');
   const empty = document.getElementById('emptySectionState');
-  body.innerHTML = '';
+  showSkeleton('pendingSectionBody', 5);
   try {
     const r = await fetch(API_BASE + 'get_pending_sections.php');
     const d = await r.json();
     const list = d.pending || [];
+    body.innerHTML = '';
     empty.style.display = list.length ? 'none' : 'block';
     list.forEach(item => body.appendChild(buildSectionRow(item)));
   } catch (_) {
+    body.innerHTML = '';
     empty.style.display = 'block';
   }
 }
@@ -89,14 +108,16 @@ function buildSectionRow(item) {
 async function loadPendingSchedules() {
   const body = document.getElementById('pendingBody');
   const empty = document.getElementById('emptyState');
-  body.innerHTML = '';
+  showSkeleton('pendingBody', 7);
   try {
     const r = await fetch(API_BASE + 'get_pending_schedules.php');
     const d = await r.json();
     const list = d.pending || [];
+    body.innerHTML = '';
     empty.style.display = list.length ? 'none' : 'block';
     list.forEach(item => body.appendChild(buildScheduleRow(item)));
   } catch (_) {
+    body.innerHTML = '';
     empty.style.display = 'block';
   }
 }

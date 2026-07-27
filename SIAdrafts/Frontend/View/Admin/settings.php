@@ -20,25 +20,25 @@ include '../Include/header.php';
     <?php include '../Include/sidebar.php'; ?>
 
     <main class="page-content">
-      <div class="card p-4" style="max-width: 480px;">
-        <h4 class="mb-3">Current Term</h4>
+      <div class="surface-2" style="max-width: 480px; padding:22px;">
+        <div class="rd-section-title">Current Term</div>
         <form id="settingsForm">
           <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
-          <div class="mb-3">
-            <label class="form-label">Current School Year (YYYY-YYYY)</label>
-            <input type="text" class="form-control" name="current_school_year"
+          <div class="rd-field">
+            <label>Current School Year (YYYY-YYYY)</label>
+            <input type="text" class="mono" name="current_school_year"
                    value="<?= htmlspecialchars($currentSchoolYear ?? '', ENT_QUOTES) ?>" pattern="\d{4}-\d{4}" required>
           </div>
-          <div class="mb-3">
-            <label class="form-label">Current Semester</label>
-            <select class="form-select" name="current_semester" required>
+          <div class="rd-field">
+            <label>Current Semester</label>
+            <select name="current_semester" required>
               <?php foreach (['1' => '1st Semester', '2' => '2nd Semester', '3' => 'Summer'] as $val => $label): ?>
                 <option value="<?= $val ?>" <?= $currentSemester === $val ? 'selected' : '' ?>><?= $label ?></option>
               <?php endforeach; ?>
             </select>
           </div>
-          <button type="submit" class="btn btn-primary">Save</button>
-          <div id="settingsMsg" class="mt-2"></div>
+          <button type="submit" class="btn-primary">Save</button>
+          <div id="settingsMsg" class="row-secondary" style="margin-top:8px;"></div>
         </form>
       </div>
     </main>

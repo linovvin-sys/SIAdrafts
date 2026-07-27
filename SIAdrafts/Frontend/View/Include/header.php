@@ -11,6 +11,9 @@ $extraCss = $extraCss ?? [];
   <link rel="stylesheet" href="/SIAdrafts/bootstrap-5.3.8-dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css" />
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/schedule.css" />
   <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/modal.css" />

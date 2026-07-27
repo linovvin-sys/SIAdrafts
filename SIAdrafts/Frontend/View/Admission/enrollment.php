@@ -9,6 +9,33 @@ require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
 
 // Show success flash if returning from a completed enrollment
 $enrolled_ref = isset($_GET['enrolled'], $_GET['ref']) ? (int)$_GET['ref'] : null;
+
+// Quick stat strip so the search screen isn't just a lone card in empty
+// space -- gives staff useful context (today's activity) while they type.
+require_once __DIR__ . '/../../../Backend/db.php';
+$db   = new Database();
+$conn = $db->connect();
+$quickStats = ['today' => 0, 'pending_payment' => 0, 'total' => 0];
+$r = $conn->query("SELECT COUNT(*) AS c FROM enrollment WHERE DATE(created_at) = CURDATE()");
+if ($r) $quickStats['today'] = (int)$r->fetch_assoc()['c'];
+$r = $conn->query("SELECT COUNT(*) AS c FROM payment WHERE payment_status != 'Fully Paid'");
+if ($r) $quickStats['pending_payment'] = (int)$r->fetch_assoc()['c'];
+$r = $conn->query("SELECT COUNT(*) AS c FROM enrollment");
+if ($r) $quickStats['total'] = (int)$r->fetch_assoc()['c'];
+$db->close();
+
+// This page's search-card markup (.login-card, .enroll-input,
+// .search-dropdown, .btn-search, etc.) uses classes defined in the
+// Admission section's own theme files, not anything in admin.css --
+// but the page uses the shared Include/header.php + Include/sidebar.php
+// (app-layout/page-content shell) rather than Admission's own header,
+// so those files were never being loaded and the search card rendered
+// completely unstyled. Loading them here via the shared header's
+// existing $extraCss hook.
+$extraCss = [
+    '/SIAdrafts/Frontend/Css/Admission/style.css',
+    '/SIAdrafts/Frontend/Css/Admission/login.css',
+];
 ?>
 <?php include '../Include/header.php' ?>
 
@@ -86,6 +113,24 @@ $enrolled_ref = isset($_GET['enrolled'], $_GET['ref']) ? (int)$_GET['ref'] : nul
             </button>
           </div>
 
+        </div>
+      </div>
+
+      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr); margin-top:20px;">
+        <div class="surface-1 rd-stat-card" style="padding:16px;">
+          <div class="rd-stat-icon" style="width:40px;height:40px;font-size:17px; background:var(--teal-100); color:var(--teal-600);"><i class="bi bi-check-circle-fill"></i></div>
+          <div class="rd-stat-figure mono" style="font-size:20px;"><?= $quickStats['today'] ?></div>
+          <div class="rd-stat-label">Enrolled Today</div>
+        </div>
+        <div class="surface-1 rd-stat-card" style="padding:16px;">
+          <div class="rd-stat-icon" style="width:40px;height:40px;font-size:17px; background:var(--seal-100); color:var(--seal-600);"><i class="bi bi-hourglass-split"></i></div>
+          <div class="rd-stat-figure mono" style="font-size:20px;"><?= $quickStats['pending_payment'] ?></div>
+          <div class="rd-stat-label">Pending Payment</div>
+        </div>
+        <div class="surface-1 rd-stat-card" style="padding:16px;">
+          <div class="rd-stat-icon" style="width:40px;height:40px;font-size:17px; background:var(--sky-100); color:var(--sky-600);"><i class="bi bi-mortarboard-fill"></i></div>
+          <div class="rd-stat-figure mono" style="font-size:20px;"><?= $quickStats['total'] ?></div>
+          <div class="rd-stat-label">Total Enrolled</div>
         </div>
       </div>
 

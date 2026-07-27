@@ -49,6 +49,7 @@ return [
             ],
         ],
         ['label' => 'Messages', 'page' => 'messages', 'url' => '/SIAdrafts/Frontend/View/Registrar/messages.php', 'icon' => 'messages', 'badge' => 'unread'],
+        ['label' => 'Notifications', 'page' => 'notifications', 'url' => '/SIAdrafts/Frontend/View/Registrar/notifications.php', 'icon' => 'notifications'],
     ],
     'head registrar' => [
         ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/registrar_dashboard.php', 'icon' => 'dashboard'],
@@ -73,6 +74,7 @@ return [
             ],
         ],
         ['label' => 'Messages', 'page' => 'messages', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/messages.php', 'icon' => 'messages', 'badge' => 'unread'],
+        ['label' => 'Notifications', 'page' => 'notifications', 'url' => '/SIAdrafts/Frontend/View/HeadRegistrar/notifications.php', 'icon' => 'notifications'],
         ['label' => 'Settings', 'page' => 'settings', 'url' => '/SIAdrafts/Frontend/View/Admin/settings.php', 'icon' => 'settings'],
     ],
 ];

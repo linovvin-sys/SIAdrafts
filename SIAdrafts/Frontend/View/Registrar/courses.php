@@ -43,6 +43,15 @@ $db->close();
 
 $isHead = current_user_is(['Head Registrar']);
 
+// Stable color assignment per course code, so the same course always gets
+// the same accent bar across page loads (not random per-render).
+function course_accent_class(?string $courseCode): string {
+    $accents = ['accent-blue', 'accent-coral', 'accent-teal', 'accent-gold'];
+    if (!$courseCode) return $accents[0];
+    $index = crc32($courseCode) % count($accents);
+    return $accents[$index];
+}
+
 include '../Include/header.php';
 ?>
 
@@ -168,15 +177,15 @@ include '../Include/header.php';
         <div class="subject-card-grid" id="subjectCardGrid">
           <?php if (!empty($subjects)): ?>
             <?php foreach ($subjects as $s): ?>
-              <div class="subject-card" data-search="<?= htmlspecialchars(strtolower($s['subject_code'] . ' ' . $s['subject_name'] . ' ' . ($s['course_code'] ?? ''))) ?>">
+              <div class="subject-card <?= course_accent_class($s['course_code']) ?>" data-search="<?= htmlspecialchars(strtolower($s['subject_code'] . ' ' . $s['subject_name'] . ' ' . ($s['course_code'] ?? ''))) ?>">
                 <div class="subject-card-top">
-                  <span class="subject-card-code"><?= htmlspecialchars($s['subject_code']) ?></span>
+                  <span class="subject-card-code mono"><?= htmlspecialchars($s['subject_code']) ?></span>
                   <span class="subject-card-category"><?= htmlspecialchars($s['category_name'] ?? 'Uncategorized') ?></span>
                 </div>
                 <div class="subject-card-name"><?= htmlspecialchars($s['subject_name']) ?></div>
                 <div class="subject-card-footer">
                   <span><?= htmlspecialchars($s['units']) ?> unit<?= (float)$s['units'] == 1 ? '' : 's' ?></span>
-                  <span><?= htmlspecialchars($s['course_code'] ?? '—') ?></span>
+                  <span class="mono"><?= htmlspecialchars($s['course_code'] ?? '—') ?></span>
                 </div>
               </div>
             <?php endforeach; ?>

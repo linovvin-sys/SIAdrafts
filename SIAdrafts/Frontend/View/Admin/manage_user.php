@@ -9,6 +9,33 @@ require_once '../../../Backend/require_role.php';
 require_role([ROLE_ADMIN]);
 require_once __DIR__ . '/../../../Backend/admin/manage_user.php';
 
+function role_badge_class(string $role): string {
+    $role = strtolower($role);
+    if (strpos($role, 'admin') !== false) return 'rd-role-admin';
+    if (strpos($role, 'registrar') !== false) return 'rd-role-registrar';
+    if (strpos($role, 'treasury') !== false || strpos($role, 'cashier') !== false) return 'rd-role-treasury';
+    return 'rd-role-staff';
+}
+
+function avatar_tint(string $role): string {
+    $role = strtolower($role);
+    if (strpos($role, 'admin') !== false) return 'seal';
+    if (strpos($role, 'registrar') !== false) return 'sky';
+    if (strpos($role, 'treasury') !== false || strpos($role, 'cashier') !== false) return 'gold';
+    return 'teal';
+}
+
+function user_initials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $letters = '';
+    foreach ($parts as $p) {
+        if ($p === '') continue;
+        $letters .= strtoupper($p[0]);
+        if (strlen($letters) >= 2) break;
+    }
+    return $letters ?: '?';
+}
+
 include '../Include/header.php';
 ?>
 
@@ -22,7 +49,7 @@ include '../Include/header.php';
         <div class="stats-grid">
 
             <div class="stat-card">
-                <div class="stat-icon gold">👥</div>
+                <div class="stat-icon gold"><i class="bi bi-people-fill"></i></div>
                 <div>
                     <div class="stat-value"><?= $userStats['total']; ?></div>
                     <div class="stat-label">Total Users</div>
@@ -30,7 +57,7 @@ include '../Include/header.php';
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon green">✅</div>
+                <div class="stat-icon green"><i class="bi bi-person-check-fill"></i></div>
                 <div>
                     <div class="stat-value"><?= $userStats['active']; ?></div>
                     <div class="stat-label">Active</div>
@@ -38,7 +65,7 @@ include '../Include/header.php';
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon blue">💤</div>
+                <div class="stat-icon blue"><i class="bi bi-person-dash"></i></div>
                 <div>
                     <div class="stat-value"><?= $userStats['inactive']; ?></div>
                     <div class="stat-label">Inactive</div>
@@ -46,7 +73,7 @@ include '../Include/header.php';
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon purple">🏷️</div>
+                <div class="stat-icon purple"><i class="bi bi-tags-fill"></i></div>
                 <div>
                     <div class="stat-value"><?= count($userStats['roles']); ?></div>
                     <div class="stat-label">Roles in Use</div>
@@ -125,22 +152,31 @@ include '../Include/header.php';
 
                             <tr data-role="<?= htmlspecialchars($row['role_name']) ?>" data-status="<?= htmlspecialchars($row['status_name']) ?>" data-search="<?= htmlspecialchars(strtolower($row['full_name'] . ' ' . $row['email'] . ' ' . ($row['staff_id'] ?? ''))) ?>">
 
-                                <td><?= htmlspecialchars($row['staff_id'] ?? '—'); ?></td>
+                                <td class="mono"><?= htmlspecialchars($row['staff_id'] ?? '—'); ?></td>
 
-                                <td><?= htmlspecialchars($row['full_name']); ?></td>
+                                <td>
+                                    <div style="display:flex; align-items:center; gap:10px;">
+                                        <span class="rd-avatar <?= avatar_tint($row['role_name']) ?>"><?= htmlspecialchars(user_initials($row['full_name'])) ?></span>
+                                        <?= htmlspecialchars($row['full_name']); ?>
+                                    </div>
+                                </td>
 
                                 <td><?= htmlspecialchars($row['email']); ?></td>
 
-                                <td><?= htmlspecialchars($row['role_name']); ?></td>
-
                                 <td>
+                                    <span class="rd-role-badge <?= role_badge_class($row['role_name']) ?>">
+                                        <?= htmlspecialchars($row['role_name']); ?>
+                                    </span>
+                                </td>
+
+                                <td class="mono">
                                     <?= !empty($row['last_login'])
                                         ? date('M d, Y h:i A', strtotime($row['last_login']))
-                                        : 'Never'; ?>
+                                        : '<span class="text-never" style="font-family:var(--font-ui); font-style:italic;">Never logged in</span>'; ?>
                                 </td>
 
                                 <td>
-                                    <span class="badge badge-<?= $badge; ?>">
+                                    <span class="stamp <?= $badge === 'success' ? 'approved' : ($badge === 'pending' ? 'pending' : '') ?>">
                                         <?= htmlspecialchars($row['status_name']); ?>
                                     </span>
                                 </td>

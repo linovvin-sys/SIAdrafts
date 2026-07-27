@@ -106,18 +106,21 @@ function student_fullname_t(array $s): string {
 
     <!-- ===== REVENUE VIEW ===== -->
     <div id="revenuePanel">
-      <div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:24px;">
-        <div class="stat-card">
-          <div class="stat-icon green">💰</div>
-          <div><div class="stat-value">₱<?= number_format($revenue['total'], 2) ?></div><div class="stat-label">Total Revenue</div></div>
+      <div class="stat-grid" style="grid-template-columns: 1fr 1fr 1.3fr;">
+        <div class="surface-1 rd-stat-card">
+          <div class="rd-stat-icon" style="background:var(--sky-100); color:var(--sky-600);">₱</div>
+          <div class="rd-stat-figure mono">₱<?= number_format($revenue['total'], 2) ?></div>
+          <div class="rd-stat-label">Total Revenue Expected</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon gold">📈</div>
-          <div><div class="stat-value">₱<?= number_format($revenue['collected'], 2) ?></div><div class="stat-label">Collected</div></div>
+        <div class="surface-1 rd-stat-card">
+          <div class="rd-stat-icon" style="background:var(--teal-100); color:var(--teal-600);">✓</div>
+          <div class="rd-stat-figure mono">₱<?= number_format($revenue['collected'], 2) ?></div>
+          <div class="rd-stat-label">Collected</div>
         </div>
-        <div class="stat-card">
-          <div class="stat-icon blue">⏳</div>
-          <div><div class="stat-value">₱<?= number_format($revenue['outstanding'], 2) ?></div><div class="stat-label">Outstanding</div></div>
+        <div class="rd-stat-card" style="background:var(--seal-100); border:1px solid #E3B9AF; border-radius:var(--radius-lg);">
+          <div class="rd-stat-icon" style="background:var(--seal-600); color:#fff;">!</div>
+          <div class="rd-stat-figure mono" style="font-size:29px; color:var(--seal-600);">₱<?= number_format($revenue['outstanding'], 2) ?></div>
+          <div class="rd-stat-label" style="color:#8A3A2E; font-weight:500;">Outstanding — needs follow-up</div>
         </div>
       </div>
 
@@ -135,24 +138,50 @@ function student_fullname_t(array $s): string {
                 <th>Fee / Student</th>
                 <th>Total Expected</th>
                 <th>Collected</th>
+                <th style="width:150px;">Collected %</th>
                 <th>Balance</th>
               </tr>
             </thead>
             <tbody>
               <?php if (empty($revenueByCourse)): ?>
               <tr>
-                <td colspan="6" style="text-align:center; padding:32px; color:#888;">No payment records yet.</td>
+                <td colspan="7" style="text-align:center; padding:32px; color:#888;">No payment records yet.</td>
               </tr>
-              <?php else: foreach ($revenueByCourse as $row): ?>
+              <?php else:
+                $sumEnrolled = 0; $sumExpected = 0; $sumCollected = 0; $sumBalance = 0;
+                foreach ($revenueByCourse as $row):
+                  $sumEnrolled  += (int)$row['enrolled'];
+                  $sumExpected  += (float)$row['total_expected'];
+                  $sumCollected += (float)$row['collected'];
+                  $sumBalance   += (float)$row['balance'];
+                  $pct = $row['total_expected'] > 0 ? min(100, round(($row['collected'] / $row['total_expected']) * 100)) : 0;
+                  $fillClass = $pct >= 80 ? 'fill-bar-fill--high' : ($pct >= 40 ? 'fill-bar-fill--mid' : 'fill-bar-fill--low');
+              ?>
               <tr>
                 <td><?= htmlspecialchars($row['course_name']) ?></td>
-                <td><?= (int)$row['enrolled'] ?></td>
-                <td>₱<?= number_format($row['fee_per_student'], 2) ?></td>
-                <td>₱<?= number_format($row['total_expected'], 2) ?></td>
-                <td>₱<?= number_format($row['collected'], 2) ?></td>
-                <td>₱<?= number_format($row['balance'], 2) ?></td>
+                <td class="mono"><?= (int)$row['enrolled'] ?></td>
+                <td class="mono">₱<?= number_format($row['fee_per_student'], 2) ?></td>
+                <td class="mono">₱<?= number_format($row['total_expected'], 2) ?></td>
+                <td class="mono" style="color:var(--teal-600);">₱<?= number_format($row['collected'], 2) ?></td>
+                <td>
+                  <div class="rd-progress-track" style="width:130px;" title="₱<?= number_format($row['collected'], 2) ?> of ₱<?= number_format($row['total_expected'], 2) ?>">
+                    <div class="rd-progress-fill" style="width: <?= $pct ?>%;"></div>
+                  </div>
+                  <div class="row-secondary mono" style="margin-top:4px;"><?= $pct ?>% collected</div>
+                </td>
+                <td class="mono" style="color:<?= $row['balance'] > 0 ? 'var(--seal-600)' : 'inherit' ?>;">₱<?= number_format($row['balance'], 2) ?></td>
               </tr>
-              <?php endforeach; endif; ?>
+              <?php endforeach; ?>
+              <tr class="total-row">
+                <td style="font-weight:600;">Total</td>
+                <td class="mono"><?= $sumEnrolled ?></td>
+                <td class="mono">—</td>
+                <td class="mono">₱<?= number_format($sumExpected, 2) ?></td>
+                <td class="mono" style="color:var(--teal-600);">₱<?= number_format($sumCollected, 2) ?></td>
+                <td class="mono"><?= $sumExpected > 0 ? round(($sumCollected / $sumExpected) * 100) : 0 ?>%</td>
+                <td class="mono" style="color:var(--seal-600);">₱<?= number_format($sumBalance, 2) ?></td>
+              </tr>
+              <?php endif; ?>
             </tbody>
           </table>
         </div>
