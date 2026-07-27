@@ -208,6 +208,13 @@ function fmt_time(string $t): string {
     $hr = (int)$h;
     return ($hr > 12 ? $hr - 12 : ($hr ?: 12)) . ':' . $m . ($hr >= 12 ? 'PM' : 'AM');
 }
+// Same fix as the rest of the enrollment wizard: this page's markup
+// uses the Admission section's own theme classes but includes the
+// shared header, which doesn't load that theme by default.
+$extraCss = [
+    '/SIAdrafts/Frontend/Css/Admission/style.css',
+    '/SIAdrafts/Frontend/Css/Admission/login.css',
+];
 ?>
 <?php include '../Include/header.php'; ?>
 

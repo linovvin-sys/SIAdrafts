@@ -5,7 +5,7 @@ document.getElementById('addHistoryRow').addEventListener('click', function () {
   const block = document.createElement('div');
   block.className = 'history-row';
   block.innerHTML = `
-    <span class="row-tag">Previous ${count}</span>
+    <span class="row-tag">School ${count + 1}</span>
     <div class="row g-3">
       <div class="col-md-6">
         <label class="form-label">School name</label>

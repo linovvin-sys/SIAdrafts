@@ -1,6 +1,6 @@
 :root{
     --ink:#1B2A4A; --paper:#FAF7F0; --amber:#E8A33D; --sage:#7C9885;
-    --ink-soft: rgba(27,42,74,0.65); --ink-line: rgba(27,42,74,0.12);
+    --ink-soft: rgba(31,46,40,0.80); --ink-line: rgba(31,46,40,0.12);
   }
  
   .treasury-page{
@@ -28,7 +28,7 @@
   .treasury-card{
     max-width: 1100px; margin: 0 auto; background: #fff;
     border: 1px solid var(--ink-line); border-radius: 20px;
-    box-shadow: 0 1px 1px rgba(27,42,74,0.03), 0 24px 48px -22px rgba(27,42,74,0.22);
+    box-shadow: 0 1px 1px rgba(31,46,40,0.03), 0 24px 48px -22px rgba(31,46,40,0.22);
     padding: 0 16px;
   }
  
@@ -49,15 +49,15 @@
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px;
   }
-  .status-pill.unpaid{ background: rgba(232,163,61,0.15); color: #b8741f; }
+  .status-pill.unpaid{ background: rgba(164,123,63,0.15); color: #6F5027; }
   .status-pill.down{ background: rgba(124,152,133,0.15); color: #4f6b56; }
-  .status-pill.full{ background: rgba(27,42,74,0.1); color: var(--ink); }
+  .status-pill.full{ background: rgba(31,46,40,0.1); color: var(--ink); }
  
   .btn-pay-row{
-    background: var(--amber); color: var(--ink); font-weight: 700;
+    background: var(--ink); color: var(--paper); font-weight: 700;
     border: none; padding: 7px 16px; border-radius: 999px; font-size: 0.84rem; cursor: pointer;
   }
-  .btn-pay-row:hover{ background: #f0ad4f; }
+  .btn-pay-row:hover{ background: #2A3D35; }
  
   .empty-queue{ text-align: center; padding: 60px 20px; color: var(--ink-soft); }
  
@@ -86,7 +86,7 @@
   .pay-stats{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0; }
   .pay-stat .k{ font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 3px; }
   .pay-stat .v{ font-size: 1.3rem; font-weight: 700; color: var(--ink); }
-  .pay-stat .v.balance{ color: #b8741f; }
+  .pay-stat .v.balance{ color: #6F5027; }
  
   .pay-form{ display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
   .pay-form .field{ flex: 1; min-width: 160px; }
@@ -96,10 +96,10 @@
     padding: 10px 12px; font-size: 0.92rem; color: var(--ink);
   }
   .btn-record-pay{
-    background: var(--amber); color: var(--ink); font-weight: 700; border: none;
+    background: var(--ink); color: var(--paper); font-weight: 700; border: none;
     border-radius: 0.7rem; padding: 11px 22px; cursor: pointer; white-space: nowrap;
   }
-  .btn-record-pay:hover{ background: #f0ad4f; }
+  .btn-record-pay:hover{ background: #2A3D35; }
   .btn-record-pay[disabled]{ opacity: 0.6; cursor: not-allowed; }
  
   .pay-history{ margin-top: 18px; }
@@ -115,7 +115,7 @@
   .pending-fees h4{ font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 10px; }
   .pending-fee-row{
     display: flex; justify-content: space-between; align-items: center; gap: 14px;
-    background: rgba(232,163,61,0.08); border: 1px solid rgba(232,163,61,0.3);
+    background: rgba(164,123,63,0.08); border: 1px solid rgba(164,123,63,0.3);
     border-radius: 12px; padding: 12px 16px; margin-bottom: 10px;
   }
   .pending-fee-row:last-child{ margin-bottom: 0; }
@@ -127,10 +127,10 @@
   .pending-fee-amount{ font-weight: 700; color: var(--ink); font-size: 1rem; white-space: nowrap; }
 
   .btn-record-fee{
-    background: var(--amber); color: var(--ink); font-weight: 700; border: none;
+    background: var(--ink); color: var(--paper); font-weight: 700; border: none;
     border-radius: 0.6rem; padding: 8px 16px; cursor: pointer; white-space: nowrap; font-size: 0.82rem;
   }
-  .btn-record-fee:hover{ background: #f0ad4f; }
+  .btn-record-fee:hover{ background: #2A3D35; }
   .btn-record-fee[disabled]{ opacity: 0.6; cursor: not-allowed; }
 
   @media (max-width: 560px){
@@ -139,7 +139,7 @@
   }
  
   .t-banner{ border-radius: 12px; padding: 12px 16px; font-size: 0.88rem; margin-bottom: 14px; }
-  .t-banner.error{ background: rgba(232,163,61,0.1); border: 1px solid rgba(232,163,61,0.35); color: var(--ink); }
+  .t-banner.error{ background: rgba(164,123,63,0.1); border: 1px solid rgba(164,123,63,0.35); color: var(--ink); }
   .t-banner.success{ background: rgba(124,152,133,0.12); border: 1px solid rgba(124,152,133,0.35); color: var(--ink); }
  
   @media (max-width: 700px){

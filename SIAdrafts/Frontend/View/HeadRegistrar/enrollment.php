@@ -24,7 +24,7 @@ include '../Include/header.php';
         <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:24px;">
 
             <div class="stat-card">
-                <div class="stat-icon gold">📝</div>
+                <div class="stat-icon gold"><i class="bi bi-journal-check"></i></div>
                 <div>
                     <div class="stat-value"><?= $dashboard['enrolled']; ?></div>
                     <div class="stat-label">Total Enrolled</div>
@@ -32,7 +32,7 @@ include '../Include/header.php';
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon blue">⏳</div>
+                <div class="stat-icon blue"><i class="bi bi-hourglass-split"></i></div>
                 <div>
                     <div class="stat-value"><?= $dashboard['pending_payment']; ?></div>
                     <div class="stat-label">Awaiting Payment</div>
@@ -40,7 +40,7 @@ include '../Include/header.php';
             </div>
 
             <div class="stat-card">
-                <div class="stat-icon green">✅</div>
+                <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
                 <div>
                     <div class="stat-value"><?= $dashboard['fully_enrolled']; ?></div>
                     <div class="stat-label">Fully Enrolled</div>
@@ -165,7 +165,7 @@ include '../Include/header.php';
                                 data-section="<?= htmlspecialchars($row['section_name'] ?? '') ?>"
                                 data-search="<?= htmlspecialchars($enrollmentSearchKey) ?>">
 
-                                <td><?= htmlspecialchars($row['student_no']); ?></td>
+                                <td class="mono"><?= htmlspecialchars($row['student_no']); ?></td>
 
                                 <td><?= htmlspecialchars($row['student_name']); ?></td>
 
@@ -173,12 +173,12 @@ include '../Include/header.php';
 
                                 <td><?= htmlspecialchars($row['section_name']); ?></td>
 
-                                <td><?= !empty($row['year_level']) ? htmlspecialchars(ordinal_year((int)$row['year_level'])) : '—' ?><?= !empty($row['semester']) ? ' · Sem ' . (int)$row['semester'] : '' ?></td>
+                                <td class="mono"><?= !empty($row['year_level']) ? htmlspecialchars(ordinal_year((int)$row['year_level'])) : '—' ?><?= !empty($row['semester']) ? ' · Sem ' . (int)$row['semester'] : '' ?></td>
 
                                 <td><?= htmlspecialchars($row['payment_status']); ?></td>
 
                                 <td>
-                                    <span class="badge badge-<?= $badge; ?>">
+                                    <span class="stamp <?= $badge === 'success' ? 'approved' : ($badge === 'pending' ? 'pending' : '') ?>">
                                         <?= htmlspecialchars($row['status']); ?>
                                     </span>
                                 </td>

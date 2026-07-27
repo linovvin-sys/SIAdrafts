@@ -79,12 +79,12 @@ include '../Include/header.php';
                         <div class="grid-2">
                             <div class="form-group">
                                 <span class="form-label">Application ID</span>
-                                <span class="form-value"><?= htmlspecialchars($applicant['reference_id']); ?></span>
+                                <span class="form-value mono"><?= htmlspecialchars($applicant['reference_id']); ?></span>
                             </div>
                             <div class="form-group">
                                 <span class="form-label">Status</span>
                                 <span class="form-value">
-                                    <span class="badge badge-<?= $badge; ?>"><?= htmlspecialchars($applicant['status']); ?></span>
+                                    <span class="stamp <?= $badge === 'success' ? 'approved' : ($badge === 'pending' ? 'pending' : ($badge === 'danger' ? 'rejected' : '')) ?>"><?= htmlspecialchars($applicant['status']); ?></span>
                                 </span>
                             </div>
                         </div>
@@ -248,8 +248,8 @@ include '../Include/header.php';
                                         ?>
                                         <tr>
                                             <td><?= htmlspecialchars($doc['document_name']); ?></td>
-                                            <td><span class="badge badge-<?= $docBadge; ?>"><?= htmlspecialchars($doc['status']); ?></span></td>
-                                            <td><?= date('M d, Y', strtotime($doc['uploaded_at'])); ?></td>
+                                            <td><span class="stamp <?= $docBadge === 'success' ? 'approved' : ($docBadge === 'pending' ? 'pending' : ($docBadge === 'danger' ? 'rejected' : '')) ?>"><?= htmlspecialchars($doc['status']); ?></span></td>
+                                            <td class="mono"><?= date('M d, Y', strtotime($doc['uploaded_at'])); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
