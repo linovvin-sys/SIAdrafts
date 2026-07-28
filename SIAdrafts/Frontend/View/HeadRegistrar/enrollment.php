@@ -165,7 +165,7 @@ include '../Include/header.php';
                                 data-section="<?= htmlspecialchars($row['section_name'] ?? '') ?>"
                                 data-search="<?= htmlspecialchars($enrollmentSearchKey) ?>">
 
-                                <td class="mono"><?= htmlspecialchars($row['student_no']); ?></td>
+                                <td class="mono"><a href="student_profile.php?student_no=<?= urlencode($row['student_no']) ?>" style="color:inherit; text-decoration:underline; text-decoration-color:var(--line-200);"><?= htmlspecialchars($row['student_no']); ?></a></td>
 
                                 <td><?= htmlspecialchars($row['student_name']); ?></td>
 

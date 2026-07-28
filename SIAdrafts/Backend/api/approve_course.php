@@ -1,7 +1,12 @@
 <?php
 session_start();
+
+
+
+
 require_once '../db.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user_id'])) {
@@ -17,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Method not allowed.']);
     exit;
 }
+
+csrf_verify();
 
 $db   = new Database();
 $conn = $db->connect();

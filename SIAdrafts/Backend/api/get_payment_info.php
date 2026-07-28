@@ -18,77 +18,136 @@ if (empty($_SESSION['user_id'])) {
 
 require_role([ROLE_TREASURY, ROLE_STAFF, ROLE_ADMIN], true);
 
-$q = trim($_GET['q'] ?? '');
-if ($q === '') {
-    echo json_encode(['error' => 'Enter a student ID or name.']);
-    exit;
-}
+// A specific payment_id (e.g. from the Treasury queue's Pay button) always
+// wins — it names the exact record intended, so name/ID search ambiguity
+// below never gets a chance to load the wrong student's payment.
+$payment_id = (int)($_GET['payment_id'] ?? 0);
 
-// Resolve to an applicant row
-$looksLikeId = preg_match('/^[\d\-]+$/', $q);
-
-if ($looksLikeId) {
+if ($payment_id > 0) {
     $stmt = $conn->prepare(
-        "SELECT a.applicant_id, COALESCE(s.student_no, a.reference_id) AS display_id,
-                a.first_name, a.last_name
-         FROM applicants a
+        "SELECT p.payment_id, p.amount_due, p.downpayment, p.balance, p.due_date, p.payment_status,
+                e.enrollment_id, e.school_year, e.semester,
+                a.applicant_id, a.first_name, a.last_name,
+                COALESCE(s.student_no, a.reference_id) AS display_id
+         FROM payment p
+         JOIN enrollment e ON e.enrollment_id = p.enrollment_id
+         JOIN applicants a ON a.applicant_id = e.student_id
          LEFT JOIN student s ON s.applicant_id = a.applicant_id
-         WHERE a.reference_id = ? OR s.student_no = ?
+         WHERE p.payment_id = ?
          LIMIT 1"
     );
-    $stmt->bind_param('ss', $q, $q);
-} else {
-    if (strpos($q, ',') !== false) {
-        [$lastPart, $firstPart] = array_map('trim', explode(',', $q, 2));
-    } else {
-        $lastPart = $firstPart = $q;
+    $stmt->bind_param('i', $payment_id);
+    $stmt->execute();
+    $payment = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if (!$payment) {
+        echo json_encode(['error' => 'Payment record not found.']);
+        exit;
     }
 
-    $like      = '%' . $q . '%';
-    $likeFirst = '%' . $firstPart . '%';
-    $likeLast  = '%' . $lastPart . '%';
+    $student = [
+        'applicant_id' => $payment['applicant_id'],
+        'display_id'   => $payment['display_id'],
+        'first_name'   => $payment['first_name'],
+        'last_name'    => $payment['last_name'],
+    ];
+    unset($payment['applicant_id'], $payment['display_id'], $payment['first_name'], $payment['last_name']);
+} else {
+    $q = trim($_GET['q'] ?? '');
+    if ($q === '') {
+        echo json_encode(['error' => 'Enter a student ID or name.']);
+        exit;
+    }
 
+    // Resolve to an applicant row
+    $looksLikeId = preg_match('/^[\d\-]+$/', $q);
+
+    if ($looksLikeId) {
+        $stmt = $conn->prepare(
+            "SELECT a.applicant_id, COALESCE(s.student_no, a.reference_id) AS display_id,
+                    a.first_name, a.last_name
+             FROM applicants a
+             LEFT JOIN student s ON s.applicant_id = a.applicant_id
+             WHERE a.reference_id = ? OR s.student_no = ?
+             LIMIT 1"
+        );
+        $stmt->bind_param('ss', $q, $q);
+        $stmt->execute();
+        $matches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    } else {
+        if (strpos($q, ',') !== false) {
+            [$lastPart, $firstPart] = array_map('trim', explode(',', $q, 2));
+        } else {
+            $lastPart = $firstPart = $q;
+        }
+
+        $like      = '%' . $q . '%';
+        $likeFirst = '%' . $firstPart . '%';
+        $likeLast  = '%' . $lastPart . '%';
+
+        // No LIMIT 1 here — a name can match more than one student, and
+        // silently picking one (with no ORDER BY tiebreaker) risked loading
+        // the wrong student's payment info. Cap at a small preview list and
+        // ask the caller to be more specific instead of guessing.
+        $stmt = $conn->prepare(
+            "SELECT a.applicant_id, COALESCE(s.student_no, a.reference_id) AS display_id,
+                    a.first_name, a.last_name
+             FROM applicants a
+             LEFT JOIN student s ON s.applicant_id = a.applicant_id
+             WHERE a.first_name LIKE ?
+                OR a.last_name LIKE ?
+                OR CONCAT(a.first_name, ' ', a.last_name) LIKE ?
+                OR CONCAT(a.last_name, ', ', a.first_name) LIKE ?
+                OR (a.first_name LIKE ? AND a.last_name LIKE ?)
+             ORDER BY a.last_name, a.first_name
+             LIMIT 6"
+        );
+        $stmt->bind_param('ssssss', $like, $like, $like, $like, $likeFirst, $likeLast);
+        $stmt->execute();
+        $matches = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+        $stmt->close();
+    }
+
+    if (empty($matches)) {
+        echo json_encode(['error' => 'No student found.']);
+        exit;
+    }
+
+    if (count($matches) > 1) {
+        echo json_encode([
+            'error'   => 'Multiple students match that search. Please search by student ID/reference ID, or narrow the name.',
+            'matches' => array_map(fn($m) => [
+                'applicant_id' => $m['applicant_id'],
+                'display_id'   => $m['display_id'],
+                'full_name'    => $m['last_name'] . ', ' . $m['first_name'],
+            ], $matches),
+        ]);
+        exit;
+    }
+
+    $student = $matches[0];
+
+    // Most recent enrollment + payment record for this student
     $stmt = $conn->prepare(
-        "SELECT a.applicant_id, COALESCE(s.student_no, a.reference_id) AS display_id,
-                a.first_name, a.last_name
-         FROM applicants a
-         LEFT JOIN student s ON s.applicant_id = a.applicant_id
-         WHERE a.first_name LIKE ?
-            OR a.last_name LIKE ?
-            OR CONCAT(a.first_name, ' ', a.last_name) LIKE ?
-            OR CONCAT(a.last_name, ', ', a.first_name) LIKE ?
-            OR (a.first_name LIKE ? AND a.last_name LIKE ?)
+        "SELECT p.payment_id, p.amount_due, p.downpayment, p.balance, p.due_date, p.payment_status,
+                e.enrollment_id, e.school_year, e.semester
+         FROM payment p
+         JOIN enrollment e ON e.enrollment_id = p.enrollment_id
+         WHERE e.student_id = ?
+         ORDER BY e.created_at DESC
          LIMIT 1"
     );
-    $stmt->bind_param('ssssss', $like, $like, $like, $like, $likeFirst, $likeLast);
-}
-$stmt->execute();
-$student = $stmt->get_result()->fetch_assoc();
-$stmt->close();
+    $stmt->bind_param('i', $student['applicant_id']);
+    $stmt->execute();
+    $payment = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
 
-if (!$student) {
-    echo json_encode(['error' => 'No student found.']);
-    exit;
-}
-
-// Most recent enrollment + payment record for this student
-$stmt = $conn->prepare(
-    "SELECT p.payment_id, p.amount_due, p.downpayment, p.balance, p.due_date, p.payment_status,
-            e.enrollment_id, e.school_year, e.semester
-     FROM payment p
-     JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-     WHERE e.student_id = ?
-     ORDER BY e.created_at DESC
-     LIMIT 1"
-);
-$stmt->bind_param('i', $student['applicant_id']);
-$stmt->execute();
-$payment = $stmt->get_result()->fetch_assoc();
-$stmt->close();
-
-if (!$payment) {
-    echo json_encode(['error' => 'This student has no enrollment/payment record yet.']);
-    exit;
+    if (!$payment) {
+        echo json_encode(['error' => 'This student has no enrollment/payment record yet.']);
+        exit;
+    }
 }
 
 // Fee breakdown snapshot for this payment (tuition, laboratory, misc, etc.)

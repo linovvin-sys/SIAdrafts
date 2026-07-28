@@ -33,6 +33,18 @@ $result = $conn->query("
 header('Content-Type: text/csv');
 header('Content-Disposition: attachment; filename="revenue_by_course_' . date('Y-m-d') . '.csv"');
 
+// Neutralizes CSV/formula injection: a cell starting with =, +, -, or @ is
+// interpreted as a formula by Excel/Sheets when the file is opened, which
+// could execute attacker-supplied logic if a course name were ever crafted
+// maliciously. Prefixing with a tab keeps the value readable but inert.
+function csv_safe($value) {
+    $value = (string)$value;
+    if ($value !== '' && in_array($value[0], ['=', '+', '-', '@'], true)) {
+        return "\t" . $value;
+    }
+    return $value;
+}
+
 $out = fopen('php://output', 'w');
 fputcsv($out, ['Course', 'Enrolled', 'Fee / Student', 'Total Expected', 'Collected', 'Balance']);
 
@@ -41,7 +53,7 @@ if ($result) {
         $enrolled = (int)$row['enrolled'];
         $feePerStudent = $enrolled > 0 ? $row['total_expected'] / $enrolled : 0;
         fputcsv($out, [
-            $row['course_name'],
+            csv_safe($row['course_name']),
             $enrolled,
             number_format($feePerStudent, 2),
             number_format($row['total_expected'], 2),

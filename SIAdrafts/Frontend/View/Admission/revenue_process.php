@@ -4,12 +4,17 @@ $activePage = "revenue_process";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/db.php';
+require_once '../../../Backend/unpaid_transfer.php';
 
 $db = new Database();
 $conn = $db->connect();
+transfer_overdue_unpaid($conn);
 include '../Admission/Include/header.php';
 
 // ---- Still has a balance ----
+// Excludes anything already transferred to the Unpaid Students list — once
+// an enrollment misses its payment window with no downpayment at all, it
+// belongs there instead of lingering in this queue too.
 $procStmt = $conn->prepare(
     "SELECT p.payment_id, p.amount_due, p.downpayment, p.balance, p.due_date, p.payment_status,
             e.enrollment_id, e.school_year, e.semester,
@@ -19,6 +24,7 @@ $procStmt = $conn->prepare(
      JOIN applicants a ON a.applicant_id = e.student_id
      LEFT JOIN student s ON s.applicant_id = a.applicant_id
      WHERE p.balance > 0
+       AND NOT EXISTS (SELECT 1 FROM unpaid_students u WHERE u.payment_id = p.payment_id)
      ORDER BY p.due_date ASC"
 );
 $procStmt->execute();

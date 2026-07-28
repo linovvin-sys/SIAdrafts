@@ -4,6 +4,7 @@ session_start();
 require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -21,6 +22,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
     exit;
 }
+
+csrf_verify();
 
 $staffStmt = $conn->prepare("SELECT staff_id FROM users WHERE user_id = ? LIMIT 1");
 $staffStmt->bind_param('i', $_SESSION['user_id']);

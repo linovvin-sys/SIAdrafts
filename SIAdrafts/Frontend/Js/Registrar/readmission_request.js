@@ -52,6 +52,7 @@ Vue.createApp({
 
       this.submitting = true;
       const body = new FormData();
+      body.append('csrf_token', document.body.dataset.csrf || '');
       body.append('student_no', this.student.student_no);
       body.append('reason', this.reason.trim());
       body.append('school_year', this.schoolYear.trim());

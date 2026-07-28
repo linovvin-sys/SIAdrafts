@@ -5,7 +5,7 @@ $activePage = "enrollment";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
-require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
+require_role([ROLE_STAFF, ROLE_ADMIN]);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();

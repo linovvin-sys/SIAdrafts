@@ -236,6 +236,7 @@ chatForm.addEventListener('submit', (e) => {
   chatSendBtn.disabled = true;
 
   const formData = new FormData();
+  formData.append('csrf_token', document.body.dataset.csrf || '');
   formData.append('recipient_id', currentContactId);
   formData.append('body', body);
   if (selectedFile) formData.append('attachment', selectedFile);

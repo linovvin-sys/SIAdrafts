@@ -4,6 +4,7 @@ session_start();
 require_once "../db.php";   // Change this if your db.php is in another folder
 require_once __DIR__ . '/../roles.php';
 require_once __DIR__ . '/../require_role.php';
+require_once __DIR__ . '/../csrf.php';
 require_role([ROLE_ADMIN], true);
 
 // Optional: Allow only admins
@@ -20,6 +21,8 @@ if ($_SERVER["REQUEST_METHOD"] != "POST") {
     header("Location: ../../Frontend/View/Admin/manage_user.php");
     exit();
 }
+
+csrf_verify();
 
 // Get form data
 $user_id     = trim($_POST['user_id']);
@@ -106,6 +109,49 @@ if ($result->num_rows == 0) {
 $status = $result->fetch_assoc();
 $status_id = $status['status_id'];
 $stmt->close();
+
+// An Admin editing their own account can't demote or deactivate themselves —
+// that's how an Admin locks themselves out with no one left to undo it.
+$isSelf = ((int)$user_id === (int)($_SESSION['user_id'] ?? 0));
+if ($isSelf && $role_name !== 'Admin') {
+    die("You cannot change your own role away from Admin.");
+}
+if ($isSelf && $status_name !== 'Active') {
+    die("You cannot deactivate your own account.");
+}
+
+// Also guard the case where this isn't self-edit, but the target is the
+// last remaining active Admin — demoting/deactivating them the same way
+// would leave the system with no one who can manage users at all.
+if ($role_name !== 'Admin' || $status_name !== 'Active') {
+    $stmt = $conn->prepare("
+        SELECT r.role_name, st.status_name FROM users u
+        JOIN roles r ON r.role_id = u.role_id
+        JOIN statuses st ON st.status_id = u.status_id
+        WHERE u.user_id = ?
+    ");
+    $stmt->bind_param("i", $user_id);
+    $stmt->execute();
+    $current = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+
+    if ($current && $current['role_name'] === 'Admin' && $current['status_name'] === 'Active') {
+        $stmt = $conn->prepare("
+            SELECT COUNT(*) AS cnt FROM users u
+            JOIN roles r ON r.role_id = u.role_id
+            JOIN statuses st ON st.status_id = u.status_id
+            WHERE r.role_name = 'Admin' AND st.status_name = 'Active' AND u.user_id != ?
+        ");
+        $stmt->bind_param("i", $user_id);
+        $stmt->execute();
+        $cnt = (int)$stmt->get_result()->fetch_assoc()['cnt'];
+        $stmt->close();
+
+        if ($cnt === 0) {
+            die("At least one active Admin must remain in the system.");
+        }
+    }
+}
 
 // Update user — with or without a new password
 if (!empty($password)) {

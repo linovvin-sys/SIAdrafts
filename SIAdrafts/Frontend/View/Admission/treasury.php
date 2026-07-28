@@ -4,9 +4,11 @@ $pageTitle = "Treasury";
 $activePage = "treasury";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/db.php';
+require_once '../../../Backend/unpaid_transfer.php';
 
 $db = new Database();
 $conn = $db->connect();
+transfer_overdue_unpaid($conn);
 include '../Admission/Include/header.php';
 
 

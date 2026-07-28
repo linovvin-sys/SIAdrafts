@@ -3,6 +3,7 @@ session_start();
 require '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
 require 'validation_rules.php';
 
 $db   = new Database();
@@ -23,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'errors' => ['Invalid request method.']]);
     exit;
 }
+
+csrf_verify();
 
 // look up the logged-in staff member's StaffID (format YYYY-NNNN), same as before
 $staffStmt = $conn->prepare("SELECT staff_id FROM users WHERE user_id = ? LIMIT 1");

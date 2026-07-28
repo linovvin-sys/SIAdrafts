@@ -21,6 +21,7 @@ async function init() {
   await Promise.all([
     loadPendingCourses(),
     loadPendingSections(),
+    loadPendingSubjects(),
     loadPendingSchedules(),
   ]);
 }
@@ -99,6 +100,46 @@ function buildSectionRow(item) {
     approveItem('approve_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
   tr.querySelector('[data-reject]').addEventListener('click', () =>
     rejectItem('reject_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
+
+  return tr;
+}
+
+/* ===================== SUBJECTS ===================== */
+
+async function loadPendingSubjects() {
+  const body = document.getElementById('pendingSubjectBody');
+  const empty = document.getElementById('emptySubjectState');
+  showSkeleton('pendingSubjectBody', 6);
+  try {
+    const r = await fetch(API_BASE + 'get_pending_subjects.php');
+    const d = await r.json();
+    const list = d.pending || [];
+    body.innerHTML = '';
+    empty.style.display = list.length ? 'none' : 'block';
+    list.forEach(item => body.appendChild(buildSubjectRow(item)));
+  } catch (_) {
+    body.innerHTML = '';
+    empty.style.display = 'block';
+  }
+}
+
+function buildSubjectRow(item) {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td>${escHtml(item.requested_by_name || '—')}</td>
+    <td>${escHtml(item.subject_code || '')}</td>
+    <td>${escHtml(item.subject_name || '')}</td>
+    <td>${escHtml(item.units ?? '')}</td>
+    <td>${escHtml(item.course_code || '—')}</td>
+    <td>
+      <button type="button" class="btn-approve" data-approve="${item.subject_id}">Approve</button>
+      <button type="button" class="btn-reject" data-reject="${item.subject_id}">Reject</button>
+    </td>`;
+
+  tr.querySelector('[data-approve]').addEventListener('click', () =>
+    approveItem('approve_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
+  tr.querySelector('[data-reject]').addEventListener('click', () =>
+    rejectItem('reject_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
 
   return tr;
 }
@@ -195,10 +236,14 @@ function toggleEmptyIfNoRows(emptyStateId, bodyId) {
   empty.style.display = body.children.length ? 'none' : 'block';
 }
 
+function csrfToken() {
+  return document.body.dataset.csrf || '';
+}
+
 async function postJSON(url, payload) {
   const res = await fetch(API_BASE + url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
     body: JSON.stringify(payload),
   });
   return res.json();

@@ -4,6 +4,7 @@ session_start();
 require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
 require_once 'can_message.php';
 require_once 'message_attachments.php';
 
@@ -23,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Invalid request method.']);
     exit;
 }
+
+csrf_verify();
 
 $sender_id    = (int)$_SESSION['user_id'];
 $recipient_id = (int)($_POST['recipient_id'] ?? 0);

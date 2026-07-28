@@ -232,6 +232,8 @@ include '../Include/header.php';
 
         <form action="../../../Backend/admin/add_user.php" method="POST">
 
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
+
             <!-- Header -->
             <div class="modal-header">
 
@@ -407,6 +409,7 @@ include '../Include/header.php';
 
         <form action="../../../Backend/admin/edit_user.php" method="POST" id="editUserForm">
 
+            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
             <input type="hidden" name="user_id" id="editUserId">
 
             <!-- Header -->

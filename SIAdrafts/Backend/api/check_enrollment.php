@@ -18,7 +18,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_STAFF, ROLE_ADMISSION, ROLE_ADMIN], true);
+require_role([ROLE_STAFF, ROLE_ADMIN], true);
 
 $student_id  = (int)trim($_GET['student_id']  ?? 0);
 $school_year = trim($_GET['school_year'] ?? '');

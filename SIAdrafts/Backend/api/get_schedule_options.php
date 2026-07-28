@@ -27,6 +27,7 @@ $sections = $conn->query("
 $subjects = $conn->query("
     SELECT subject_id, subject_code, subject_name, units, year_level, semester
     FROM subject
+    WHERE status = 'Approved'
     ORDER BY year_level, semester, subject_code
 ")->fetch_all(MYSQLI_ASSOC);
 

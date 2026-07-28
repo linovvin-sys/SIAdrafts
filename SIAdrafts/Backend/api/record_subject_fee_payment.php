@@ -4,6 +4,7 @@ session_start();
 require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -15,6 +16,8 @@ if (empty($_SESSION['user_id'])) {
 }
 
 require_role([ROLE_TREASURY, ROLE_ADMIN], true);
+
+csrf_verify();
 
 $fee_id = $_POST['fee_id'] ?? '';
 

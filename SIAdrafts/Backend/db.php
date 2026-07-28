@@ -16,9 +16,9 @@ class Database
     {
         $this->host     = config('DB_HOST') ?? 'localhost';
         $this->username = config('DB_USERNAME') ?? 'root';
-        $this->password = config('DB_PASSWORD') ?? '';
-        $this->database = config('DB_DATABASE') ?? '';
-        $this->port     = config('DB_PORT') ?? '3306';
+        $this->password = config('DB_PASSWORD') ?? 'root';
+        $this->database = config('DB_DATABASE') ?? 'enrollment_db_sia_final';
+        $this->port     = config('DB_PORT') ?? '8889';
     }
 
     public function connect()

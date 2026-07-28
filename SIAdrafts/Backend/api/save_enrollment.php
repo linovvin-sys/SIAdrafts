@@ -3,7 +3,7 @@ session_start();
 require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
-
+require_once '../prereq.php';
 
 header('Content-Type: application/json');
 
@@ -116,7 +116,7 @@ function generate_student_no(mysqli $conn): string {
 
 // Resolve the applicant's course — needed to scope subject/section
 // validation. Fetched here, not trusted from the client payload.
-$courseStmt = $conn->prepare("SELECT course_id FROM applicants WHERE applicant_id = ? LIMIT 1");
+$courseStmt = $conn->prepare("SELECT course_id, admission_status FROM applicants WHERE applicant_id = ? LIMIT 1");
 if (!$courseStmt) {
     throw new RuntimeException('Database error: ' . $conn->error);
 }
@@ -128,6 +128,16 @@ $courseStmt->close();
 if (!$courseRow || !$courseRow['course_id']) {
     throw new RuntimeException('This applicant has no program assigned.');
 }
+
+// Enrollment can only be finalized for applicants who already cleared
+// walk-in document verification. This mirrors the gate in get_student.php
+// and enrollment_profile.php — enforced here too since this endpoint can
+// be called directly, bypassing the UI wizard.
+if (($courseRow['admission_status'] ?? '') !== 'verified') {
+    echo json_encode(['error' => 'This applicant hasn\'t completed document verification yet. Verify them via Admission first, then come back to enroll.']);
+    exit;
+}
+
 $course_id = (int)$courseRow['course_id'];
 
 $conn->begin_transaction();
@@ -166,6 +176,11 @@ try {
             if (!$row) {
                 $slotStmt->close();
                 throw new RuntimeException('One or more selected subjects are no longer available. Please go back and reselect.');
+            }
+            if (!subject_prereq_met($conn, $student_id, $pick['subject_id'])) {
+                $slotStmt->close();
+                $prereqLabel = subject_prereq_label($conn, $pick['subject_id']);
+                throw new RuntimeException('Prerequisite not yet completed' . ($prereqLabel ? ": $prereqLabel" : '.') . '.');
             }
             foreach ($validatedSlots as $v) {
                 if ($v['day'] === $row['day'] &&
@@ -215,6 +230,30 @@ try {
 
         if ($offered_count === 0) {
             throw new RuntimeException('Selected section is not offered for this year level / semester.');
+        }
+
+        // Enforce section capacity server-side — the client's picker can go
+        // stale between load and submit if another staff member enrolls a
+        // student into the same section in the meantime.
+        $capStmt = $conn->prepare(
+            "SELECT sec.capacity,
+                    (SELECT COUNT(*) FROM enrollment e
+                     JOIN student st ON st.student_id = e.student_id
+                     WHERE e.section_id = sec.section_id
+                       AND e.school_year = ? AND e.semester = ?
+                       AND st.applicant_id != ?) AS taken
+             FROM section sec WHERE sec.section_id = ?"
+        );
+        if (!$capStmt) {
+            throw new RuntimeException('Database error: ' . $conn->error);
+        }
+        $capStmt->bind_param('siii', $school_year, $semester, $student_id, $section_id);
+        $capStmt->execute();
+        $capRow = $capStmt->get_result()->fetch_assoc();
+        $capStmt->close();
+
+        if ($capRow && $capRow['taken'] >= (int)$capRow['capacity']) {
+            throw new RuntimeException('Selected section is already full. Please choose another section.');
         }
 
         // Re-derive credited subjects server-side — the session count is a

@@ -16,6 +16,10 @@ const emptyState = document.getElementById('emptyState');
 const scheduleTable = document.getElementById('scheduleTable');
 const isHead = scheduleTable.dataset.isHead === '1';
 
+function csrfToken() {
+  return document.body.dataset.csrf || '';
+}
+
 async function init() {
   bindModalOpenClose();
   await Promise.all([loadOptions(), loadSchedules()]);
@@ -280,7 +284,7 @@ async function deleteSchedules(ids) {
   try {
     const res = await fetch(API_BASE + 'delete_schedule.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
       body: JSON.stringify({ ids }),
     });
     const result = await res.json();
@@ -320,7 +324,7 @@ async function submitSchedule() {
   try {
     const res = await fetch(API_BASE + 'save_schedule_registrar.php', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
       body: JSON.stringify(payload),
     });
     const result = await res.json();

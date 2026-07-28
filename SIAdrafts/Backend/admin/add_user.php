@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../roles.php';
 require_once __DIR__ . '/../require_role.php';
+require_once __DIR__ . '/../csrf.php';
 
 if (empty($_SESSION['user_id'])) {
     http_response_code(401);
@@ -23,6 +24,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     exit('Invalid request method.');
 }
+
+csrf_verify();
 
 function clean($value) {
     return htmlspecialchars(trim($value ?? ''), ENT_QUOTES, 'UTF-8');
@@ -79,6 +82,30 @@ if (!$statusRow) {
     exit;
 }
 $status_id = $statusRow['status_id'];
+
+// Check duplicate email
+$dupEmailStmt = $conn->prepare("SELECT user_id FROM users WHERE email = ?");
+$dupEmailStmt->bind_param('s', $email);
+$dupEmailStmt->execute();
+$dupEmailStmt->store_result();
+if ($dupEmailStmt->num_rows > 0) {
+    $dupEmailStmt->close();
+    header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?add_error=' . urlencode('Email already exists.'));
+    exit;
+}
+$dupEmailStmt->close();
+
+// Check duplicate username
+$dupUserStmt = $conn->prepare("SELECT user_id FROM users WHERE username = ?");
+$dupUserStmt->bind_param('s', $username);
+$dupUserStmt->execute();
+$dupUserStmt->store_result();
+if ($dupUserStmt->num_rows > 0) {
+    $dupUserStmt->close();
+    header('Location: /SIAdrafts/Frontend/View/Admin/manage_user.php?add_error=' . urlencode('Username already exists.'));
+    exit;
+}
+$dupUserStmt->close();
 
 // auto-generate the StaffID: YYYY-NNNN
 $staff_id = generate_staff_id($conn);
