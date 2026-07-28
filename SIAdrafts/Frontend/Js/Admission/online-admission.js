@@ -151,8 +151,12 @@ function submitApplication() {
       Swal.fire({
         icon: 'success',
         title: 'Application submitted',
-        html: 'Your reference ID is <strong>' + escapeHtml(data.reference_id) + '</strong>.<br>Bring it and your documents to campus to finish your admission.',
-        confirmButtonColor: '#2f8f4e'
+        html: 'Your reference ID is <strong>' + escapeHtml(data.reference_id) + '</strong>.<br>' +
+          (data.email_sent
+            ? 'A printable admission slip was emailed to you.<br>'
+            : '') +
+          'Bring it and your documents to campus to finish your admission.',
+        confirmButtonColor: '#1F2E28'
       });
 
       form.reset();
