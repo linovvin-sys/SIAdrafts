@@ -41,7 +41,7 @@ $stmt = $conn->prepare(
          AND sch.section_id  = ?
      LEFT JOIN professor p ON sch.professor_id = p.professor_id
      LEFT JOIN room r       ON sch.room_id = r.room_id
-     WHERE sub.year_level = ? AND sub.semester = ?
+     WHERE sub.year_level = ? AND sub.semester = ? AND sub.status = 'Approved'
      ORDER BY sc.category_name, sub.subject_code"
 );
 

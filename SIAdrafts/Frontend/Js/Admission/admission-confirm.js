@@ -109,6 +109,7 @@ if (document.getElementById('confirm-app')) {
         this.confirming = true;
         try {
           const body = new FormData();
+          body.append('csrf_token', this.csrfToken());
           body.append('reference_id', this.referenceId.trim());
           this.checkedDocs.forEach(doc => body.append('docs[]', doc));
           this.creditedSubjectIds.forEach(sid => body.append('credited_subjects[]', sid));

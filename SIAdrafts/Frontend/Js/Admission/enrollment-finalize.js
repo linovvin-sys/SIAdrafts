@@ -33,6 +33,7 @@ Vue.createApp({
             type_id:     ENROLLMENT_PAYLOAD.type_id,
             section_id:  ENROLLMENT_PAYLOAD.section_id,
             subject_ids: ENROLLMENT_PAYLOAD.subject_ids,
+            schedule_ids: ENROLLMENT_PAYLOAD.schedule_ids,
           }),
         });
         const d = await r.json();

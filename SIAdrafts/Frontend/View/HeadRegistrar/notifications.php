@@ -21,7 +21,7 @@ $res = $conn->query("
     SELECT CONCAT(first_name, ' ', last_name) AS title, program AS subtitle, created_at AS ts, 'admission' AS kind
     FROM applicants
     ORDER BY created_at DESC
-    LIMIT 20
+    LIMIT 25
 ");
 if ($res) while ($row = $res->fetch_assoc()) $events[] = $row;
 
@@ -34,7 +34,7 @@ $res = $conn->query("
     JOIN applicants a ON a.applicant_id = e.student_id
     WHERE p.paid_at IS NOT NULL
     ORDER BY p.paid_at DESC
-    LIMIT 20
+    LIMIT 25
 ");
 if ($res) while ($row = $res->fetch_assoc()) $events[] = $row;
 

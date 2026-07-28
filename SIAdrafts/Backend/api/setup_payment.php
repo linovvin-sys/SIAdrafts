@@ -3,6 +3,7 @@ session_start();
 require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
 
 header('Content-Type: application/json');
 
@@ -19,6 +20,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['success' => false, 'error' => 'Method not allowed.']);
     exit;
 }
+
+csrf_verify();
 
 $db   = new Database();
 $conn = $db->connect();
@@ -48,40 +51,48 @@ if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $due_date)) {
     exit;
 }
 
-// Confirm the enrollment exists and doesn't already have a payment row.
-$check = $conn->prepare("SELECT enrollment_id FROM enrollment WHERE enrollment_id = ? LIMIT 1");
-$check->bind_param('i', $enrollment_id);
-$check->execute();
-if (!$check->get_result()->fetch_assoc()) {
+$conn->begin_transaction();
+
+try {
+    // Lock the enrollment row so two concurrent setup requests for the same
+    // enrollment can't both pass the duplicate-check below before either
+    // has inserted — matches the FOR UPDATE pattern used in record_payment.php.
+    $check = $conn->prepare("SELECT enrollment_id FROM enrollment WHERE enrollment_id = ? LIMIT 1 FOR UPDATE");
+    $check->bind_param('i', $enrollment_id);
+    $check->execute();
+    if (!$check->get_result()->fetch_assoc()) {
+        $check->close();
+        throw new RuntimeException('Enrollment not found.');
+    }
     $check->close();
-    echo json_encode(['success' => false, 'error' => 'Enrollment not found.']);
-    exit;
-}
-$check->close();
 
-$dup = $conn->prepare("SELECT payment_id FROM payment WHERE enrollment_id = ? LIMIT 1");
-$dup->bind_param('i', $enrollment_id);
-$dup->execute();
-if ($dup->get_result()->fetch_assoc()) {
+    $dup = $conn->prepare("SELECT payment_id FROM payment WHERE enrollment_id = ? LIMIT 1");
+    $dup->bind_param('i', $enrollment_id);
+    $dup->execute();
+    if ($dup->get_result()->fetch_assoc()) {
+        $dup->close();
+        throw new RuntimeException('Payment is already set up for this enrollment.');
+    }
     $dup->close();
-    echo json_encode(['success' => false, 'error' => 'Payment is already set up for this enrollment.']);
-    exit;
+
+    $stmt = $conn->prepare(
+        "INSERT INTO payment (enrollment_id, amount_due, downpayment, due_date, payment_status)
+         VALUES (?, ?, 0, ?, 'Unpaid')"
+    );
+    $stmt->bind_param('ids', $enrollment_id, $amount_due, $due_date);
+
+    if (!$stmt->execute()) {
+        $stmt->close();
+        throw new RuntimeException('Database error: ' . $conn->error);
+    }
+
+    $payment_id = (int)$conn->insert_id;
+    $stmt->close();
+    $conn->commit();
+
+    echo json_encode(['success' => true, 'payment_id' => $payment_id]);
+} catch (RuntimeException $e) {
+    $conn->rollback();
+    echo json_encode(['success' => false, 'error' => $e->getMessage()]);
 }
-$dup->close();
-
-$stmt = $conn->prepare(
-    "INSERT INTO payment (enrollment_id, amount_due, downpayment, due_date, payment_status)
-     VALUES (?, ?, 0, ?, 'Unpaid')"
-);
-$stmt->bind_param('ids', $enrollment_id, $amount_due, $due_date);
-
-if (!$stmt->execute()) {
-    echo json_encode(['success' => false, 'error' => 'Database error: ' . $stmt->error]);
-    exit;
-}
-
-$payment_id = (int)$conn->insert_id;
-$stmt->close();
 $conn->close();
-
-echo json_encode(['success' => true, 'payment_id' => $payment_id]);

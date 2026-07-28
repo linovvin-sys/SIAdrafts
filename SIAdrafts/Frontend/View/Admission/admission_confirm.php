@@ -9,6 +9,18 @@ require_role([ROLE_ADMISSION, ROLE_ADMIN]);
 require_once '../../../Backend/csrf.php';
 $csrfToken = csrf_token();
 
+// This page uses the shared Include/header.php (app-layout/page-content
+// shell), not Admission's own header, so admission.css — which defines
+// .admission-card, .form-section, .doc-checklist, etc. — was never being
+// loaded and the whole page rendered unstyled. Same fix as enrollment.php.
+// style.css must come first: admission.css's rules (e.g. .btn-submit's
+// background/color) reference --ink/--paper/--sage, which are only
+// defined in style.css's :root block, not in admission.css itself.
+$extraCss = [
+    '/SIAdrafts/Frontend/Css/Admission/style.css',
+    '/SIAdrafts/Frontend/Css/Admission/admission.css',
+];
+
 include '../Include/header.php';
 ?>
 

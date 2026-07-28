@@ -5,7 +5,7 @@ $activePage = "enrollment";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
-require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
+require_role([ROLE_STAFF, ROLE_ADMIN]);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -129,7 +129,17 @@ if (!empty($enroll['credited_subject_ids'])) {
 
 $stmt->close();
 
-$total_units = array_sum(array_column($subjects, 'units'));
+// $subjects has one row per schedule slot, not per subject — a subject
+// with a separate lecture + lab time legitimately appears twice so both
+// meeting times print on the form. Summing units straight off that array
+// would double-count such subjects, so dedupe by subject_id first. This
+// matches save_enrollment.php's actual billing calculation, which sums
+// units from `subject` directly and never joins `schedule` at all.
+$unitsBySubject = [];
+foreach ($subjects as $sub) {
+    $unitsBySubject[$sub['subject_id']] = (float)$sub['units'];
+}
+$total_units = array_sum($unitsBySubject);
 $sem_label   = $enroll['semester'] == 1 ? '1st Semester' : '2nd Semester';
 $yr_label    = $enroll['year_level'] . match((int)$enroll['year_level']) {
     1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'

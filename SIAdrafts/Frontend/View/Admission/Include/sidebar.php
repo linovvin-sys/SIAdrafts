@@ -52,6 +52,16 @@ $_tInitials = strtoupper(substr($_tFullName, 0, 2));
       <span class="nav-text">Process</span>
     </a>
 
+    <a href="<?= $root ?>View/Admission/unpaid_students.php" class="nav-item<?= ($activePage ?? '') === 'unpaid_students' ? ' active' : '' ?>" data-page="unpaid_students">
+      <span class="nav-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M0 0h24v24H0z" fill="none"/>
+          <path d="M1 21h22L12 2 1 21m12-3h-2v-2h2zm0-4h-2v-4h2z"/>
+        </svg>
+      </span>
+      <span class="nav-text">Unpaid</span>
+    </a>
+
   </nav>
 
   <!-- User Footer -->

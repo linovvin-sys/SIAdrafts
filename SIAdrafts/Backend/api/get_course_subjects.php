@@ -28,7 +28,7 @@ $stmt = $conn->prepare(
             sub.year_level, sub.semester, sc.category_name
      FROM subject sub
      LEFT JOIN subject_category sc ON sc.category_id = sub.category_id
-     WHERE sub.course_id = ?
+     WHERE sub.course_id = ? AND sub.status = 'Approved'
      ORDER BY sub.year_level, sub.semester, sub.subject_code"
 );
 $stmt->bind_param('i', $course_id);

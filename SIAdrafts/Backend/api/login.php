@@ -1,12 +1,20 @@
 <?php
 session_start();
 require_once '../db.php';
+require_once '../rate_limit.php';
 
 header('Content-Type: application/json');
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed.']);
+    exit;
+}
+
+// Cap credential-guessing attempts per IP — before even touching the DB.
+if (!rate_limit_check('login', 10, 300)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Too many login attempts. Please wait a few minutes and try again.']);
     exit;
 }
 

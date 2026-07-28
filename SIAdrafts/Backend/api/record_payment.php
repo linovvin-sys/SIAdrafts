@@ -4,6 +4,7 @@ session_start();
 require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -18,6 +19,8 @@ if (empty($_SESSION['user_id'])) {
 }
 
 require_role([ROLE_TREASURY, ROLE_ADMIN], true);
+
+csrf_verify();
 
 $payment_id = $_POST['payment_id'] ?? '';
 $amount     = $_POST['amount'] ?? '';
@@ -198,6 +201,17 @@ try {
         throw new Exception($conn->error);
     }
 
+    $stmt->bind_param("i", $payment_id);
+    $stmt->execute();
+    $stmt->close();
+
+    // If this enrollment had already been flagged as unpaid (missed its
+    // due date with nothing paid), a payment coming in now resolves that —
+    // mark it rather than deleting, so there's still a record it was late.
+    $stmt = $conn->prepare("UPDATE unpaid_students SET status = 'Resolved' WHERE payment_id = ? AND status = 'Pending'");
+    if (!$stmt) {
+        throw new Exception($conn->error);
+    }
     $stmt->bind_param("i", $payment_id);
     $stmt->execute();
     $stmt->close();

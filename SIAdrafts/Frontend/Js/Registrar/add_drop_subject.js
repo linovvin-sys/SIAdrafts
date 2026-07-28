@@ -27,6 +27,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
   const API = '/SIAdrafts/Backend/api/';
 
+  function csrfToken() {
+    return document.body.dataset.csrf || '';
+  }
+
   async function getJSON(url) {
     const res = await fetch(API + url);
     return res.json();
@@ -34,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
   async function postJSON(url, payload) {
     const res = await fetch(API + url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
       body: JSON.stringify(payload),
     });
     return res.json();

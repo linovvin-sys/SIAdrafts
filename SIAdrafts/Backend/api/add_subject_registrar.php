@@ -2,6 +2,8 @@
 session_start();
 require_once '../db.php';
 require_once '../require_role.php';
+require_once '../csrf.php';
+require_once '../prereq.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user_id'])) {
@@ -17,6 +19,8 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     echo json_encode(['error' => 'Method not allowed.']);
     exit;
 }
+
+csrf_verify();
 
 $db   = new Database();
 $conn = $db->connect();
@@ -49,17 +53,20 @@ if (!$staffRow || empty($staffRow['staff_id'])) {
 $requested_by = $staffRow['staff_id'];
 
 // Make sure the enrollment actually exists.
-$check = $conn->prepare("SELECT enrollment_id FROM enrollment WHERE enrollment_id = ? LIMIT 1");
+$check = $conn->prepare("SELECT enrollment_id, student_id FROM enrollment WHERE enrollment_id = ? LIMIT 1");
 $check->bind_param('i', $enrollment_id);
 $check->execute();
-if (!$check->get_result()->fetch_assoc()) {
+$enrollmentRow = $check->get_result()->fetch_assoc();
+if (!$enrollmentRow) {
     echo json_encode(['error' => 'Enrollment not found.']);
     exit;
 }
 $check->close();
 
-// Pull the subject's unit count to compute the add fee.
-$subjStmt = $conn->prepare("SELECT units FROM subject WHERE subject_id = ? LIMIT 1");
+// Pull the subject's unit count to compute the add fee. Also re-checked
+// server-side that it's Approved — a still-pending subject shouldn't be
+// addable just because a client bypassed the (already-filtered) picker.
+$subjStmt = $conn->prepare("SELECT units FROM subject WHERE subject_id = ? AND status = 'Approved' LIMIT 1");
 $subjStmt->bind_param('i', $subject_id);
 $subjStmt->execute();
 $subjectRow = $subjStmt->get_result()->fetch_assoc();
@@ -69,6 +76,13 @@ if (!$subjectRow) {
     echo json_encode(['error' => 'Subject not found.']);
     exit;
 }
+
+if (!subject_prereq_met($conn, (int)$enrollmentRow['student_id'], $subject_id)) {
+    $prereqLabel = subject_prereq_label($conn, $subject_id);
+    echo json_encode(['error' => 'Prerequisite not yet completed' . ($prereqLabel ? ": $prereqLabel" : '.') . '.']);
+    exit;
+}
+
 $units  = (float)$subjectRow['units'];
 $amount = round($units * ADDROP_FEE_PER_UNIT, 2);
 

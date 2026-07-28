@@ -1,5 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../../../../Backend/csrf.php';
+$_pageCsrfToken = csrf_token();
 $_logged_in  = !empty($_SESSION['user_id']);
 $_role       = $_SESSION['role_name'] ?? '';
 
@@ -31,7 +33,7 @@ $_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'
 // universal `body`/`*` reset would otherwise cascade onto pages like
 // login.php and online_admission.php that haven't been reviewed against
 // it and have their own tuned base styles.
-$_designSystemPages = ['enrollment.php', 'treasury.php'];
+$_designSystemPages = ['enrollment.php', 'treasury.php', 'revenue_process.php', 'revenue_paid.php', 'unpaid_students.php'];
 if (in_array($_cur, $_designSystemPages, true)):
 ?>
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css">
@@ -39,7 +41,7 @@ if (in_array($_cur, $_designSystemPages, true)):
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
-<body>
+<body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 
   <div class="nav-wrap" id="navWrap">
     <nav class="navbar <?= !$_logged_in ? 'navbar-guest' : '' ?>">

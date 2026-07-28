@@ -157,7 +157,7 @@ function renderPayCard(data) {
 
         fetch('/SIAdrafts/Backend/api/record_subject_fee_payment.php', {
           method: 'POST',
-          body: new URLSearchParams({ fee_id: feeId }),
+          body: new URLSearchParams({ fee_id: feeId, csrf_token: document.body.dataset.csrf || '' }),
         })
           .then(function (res) { return res.json(); })
           .then(function (result) {
@@ -167,7 +167,7 @@ function renderPayCard(data) {
               btn.textContent = 'Record payment';
               return;
             }
-            fetchAndRenderByStudentId(s.student_id);
+            fetchAndRenderByPaymentId(p.payment_id);
           })
           .catch(function () {
             Swal.fire({ icon: 'error', title: 'Could not reach the server. Please try again.' });
@@ -203,7 +203,7 @@ function renderPayCard(data) {
         recordBtn.disabled = true;
         recordBtn.textContent = 'Recording…';
 
-        const body = new URLSearchParams({ payment_id: paymentId, amount: amount });
+        const body = new URLSearchParams({ payment_id: paymentId, amount: amount, csrf_token: document.body.dataset.csrf || '' });
 
         fetch('/SIAdrafts/Backend/api/record_payment.php', { method: 'POST', body: body })
           .then(function (res) { return res.json(); })
@@ -214,7 +214,7 @@ function renderPayCard(data) {
               recordBtn.textContent = 'Record payment';
               return;
             }
-            fetchAndRenderByStudentId(s.student_id);
+            fetchAndRenderByPaymentId(p.payment_id);
           })
           .catch(function () {
             banner.innerHTML = '<div class="t-banner error">Could not reach the server. Please try again.</div>';
@@ -260,6 +260,27 @@ function fetchAndRenderByStudentId(studentId) {
     });
 }
 
+// Loads by the exact payment record, not a name/ID re-search — used by the
+// queue's Pay button and by post-payment refreshes, so a same-named student
+// or an ambiguous search never swaps in the wrong record.
+function fetchAndRenderByPaymentId(paymentId) {
+  const resultDiv = document.getElementById('payResult');
+  fetch('/SIAdrafts/Backend/api/get_payment_info.php?payment_id=' + encodeURIComponent(paymentId))
+    .then(function (res) {
+      if (!res.ok) {
+        return res.text().then(function (body) {
+          throw new Error('HTTP ' + res.status + ': ' + body);
+        });
+      }
+      return res.json();
+    })
+    .then(renderPayCard)
+    .catch(function (err) {
+      console.error('get_payment_info failed:', err);
+      resultDiv.innerHTML = '<div class="t-banner error">Could not load student. Check the console for details.</div>';
+    });
+}
+
 // ===== Search box =====
 document.getElementById('studentSearchBtn').addEventListener('click', function () {
   const q = document.getElementById('studentSearchInput').value.trim();
@@ -274,10 +295,16 @@ document.getElementById('studentSearchInput').addEventListener('keydown', functi
 // ===== "Pay" buttons inside the queue table =====
 document.querySelectorAll('.btn-pay-row').forEach(function (btn) {
   btn.addEventListener('click', function () {
-    // Switch to search tab and load this student directly by their queue row's student name search
     tabSearch.click();
-    const studentName = btn.dataset.student;
-    document.getElementById('studentSearchInput').value = studentName;
-    fetchAndRenderByStudentId(studentName);
+    document.getElementById('studentSearchInput').value = btn.dataset.student || '';
+    if (btn.dataset.paymentId) {
+      // Payment queue row — load this exact payment record, not a name
+      // re-search, which could match the wrong student if two share a name.
+      fetchAndRenderByPaymentId(btn.dataset.paymentId);
+    } else {
+      // Subject-change fee queue row — no payment_id on this button, fall
+      // back to the name search (unchanged from prior behavior).
+      fetchAndRenderByStudentId(btn.dataset.student);
+    }
   });
 });

@@ -13,6 +13,7 @@ require 'validation_rules.php';
 require '../requirements.php';
 require '../settings.php';
 require '../mailer.php';
+require '../rate_limit.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -22,6 +23,14 @@ header('Content-Type: application/json');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'errors' => ['Invalid request method.']]);
+    exit;
+}
+
+// This is a public, unauthenticated form — cap submissions per IP so it
+// can't be used to spam-fill the applicants table or hammer the mailer.
+if (!rate_limit_check('online_admission', 5, 3600)) {
+    http_response_code(429);
+    echo json_encode(['success' => false, 'errors' => ['Too many submissions from this connection. Please try again later.']]);
     exit;
 }
 
@@ -222,13 +231,21 @@ foreach (REQUIREMENT_DEFINITIONS as $req) {
             $fileError = 'Upload failed for ' . $req['label'] . '.';
         } else {
             $mime = mime_content_type($tmpPath);
-            $allowedMimes = ['application/pdf', 'image/jpeg', 'image/png'];
-            if (!in_array($mime, $allowedMimes, true)) {
+            // The stored extension is derived from the validated MIME type,
+            // never from $origName — a client can name a file anything
+            // (e.g. "photo.jpg.php") and mime_content_type() alone doesn't
+            // stop that name from being trusted downstream.
+            $allowedExtByMime = [
+                'application/pdf' => 'pdf',
+                'image/jpeg'      => 'jpg',
+                'image/png'       => 'png',
+            ];
+            if (!isset($allowedExtByMime[$mime])) {
                 $fileError = $req['label'] . ' must be a PDF, JPG, or PNG file.';
             } elseif (filesize($tmpPath) > 5 * 1024 * 1024) {
                 $fileError = $req['label'] . ' file is too large (max 5MB).';
             } else {
-                $ext = pathinfo($origName, PATHINFO_EXTENSION);
+                $ext = $allowedExtByMime[$mime];
                 $storedName = $key . '_' . bin2hex(random_bytes(8)) . '.' . $ext;
                 if (!is_dir($uploadDir)) mkdir($uploadDir, 0755, true);
                 if (move_uploaded_file($tmpPath, $uploadDir . $storedName)) {

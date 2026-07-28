@@ -59,6 +59,7 @@ $stmt = $conn->prepare(
      WHERE sub.course_id = ?
        AND sub.year_level = ?
        AND sub.semester   = ?
+       AND sub.status     = 'Approved'
        AND sub.subject_id NOT IN (
            SELECT subject_id FROM enrollment_subject
            WHERE enrollment_id = ? AND status != 'Dropped'

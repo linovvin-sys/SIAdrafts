@@ -14,7 +14,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_STAFF, ROLE_ADMISSION, ROLE_ADMIN], true);
+require_role([ROLE_STAFF, ROLE_ADMIN], true);
 
 $q    = trim($_GET['q'] ?? '');
 $mode = $_GET['mode'] ?? 'id';

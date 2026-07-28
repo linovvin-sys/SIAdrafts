@@ -1,6 +1,8 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 $extraCss = $extraCss ?? [];
+require_once __DIR__ . '/../../../Backend/csrf.php';
+$_pageCsrfToken = csrf_token();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -24,4 +26,4 @@ $extraCss = $extraCss ?? [];
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
-<body>
+<body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">

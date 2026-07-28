@@ -12,7 +12,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN], true);
+require_role([ROLE_ADMISSION, ROLE_ADMIN], true);
 
 $db   = new Database();
 $conn = $db->connect();

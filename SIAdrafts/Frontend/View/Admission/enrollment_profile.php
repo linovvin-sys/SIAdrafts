@@ -5,7 +5,7 @@ $activePage = "enrollment";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
-require_role([ROLE_ADMISSION, ROLE_STAFF, ROLE_ADMIN]);
+require_role([ROLE_STAFF, ROLE_ADMIN]);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -15,13 +15,32 @@ $student       = null;
 $students_list = null;
 $error         = null;
 
+// year_level, school_year, and semester were already decided at
+// application time (online_admission_process.php pulls school_year/
+// semester from the active-term settings and year_level from the
+// applicant's own form) -- enrollment must not let staff silently pick
+// different values here, so we read the applicant's actual record
+// instead of defaulting/guessing.
 $student_query = "
     SELECT a.applicant_id, a.reference_id, a.first_name, a.last_name, a.middle_name,
-           a.applicant_type_id AS default_type_id, a.course_id,
+           a.applicant_type_id AS default_type_id, a.course_id, a.admission_status,
+           a.year_level, a.school_year, a.semester,
            st.type_name, '—' AS section_name, 0 AS section_id
     FROM applicants a
     JOIN student_type st ON a.applicant_type_id = st.type_id
 ";
+
+// Enrollment must not be reachable until walk-in document verification is
+// done (get_student.php's live search already enforces this and explains
+// why in its own comment) -- this page was missing the same check, so
+// typing a reference ID and hitting Enter could enroll an applicant who'd
+// never been verified, silently skipping that step.
+function reject_if_unverified(?array $student): ?string {
+    if ($student && ($student['admission_status'] ?? '') !== 'verified') {
+        return 'This applicant hasn\'t completed document verification yet. Verify them via Admission first, then come back to enroll.';
+    }
+    return null;
+}
 
 // --- Handle POST: save params to session, go to subjects ---
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -67,10 +86,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt->execute();
     $student = $stmt->get_result()->fetch_assoc();
     $stmt->close();
+    $error = reject_if_unverified($student);
+    if ($error) $student = null;
 }
 
 // --- GET: resolve student from URL params ---
-if (!$student && $_SERVER['REQUEST_METHOD'] === 'GET') {
+if (!$student && !$error && $_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['reference_id'])) {
       $rid  = trim($_GET['reference_id']);
       $stmt = $conn->prepare(
@@ -82,7 +103,12 @@ if (!$student && $_SERVER['REQUEST_METHOD'] === 'GET') {
         $stmt->execute();
         $student = $stmt->get_result()->fetch_assoc() ?: null;
         $stmt->close();
-        if (!$student) $error = 'Student not found.';
+        if (!$student) {
+            $error = 'Student not found.';
+        } else {
+            $error = reject_if_unverified($student);
+            if ($error) $student = null;
+        }
 
     } elseif (isset($_GET['q'])) {
         $q    = trim($_GET['q']);
@@ -94,7 +120,12 @@ if (!$student && $_SERVER['REQUEST_METHOD'] === 'GET') {
             $stmt->execute();
             $student = $stmt->get_result()->fetch_assoc() ?: null;
             $stmt->close();
-            if (!$student) $error = 'No student found with that ID.';
+            if (!$student) {
+                $error = 'No student found with that ID.';
+            } else {
+                $error = reject_if_unverified($student);
+                if ($error) $student = null;
+            }
         } else {
             $like = '%' . $q . '%';
             $stmt = $conn->prepare($student_query .
@@ -104,25 +135,19 @@ if (!$student && $_SERVER['REQUEST_METHOD'] === 'GET') {
             $stmt->execute();
             $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
             $stmt->close();
+            // Same rule as the reference-ID lookups above: an applicant who
+            // hasn't cleared document verification can't be enrolled yet,
+            // so they don't belong in the name-search picker either.
+            $rows = array_values(array_filter($rows, fn($r) => ($r['admission_status'] ?? '') === 'verified'));
             if (count($rows) === 1)      $student       = $rows[0];
             elseif (count($rows) > 1)    $students_list = $rows;
-            else                         $error = 'No students found with that name.';
+            else                         $error = 'No verified students found with that name. They may still need document verification via Admission.';
         }
     } else {
         header('Location: enrollment.php');
         exit;
     }
 }
-
-// Detect year level from section name
-$detected_year = 1;
-
-// Default school year / semester based on current month
-$now        = new DateTime();
-$yr         = (int)$now->format('Y');
-$mo         = (int)$now->format('n');
-$default_sy  = $mo >= 6 ? "$yr-" . ($yr + 1) : ($yr - 1) . "-$yr";
-$default_sem = $mo >= 6 ? 1 : 2;
 
 // Student types for dropdown
 $types_result = $conn->query("SELECT type_id, type_name FROM student_type ORDER BY type_id");
@@ -256,33 +281,35 @@ $extraCss = [
             <input type="hidden" name="section_name" value="<?= htmlspecialchars($student['section_name']) ?>">
             <input type="hidden" name="course_id"    value="<?= (int)$student['course_id'] ?>">
             
+            <?php
+              // Fixed, not editable: these three were already decided at
+              // application time and must carry through to enrollment
+              // unchanged (see the note by $student_query above).
+              $lockedSchoolYear = $student['school_year'] ?: date('Y') . '-' . (date('Y') + 1);
+              $lockedSemester   = (int)($student['semester'] ?: 1);
+              $lockedYearLevel  = (int)($student['year_level'] ?: 1);
+              $yearOrdinal      = match ($lockedYearLevel) { 1 => '1st', 2 => '2nd', 3 => '3rd', default => "{$lockedYearLevel}th" };
+            ?>
+
             <div class="mb-3">
               <label class="form-label fw-bold small">School Year</label>
-              <input type="text" name="school_year" id="field-sy"
-                     class="form-control"
-                     value="<?= htmlspecialchars($_POST['school_year'] ?? $default_sy) ?>"
-                     placeholder="e.g. 2025-2026"
-                     pattern="\d{4}-\d{4}" required>
-              <div class="form-text">Format: YYYY-YYYY</div>
+              <input type="text" class="form-control" value="<?= htmlspecialchars($lockedSchoolYear) ?>" disabled>
+              <input type="hidden" name="school_year" value="<?= htmlspecialchars($lockedSchoolYear) ?>">
+              <div class="form-text">Set when the application was filed — not editable here.</div>
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold small">Semester</label>
-              <select name="semester" id="field-sem" class="form-select" required>
-                <option value="1" <?= (($_POST['semester'] ?? $default_sem) == 1) ? 'selected' : '' ?>>1st Semester</option>
-                <option value="2" <?= (($_POST['semester'] ?? $default_sem) == 2) ? 'selected' : '' ?>>2nd Semester</option>
-              </select>
+              <input type="text" class="form-control" value="<?= $lockedSemester ?><?= $lockedSemester === 1 ? 'st' : 'nd' ?> Semester" disabled>
+              <input type="hidden" name="semester" value="<?= $lockedSemester ?>">
+              <div class="form-text">Set when the application was filed — not editable here.</div>
             </div>
 
             <div class="mb-3">
               <label class="form-label fw-bold small">Year Level</label>
-              <select name="year_level" class="form-select" required>
-                <?php for ($y = 1; $y <= 4; $y++): ?>
-                  <option value="<?= $y ?>" <?= (($_POST['year_level'] ?? $detected_year) == $y) ? 'selected' : '' ?>>
-                    <?= $y ?><?= match($y){1=>'st',2=>'nd',3=>'rd',default=>'th'} ?> Year
-                  </option>
-                <?php endfor; ?>
-              </select>
+              <input type="text" class="form-control" value="<?= $yearOrdinal ?> Year" disabled>
+              <input type="hidden" name="year_level" value="<?= $lockedYearLevel ?>">
+              <div class="form-text">From the applicant's original application — not editable here.</div>
             </div>
 
             <div class="mb-4">
