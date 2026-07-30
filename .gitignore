@@ -1,10 +1,9 @@
 .DS_Store
 *.log
-Backend/config.php
+vendor/
+.env
 Backend/uploads/messages/*
 !Backend/uploads/messages/.gitkeep
-SIAdrafts/vendor/
-SIAdrafts/.env
-SIAdrafts/Backend/uploads/requirements/*
-!SIAdrafts/Backend/uploads/requirements/.gitkeep
+Backend/uploads/requirements/*
+!Backend/uploads/requirements/.gitkeep
 .superpowers/
