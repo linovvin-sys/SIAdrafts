@@ -1,9 +1,0 @@
-.DS_Store
-*.log
-vendor/
-.env
-Backend/uploads/messages/*
-!Backend/uploads/messages/.gitkeep
-Backend/uploads/requirements/*
-!Backend/uploads/requirements/.gitkeep
-.superpowers/
