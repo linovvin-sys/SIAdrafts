@@ -127,6 +127,10 @@
     font-size: 0.82rem;
     margin-bottom: 6px;
   }
+  .form-label .required{
+    color: #e03a3a;
+    margin-left: 2px;
+  }
   .form-control, .form-select{
     color: var(--ink);
     border-color: var(--ink-line);
@@ -186,6 +190,7 @@
   .doc-item{
     display:flex;
     align-items:center;
+    flex-wrap: wrap;
     gap: 10px;
     background: #fff;
     border: 1px solid var(--ink-line);
@@ -210,7 +215,44 @@
     text-transform:uppercase;
     letter-spacing:0.02em;
   }
- 
+  .doc-item .doc-later{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    margin-left:auto;
+    font-size:0.76rem;
+    color: var(--ink-soft);
+    font-weight:600;
+  }
+  .doc-item .doc-later input[type="checkbox"]{
+    width:15px; height:15px;
+  }
+  .doc-online-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:0.72rem;
+    font-weight:600;
+    padding:3px 9px;
+    border-radius:999px;
+    text-decoration:none;
+    white-space:nowrap;
+  }
+  .doc-online-badge--file{
+    background: #e4efe6;
+    color: #2f6b40;
+  }
+  .doc-online-badge--file:hover{ text-decoration: underline; }
+  .doc-online-badge--later{
+    background: #fdf3e2;
+    color: #8a6416;
+  }
+  .doc-online-badge--none{
+    color: var(--ink-soft);
+    font-weight:500;
+    font-style: italic;
+  }
+
   /*  AJAX result banner  */
   .form-banner{
     border-radius: 14px;

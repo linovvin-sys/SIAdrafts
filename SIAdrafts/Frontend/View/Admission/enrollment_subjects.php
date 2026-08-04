@@ -139,16 +139,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !$is_irregular) {
         if (!$secRow) {
             $post_error = 'That section is not offered for this year level / semester.';
         } else {
+            // A subject belongs to this section's load only if the registrar
+            // actually scheduled it for this exact section — no cross-course
+            // sharing. Gen Ed subjects are manually added per section like
+            // any other subject, so only what's really scheduled here shows up.
             $stmt2 = $conn->prepare(
-                "SELECT sub.subject_id
+                "SELECT DISTINCT sub.subject_id
                 FROM subject sub
                 JOIN schedule sch ON sch.subject_id = sub.subject_id
-                JOIN section sec  ON sec.section_id = sch.section_id
-                WHERE sec.course_id = ?
-                  AND sub.year_level = ? AND sub.semester = ?
-                  AND sch.semester = ? AND sch.school_year = ? AND sch.section_id = ?"
+                WHERE sub.year_level = ? AND sub.semester = ?
+                  AND sch.semester = ? AND sch.school_year = ?
+                  AND sch.section_id = ?"
             );
-            $stmt2->bind_param('iiiisi', $course_id, $year_level, $semester, $semester, $school_year, $section_id);
+            $stmt2->bind_param('iiisi', $year_level, $semester, $semester, $school_year, $section_id);
             $stmt2->execute();
             $subject_ids = array_map(fn($r) => (int)$r['subject_id'], $stmt2->get_result()->fetch_all(MYSQLI_ASSOC));
             $stmt2->close();

@@ -61,18 +61,23 @@ $histStmt->execute();
 $history = $histStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $histStmt->close();
 
+// Full detail (not just the name) so the walk-in checklist can show what
+// was actually submitted online — a soft copy to view, or a note that the
+// applicant already said they'd bring it in person.
 $docStmt = $conn->prepare("
-    SELECT document_name FROM applicant_documents WHERE applicant_id = ?
+    SELECT document_id, document_name, status, file_path, uploaded_at
+    FROM applicant_documents
+    WHERE applicant_id = ? AND source = 'applicant'
 ");
 $docStmt->bind_param('i', $applicant['applicant_id']);
 $docStmt->execute();
-$already_submitted = array_column($docStmt->get_result()->fetch_all(MYSQLI_ASSOC), 'document_name');
+$online_requirements = $docStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $docStmt->close();
 
 $conn->close();
 
 $applicant['full_name'] = trim($applicant['first_name'] . ' ' . $applicant['middle_name'] . ' ' . $applicant['last_name']);
 $applicant['history'] = $history;
-$applicant['documents_already_submitted'] = $already_submitted;
+$applicant['online_requirements'] = $online_requirements;
 
 echo json_encode(['success' => true, 'applicant' => $applicant]);

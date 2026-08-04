@@ -10,32 +10,6 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   if (document.getElementById('courseTable')) initDataTable('#courseTable', { order: [] });
-  if (document.getElementById('sectionTable')) initDataTable('#sectionTable', { order: [] });
-
-  function wireCardSearch(searchId, gridId, emptyId) {
-    const searchEl = document.getElementById(searchId);
-    const grid      = document.getElementById(gridId);
-    const emptyEl   = document.getElementById(emptyId);
-    if (!searchEl || !grid) return;
-
-    const cards = [...grid.querySelectorAll('.subject-card[data-search]')];
-    if (!cards.length) return;
-
-    searchEl.addEventListener('input', () => {
-      const search = searchEl.value.trim().toLowerCase();
-      let visible = 0;
-
-      cards.forEach(card => {
-        const show = !search || card.dataset.search.includes(search);
-        card.style.display = show ? '' : 'none';
-        if (show) visible++;
-      });
-
-      if (emptyEl) emptyEl.style.display = visible ? 'none' : 'block';
-    });
-  }
-
-  wireCardSearch('subjectSearch', 'subjectCardGrid', 'subjectListEmptyState');
 
   document.querySelectorAll('[data-open]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -98,56 +72,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // ----- Add Section -----
-  const confirmAddSection = document.getElementById('confirmAddSection');
-  if (confirmAddSection) {
-    confirmAddSection.addEventListener('click', async () => {
-      const section_name = document.getElementById('newSectionName').value.trim();
-      const capacity      = document.getElementById('newSectionCapacity').value;
-      const course_id     = document.getElementById('newSectionCourse').value;
-
-      if (!section_name || !course_id) {
-        Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Section name and course are required.' });
-        return;
-      }
-
-      const result = await postJSON('save_section.php', { section_name, capacity, course_id });
-      if (result.error) {
-        Swal.fire({ icon: 'error', title: 'Could not add section', text: result.error });
-        return;
-      }
-      Swal.fire({ icon: 'success', title: result.message || 'Section added', timer: 1500, showConfirmButton: false })
-        .then(() => location.reload());
-    });
-  }
-
-  // ----- Add Subject -----
-  const confirmAddSubject = document.getElementById('confirmAddSubject');
-  if (confirmAddSubject) {
-    confirmAddSubject.addEventListener('click', async () => {
-      const course_id    = document.getElementById('newSubjectCourse').value;
-      const subject_code = document.getElementById('newSubjectCode').value.trim();
-      const subject_name = document.getElementById('newSubjectName').value.trim();
-      const units         = document.getElementById('newSubjectUnits').value;
-      const category_id  = document.getElementById('newSubjectCategory').value;
-      const year_level    = document.getElementById('newSubjectYearLevel').value;
-      const semester       = document.getElementById('newSubjectSemester').value;
-
-      if (!course_id || !subject_code || !subject_name || !category_id || !year_level || !semester) {
-        Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Course, subject code, subject name, category, year level, and semester are required.' });
-        return;
-      }
-
-      const result = await postJSON('save_subject.php', { course_id, subject_code, subject_name, units, category_id, year_level, semester });
-      if (result.error) {
-        Swal.fire({ icon: 'error', title: 'Could not add subject', text: result.error });
-        return;
-      }
-      Swal.fire({ icon: 'success', title: result.message || 'Subject added', timer: 1500, showConfirmButton: false })
-        .then(() => location.reload());
-    });
-  }
-
   // ----- Remove Course (Head Registrar only — button only renders for that role) -----
   document.querySelectorAll('[data-remove-course]').forEach(btn => {
     btn.addEventListener('click', async () => {
@@ -171,29 +95,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // ----- Remove Section (Head Registrar only) -----
-  document.querySelectorAll('[data-remove-section]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const section_id = btn.getAttribute('data-remove-section');
-      const confirm = await Swal.fire({
-        icon: 'warning',
-        title: 'Remove this section?',
-        text: 'This cannot be undone.',
-        showCancelButton: true,
-        confirmButtonText: 'Remove',
-        confirmButtonColor: '#dc2626',
-      });
-      if (!confirm.isConfirmed) return;
-
-      const result = await postJSON('delete_section.php', { section_id });
-      if (result.error) {
-        Swal.fire({ icon: 'error', title: 'Could not remove section', text: result.error });
-        return;
-      }
-      btn.closest('tr').remove();
-    });
-  });
-
   function escHtml(s) {
     return String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
@@ -208,6 +109,9 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', async () => {
       const course_id = btn.getAttribute('data-view-course');
       document.getElementById('viewCourseLabel').textContent = btn.getAttribute('data-course-label') || '';
+
+      const manageLink = document.getElementById('viewCourseManageLink');
+      if (manageLink) manageLink.href = `subjects.php?course_id=${course_id}`;
 
       const modal = document.getElementById('viewCourseModal');
       const body  = document.getElementById('viewCourseBody');
@@ -246,44 +150,6 @@ document.addEventListener('DOMContentLoaded', function () {
         totalEl.textContent = data.total_units;
       } catch (_) {
         body.innerHTML = '<p style="text-align:center;color:#b91c1c;">Network error. Please try again.</p>';
-      }
-    });
-  });
-
-  // ----- View Section (enrolled students + their subjects) -----
-  document.querySelectorAll('[data-view-section]').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const section_id = btn.getAttribute('data-view-section');
-      document.getElementById('viewSectionLabel').textContent = btn.getAttribute('data-section-label') || '';
-
-      const modal = document.getElementById('viewSectionModal');
-      const body  = document.getElementById('viewSectionBody');
-      body.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading…</td></tr>';
-      openModal(modal);
-
-      try {
-        const res = await fetch(`${API}get_section_roster.php?section_id=${section_id}`);
-        const data = await res.json();
-
-        if (data.error) {
-          body.innerHTML = `<tr><td colspan="4" style="text-align:center;color:#b91c1c;">${escHtml(data.error)}</td></tr>`;
-          return;
-        }
-
-        if (!data.students.length) {
-          body.innerHTML = '<tr><td colspan="4" style="text-align:center;">No students in this section yet.</td></tr>';
-          return;
-        }
-
-        body.innerHTML = data.students.map(st => `
-          <tr>
-            <td>${escHtml(st.student_no)}</td>
-            <td>${escHtml(st.last_name)}, ${escHtml(st.first_name)}${st.middle_name ? ' ' + escHtml(st.middle_name) : ''}</td>
-            <td>${escHtml(st.email || '—')}</td>
-            <td>${escHtml(st.contact_number || '—')}</td>
-          </tr>`).join('');
-      } catch (_) {
-        body.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#b91c1c;">Network error. Please try again.</td></tr>';
       }
     });
   });

@@ -170,6 +170,20 @@ document.addEventListener('DOMContentLoaded', function () {
   searchBtn.addEventListener('click', doSearch);
   searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') doSearch(); });
 
+  // ----- All Enrolled Students list -----
+  const allStudentsTable = document.getElementById('allStudentsTable');
+  if (allStudentsTable) {
+    initDataTable('#allStudentsTable', { order: [] });
+
+    allStudentsTable.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-manage-student]');
+      if (!btn) return;
+      searchInput.value = btn.getAttribute('data-manage-student');
+      doSearch();
+      resultPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }
+
   // ----- Drop subject -----
   subjectsBody.addEventListener('click', async (e) => {
     const dropBtn = e.target.closest('[data-drop-subject]');

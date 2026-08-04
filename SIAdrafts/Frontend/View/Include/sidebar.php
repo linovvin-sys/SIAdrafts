@@ -44,12 +44,20 @@ $iconMap = [
     'enrollment'  => 'bi-journal-check',
     'enrolees'    => 'bi-mortarboard-fill',
     'course'      => 'bi-book-half',
+    'sections'    => 'bi-people-fill',
+    'subjects'    => 'bi-journal-bookmark-fill',
+    'professors'  => 'bi-person-video3',
     'schedule'    => 'bi-calendar3',
     'addDrop'     => 'bi-arrow-left-right',
     'approval'    => 'bi-check2-square',
     'readmission' => 'bi-arrow-repeat',
     'messages'    => 'bi-chat-dots-fill',
     'notifications' => 'bi-bell-fill',
+    'treasury'    => 'bi-cash-coin',
+    'revenue'     => 'bi-graph-up-arrow',
+    'paid'        => 'bi-check-circle-fill',
+    'process'     => 'bi-hourglass-split',
+    'unpaid'      => 'bi-exclamation-triangle-fill',
 ];
 ?>
 <!-- ===== SIDEBAR ===== -->

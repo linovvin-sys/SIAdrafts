@@ -5,7 +5,7 @@ $pageScript = "dashboard";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff']);
+require_role(['Registrar Staff', 'Head Registrar']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -150,7 +150,7 @@ include '../Include/header.php';
       </div>
     </div>
 
-    <div class="grid-2">
+    <div class="grid-2" style="margin-bottom:24px;">
 
       <div class="panel">
         <div class="panel-header">
@@ -195,6 +195,7 @@ include '../Include/header.php';
           </div>
         </div>
         <div class="panel-body" style="padding:0;">
+          <div class="table-responsive">
           <table class="data-table" id="recentSchedulesTable">
             <thead>
               <tr>
@@ -226,6 +227,7 @@ include '../Include/header.php';
               <?php endif; ?>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
 
@@ -247,6 +249,7 @@ include '../Include/header.php';
           </div>
         </div>
         <div class="panel-body" style="padding:0;">
+          <div class="table-responsive">
           <table class="data-table" id="registrarStaffTable">
             <thead>
               <tr>
@@ -278,6 +281,7 @@ include '../Include/header.php';
               <?php endif; ?>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
       <?php else: ?>

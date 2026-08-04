@@ -3,6 +3,7 @@ session_start();
 require_once '../db.php';
 require_once '../require_role.php';
 require_once '../csrf.php';
+require_once '../subject_course.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user_id'])) {
@@ -57,6 +58,47 @@ if ($time_start >= $time_end) {
 
 if (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
     echo json_encode(['error' => 'Invalid school year format. Use YYYY-YYYY.']);
+    exit;
+}
+
+// The subject picker only shows subjects valid for the selected section's
+// course, but that's a client-side convenience, not a trust boundary —
+// re-verify here so a stale form or a direct API call can't schedule a
+// subject under the wrong course's section.
+$secStmt = $conn->prepare("SELECT course_id FROM section WHERE section_id = ? LIMIT 1");
+$secStmt->bind_param('i', $section_id);
+$secStmt->execute();
+$sectionRow = $secStmt->get_result()->fetch_assoc();
+$secStmt->close();
+
+if (!$sectionRow) {
+    echo json_encode(['error' => 'Section not found.']);
+    exit;
+}
+
+if (!subject_belongs_to_course($conn, $subject_id, (int)$sectionRow['course_id'])) {
+    echo json_encode(['error' => 'This subject is not offered under the selected section\'s course.']);
+    exit;
+}
+
+// The subject picker only shows subjects matching the selected year level
+// and semester, but same as above, re-verify server-side — a schedule row
+// whose semester disagrees with its subject's own catalog semester would
+// silently disappear from enrollment (that exact mismatch happened once
+// with a hand-entered row and had to be fixed by hand).
+$subStmt = $conn->prepare("SELECT semester FROM subject WHERE subject_id = ? LIMIT 1");
+$subStmt->bind_param('i', $subject_id);
+$subStmt->execute();
+$subjectRow = $subStmt->get_result()->fetch_assoc();
+$subStmt->close();
+
+if (!$subjectRow) {
+    echo json_encode(['error' => 'Subject not found.']);
+    exit;
+}
+
+if ((int)$subjectRow['semester'] !== $semester) {
+    echo json_encode(['error' => 'This subject belongs to a different semester than the one selected.']);
     exit;
 }
 

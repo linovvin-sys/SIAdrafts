@@ -4,7 +4,7 @@ $activePage = "notifications";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff']);
+require_role(['Registrar Staff', 'Head Registrar']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();

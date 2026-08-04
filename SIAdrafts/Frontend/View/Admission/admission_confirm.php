@@ -120,15 +120,32 @@ include '../Include/header.php';
           <span class="section-num">✓</span>
           <div>
             <h2>Document Checklist</h2>
-            <p>Check off only what the applicant has physically handed over today.</p>
+            <p>Check off only what the applicant has physically handed over today. PSA/NSO Birth Certificate and Certificate of Good Moral must be on hand — everything else can be marked "To follow" if the applicant doesn't have it yet.</p>
           </div>
         </div>
 
         <div class="doc-checklist">
           <div class="doc-item" v-for="doc in requiredDocs" :key="doc">
-            <input type="checkbox" :id="doc" v-model="checkedDocs" :value="doc">
+            <input type="checkbox" :id="doc" v-model="checkedDocs" :value="doc" :disabled="laterDocs.includes(doc)">
             <label :for="doc">{{ doc }}</label>
-            <span class="req">Required</span>
+            <template v-if="onlineRecordFor(doc)">
+              <a v-if="onlineRecordFor(doc).file_path"
+                 :href="documentViewUrl(onlineRecordFor(doc))"
+                 target="_blank"
+                 rel="noopener"
+                 class="doc-online-badge doc-online-badge--file">
+                <iconify-icon icon="mdi:file-eye-outline"></iconify-icon> View soft copy
+              </a>
+              <span v-else class="doc-online-badge doc-online-badge--later">
+                <iconify-icon icon="mdi:clock-outline"></iconify-icon> Said they'd bring at campus
+              </span>
+            </template>
+            <span v-else class="doc-online-badge doc-online-badge--none">Not submitted online</span>
+            <span class="req" v-if="isCritical(doc)">Required</span>
+            <label class="doc-later" v-else>
+              <input type="checkbox" :checked="laterDocs.includes(doc)" @change="toggleLater(doc)">
+              To follow
+            </label>
           </div>
         </div>
 

@@ -1,15 +1,19 @@
 <?php
+$extraCss = ['/SIAdrafts/Frontend/Css/Admission/treasury.css'];
 $pageTitle = "Unpaid Students";
 $activePage = "unpaid_students";
 
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_TREASURY]);
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/unpaid_transfer.php';
 
 $db = new Database();
 $conn = $db->connect();
 transfer_overdue_unpaid($conn);
-include '../Admission/Include/header.php';
+include '../Include/header.php';
 
 // Balance/amount_due are joined live from `payment` rather than read off
 // unpaid_students' own snapshot columns, so a partial payment made after
@@ -40,7 +44,7 @@ function student_fullname_us(array $s): string {
 ?>
 
 <div class="app-layout">
-  <?php include '../Admission/Include/sidebar.php'; ?>
+  <?php include '../Include/sidebar.php'; ?>
   <main class="page-content">
 
     <div class="treasury-page">
@@ -94,4 +98,4 @@ function student_fullname_us(array $s): string {
   </main>
 </div>
 
-<?php include '../Admission/Include/footer.php' ?>
+<?php include '../Include/footer.php'; ?>

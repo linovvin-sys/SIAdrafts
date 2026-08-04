@@ -5,7 +5,7 @@ $pageScript = "schedule";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff']);
+require_role(['Registrar Staff', 'Head Registrar']);
 
 $isHead = current_user_is(['Head Registrar']);
 
@@ -72,6 +72,7 @@ include '../Include/header.php';
     <!-- ===== SCHEDULE TABLE ===== -->
     <div class="panel">
       <div class="panel-body" style="padding:0">
+        <div class="table-responsive">
         <table class="sched-table" id="scheduleTable" data-is-head="<?= $isHead ? '1' : '0' ?>">
           <thead>
             <tr>
@@ -88,6 +89,7 @@ include '../Include/header.php';
           </thead>
           <tbody id="scheduleBody"></tbody>
         </table>
+        </div>
 
         <div class="empty-state" id="emptyState" style="display:none">
           <div class="empty-icon">📅</div>
@@ -118,6 +120,22 @@ include '../Include/header.php';
             <select class="form-input form-select" id="schedSection" required></select>
           </div>
           <div class="form-group">
+            <label class="form-label">Year Level<span class="required">*</span></label>
+            <select class="form-input form-select" id="schedYear" required>
+              <option value="1">1st Year</option>
+              <option value="2">2nd Year</option>
+              <option value="3">3rd Year</option>
+              <option value="4">4th Year</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Semester<span class="required">*</span></label>
+            <select class="form-input form-select" id="schedSemester" required>
+              <option value="1">1st Semester</option>
+              <option value="2">2nd Semester</option>
+            </select>
+          </div>
+          <div class="form-group">
             <label class="form-label">Subject<span class="required">*</span></label>
             <select class="form-input form-select" id="schedSubject" required></select>
           </div>
@@ -142,22 +160,15 @@ include '../Include/header.php';
           </div>
           <div class="form-group">
             <label class="form-label">Start Time<span class="required">*</span></label>
-            <input type="time" class="form-input" id="schedStart" required>
+            <select class="form-input form-select" id="schedStart" required></select>
           </div>
           <div class="form-group">
             <label class="form-label">End Time<span class="required">*</span></label>
-            <input type="time" class="form-input" id="schedEnd" required>
+            <select class="form-input form-select" id="schedEnd" required></select>
           </div>
           <div class="form-group">
             <label class="form-label">School Year<span class="required">*</span></label>
             <input type="text" class="form-input" id="schedSchoolYear" placeholder="2026-2027" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Semester<span class="required">*</span></label>
-            <select class="form-input form-select" id="schedSemester" required>
-              <option value="1">1st Semester</option>
-              <option value="2">2nd Semester</option>
-            </select>
           </div>
         </div>
 

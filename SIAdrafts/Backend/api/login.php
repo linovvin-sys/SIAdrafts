@@ -92,7 +92,7 @@ switch ($role) {
         break;
         
     case 'head registrar':
-        $redirect = '/SIAdrafts/Frontend/View/HeadRegistrar/registrar_dashboard.php';
+        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
         break;
 
     case 'registrar staff':

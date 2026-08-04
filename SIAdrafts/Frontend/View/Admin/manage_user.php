@@ -113,6 +113,7 @@ include '../Include/header.php';
 
             <div class="panel-body" style="padding:0;">
 
+                <div class="table-responsive">
                 <table class="data-table" id="userTable">
 
                     <thead>
@@ -215,6 +216,7 @@ include '../Include/header.php';
                     </tbody>
 
                 </table>
+                </div>
 
             </div>
 

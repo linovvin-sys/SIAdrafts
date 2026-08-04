@@ -25,6 +25,7 @@ async function init() {
   await Promise.all([loadOptions(), loadSchedules()]);
   populateCourseFilter();
   populateFormDropdowns();
+  populateTimeDropdowns();
   render();
 
   [filterCourse, filterYear, filterDay, filterStatus].forEach(el => el.addEventListener('change', render));
@@ -87,19 +88,126 @@ function populateCourseFilter() {
     codes.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('');
 }
 
+// Preset time-slot options (7:00 AM – 9:00 PM, every 30 minutes) instead of
+// a free-typed/native time picker, so Head Registrar just picks from a
+// list rather than typing or scrubbing a time widget for every schedule.
+const TIME_SLOTS = (() => {
+  const slots = [];
+  for (let mins = 7 * 60; mins <= 21 * 60; mins += 30) {
+    const h24 = Math.floor(mins / 60);
+    const m = mins % 60;
+    const value = String(h24).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+    const h12 = h24 % 12 || 12;
+    const ampm = h24 < 12 ? 'AM' : 'PM';
+    const label = h12 + ':' + String(m).padStart(2, '0') + ' ' + ampm;
+    slots.push({ value, label });
+  }
+  return slots;
+})();
+
+function populateTimeDropdowns() {
+  const startSel = document.getElementById('schedStart');
+  const endSel = document.getElementById('schedEnd');
+
+  startSel.innerHTML = TIME_SLOTS
+    .map(t => `<option value="${t.value}">${t.label}</option>`).join('');
+
+  // End time only ever offers slots after whichever start time is picked —
+  // an invalid (end <= start) combination can't even be selected.
+  function refreshEndOptions() {
+    const startValue = startSel.value;
+    const previousEnd = endSel.value;
+    const validEnds = TIME_SLOTS.filter(t => t.value > startValue);
+    endSel.innerHTML = validEnds
+      .map(t => `<option value="${t.value}">${t.label}</option>`).join('');
+    if (validEnds.some(t => t.value === previousEnd)) {
+      endSel.value = previousEnd;
+    }
+  }
+
+  startSel.addEventListener('change', refreshEndOptions);
+  refreshEndOptions();
+}
+
 function populateFormDropdowns() {
-  const sectionSel = document.getElementById('schedSection');
-  const subjectSel = document.getElementById('schedSubject');
-  const profSel = document.getElementById('schedProfessor');
-  const roomSel = document.getElementById('schedRoom');
+  const sectionSel  = document.getElementById('schedSection');
+  const subjectSel  = document.getElementById('schedSubject');
+  const yearSel     = document.getElementById('schedYear');
+  const semesterSel = document.getElementById('schedSemester');
 
   sectionSel.innerHTML = options.sections
-    .map(s => `<option value="${s.section_id}">${escHtml(s.course_code)} - ${escHtml(s.section_name)}</option>`).join('');
-  subjectSel.innerHTML = options.subjects
-    .map(s => `<option value="${s.subject_id}">${escHtml(s.subject_code)} - ${escHtml(s.subject_name)}</option>`).join('');
-  profSel.innerHTML = '<option value="">-- None --</option>' + options.professors
+    .map(s => `<option value="${s.section_id}" data-course-id="${s.course_id}">${escHtml(s.course_code)} - ${escHtml(s.section_name)}</option>`).join('');
+
+  // Subject list depends on which section (i.e. which course) is picked,
+  // AND on year level + semester — a course's subject list spans all 4
+  // year levels, so without this a 1st-year section could otherwise be
+  // offered a 3rd-year subject. Professor/room lists then depend on which
+  // subject is picked.
+  sectionSel.addEventListener('change', refreshSubjects);
+  yearSel.addEventListener('change', refreshSubjects);
+  semesterSel.addEventListener('change', refreshSubjects);
+  subjectSel.addEventListener('change', () => populateProfessorsAndRoomsForSubject(subjectSel));
+  refreshSubjects();
+}
+
+function refreshSubjects() {
+  const sectionSel = document.getElementById('schedSection');
+  populateSubjectsForSection(sectionSel);
+}
+
+function populateSubjectsForSection(sectionSel) {
+  const subjectSel = document.getElementById('schedSubject');
+  const selectedOption = sectionSel.options[sectionSel.selectedIndex];
+  const courseId = selectedOption ? Number(selectedOption.dataset.courseId) : null;
+  const yearLevel = Number(document.getElementById('schedYear').value);
+  const semester  = Number(document.getElementById('schedSemester').value);
+
+  const matching = courseId
+    ? options.subjects.filter(s =>
+        s.course_ids.includes(courseId)
+        && Number(s.year_level) === yearLevel
+        && Number(s.semester) === semester
+      )
+    : [];
+
+  subjectSel.innerHTML = matching.length
+    ? matching.map(s =>
+        `<option value="${s.subject_id}" data-department-id="${s.department_id ?? ''}" data-category="${escHtml(s.category_name || '')}" data-subject-name="${escHtml(s.subject_code + ' ' + s.subject_name)}">${escHtml(s.subject_code)} - ${escHtml(s.subject_name)}</option>`
+      ).join('')
+    : '<option value="">-- No subjects for this year level / semester --</option>';
+
+  populateProfessorsAndRoomsForSubject(subjectSel);
+}
+
+// A subject's own department (via its category, e.g. PSYCH subjects ->
+// Psychology department) narrows the professor list, and whether it's a
+// lecture, lab, or PE subject narrows the room list — instead of showing
+// every professor in the school and every room regardless of fit.
+function populateProfessorsAndRoomsForSubject(subjectSel) {
+  const profSel = document.getElementById('schedProfessor');
+  const roomSel = document.getElementById('schedRoom');
+  const selectedOption = subjectSel.options[subjectSel.selectedIndex];
+
+  const departmentId = selectedOption?.dataset.departmentId ? Number(selectedOption.dataset.departmentId) : null;
+  const category = selectedOption?.dataset.category || '';
+  const subjectLabel = selectedOption?.dataset.subjectName || '';
+
+  const matchingProfs = departmentId
+    ? options.professors.filter(p => Number(p.department_id) === departmentId)
+    : [];
+  const profList = matchingProfs.length ? matchingProfs : options.professors;
+  profSel.innerHTML = '<option value="">-- None --</option>' + profList
     .map(p => `<option value="${p.professor_id}">${escHtml(p.professor_name)}</option>`).join('');
-  roomSel.innerHTML = options.rooms
+
+  // Same lab-detection heuristic used for the Lec/Lab badge in the
+  // schedule table below (no dedicated column exists for this distinction).
+  const wantsGym = category === 'PATHFIT';
+  const wantsLab = /lab/i.test(subjectLabel);
+  const wantedType = wantsGym ? 'Gymnasium' : (wantsLab ? 'Laboratory' : 'Lecture');
+
+  const matchingRooms = options.rooms.filter(r => r.room_type === wantedType);
+  const roomList = matchingRooms.length ? matchingRooms : options.rooms;
+  roomSel.innerHTML = roomList
     .map(r => `<option value="${r.room_id}">${escHtml(r.room_name)}</option>`).join('');
 }
 
@@ -271,21 +379,29 @@ function onBodyClick(e) {
 }
 
 async function deleteSchedules(ids) {
+  // A reason is required — this is a hard delete with no undo, and (unlike
+  // every other reject/deactivate flow in this app) schedules had no audit
+  // trail at all, so there was no record of who removed a class or why.
   const confirm = await Swal.fire({
     icon: 'warning',
     title: 'Delete this schedule?',
-    text: 'This removes it for every day it meets. This cannot be undone.',
+    html: 'This removes it for every day it meets. This cannot be undone.',
+    input: 'textarea',
+    inputLabel: 'Reason for deletion',
+    inputPlaceholder: 'e.g. Duplicate entry, professor reassigned, class cancelled…',
+    inputValidator: (value) => !value || !value.trim() ? 'Please provide a reason.' : undefined,
     showCancelButton: true,
     confirmButtonText: 'Delete',
     confirmButtonColor: '#dc2626',
   });
   if (!confirm.isConfirmed) return;
+  const reason = confirm.value.trim();
 
   try {
     const res = await fetch(API_BASE + 'delete_schedule.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
-      body: JSON.stringify({ ids }),
+      body: JSON.stringify({ ids, reason }),
     });
     const result = await res.json();
 

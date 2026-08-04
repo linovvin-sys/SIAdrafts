@@ -405,7 +405,7 @@ if (!empty($fields['email'])) {
           </table>
           <p style="margin:22px 0 0;font-size:13px;color:rgba(31,46,40,0.8);line-height:1.6;">
             Print this slip or show it on your phone when you visit campus, together with your
-            Form 137/SHS card, Certificate of Good Moral, PSA birth certificate, and 2x2 photos,
+            Certificate of Good Moral, PSA birth certificate, Form 138, and 2x2 photos,
             to complete document verification and enrollment.
           </p>
         </td></tr>

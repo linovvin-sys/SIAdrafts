@@ -93,7 +93,7 @@ function course_monogram(string $name): string {
         <div class="e-step-num">02</div>
         <div>
           <h3>Verify documents</h3>
-          <p>Bring your Form 137/SHS card, Certificate of Good Moral, PSA birth certificate, and 2x2 photos to campus.</p>
+          <p>Bring your Certificate of Good Moral, PSA birth certificate, Form 138, and 2x2 photos to campus.</p>
         </div>
       </div>
       <div class="e-step e-reveal e-reveal--right" style="transition-delay:160ms">

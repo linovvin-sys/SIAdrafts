@@ -18,40 +18,48 @@ include '../Include/header.php';
     <main class="page-content">
 
         <!-- Statistics -->
-        <div class="stat-grid">
+        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
 
             <!-- Students -->
-            <div class="surface-1 rd-stat-card">
-                <div class="rd-stat-icon" style="background:var(--sky-100); color:var(--sky-600);"><i class="bi bi-mortarboard-fill"></i></div>
-                <div class="rd-stat-figure mono"><?= $dashboard['students']; ?></div>
-                <div class="rd-stat-label">Total Students</div>
+            <div class="stat-card">
+                <div class="stat-icon gold"><i class="bi bi-mortarboard-fill"></i></div>
+                <div>
+                    <div class="stat-value"><?= $dashboard['students']; ?></div>
+                    <div class="stat-label">Total Students</div>
+                </div>
             </div>
 
             <!-- Pending Admissions -->
-            <div class="surface-1 rd-stat-card">
-                <div class="rd-stat-icon" style="background:var(--gold-100); color:#7A5A0F;"><i class="bi bi-hourglass-split"></i></div>
-                <div class="rd-stat-figure mono"><?= $dashboard['pending']; ?></div>
-                <div class="rd-stat-label">Pending Admissions</div>
+            <div class="stat-card">
+                <div class="stat-icon blue"><i class="bi bi-hourglass-split"></i></div>
+                <div>
+                    <div class="stat-value"><?= $dashboard['pending']; ?></div>
+                    <div class="stat-label">Pending Admissions</div>
+                </div>
             </div>
 
             <!-- Approved Admissions -->
-            <div class="surface-1 rd-stat-card">
-                <div class="rd-stat-icon" style="background:var(--teal-100); color:var(--teal-600);"><i class="bi bi-check-circle-fill"></i></div>
-                <div class="rd-stat-figure mono"><?= $dashboard['approved']; ?></div>
-                <div class="rd-stat-label">Approved Admissions</div>
+            <div class="stat-card">
+                <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+                <div>
+                    <div class="stat-value"><?= $dashboard['approved']; ?></div>
+                    <div class="stat-label">Approved Admissions</div>
+                </div>
             </div>
 
             <!-- Courses -->
-            <div class="surface-1 rd-stat-card">
-                <div class="rd-stat-icon" style="background:rgba(18,22,42,0.08); color:var(--ink-950);"><i class="bi bi-book-half"></i></div>
-                <div class="rd-stat-figure mono"><?= $dashboard['courses']; ?></div>
-                <div class="rd-stat-label">Active Courses</div>
+            <div class="stat-card">
+                <div class="stat-icon purple"><i class="bi bi-book-half"></i></div>
+                <div>
+                    <div class="stat-value"><?= $dashboard['courses']; ?></div>
+                    <div class="stat-label">Active Courses</div>
+                </div>
             </div>
 
         </div>
 
         <!-- Trends -->
-        <div class="grid-2">
+        <div class="grid-2" style="margin-bottom:24px;">
 
             <!-- Admissions Trend -->
             <div class="panel">
@@ -148,6 +156,7 @@ include '../Include/header.php';
 
                 <div class="panel-body" style="padding:0;">
 
+                    <div class="table-responsive">
                     <table class="data-table">
 
                         <thead>
@@ -203,6 +212,7 @@ include '../Include/header.php';
                         </tbody>
 
                     </table>
+                    </div>
 
                 </div>
 

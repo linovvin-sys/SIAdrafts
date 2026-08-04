@@ -22,22 +22,28 @@ $r = $conn->query("SELECT COUNT(*) AS c FROM payment WHERE payment_status != 'Fu
 if ($r) $quickStats['pending_payment'] = (int)$r->fetch_assoc()['c'];
 $r = $conn->query("SELECT COUNT(*) AS c FROM enrollment");
 if ($r) $quickStats['total'] = (int)$r->fetch_assoc()['c'];
+
+// Verified applicants who don't have a student record yet — i.e. cleared
+// admission but never actually enrolled. Browsable list so staff don't
+// have to already know a reference ID to start someone's enrollment.
+$readyToEnroll = [];
+$r = $conn->query("
+    SELECT a.reference_id, a.first_name, a.last_name, a.program, a.year_level, a.verified_at
+    FROM applicants a
+    LEFT JOIN student s ON s.applicant_id = a.applicant_id
+    WHERE a.admission_status = 'verified' AND s.student_id IS NULL
+    ORDER BY a.verified_at ASC
+");
+if ($r) {
+    while ($row = $r->fetch_assoc()) {
+        $readyToEnroll[] = $row;
+    }
+}
+
 $db->close();
 
-// This page's search-card markup (.login-card, .enroll-input,
-// .search-dropdown, .btn-search, etc.) uses classes defined in the
-// Admission section's own theme files, not anything in admin.css --
-// but the page uses the shared Include/header.php + Include/sidebar.php
-// (app-layout/page-content shell) rather than Admission's own header,
-// so those files were never being loaded and the search card rendered
-// completely unstyled. Loading them here via the shared header's
-// existing $extraCss hook.
-$extraCss = [
-    '/SIAdrafts/Frontend/Css/Admission/style.css',
-    '/SIAdrafts/Frontend/Css/Admission/login.css',
-];
+include '../Include/header.php';
 ?>
-<?php include '../Include/header.php' ?>
 
 <div class="app-layout">
 
@@ -45,105 +51,89 @@ $extraCss = [
 
 <main class="page-content">
 
-<div class="container" style="padding-top:calc(var(--nav-h) + 56px); padding-bottom:60px;">
-  <div class="row justify-content-center">
-    <div class="col-12 col-sm-9 col-md-7 col-lg-5">
-
-      <?php if ($enrolled_ref): ?>
-      <div class="alert-box alert-success mb-3">
-        <iconify-icon icon="mdi:check-circle-outline"></iconify-icon>
+    <?php if ($enrolled_ref): ?>
+    <div class="alert-box alert-success" style="margin-bottom:24px;">
+        <i class="bi bi-check-circle-fill"></i>
         Enrollment #<?= $enrolled_ref ?> saved successfully. You can enroll another student below.
-      </div>
-      <?php endif; ?>
-
-      <div class="card login-card p-4 p-sm-5">
-        <div class="card-body p-0 text-center">
-          <div class="login-mark d-flex align-items-center justify-content-center mb-3 mx-auto">
-            <iconify-icon icon="mdi:school"></iconify-icon>
-          </div>
-          <h1 class="login-title h3 fw-bold mb-2">Student Enrollment</h1>
-          <p class="text-ink-soft mb-4">Enter the student ID or name to pull up their record.</p>
-
-          <div id="enroll-app" autocomplete="off">
-
-            <!-- Input + dropdown wrapped together so dropdown anchors to input -->
-            <div class="position-relative mb-1" style="z-index:100;">
-              <input
-                class="enroll-input w-100"
-                v-model="query"
-                :placeholder="nameMode ? 'Enter student name' : 'Reference ID'"
-                @input="onInput"
-                @keydown.enter.prevent="submitSearch"
-                @keydown.esc="results = []"
-                autocomplete="off">
-
-              <!-- Autocomplete dropdown anchored below the input -->
-              <div v-if="results.length" class="search-dropdown">
-                <div
-                  v-for="s in results"
-                  :key="s.student_id"
-                  class="search-result-item"
-                  @click="pick(s)">
-                  <div class="sri-name">{{ s.full_name }}</div>
-                  <div class="sri-meta">{{ s.display_id }} &mdash; {{ s.section_name }} &mdash; {{ s.type_name }}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="d-flex justify-content-between align-items-center mb-3">
-              <small class="text-ink-soft">{{ hint }}</small>
-              <a href="#" class="link-sage small" @click.prevent="toggle">
-                {{ nameMode ? 'Search by ID' : 'Search by Name' }}
-              </a>
-            </div>
-
-            <div v-if="searching" class="text-center py-2">
-              <small class="text-ink-soft">Searching&hellip;</small>
-            </div>
-
-            <div v-if="noResults" class="text-center py-2">
-              <small class="text-ink-soft">No students found.</small>
-            </div>
-
-            <button
-              type="button"
-              class="btn-search d-flex align-items-center justify-content-center gap-2 mx-auto"
-              @click="submitSearch">
-              Search <iconify-icon icon="mdi:magnify"></iconify-icon>
-            </button>
-          </div>
-
-        </div>
-      </div>
-
-      <div class="stat-grid" style="grid-template-columns:repeat(3,1fr); margin-top:20px;">
-        <div class="surface-1 rd-stat-card" style="padding:16px;">
-          <div class="rd-stat-icon" style="width:40px;height:40px;font-size:17px; background:var(--teal-100); color:var(--teal-600);"><i class="bi bi-check-circle-fill"></i></div>
-          <div class="rd-stat-figure mono" style="font-size:20px;"><?= $quickStats['today'] ?></div>
-          <div class="rd-stat-label">Enrolled Today</div>
-        </div>
-        <div class="surface-1 rd-stat-card" style="padding:16px;">
-          <div class="rd-stat-icon" style="width:40px;height:40px;font-size:17px; background:var(--seal-100); color:var(--seal-600);"><i class="bi bi-hourglass-split"></i></div>
-          <div class="rd-stat-figure mono" style="font-size:20px;"><?= $quickStats['pending_payment'] ?></div>
-          <div class="rd-stat-label">Pending Payment</div>
-        </div>
-        <div class="surface-1 rd-stat-card" style="padding:16px;">
-          <div class="rd-stat-icon" style="width:40px;height:40px;font-size:17px; background:var(--sky-100); color:var(--sky-600);"><i class="bi bi-mortarboard-fill"></i></div>
-          <div class="rd-stat-figure mono" style="font-size:20px;"><?= $quickStats['total'] ?></div>
-          <div class="rd-stat-label">Total Enrolled</div>
-        </div>
-      </div>
-
     </div>
-  </div>
-</div>
+    <?php endif; ?>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-icon blue"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+                <div class="stat-value"><?= $quickStats['today'] ?></div>
+                <div class="stat-label">Enrolled Today</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon gold"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+                <div class="stat-value"><?= $quickStats['pending_payment'] ?></div>
+                <div class="stat-label">Pending Payment</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon green"><i class="bi bi-mortarboard-fill"></i></div>
+            <div>
+                <div class="stat-value"><?= $quickStats['total'] ?></div>
+                <div class="stat-label">Total Enrolled</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="panel" style="margin-top:24px;">
+        <div class="panel-header">
+            <span class="panel-title">Ready to Enroll</span>
+            <span class="text-muted" style="font-size:12px;"><?= count($readyToEnroll) ?> verified applicant<?= count($readyToEnroll) === 1 ? '' : 's' ?> awaiting enrollment</span>
+        </div>
+        <div class="panel-body" style="padding:0;">
+            <div class="table-responsive">
+            <table class="data-table" id="readyToEnrollTable">
+                <thead>
+                    <tr>
+                        <th>Reference ID</th>
+                        <th>Applicant Name</th>
+                        <th>Program</th>
+                        <th>Year Level</th>
+                        <th>Verified On</th>
+                        <th style="width:110px;"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php if (empty($readyToEnroll)): ?>
+                        <tr><td colspan="6" style="text-align:center;">No verified applicants waiting to enroll right now.</td></tr>
+                    <?php else: ?>
+                        <?php foreach ($readyToEnroll as $row): ?>
+                            <tr>
+                                <td class="mono"><?= htmlspecialchars($row['reference_id']) ?></td>
+                                <td><?= htmlspecialchars($row['last_name'] . ', ' . $row['first_name']) ?></td>
+                                <td><?= htmlspecialchars($row['program']) ?></td>
+                                <td><?= (int)$row['year_level'] ?></td>
+                                <td><?= !empty($row['verified_at']) ? date('M d, Y', strtotime($row['verified_at'])) : '—' ?></td>
+                                <td>
+                                    <a href="enrollment_profile.php?reference_id=<?= urlencode($row['reference_id']) ?>" class="btn btn-outline" style="padding:4px 10px;font-size:12px">
+                                        Enroll
+                                    </a>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
 
 </main>
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<?php
-$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment.js'];
-include '../Include/footer.php';
-?>
+<?php if (!empty($readyToEnroll)): ?>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  initDataTable('#readyToEnrollTable', { order: [[4, 'asc']] });
+});
+</script>
+<?php endif; ?>
+<?php include '../Include/footer.php'; ?>

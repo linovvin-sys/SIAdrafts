@@ -4,6 +4,7 @@ require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
 require_once '../csrf.php';
+require_once '../subject_course.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user_id'])) {
@@ -62,6 +63,42 @@ if ($time_start >= $time_end) {
 
 if (!preg_match('/^\d{4}-\d{4}$/', $school_year)) {
     echo json_encode(['error' => 'Invalid school year format. Use YYYY-YYYY.']);
+    exit;
+}
+
+// Re-verify the subject is actually offered under this section's course —
+// never trust the client's picker alone.
+$secStmt = $conn->prepare("SELECT course_id FROM section WHERE section_id = ? LIMIT 1");
+$secStmt->bind_param('i', $section_id);
+$secStmt->execute();
+$sectionRow = $secStmt->get_result()->fetch_assoc();
+$secStmt->close();
+
+if (!$sectionRow) {
+    echo json_encode(['error' => 'Section not found.']);
+    exit;
+}
+
+if (!subject_belongs_to_course($conn, $subject_id, (int)$sectionRow['course_id'])) {
+    echo json_encode(['error' => 'This subject is not offered under the selected section\'s course.']);
+    exit;
+}
+
+// Re-verify the chosen semester matches the subject's own catalog semester
+// — a mismatch here silently hides the subject from enrollment for that term.
+$subStmt = $conn->prepare("SELECT semester FROM subject WHERE subject_id = ? LIMIT 1");
+$subStmt->bind_param('i', $subject_id);
+$subStmt->execute();
+$subjectRow = $subStmt->get_result()->fetch_assoc();
+$subStmt->close();
+
+if (!$subjectRow) {
+    echo json_encode(['error' => 'Subject not found.']);
+    exit;
+}
+
+if ((int)$subjectRow['semester'] !== $semester) {
+    echo json_encode(['error' => 'This subject belongs to a different semester than the one selected.']);
     exit;
 }
 
