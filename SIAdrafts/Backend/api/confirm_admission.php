@@ -59,21 +59,47 @@ if ($reference_id === '' || $ref_error !== null) {
 require '../requirements.php';
 
 $docs_submitted = array_map('htmlspecialchars', $_POST['docs'] ?? []);
+$docs_later      = array_map('htmlspecialchars', $_POST['docs_later'] ?? []);
 
-$labelToKey = [];
+$labelToKey  = [];
+$keyToGroup  = [];
 foreach (REQUIREMENT_DEFINITIONS as $def) {
     $labelToKey[$def['label']] = $def['key'];
+    $keyToGroup[$def['key']]   = $def['group'];
 }
 $submittedKeys = [];
 foreach ($docs_submitted as $label) {
     if (isset($labelToKey[$label])) $submittedKeys[] = $labelToKey[$label];
 }
-$missingGroups = missing_requirement_groups($submittedKeys);
+
+// Critical groups (PSA/NSO, Good Moral) can only ever be satisfied by an
+// actual submission — never trust "later" for these, even if a client
+// sends one anyway (the UI never offers that option, but the server must
+// not rely on that alone). Silently drop any critical-group entries here
+// rather than accepting them as a deferred document.
+$criticalGroups = critical_requirement_groups();
+$laterKeys = [];
+$validLaterLabels = [];
+foreach ($docs_later as $label) {
+    $key = $labelToKey[$label] ?? null;
+    if ($key !== null && !in_array($keyToGroup[$key], $criticalGroups, true)) {
+        $laterKeys[] = $key;
+        $validLaterLabels[] = $label;
+    }
+}
+// Everything downstream (the INSERT loop and the response summary) reads
+// $docs_later — swap in the filtered list so a critical doc can never slip
+// through as "will_submit_later" regardless of what the client sent.
+$docs_later = $validLaterLabels;
+
+// Critical groups are judged on submitted docs only; deferring one never
+// satisfies it. Non-critical groups can be satisfied by either.
+$blockingGroups = array_intersect(missing_requirement_groups($submittedKeys), $criticalGroups);
 
 $errors = [];
-if (!empty($missingGroups)) {
+if (!empty($blockingGroups)) {
     $missingLabels = [];
-    foreach ($missingGroups as $groupKey) {
+    foreach ($blockingGroups as $groupKey) {
         foreach (REQUIREMENT_DEFINITIONS as $def) {
             if ($def['group'] === $groupKey) { $missingLabels[] = $def['label']; break; }
         }
@@ -136,20 +162,53 @@ if (!$upd->execute()) {
 }
 $upd->close();
 
-$docStmt = $conn->prepare("
-    INSERT INTO applicant_documents (applicant_id, document_name, status, verified_by)
-    VALUES (?, ?, 'submitted', ?)
-");
-foreach ($docs_submitted as $doc) {
-    $docStmt->bind_param('isi', $applicant_id, $doc, $_SESSION['user_id']);
-    if (!$docStmt->execute()) {
-        $conn->rollback();
-        http_response_code(500);
-        echo json_encode(['success' => false, 'errors' => ['Database error (documents): ' . $docStmt->error]]);
-        exit;
+// A row for this exact document may already exist — most commonly the
+// applicant declared it "will submit later" on the online form, and now
+// walk-in is recording what actually happened. Update that row instead of
+// inserting a second one, or Pending Documents ends up showing stale
+// "still owed" entries for documents that were in fact already collected,
+// or the same document listed twice.
+function upsert_applicant_document(mysqli $conn, int $applicant_id, string $doc, string $status, ?int $verified_by): void
+{
+    $find = $conn->prepare("
+        SELECT document_id FROM applicant_documents
+        WHERE applicant_id = ? AND document_name = ?
+        ORDER BY document_id DESC LIMIT 1
+    ");
+    $find->bind_param('is', $applicant_id, $doc);
+    $find->execute();
+    $existing = $find->get_result()->fetch_assoc();
+    $find->close();
+
+    if ($existing) {
+        $upd = $conn->prepare("
+            UPDATE applicant_documents
+            SET status = ?, verified_by = ?, uploaded_at = NOW()
+            WHERE document_id = ?
+        ");
+        $upd->bind_param('sii', $status, $verified_by, $existing['document_id']);
+        $upd->execute();
+        $upd->close();
+    } else {
+        $ins = $conn->prepare("
+            INSERT INTO applicant_documents (applicant_id, document_name, status, verified_by)
+            VALUES (?, ?, ?, ?)
+        ");
+        $ins->bind_param('issi', $applicant_id, $doc, $status, $verified_by);
+        $ins->execute();
+        $ins->close();
     }
 }
-$docStmt->close();
+
+foreach ($docs_submitted as $doc) {
+    upsert_applicant_document($conn, $applicant_id, $doc, 'submitted', (int)$_SESSION['user_id']);
+}
+
+// Deferred docs get no verified_by — nobody's actually checked them yet,
+// that only happens when mark_document_received.php later flips them over.
+foreach ($docs_later as $doc) {
+    upsert_applicant_document($conn, $applicant_id, $doc, 'will_submit_later', null);
+}
 
 $credited_subject_ids = array_map('intval', $_POST['credited_subjects'] ?? []);
 
@@ -182,6 +241,7 @@ echo json_encode([
         'guardian'    => $applicant['guardian_name'] . ' (' . $applicant['guardian_relationship'] . ')',
         'verified_by' => $verifying_staff_id,
         'documents'   => $docs_submitted,
+        'documents_later' => $docs_later,
         'credited_subjects' => count($credited_subject_ids),
     ],
 ]);

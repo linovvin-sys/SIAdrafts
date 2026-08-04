@@ -1,37 +1,3 @@
-// Adds another academic-history row block, same as the staff form.
-document.getElementById('addHistoryRow').addEventListener('click', function () {
-  const rows = document.getElementById('historyRows');
-  const count = rows.querySelectorAll('.history-row').length;
-  const block = document.createElement('div');
-  block.className = 'history-row';
-  block.innerHTML = `
-    <span class="row-tag">School ${count + 1}</span>
-    <div class="row g-3">
-      <div class="col-md-6">
-        <label class="form-label">School name</label>
-        <input type="text" class="form-control" name="school_name[]">
-      </div>
-      <div class="col-md-6">
-        <label class="form-label">School address</label>
-        <input type="text" class="form-control" name="school_address[]">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Year graduated / last attended</label>
-        <input type="text" class="form-control" name="school_year[]">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">Strand / track (if SHS)</label>
-        <input type="text" class="form-control" name="school_strand[]">
-      </div>
-      <div class="col-md-4">
-        <label class="form-label">General average / GPA</label>
-        <input type="text" class="form-control" name="school_gpa[]">
-      </div>
-    </div>
-  `;
-  rows.appendChild(block);
-});
-
 const unlockBtn = document.getElementById('unlockProgramBtn');
 if (unlockBtn) {
   unlockBtn.addEventListener('click', function () {

@@ -48,6 +48,10 @@ if (empty($sections)) {
 }
 
 // 2) Subjects per section
+// Only subjects the registrar actually scheduled for this exact section —
+// no cross-course sharing. Gen Ed subjects are manually added per section
+// like any other subject, so a section's subject load always matches what
+// the registrar set up in schedule.php.
 $subStmt = $conn->prepare(
     "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
             sc.category_name,
@@ -56,13 +60,12 @@ $subStmt = $conn->prepare(
             r.room_name
      FROM subject sub
      JOIN subject_category sc ON sub.category_id = sc.category_id
-     JOIN schedule sch        ON sch.subject_id = sub.subject_id
-     JOIN section sec         ON sec.section_id = sch.section_id
+     JOIN schedule sch ON sch.subject_id = sub.subject_id
      LEFT JOIN professor p ON sch.professor_id = p.professor_id
      LEFT JOIN room r      ON sch.room_id = r.room_id
-     WHERE sec.course_id = ?
-       AND sub.year_level = ? AND sub.semester = ?
-       AND sch.semester = ? AND sch.school_year = ? AND sch.section_id = ?
+     WHERE sub.year_level = ? AND sub.semester = ?
+       AND sch.semester = ? AND sch.school_year = ?
+       AND sch.section_id = ?
      ORDER BY sc.category_name, sub.subject_code"
 );
 if (!$subStmt) {
@@ -74,7 +77,7 @@ if (!$subStmt) {
 $out = [];
 foreach ($sections as $sec) {
     $section_id = (int)$sec['section_id'];
-    $subStmt->bind_param('iiiisi', $course_id, $year_level, $semester, $semester, $school_year, $section_id);
+    $subStmt->bind_param('iiisi', $year_level, $semester, $semester, $school_year, $section_id);
     $subStmt->execute();
     $subjects = $subStmt->get_result()->fetch_all(MYSQLI_ASSOC);
 

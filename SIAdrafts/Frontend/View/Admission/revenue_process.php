@@ -1,15 +1,19 @@
 <?php
+$extraCss = ['/SIAdrafts/Frontend/Css/Admission/treasury.css'];
 $pageTitle = "Revenue — Process";
 $activePage = "revenue_process";
 
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_TREASURY]);
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/unpaid_transfer.php';
 
 $db = new Database();
 $conn = $db->connect();
 transfer_overdue_unpaid($conn);
-include '../Admission/Include/header.php';
+include '../Include/header.php';
 
 // ---- Still has a balance ----
 // Excludes anything already transferred to the Unpaid Students list — once
@@ -39,7 +43,7 @@ function student_fullname_rpr(array $s): string {
 ?>
 
 <div class="app-layout">
-  <?php include '../Admission/Include/sidebar.php'; ?>
+  <?php include '../Include/sidebar.php'; ?>
   <main class="page-content">
 
     <div class="treasury-page">
@@ -101,4 +105,4 @@ function student_fullname_rpr(array $s): string {
   </main>
 </div>
 
-<?php include '../Admission/Include/footer.php' ?>
+<?php include '../Include/footer.php'; ?>

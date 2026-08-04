@@ -7,7 +7,6 @@ if (!empty($_SESSION['user_id'])) {
 
 $page_scripts = [
     //'/SIAdrafts/Frontend/Js/Admission/password-toggle.js',
-    //'/SIAdrafts/Frontend/Js/Admission/login-submit.js',
     //'/SIAdrafts/Frontend/Js/Admission/login.js',
     ];
 ?>
@@ -64,10 +63,6 @@ $page_scripts = [
                     <iconify-icon icon="mdi:eye-outline"></iconify-icon>
                   </button>
                 </div>
-              </div>
-
-              <div class="mb-4">
-                <a href="#" class="link-sage small">Forgot password?</a>
               </div>
 
               <button type="submit" id="login-btn" class="btn btn-login w-100 py-2 d-flex align-items-center justify-content-center gap-2">

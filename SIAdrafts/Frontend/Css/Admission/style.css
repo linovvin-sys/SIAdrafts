@@ -130,6 +130,21 @@
     right: 14px;
   }
 
+  .nav-guest-home{
+    display:flex;
+    align-items:center;
+    gap: 6px;
+    font-weight: 600;
+    font-size: 0.92rem;
+    color: var(--ink-soft);
+    text-decoration: none;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: rgba(31,46,40,0.045);
+    white-space: nowrap;
+  }
+  .nav-guest-home:hover{ color: var(--ink); background: rgba(31,46,40,0.08); }
+
   /* navlinks */
   .nav-links{
     display:flex;
@@ -286,6 +301,7 @@
   @media (max-width: 860px){
     .nav-links{ display:none; }
     .nav-toggle{ display:flex; }
+    .nav-guest-home{ display:none; }
     .nav-cta .btn-enroll-desktop{ display:none; }
   }
   @media (min-width: 861px){

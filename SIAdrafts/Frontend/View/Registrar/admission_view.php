@@ -4,7 +4,7 @@ $activePage = "admission";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff']);
+require_role(['Registrar Staff', 'Head Registrar']);
 require_once __DIR__ . '/../../../Backend/admin/admission_view.php';
 
 include '../Include/header.php';
@@ -227,6 +227,7 @@ include '../Include/header.php';
                         <div class="form-section">
                             <div class="section-title">Documents Submitted</div>
 
+                            <div class="table-responsive">
                             <table class="data-table">
                                 <thead>
                                     <tr>
@@ -254,6 +255,7 @@ include '../Include/header.php';
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
+                            </div>
                         </div>
                     <?php endif; ?>
 

@@ -21,24 +21,24 @@ include '../Include/header.php';
 
       <div class="stats-grid" style="grid-template-columns:repeat(4,1fr); margin-bottom:24px;">
         <div class="stat-card">
-          <div class="stat-icon gold">👥</div>
+          <div class="stat-icon gold"><i class="bi bi-people-fill"></i></div>
           <div><div class="stat-value"><?= number_format($stats['total']) ?></div><div class="stat-label">Total Enrolees</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon blue">🆕</div>
+          <div class="stat-icon blue"><i class="bi bi-person-plus-fill"></i></div>
           <div><div class="stat-value"><?= number_format($stats['new']) ?></div><div class="stat-label">New Students</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon green">🔄</div>
+          <div class="stat-icon green"><i class="bi bi-arrow-repeat"></i></div>
           <div><div class="stat-value"><?= number_format($stats['continuing']) ?></div><div class="stat-label">Continuing</div></div>
         </div>
         <div class="stat-card">
-          <div class="stat-icon purple">👨‍🎓</div>
+          <div class="stat-icon purple"><i class="bi bi-shuffle"></i></div>
           <div><div class="stat-value"><?= number_format($stats['irregular']) ?></div><div class="stat-label">Irregular</div></div>
         </div>
       </div>
 
-      <div class="grid-2">
+      <div class="grid-2" style="margin-bottom:24px;">
 
         <div class="panel">
           <div class="panel-header">
@@ -70,7 +70,7 @@ include '../Include/header.php';
           <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_enrolees_csv.php">Export Report</a>
         </div>
 
-        <div class="panel-body" style="padding:0">
+        <div class="panel-body" style="padding:16px 24px 24px;">
           <div class="table-responsive">
           <table class="data-table" id="enroleesTable">
             <thead>

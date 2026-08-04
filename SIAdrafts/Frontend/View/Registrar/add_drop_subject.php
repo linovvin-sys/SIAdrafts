@@ -5,7 +5,8 @@ $pageScript = "add_drop_subject";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff']);
+require_role(['Registrar Staff', 'Head Registrar']);
+require_once __DIR__ . '/../../../Backend/admin/enrollment.php';
 
 include '../Include/header.php';
 ?>
@@ -15,6 +16,8 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+
+    <div class="panel-stack">
 
     <!-- Search -->
     <div class="panel">
@@ -29,7 +32,7 @@ include '../Include/header.php';
           </div>
           <button type="button" class="btn btn-primary" id="searchStudentBtn">Search</button>
         </div>
-        <div id="searchEmptyState" class="addrop-empty">Search a student ID to view their enrollment and manage subjects.</div>
+        <div id="searchEmptyState" class="addrop-empty">Search a student ID above, or pick one from the list below, to view their enrollment and manage subjects.</div>
       </div>
     </div>
 
@@ -66,6 +69,49 @@ include '../Include/header.php';
           </tbody>
         </table>
       </div>
+    </div>
+
+    <!-- All Enrolled Students -->
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Enrolled Students</span>
+      </div>
+      <div class="panel-body" style="padding:16px 24px;">
+        <div class="table-responsive">
+        <table class="data-table" id="allStudentsTable">
+          <thead>
+            <tr>
+              <th>Student ID</th>
+              <th>Name</th>
+              <th>Course</th>
+              <th>Section</th>
+              <th>Year / Sem</th>
+              <th>Status</th>
+              <th style="width:110px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if (!empty($enrollmentList)): ?>
+              <?php foreach ($enrollmentList as $row): ?>
+                <tr>
+                  <td class="mono"><?= htmlspecialchars($row['student_no']) ?></td>
+                  <td><?= htmlspecialchars($row['student_name']) ?></td>
+                  <td><?= htmlspecialchars($row['course_name'] ?? '—') ?></td>
+                  <td><?= htmlspecialchars($row['section_name'] ?? '—') ?></td>
+                  <td class="mono"><?= !empty($row['year_level']) ? (int)$row['year_level'] . 'Y' : '—' ?><?= !empty($row['semester']) ? ' · Sem ' . (int)$row['semester'] : '' ?></td>
+                  <td><span class="status-pill status-pill--<?= strtolower($row['status']) === 'enrolled' ? 'approved' : 'pending' ?>"><?= htmlspecialchars($row['status']) ?></span></td>
+                  <td><button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px" data-manage-student="<?= htmlspecialchars($row['student_no']) ?>">Manage</button></td>
+                </tr>
+              <?php endforeach; ?>
+            <?php else: ?>
+              <tr><td colspan="7" style="text-align:center;">No enrolled students found.</td></tr>
+            <?php endif; ?>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
     </div>
 
     <!-- Add Subject Modal -->

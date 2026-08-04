@@ -171,7 +171,7 @@ include '../Include/header.php';
             <?php endif; ?>
         </div>
 
-        <div class="grid-2">
+        <div class="grid-2" style="margin-bottom:24px;">
 
             <div class="panel">
                 <div class="panel-header">

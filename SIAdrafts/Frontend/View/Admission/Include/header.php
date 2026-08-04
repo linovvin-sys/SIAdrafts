@@ -9,7 +9,6 @@ $_full_name  = htmlspecialchars($_SESSION['full_name'] ?? '', ENT_QUOTES);
 $_cur        = basename($_SERVER['PHP_SELF']);
 $_enroll_pages = ['enrollment.php','enrollment_profile.php','enrollment_subjects.php','enrollment_confirm.php'];
 $_admission_pages = ['admission.php','admission_process.php','admission_confirm.php'];
-$_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -25,19 +24,6 @@ $_treasury_pages = ['treasury.php', 'get_payment_info.php', 'record_payment.php'
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/admission.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/login.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/treasury.css">
-<?php
-// admin.css carries the shared design-system classes (rd-stat-card,
-// stamp, surface-1/2, mono, ledger, etc.) used by the pages below that
-// have been rebuilt on it. It's scoped to just those pages -- not
-// loaded unconditionally for the whole Admission section -- because its
-// universal `body`/`*` reset would otherwise cascade onto pages like
-// login.php and online_admission.php that haven't been reviewed against
-// it and have their own tuned base styles.
-$_designSystemPages = ['enrollment.php', 'treasury.php', 'revenue_process.php', 'revenue_paid.php', 'unpaid_students.php'];
-if (in_array($_cur, $_designSystemPages, true)):
-?>
-<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css">
-<?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
@@ -45,7 +31,7 @@ if (in_array($_cur, $_designSystemPages, true)):
 
   <div class="nav-wrap" id="navWrap">
     <nav class="navbar <?= !$_logged_in ? 'navbar-guest' : '' ?>">
-      <a class="brand" href="<?= $_logged_in ? 'enrollment.php' : 'login.php' ?>">
+      <a class="brand" href="<?= $_logged_in ? '/SIAdrafts/Frontend/View/Admission/enrollment.php' : '/SIAdrafts/Frontend/View/index.php' ?>">
         <span class="brand-mark">
           <iconify-icon icon="mdi:school" style="color:#FAF7F0; font-size:19px;"></iconify-icon>
         </span>
@@ -54,13 +40,13 @@ if (in_array($_cur, $_designSystemPages, true)):
       <ul class="nav-links">
         <?php if ($_logged_in && $_role === 'Staff'): ?>
           <li>
-            <a href="enrollment.php" <?= in_array($_cur, $_enroll_pages) ? 'class="active"' : '' ?>>
+            <a href="/SIAdrafts/Frontend/View/Admission/enrollment.php" <?= in_array($_cur, $_enroll_pages) ? 'class="active"' : '' ?>>
               Enrollment
             </a>
           </li>
           <div class="nav-cta">
             <div class="nav-user-wrap">
-              <div class="nav-user-trigger">
+              <div class="nav-user-trigger" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
                 <iconify-icon icon="mdi:account-circle-outline" style="font-size:17px;"></iconify-icon>
                 <span><?= $_full_name ?></span>
                 <iconify-icon icon="mdi:chevron-down" class="nav-user-chevron"></iconify-icon>
@@ -83,42 +69,13 @@ if (in_array($_cur, $_designSystemPages, true)):
           </div>
         <?php elseif ($_logged_in && $_role === 'Admission'): ?>
           <li>
-              <a href="admission.php" <?= in_array($_cur, $_admission_pages) ? 'class="active"' : '' ?>>
+              <a href="/SIAdrafts/Frontend/View/Admission/admission.php" <?= in_array($_cur, $_admission_pages) ? 'class="active"' : '' ?>>
               Admission
               </a>
           </li>
           <div class="nav-cta">
             <div class="nav-user-wrap">
-              <div class="nav-user-trigger">
-                <iconify-icon icon="mdi:account-circle-outline" style="font-size:17px;"></iconify-icon>
-                <span><?= $_full_name ?></span>
-                <iconify-icon icon="mdi:chevron-down" class="nav-user-chevron"></iconify-icon>
-              </div>
-              <div class="nav-user-dropdown">
-                <div class="nud-name">
-                  <iconify-icon icon="mdi:account-circle" style="font-size:16px;"></iconify-icon>
-                  <?= $_full_name ?>
-                </div>
-                <div class="nud-divider"></div>
-                <a href="/SIAdrafts/Backend/api/logout.php" class="nud-logout">
-                  <iconify-icon icon="mdi:logout" style="font-size:15px;"></iconify-icon>
-                  Log out
-                </a>
-              </div>
-            </div>
-            <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
-              <span></span>
-            </button>
-          </div>
-        <?php elseif ($_logged_in && $_role === 'Treasury'): ?>
-          <li>
-              <a href="treasury.php" <?= in_array($_cur, $_treasury_pages) ? 'class="active"' : '' ?>>
-              Treasury
-              </a>
-          </li>
-          <div class="nav-cta">
-            <div class="nav-user-wrap">
-              <div class="nav-user-trigger">
+              <div class="nav-user-trigger" tabindex="0" role="button" aria-haspopup="true" aria-expanded="false">
                 <iconify-icon icon="mdi:account-circle-outline" style="font-size:17px;"></iconify-icon>
                 <span><?= $_full_name ?></span>
                 <iconify-icon icon="mdi:chevron-down" class="nav-user-chevron"></iconify-icon>
@@ -143,6 +100,10 @@ if (in_array($_cur, $_designSystemPages, true)):
     
       <?php else: ?>
       <div class="nav-cta">
+        <a href="/SIAdrafts/Frontend/View/index.php" class="nav-guest-home">
+          <iconify-icon icon="mdi:arrow-left" style="font-size:15px;"></iconify-icon>
+          Back to site
+        </a>
         <button class="nav-toggle" id="navToggle" aria-label="Toggle menu" aria-expanded="false">
           <span></span>
         </button>
@@ -153,11 +114,12 @@ if (in_array($_cur, $_designSystemPages, true)):
 
   <div class="mobile-panel" id="mobilePanel">
     <?php if ($_logged_in): ?>
-      <a href="enrollment.php" <?= in_array($_cur, $_enroll_pages) ? 'class="active"' : '' ?>>Enrollment</a>
+      <a href="/SIAdrafts/Frontend/View/Admission/enrollment.php" <?= in_array($_cur, $_enroll_pages) ? 'class="active"' : '' ?>>Enrollment</a>
       <a href="/SIAdrafts/Backend/api/logout.php" class="btn-enroll" style="background:var(--ink);color:#fff;justify-content:center;">
         Log out <iconify-icon icon="mdi:logout" style="font-size:14px;"></iconify-icon>
       </a>
     <?php else: ?>
-      <a href="login.php" class="active">Login</a>
+      <a href="/SIAdrafts/Frontend/View/index.php">Home</a>
+      <a href="/SIAdrafts/Frontend/View/login.php" class="active">Login</a>
     <?php endif; ?>
   </div>

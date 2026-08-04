@@ -1,15 +1,19 @@
 <?php 
-$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/treasury.js'];
+$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/treasury.js'];
+$extraCss = ['/SIAdrafts/Frontend/Css/Admission/treasury.css'];
 $pageTitle = "Treasury";
 $activePage = "treasury";
 require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_TREASURY]);
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/unpaid_transfer.php';
 
 $db = new Database();
 $conn = $db->connect();
 transfer_overdue_unpaid($conn);
-include '../Admission/Include/header.php';
+include '../Include/header.php';
 
 
 // ---- Queue: all payment rows not yet fully paid ----
@@ -87,7 +91,7 @@ function student_fullname_t(array $s): string {
 ?>
 
 <div class="app-layout">
-  <?php include '../Admission/Include/sidebar.php'; ?>
+  <?php include '../Include/sidebar.php'; ?>
   <main class="page-content">
 
 <div class="treasury-page">
@@ -132,6 +136,7 @@ function student_fullname_t(array $s): string {
           <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_revenue_csv.php">Export CSV</a>
         </div>
         <div class="panel-body" style="padding:0">
+          <div class="table-responsive">
           <table class="data-table">
             <thead>
               <tr>
@@ -186,6 +191,7 @@ function student_fullname_t(array $s): string {
               <?php endif; ?>
             </tbody>
           </table>
+          </div>
         </div>
       </div>
     </div>
@@ -327,4 +333,4 @@ function student_fullname_t(array $s): string {
   </main>
 </div>
 
-<?php include '../Admission/Include/footer.php' ?>
+<?php include '../Include/footer.php'; ?>

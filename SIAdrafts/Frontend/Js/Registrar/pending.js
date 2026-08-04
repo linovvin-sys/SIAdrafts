@@ -2,6 +2,13 @@ document.addEventListener('DOMContentLoaded', init);
 
 const API_BASE = '/SIAdrafts/Backend/api/';
 
+// Small "3 pending" label next to each panel title, matching the count
+// badge convention used on registrar_dashboard.php's panels.
+function setCount(countId, n) {
+  const el = document.getElementById(countId);
+  if (el) el.textContent = n === 1 ? '1 pending' : n + ' pending';
+}
+
 // Shimmer placeholder rows shown while a queue is being fetched, so the
 // panel never sits as a bare empty table during load.
 function showSkeleton(bodyId, cols) {
@@ -38,6 +45,7 @@ async function loadPendingCourses() {
     const list = d.pending || [];
     body.innerHTML = '';
     empty.style.display = list.length ? 'none' : 'block';
+    setCount('pendingCourseCount', list.length);
     list.forEach(item => body.appendChild(buildCourseRow(item)));
   } catch (_) {
     body.innerHTML = '';
@@ -77,6 +85,7 @@ async function loadPendingSections() {
     const list = d.pending || [];
     body.innerHTML = '';
     empty.style.display = list.length ? 'none' : 'block';
+    setCount('pendingSectionCount', list.length);
     list.forEach(item => body.appendChild(buildSectionRow(item)));
   } catch (_) {
     body.innerHTML = '';
@@ -116,6 +125,7 @@ async function loadPendingSubjects() {
     const list = d.pending || [];
     body.innerHTML = '';
     empty.style.display = list.length ? 'none' : 'block';
+    setCount('pendingSubjectCount', list.length);
     list.forEach(item => body.appendChild(buildSubjectRow(item)));
   } catch (_) {
     body.innerHTML = '';
@@ -156,6 +166,7 @@ async function loadPendingSchedules() {
     const list = d.pending || [];
     body.innerHTML = '';
     empty.style.display = list.length ? 'none' : 'block';
+    setCount('pendingScheduleCount', list.length);
     list.forEach(item => body.appendChild(buildScheduleRow(item)));
   } catch (_) {
     body.innerHTML = '';
@@ -230,10 +241,19 @@ async function rejectItem(endpoint, idField, idValue, tr, emptyStateId, bodyId) 
   Swal.fire({ icon: 'success', title: 'Rejected', timer: 1200, showConfirmButton: false });
 }
 
+const COUNT_ID_BY_BODY_ID = {
+  pendingCourseBody:  'pendingCourseCount',
+  pendingSectionBody: 'pendingSectionCount',
+  pendingSubjectBody: 'pendingSubjectCount',
+  pendingBody:        'pendingScheduleCount',
+};
+
 function toggleEmptyIfNoRows(emptyStateId, bodyId) {
   const empty = document.getElementById(emptyStateId);
   const body = document.getElementById(bodyId);
   empty.style.display = body.children.length ? 'none' : 'block';
+  const countId = COUNT_ID_BY_BODY_ID[bodyId];
+  if (countId) setCount(countId, body.children.length);
 }
 
 function csrfToken() {

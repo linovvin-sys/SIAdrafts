@@ -3,7 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 .sched-page-title {
   font-size: 20px;
@@ -223,11 +223,10 @@
 }
 
 /* ===== EMPTY STATE ===== */
-.empty-state {
-  text-align: center;
-  padding: 56px 24px;
-  color: var(--text-muted);
-}
+/* Container box (padding/centering) comes from admin.css's shared
+   .empty-state rule — only this page's own emoji icon sizing lives here,
+   since schedule.css loads after admin.css and would otherwise silently
+   override its nicer flex-centered, icon-circle version on every page. */
 .empty-state .empty-icon {
   font-size: 40px;
   margin-bottom: 12px;

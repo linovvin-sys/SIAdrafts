@@ -251,7 +251,6 @@ include '../Admission/Include/header.php';
 
         <div id="historyRows">
           <div class="history-row">
-            <span class="row-tag">School 1</span>
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">School name</label>
@@ -276,8 +275,6 @@ include '../Admission/Include/header.php';
             </div>
           </div>
         </div>
-
-        <button type="button" class="btn-add-row" id="addHistoryRow">+ Add another school</button>
       </section>
 
       <section class="form-section">
@@ -298,9 +295,9 @@ include '../Admission/Include/header.php';
           <div class="row g-2 align-items-center requirement-row" data-group="<?= htmlspecialchars($req['group']) ?>" style="margin-bottom:10px;">
             <div class="col-md-4">
               <?php if ($groupAlreadyRendered): ?>
-                <label class="form-label" style="opacity:.6;">or — <?= htmlspecialchars($req['label']) ?></label>
+                <label class="form-label" style="opacity:.6;">or — <?= htmlspecialchars($req['label']) ?><span class="required">*</span></label>
               <?php else: ?>
-                <label class="form-label"><?= htmlspecialchars($req['label']) ?></label>
+                <label class="form-label"><?= htmlspecialchars($req['label']) ?><span class="required">*</span></label>
               <?php endif; ?>
             </div>
             <div class="col-md-4">

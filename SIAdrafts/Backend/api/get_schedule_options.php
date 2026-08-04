@@ -25,11 +25,29 @@ $sections = $conn->query("
 ")->fetch_all(MYSQLI_ASSOC);
 
 $subjects = $conn->query("
-    SELECT subject_id, subject_code, subject_name, units, year_level, semester
-    FROM subject
-    WHERE status = 'Approved'
-    ORDER BY year_level, semester, subject_code
+    SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units, sub.year_level, sub.semester, sub.course_id,
+           sc.category_name, sc.department_id
+    FROM subject sub
+    LEFT JOIN subject_category sc ON sc.category_id = sub.category_id
+    WHERE sub.status = 'Approved'
+    ORDER BY sub.year_level, sub.semester, sub.subject_code
 ")->fetch_all(MYSQLI_ASSOC);
+
+// subject_course cross-lists a subject to multiple courses (e.g. Gen-Ed
+// subjects shared by BSPSYCH and BSCRIM) — it's the source of truth
+// whenever it has rows for a subject. subject.course_id defaults to 1
+// (BSIT) for nearly everything, so it's only used as a fallback for
+// subjects with no subject_course rows at all (see subject_course.php).
+$subjectCourseMap = [];
+$scRows = $conn->query("SELECT subject_id, course_id FROM subject_course")->fetch_all(MYSQLI_ASSOC);
+foreach ($scRows as $row) {
+    $subjectCourseMap[(int)$row['subject_id']][] = (int)$row['course_id'];
+}
+foreach ($subjects as &$subject) {
+    $sid = (int)$subject['subject_id'];
+    $subject['course_ids'] = $subjectCourseMap[$sid] ?? [(int)$subject['course_id']];
+}
+unset($subject);
 
 $rooms = $conn->query("
     SELECT room_id, room_name, room_type, capacity
@@ -38,7 +56,7 @@ $rooms = $conn->query("
 ")->fetch_all(MYSQLI_ASSOC);
 
 $professors = $conn->query("
-    SELECT professor_id, CONCAT(first_name, ' ', last_name) AS professor_name
+    SELECT professor_id, CONCAT(first_name, ' ', last_name) AS professor_name, department_id
     FROM professor
     WHERE status_id = 1
     ORDER BY last_name
