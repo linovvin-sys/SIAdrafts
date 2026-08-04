@@ -1,0 +1,245 @@
+/*
+ * Glass theme — a Bootstrap/vanilla-CSS-compatible layer of glassmorphism
+ * utility classes (.glass-nav, .glass-card, .glass-btn, .glass-orb, ...).
+ * Additive only: nothing here overrides a framework's own source files.
+ * Apply these classes alongside existing component classes.
+ */
+
+:root {
+  --glass-blur: 14px;
+  --glass-border: rgba(255, 255, 255, 0.35);
+  --glass-border-dark: rgba(255, 255, 255, 0.14);
+  --glass-radius: 16px;
+  --glass-shadow: 0 8px 32px rgba(31, 38, 135, 0.12), 0 2px 8px rgba(27, 42, 74, 0.06);
+  --glass-bg-light: rgba(255, 255, 255, 0.55);
+  --glass-bg-lighter: rgba(255, 255, 255, 0.7);
+  --glass-bg-dark: rgba(255, 255, 255, 0.08);
+
+  /* Accent orbs: brand amber, plus two new hues that read as fresh
+     without abandoning the existing ink/amber/sage identity. */
+  --orb-amber: #E8A33D;
+  --orb-indigo: #6366F1;
+  --orb-rose: #F472B6;
+}
+
+/* ---------- background orbs ---------- */
+
+.glass-bg-orbs {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.glass-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.35;
+  will-change: transform;
+  animation: glass-orb-drift 26s ease-in-out infinite;
+}
+
+.glass-orb--amber {
+  width: 480px; height: 480px;
+  top: -120px; left: -80px;
+  background: var(--orb-amber);
+  animation-duration: 30s;
+}
+
+.glass-orb--indigo {
+  width: 420px; height: 420px;
+  top: 30%; right: -140px;
+  background: var(--orb-indigo);
+  animation-duration: 24s;
+  animation-delay: -6s;
+}
+
+.glass-orb--rose {
+  width: 380px; height: 380px;
+  bottom: -100px; left: 20%;
+  background: var(--orb-rose);
+  animation-duration: 28s;
+  animation-delay: -12s;
+}
+
+@keyframes glass-orb-drift {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(30px, 40px) scale(1.06); }
+  66%  { transform: translate(-25px, 20px) scale(0.97); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+/* ---------- glass surfaces ---------- */
+
+.glass-nav,
+.glass-card,
+.glass-modal {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius);
+  box-shadow: var(--glass-shadow);
+}
+
+.glass-nav {
+  background: var(--glass-bg-lighter);
+}
+
+/* Dark-section variant (e.g. panels sitting on the ink-navy programs
+   section) — lower-opacity white fill so it reads as glass over a dark
+   backdrop rather than a light card floating incorrectly. */
+.glass-card--dark {
+  background: var(--glass-bg-dark);
+  border-color: var(--glass-border-dark);
+  color: #FAF7F0;
+}
+
+.glass-card {
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+}
+
+.glass-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(232, 163, 61, 0.45);
+  box-shadow: 0 18px 44px rgba(31, 38, 135, 0.18), 0 6px 16px rgba(27, 42, 74, 0.08);
+}
+
+.glass-card--dark:hover {
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* Signature interaction: a soft diagonal light sweep on hover, the one
+   consistent "premium" cue every glass surface shares. */
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.35) 47%, rgba(255, 255, 255, 0.35) 53%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.glass-card:hover::before {
+  transform: translateX(120%);
+  transition: transform 0.9s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.glass-card--dark::before {
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.12) 47%, rgba(255, 255, 255, 0.12) 53%, transparent 70%);
+}
+
+/* ---------- glass buttons ---------- */
+
+.glass-btn {
+  background: rgba(255, 255, 255, 0.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.glass-btn:hover {
+  background: rgba(255, 255, 255, 0.68);
+  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.18), 0 8px 24px -8px rgba(99, 102, 241, 0.35);
+  transform: translateY(-1px);
+}
+
+/* Primary CTA keeps its solid brand-amber fill for conversion clarity,
+   but still picks up a soft glass-style glow on hover/focus. */
+.glass-btn-primary:hover,
+.glass-btn-primary:focus-visible {
+  box-shadow: 0 0 24px rgba(232, 163, 61, 0.55), 0 8px 20px -8px rgba(232, 163, 61, 0.8);
+}
+
+/* ---------- glass form controls ---------- */
+
+.glass-input {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid var(--glass-border);
+  border-radius: 10px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: rgba(99, 102, 241, 0.5);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.15);
+  background: rgba(255, 255, 255, 0.75);
+}
+
+/* ---------- accordion (FAQ) glass skin ---------- */
+
+.glass-accordion-item {
+  background: var(--glass-bg-light);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  border-radius: var(--glass-radius) !important;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.glass-accordion-item .glass-accordion-btn {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 18px 22px;
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink, #1B2A4A);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.glass-accordion-item .glass-accordion-body {
+  max-height: 0;
+  overflow: hidden;
+  padding: 0 22px;
+  color: rgba(27, 42, 74, 0.7);
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0;
+  transition: max-height 0.4s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s ease, padding 0.4s ease;
+}
+
+.glass-accordion-item.open .glass-accordion-body {
+  padding: 0 22px 18px;
+  opacity: 1;
+}
+
+.glass-accordion-item .glass-accordion-btn {
+  transition: color 0.2s ease;
+}
+
+.glass-accordion-item:hover .glass-accordion-btn,
+.glass-accordion-item.open .glass-accordion-btn {
+  color: var(--orb-amber, #E8A33D);
+}
+
+.glass-accordion-item .glass-accordion-icon {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  flex: none;
+}
+
+.glass-accordion-item.open .glass-accordion-icon {
+  transform: rotate(180deg);
+}
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .glass-orb {
+    animation: none;
+  }
+}

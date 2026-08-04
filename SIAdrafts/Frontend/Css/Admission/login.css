@@ -1,0 +1,212 @@
+ .login-shell{
+    display:flex;
+    align-items:stretch;
+    background:#ffffff !important;
+    border:1px solid var(--ink-line) !important;
+    border-radius:28px !important;
+    overflow:hidden;
+    margin-top: 125px;
+    min-height: 560px;
+    box-shadow:
+      0 1px 1px rgba(31,46,40,0.03),
+      0 24px 48px -20px rgba(31,46,40,0.25) !important;
+  }
+
+  /* left brand panel — signature ledger-line motif nods to enrollment records */
+  .login-panel-brand{
+    flex: 0 0 40%;
+    position: relative;
+    display:flex;
+    flex-direction:column;
+    justify-content:space-between;
+    padding: 3rem 2.5rem;
+    color: var(--paper);
+    background:
+      radial-gradient(460px 300px at 12% 0%, rgba(164,123,63,0.28), transparent 60%),
+      radial-gradient(circle, rgba(255,255,255,0.09) 1px, transparent 1.4px) 0 0/20px 20px,
+      linear-gradient(160deg, var(--ink) 0%, #16241E 100%);
+    overflow:hidden;
+  }
+
+  .brand-mark-lg{
+    width:54px;
+    height:54px;
+    border-radius:15px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.18);
+    backdrop-filter: blur(2px);
+    margin-bottom: 1.5rem;
+  }
+  .brand-mark-lg iconify-icon{
+    color: var(--paper);
+    font-size: 26px;
+  }
+
+  .brand-headline{
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 500;
+    font-size: 1.9rem;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.6rem;
+    color: var(--paper);
+  }
+  .brand-headline em{
+    font-style: italic;
+    color: var(--amber);
+  }
+  .brand-tagline{
+    color: rgba(250,247,240,0.72);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    max-width: 22ch;
+  }
+
+  .ledger-lines{
+    display:flex;
+    flex-direction:column;
+    gap: 12px;
+  }
+  .ledger-lines span{
+    display:block;
+    height:1px;
+    background: linear-gradient(90deg, rgba(164,123,63,0.65), rgba(164,123,63,0));
+  }
+  .ledger-lines span:nth-child(1){ width: 100%; }
+  .ledger-lines span:nth-child(2){ width: 78%; }
+  .ledger-lines span:nth-child(3){ width: 92%; }
+  .ledger-lines span:nth-child(4){ width: 55%; }
+
+  .login-panel-form{
+    flex: 1 1 60%;
+    padding: 3rem 3rem;
+    display:flex;
+    align-items:center;
+  }
+  .login-panel-form .card-body{
+    width:100%;
+  }
+
+  @media (max-width: 991.98px){
+    .login-shell{
+      flex-direction: column;
+      min-height: 0;
+    }
+    .login-panel-brand{
+      flex: 0 0 auto;
+      padding: 2rem 1.75rem;
+    }
+    .login-panel-brand .ledger-lines{ display:none; }
+    .brand-tagline{ max-width: none; }
+    .login-panel-form{
+      padding: 2rem 1.75rem;
+    }
+  }
+
+  .login-title{
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 500;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+  }
+
+  .text-ink-soft{ 
+    color: var(--ink-soft) !important; 
+  }
+
+  a.link-sage{
+    color: var(--sage) !important;
+    font-weight: 600;
+    text-decoration: none;
+  }
+  a.link-sage:hover{ 
+    text-decoration: underline; 
+  }
+
+  .login-panel-form .form-label{
+    color: var(--ink) !important;
+  }
+
+  /* unified pill field — single outer border instead of the segmented Bootstrap look */
+  .login-panel-form .input-group{
+    border: 1.5px solid var(--ink-line);
+    border-radius: 0.9rem !important;
+    background: #fff;
+    overflow: hidden;
+    transition: border-color .2s ease, box-shadow .2s ease;
+  }
+  .login-panel-form .input-group:focus-within{
+    border-color: var(--sage);
+    box-shadow: 0 0 0 0.2rem rgba(124,152,133,0.18);
+  }
+  .login-panel-form .form-control{
+    color: var(--ink) !important;
+    padding-top: 0.65rem !important;
+    padding-bottom: 0.65rem !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .login-panel-form .input-group-text{
+    background: transparent !important;
+    border: 0 !important;
+    color: var(--ink-soft) !important;
+  }
+  .login-panel-form .input-group .btn-icon{
+    border: 0 !important;
+    border-left: 1px solid var(--ink-line) !important;
+    background: transparent !important;
+    color: var(--ink-soft) !important;
+    border-radius: 0 !important;
+  }
+
+  .login-card .form-check-input{
+    border-color: var(--ink-line) !important;
+  }
+  .login-card .form-check-input:checked{
+    background-color: var(--ink) !important;
+    border-color: var(--ink) !important;
+  }
+  .login-card .form-check-input:focus{
+    box-shadow: 0 0 0 0.2rem rgba(124,152,133,0.25) !important;
+  }
+
+  .btn-login{
+    /* ink-filled + pale text, matching index.php's own .e-btn -- the
+       accent (amber) never carries a large fill with text on top there
+       either; ink-on-amber measured 3.7:1, below the 4.5:1 minimum */
+    background: var(--ink) !important;
+    border-color: var(--ink) !important;
+    color: var(--paper) !important;
+    font-weight: 700 !important;
+    border-radius: 0.85rem !important;
+    box-shadow: 0 10px 20px -8px rgba(31,46,40,0.45);
+    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+  }
+  .btn-login:hover{
+    background: #2A3D35 !important;
+    border-color: #2A3D35 !important;
+    color: var(--paper) !important;
+    box-shadow: 0 14px 24px -10px rgba(31,46,40,0.55);
+  }
+  .btn-login iconify-icon{
+    transition: transform .2s ease;
+  }
+  .btn-login:hover iconify-icon{
+    transform: translateX(3px);
+  }
+  @media (prefers-reduced-motion: reduce){
+    .btn-login, .btn-login iconify-icon{ transition: none; }
+  }
+
+
+  .login-divider{
+    color: var(--ink-soft);
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+  }
+  .login-divider hr{ 
+    border-top: 1px solid var(--ink-line) !important; 
+    opacity: 1; 
+}

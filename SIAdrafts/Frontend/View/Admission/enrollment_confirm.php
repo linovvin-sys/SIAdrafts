@@ -1,0 +1,476 @@
+<?php
+$pageTitle  = "ENROLLMENT";
+$activePage = "enrollment";
+
+require_once '../../../Backend/auth.php';
+require_once '../../../Backend/roles.php';
+require_once '../../../Backend/require_role.php';
+require_role([ROLE_STAFF, ROLE_ADMIN]);
+require_once '../../../Backend/db.php';
+
+$db   = new Database();
+$conn = $db->connect();
+
+$enroll        = $_SESSION['enroll'] ?? null;
+$is_irregular  = !empty($enroll['is_irregular']);
+
+if (!$enroll || empty($enroll['subject_ids'])
+    || (!$is_irregular && empty($enroll['section_id']))
+    || ($is_irregular && empty($enroll['schedule_ids']))) {
+    header('Location: enrollment.php');
+    exit;
+}
+
+// Fetch fresh student data from applicants
+$stmt = $conn->prepare(
+    "SELECT a.applicant_id, a.reference_id, a.first_name, a.last_name, a.middle_name,
+            st.type_name
+     FROM applicants a
+     JOIN student_type st ON a.applicant_type_id = st.type_id
+     WHERE a.reference_id = ?"
+);
+$stmt->bind_param('s', $enroll['reference_id']);
+$stmt->execute();
+$student = $stmt->get_result()->fetch_assoc();
+$stmt->close();
+
+if (!$student) {
+    unset($_SESSION['enroll']);
+    header('Location: enrollment.php');
+    exit;
+}
+
+// Section was chosen in step 3 (enrollment_subjects.php); use it directly
+// rather than re-deriving anything from the applicant record.
+// Irregular students aren't tied to a single section — each subject can
+// come from a different one, so there's no one section_id to look up here.
+$section_id   = $is_irregular ? null : (int)$enroll['section_id'];
+$section_name = $enroll['section_name'] ?? ($is_irregular ? 'Irregular / Mixed Sections' : null);
+
+if (!$is_irregular && !$section_name) {
+    $secStmt = $conn->prepare("SELECT section_name FROM section WHERE section_id = ?");
+    $secStmt->bind_param('i', $section_id);
+    $secStmt->execute();
+    $section_name = $secStmt->get_result()->fetch_row()[0] ?? '—';
+    $secStmt->close();
+}
+
+// Fetch selected subjects with schedule info.
+// Regular students: one fixed section, one join condition for all subjects.
+// Irregular students: each subject was individually paired with a specific
+// schedule_id (possibly in different sections), so we join straight off
+// those schedule_ids instead of a single section_id.
+if ($is_irregular) {
+    $schedIds = $enroll['schedule_ids'];
+    $ph       = implode(',', array_fill(0, count($schedIds), '?'));
+    $types    = str_repeat('i', count($schedIds));
+
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+                sc.category_name,
+                sch.day, sch.time_start, sch.time_end,
+                sec.section_name,
+                CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
+                r.room_name
+         FROM schedule sch
+         JOIN subject sub          ON sub.subject_id = sch.subject_id
+         JOIN subject_category sc  ON sub.category_id = sc.category_id
+         JOIN section sec          ON sec.section_id = sch.section_id
+         LEFT JOIN professor p ON sch.professor_id = p.professor_id
+         LEFT JOIN room r      ON sch.room_id      = r.room_id
+         WHERE sch.schedule_id IN ($ph)
+         ORDER BY sc.category_name, sub.subject_code"
+    );
+    $stmt->bind_param($types, ...$schedIds);
+} else {
+    $ids = $enroll['subject_ids'];
+    $ph  = implode(',', array_fill(0, count($ids), '?'));
+
+    $types  = str_repeat('i', count($ids));
+    $params = array_merge([$enroll['school_year'], $enroll['semester'], $section_id], $ids);
+
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+                sc.category_name,
+                sch.day, sch.time_start, sch.time_end,
+                NULL AS section_name,
+                CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
+                r.room_name
+         FROM subject sub
+         JOIN subject_category sc ON sub.category_id = sc.category_id
+         LEFT JOIN schedule sch ON sch.subject_id = sub.subject_id
+             AND sch.school_year = ? AND sch.semester = ? AND sch.section_id = ?
+         LEFT JOIN professor p ON sch.professor_id = p.professor_id
+         LEFT JOIN room r      ON sch.room_id      = r.room_id
+         WHERE sub.subject_id IN ($ph)
+         ORDER BY sc.category_name, sub.subject_code"
+    );
+
+    $bind_types = 'sii' . $types;
+    $stmt->bind_param($bind_types, ...$params);
+}
+
+$stmt->execute();
+$subjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+
+$credited_subjects = [];
+if (!empty($enroll['credited_subject_ids'])) {
+    $cids = $enroll['credited_subject_ids'];
+    $ph = implode(',', array_fill(0, count($cids), '?'));
+    $types = str_repeat('i', count($cids));
+    $credStmt = $conn->prepare(
+        "SELECT subject_code, subject_name, units FROM subject WHERE subject_id IN ($ph) ORDER BY subject_code"
+    );
+    $credStmt->bind_param($types, ...$cids);
+    $credStmt->execute();
+    $credited_subjects = $credStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $credStmt->close();
+}
+
+$stmt->close();
+
+// $subjects has one row per schedule slot, not per subject — a subject
+// with a separate lecture + lab time legitimately appears twice so both
+// meeting times print on the form. Summing units straight off that array
+// would double-count such subjects, so dedupe by subject_id first. This
+// matches save_enrollment.php's actual billing calculation, which sums
+// units from `subject` directly and never joins `schedule` at all.
+$unitsBySubject = [];
+foreach ($subjects as $sub) {
+    $unitsBySubject[$sub['subject_id']] = (float)$sub['units'];
+}
+$total_units = array_sum($unitsBySubject);
+$sem_label   = $enroll['semester'] == 1 ? '1st Semester' : '2nd Semester';
+$yr_label    = $enroll['year_level'] . match((int)$enroll['year_level']) {
+    1 => 'st', 2 => 'nd', 3 => 'rd', default => 'th'
+} . ' Year';
+
+// Student type name lookup
+$type_stmt = $conn->prepare("SELECT type_name FROM student_type WHERE type_id = ?");
+$type_stmt->bind_param('i', $enroll['type_id']);
+$type_stmt->execute();
+$type_name = $type_stmt->get_result()->fetch_row()[0] ?? 'Regular';
+$type_stmt->close();
+
+// ---- Fee breakdown preview (informational only) ----
+// The actual payment row + payment_breakdown snapshot are created
+// automatically when the student clicks "Finalize Enrollment"
+// (see save_enrollment.php). This just previews what they'll owe,
+// based on the fee schedule configured for this year level / school
+// year, and lets us block finalizing if no schedule exists yet.
+const PAYMENT_DUE_DAYS = 3;
+
+$feeStmt = $conn->prepare(
+    "SELECT fee_schedule_id, total_amount FROM fee_schedule
+     WHERE year_level = ? AND school_year = ? AND is_active = 1
+     LIMIT 1"
+);
+$feeStmt->bind_param('is', $enroll['year_level'], $enroll['school_year']);
+$feeStmt->execute();
+$feeSchedule = $feeStmt->get_result()->fetch_assoc();
+$feeStmt->close();
+
+$feeItems = [];
+$computedTotal = 0.0;
+if ($feeSchedule) {
+    $itemsStmt = $conn->prepare(
+        "SELECT label, amount, is_per_unit FROM fee_schedule_item WHERE fee_schedule_id = ? ORDER BY sort_order"
+    );
+    $itemsStmt->bind_param('i', $feeSchedule['fee_schedule_id']);
+    $itemsStmt->execute();
+    $rawItems = $itemsStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $itemsStmt->close();
+
+    foreach ($rawItems as $item) {
+        $lineAmount = $item['is_per_unit']
+            ? (float)$item['amount'] * $total_units
+            : (float)$item['amount'];
+
+        $feeItems[] = [
+            'label'  => $item['is_per_unit']
+                ? $item['label'] . ' (' . number_format((float)$item['amount'], 2) . ' × ' . $total_units . ' units)'
+                : $item['label'],
+            'amount' => $lineAmount,
+        ];
+
+        $computedTotal += $lineAmount;
+    }
+}
+
+$preview_due_date = date('F j, Y', strtotime('+' . PAYMENT_DUE_DAYS . ' days'));
+
+$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/enrollment-finalize.js'];
+
+function fmt_id(string $id): string {
+    return $id; // already formatted as 2026-XXXXX
+}
+
+function student_fullname(array $s): string {
+    $ln = $s['last_name'] ?? '';
+    $fn = $s['first_name'] ?? '';
+    $mn = $s['middle_name'] ?? '';
+    return ($ln && $fn) ? $ln . ', ' . $fn . ($mn ? ' ' . $mn : '') : '';
+}
+
+function fmt_time(string $t): string {
+    if (!$t) return '';
+    [$h, $m] = explode(':', $t);
+    $hr = (int)$h;
+    return ($hr > 12 ? $hr - 12 : ($hr ?: 12)) . ':' . $m . ($hr >= 12 ? 'PM' : 'AM');
+}
+// Same fix as the rest of the enrollment wizard: this page's markup
+// uses the Admission section's own theme classes but includes the
+// shared header, which doesn't load that theme by default.
+$extraCss = [
+    '/SIAdrafts/Frontend/Css/Admission/style.css',
+    '/SIAdrafts/Frontend/Css/Admission/login.css',
+];
+?>
+<?php include '../Include/header.php'; ?>
+
+<div class="app-layout">
+
+<?php include '../Include/sidebar.php'; ?>
+
+<main class="page-content">
+
+<div class="container" style="padding-top: calc(var(--nav-h) + 40px); padding-bottom: 60px;" id="confirm-app" v-cloak>
+  <div class="row justify-content-center">
+    <div class="col-12 col-lg-8">
+
+      <!-- Stepper -->
+      <div class="wizard-steps mb-4 no-print">
+        <div class="ws-step done"><span>1</span> Search</div>
+        <div class="ws-line done"></div>
+        <div class="ws-step done"><span>2</span> Profile</div>
+        <div class="ws-line done"></div>
+        <div class="ws-step done"><span>3</span> Section</div>
+        <div class="ws-line done"></div>
+        <div class="ws-step active"><span>4</span> Confirm</div>
+      </div>
+
+      <!-- Registration Form -->
+      <div class="reg-form-wrap">
+
+        <!-- Header -->
+        <div class="reg-header">
+          <div class="reg-school-mark">
+            <iconify-icon icon="mdi:school"></iconify-icon>
+          </div>
+          <div>
+            <h2 class="reg-title">Enrollment Registration Form</h2>
+            <p class="reg-subtitle">
+              School Year <?= htmlspecialchars($enroll['school_year']) ?>
+              &mdash; <?= htmlspecialchars($sem_label) ?>
+            </p>
+          </div>
+        </div>
+
+        <!-- Student info -->
+        <div class="reg-section">
+          <div class="reg-info-grid">
+            <div class="reg-info-row">
+              <span class="ri-label">{{ studentIdLabel }}</span>
+              <span class="ri-value">{{ studentIdValue }}</span>
+            </div>
+            <div class="reg-info-row">
+              <span class="ri-label">Full Name</span>
+              <span class="ri-value"><?= htmlspecialchars(student_fullname($student)) ?></span>
+            </div>
+            <div class="reg-info-row">
+              <span class="ri-label">Section</span>
+              <span class="ri-value"><?= htmlspecialchars($section_name) ?></span>
+            </div>
+            <div class="reg-info-row">
+              <span class="ri-label">Year Level</span>
+              <span class="ri-value"><?= htmlspecialchars($yr_label) ?></span>
+            </div>
+            <div class="reg-info-row">
+              <span class="ri-label">Student Type</span>
+              <span class="ri-value"><?= htmlspecialchars($type_name) ?></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Subjects table -->
+        <div class="reg-section">
+          <h3 class="reg-section-title">Enrolled Subjects</h3>
+          <table class="reg-table">
+            <thead>
+              <tr>
+                <th>Code</th>
+                <th>Subject Name</th>
+                <?php if ($is_irregular): ?><th>Section</th><?php endif; ?>
+                <th>Units</th>
+                <th>Schedule</th>
+                <th>Room</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($subjects as $sub): ?>
+              <tr>
+                <td class="text-mono"><?= htmlspecialchars($sub['subject_code']) ?></td>
+                <td><?= htmlspecialchars($sub['subject_name']) ?></td>
+                <?php if ($is_irregular): ?><td><?= htmlspecialchars($sub['section_name'] ?? '—') ?></td><?php endif; ?>
+                <td class="text-center"><?= number_format((float)$sub['units'], 0) ?></td>
+                <td>
+                  <?php if ($sub['day']): ?>
+                    <?= htmlspecialchars($sub['day']) ?>
+                    <?= htmlspecialchars(fmt_time($sub['time_start'])) ?>–<?= htmlspecialchars(fmt_time($sub['time_end'])) ?>
+                  <?php else: ?>
+                    <span class="tba-tag">TBA</span>
+                  <?php endif; ?>
+                </td>
+                <td><?= $sub['room_name'] ? htmlspecialchars($sub['room_name']) : '<span class="tba-tag">TBA</span>' ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="<?= $is_irregular ? 3 : 2 ?>" class="text-end fw-bold">Total</td>
+                <td class="text-center fw-bold"><?= number_format((float)$total_units, 0) ?></td>
+                <td colspan="2"></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+        <!-- credited subjects table -->
+        <?php if (!empty($credited_subjects)): ?>
+          <div class="reg-section">
+            <h3 class="reg-section-title">Credited Subjects (Not Billed)</h3>
+            <table class="reg-table">
+              <thead>
+                <tr><th>Code</th><th>Subject Name</th><th>Units</th></tr>
+              </thead>
+              <tbody>
+                <?php foreach ($credited_subjects as $cs): ?>
+                <tr>
+                  <td class="text-mono"><?= htmlspecialchars($cs['subject_code']) ?></td>
+                  <td><?= htmlspecialchars($cs['subject_name']) ?></td>
+                  <td class="text-center"><?= number_format((float)$cs['units'], 0) ?></td>
+                </tr>
+                <?php endforeach; ?>
+              </tbody>
+            </table>
+            <div class="alert-box alert-info mb-3">
+              <iconify-icon icon="mdi:information-outline"></iconify-icon>
+              These subjects were already completed at the applicant's previous school and are not included in this term's units or fees.
+            </div>
+          </div>
+          <?php endif; ?>
+
+        <!-- Fee breakdown preview -->
+        <div class="reg-section">
+          <h3 class="reg-section-title">Fee Breakdown</h3>
+          <?php if ($feeSchedule): ?>
+          <table class="reg-table">
+            <thead>
+              <tr>
+                <th>Fee</th>
+                <th class="text-end">Amount</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($feeItems as $item): ?>
+              <tr>
+                <td><?= htmlspecialchars($item['label']) ?></td>
+                <td class="text-end">₱<?= number_format((float)$item['amount'], 2) ?></td>
+              </tr>
+              <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td class="fw-bold">Total Due</td>
+                <td class="text-end fw-bold">₱<?= number_format($computedTotal, 2) ?></td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="alert-box alert-info mb-3">
+            <iconify-icon icon="mdi:information-outline"></iconify-icon>
+            This will be billed automatically once enrollment is finalized, due <?= htmlspecialchars($preview_due_date) ?>
+            (<?= PAYMENT_DUE_DAYS ?> days from today). No separate treasury setup step is needed.
+          </div>
+          <?php else: ?>
+          <div class="alert-box alert-error mb-3">
+            <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
+            No fee schedule has been configured for <?= htmlspecialchars($yr_label) ?>, SY <?= htmlspecialchars($enroll['school_year']) ?> yet.
+            Please contact Treasury to set one up — finalizing is disabled until then.
+          </div>
+          <?php endif; ?>
+        </div>
+
+        <!-- Signatures -->
+        <div class="reg-section print-only">
+          <div class="sig-row">
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <span>Student Signature</span>
+            </div>
+            <div class="sig-box">
+              <div class="sig-line"></div>
+              <span>Registrar / Staff</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /.reg-form-wrap -->
+
+      <!-- Action buttons -->
+      <div class="alert-box alert-error mb-3 no-print" v-if="error">
+        <iconify-icon icon="mdi:alert-circle-outline"></iconify-icon>
+        {{ error }}
+      </div>
+
+      <div class="alert-box alert-success mb-3 no-print" v-if="saved">
+        <iconify-icon icon="mdi:check-circle-outline"></iconify-icon>
+        Enrollment saved. Student No. <strong>{{ studentIdValue }}</strong> &mdash; print this form now for the student to bring to Treasury.
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 no-print" v-if="!saved">
+        <a href="enrollment_subjects.php" class="btn-back-link">
+          <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back to Section
+        </a>
+        <button
+          type="button"
+          class="btn-primary-action"
+          @click="finalize"
+          :disabled="saving || <?= $feeSchedule ? 'false' : 'true' ?>">
+          <iconify-icon v-if="saving" icon="mdi:loading" class="spin"></iconify-icon>
+          <iconify-icon v-else icon="mdi:check-circle-outline"></iconify-icon>
+          {{ saving ? 'Saving…' : 'Finalize Enrollment' }}
+        </button>
+      </div>
+
+      <div class="d-flex justify-content-between align-items-center mt-4 no-print" v-if="saved">
+        <a :href="'enrollment.php?enrolled=1&ref=' + enrollmentRef" class="btn-back-link">
+          <iconify-icon icon="mdi:arrow-left"></iconify-icon> Done &mdash; Back to Search
+        </a>
+        <button type="button" class="btn-primary-action" onclick="window.print()">
+          <iconify-icon icon="mdi:printer"></iconify-icon> Print Registration Form
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</main>
+
+</div>
+
+<script>
+const ENROLLMENT_PAYLOAD = <?= json_encode([
+    'student_id'   => $student['applicant_id'],
+    'reference_id' => $student['reference_id'],
+    'school_year'  => $enroll['school_year'],
+    'semester'     => $enroll['semester'],
+    'year_level'   => $enroll['year_level'],
+    'type_id'      => $enroll['type_id'],
+    'is_irregular' => $is_irregular,
+    'section_id'   => $section_id,
+    'subject_ids'  => $enroll['subject_ids'],
+    'schedule_ids' => $is_irregular ? $enroll['schedule_ids'] : null,
+]) ?>;
+</script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<?php include '../Include/footer.php';?>
