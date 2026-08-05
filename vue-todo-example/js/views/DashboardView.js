@@ -1,5 +1,7 @@
 // Plain variables and functions inside setup() — same pattern as
 // StudentController's getFiltered(), called directly in the template.
+// The add/edit form is just a section on the page (v-if), not a
+// separate component — one less thing to learn (no props/emits).
 var { ref } = Vue;
 
 var STATUS_LABELS = {
@@ -11,14 +13,18 @@ var STATUS_LABELS = {
 var STATUS_ORDER = ['pending', 'in_progress', 'completed'];
 
 var DashboardView = {
-  components: { TaskModal: TaskModal },
   setup() {
     var tasks = ref([]);
     var searchText = ref('');
     var statusFilter = ref('');
-    var showModal = ref(false);
-    var editingTask = ref(null);
     var errorMsg = ref('');
+
+    var showForm = ref(false);
+    var editingId = ref(null);
+    var formTitle = ref('');
+    var formNotes = ref('');
+    var formCategory = ref('');
+    var formStatus = ref('pending');
 
     function loadTasks() {
       TaskController.getTasks().then(function (data) {
@@ -64,28 +70,43 @@ var DashboardView = {
       });
     }
 
-    function openAddModal() {
-      editingTask.value = null;
-      showModal.value = true;
+    function openAddForm() {
+      editingId.value = null;
+      formTitle.value = '';
+      formNotes.value = '';
+      formCategory.value = '';
+      formStatus.value = 'pending';
+      showForm.value = true;
     }
 
-    function openEditModal(task) {
-      editingTask.value = task;
-      showModal.value = true;
+    function openEditForm(task) {
+      editingId.value = task.id;
+      formTitle.value = task.title;
+      formNotes.value = task.notes;
+      formCategory.value = task.category;
+      formStatus.value = task.status;
+      showForm.value = true;
     }
 
-    function closeModal() {
-      showModal.value = false;
-      editingTask.value = null;
+    function closeForm() {
+      showForm.value = false;
     }
 
-    function saveTask(payload) {
-      var request = payload.id ? TaskController.updateTask(payload) : TaskController.createTask(payload);
+    function saveTask() {
+      var payload = {
+        id: editingId.value,
+        title: formTitle.value,
+        notes: formNotes.value,
+        category: formCategory.value,
+        status: formStatus.value,
+      };
+
+      var request = editingId.value ? TaskController.updateTask(payload) : TaskController.createTask(payload);
 
       request.then(function (data) {
         if (data.success) {
           loadTasks();
-          closeModal();
+          closeForm();
         } else {
           errorMsg.value = data.error;
         }
@@ -116,16 +137,20 @@ var DashboardView = {
       tasks,
       searchText,
       statusFilter,
-      showModal,
-      editingTask,
       errorMsg,
+      showForm,
+      editingId,
+      formTitle,
+      formNotes,
+      formCategory,
+      formStatus,
       filteredTasks,
       countByStatus,
       statusLabel,
       cycleStatus,
-      openAddModal,
-      openEditModal,
-      closeModal,
+      openAddForm,
+      openEditForm,
+      closeForm,
       saveTask,
       removeTask,
       logout,
@@ -163,7 +188,7 @@ var DashboardView = {
 
       <div class="toolbar">
         <input v-model="searchText" class="search-box" placeholder="Search tasks..." />
-        <button @click="openAddModal">+ Add Task</button>
+        <button @click="openAddForm">+ Add Task</button>
       </div>
 
       <div class="filter-bar">
@@ -171,6 +196,24 @@ var DashboardView = {
         <button @click="statusFilter = 'pending'" :class="{ active: statusFilter === 'pending' }">Pending</button>
         <button @click="statusFilter = 'in_progress'" :class="{ active: statusFilter === 'in_progress' }">In Progress</button>
         <button @click="statusFilter = 'completed'" :class="{ active: statusFilter === 'completed' }">Completed</button>
+      </div>
+
+      <div class="task-form" v-if="showForm">
+        <h2>{{ editingId ? 'Edit Task' : 'Add Task' }}</h2>
+        <form @submit.prevent="saveTask">
+          <input v-model="formTitle" placeholder="Title" required />
+          <textarea v-model="formNotes" placeholder="Notes"></textarea>
+          <input v-model="formCategory" placeholder="Subject / Category" />
+          <select v-model="formStatus">
+            <option value="pending">Pending</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+          <div>
+            <button type="submit">Save</button>
+            <button type="button" class="secondary" @click="closeForm">Cancel</button>
+          </div>
+        </form>
       </div>
 
       <table>
@@ -195,15 +238,13 @@ var DashboardView = {
               </span>
             </td>
             <td>
-              <button class="secondary" @click="openEditModal(t)">Edit</button>
+              <button class="secondary" @click="openEditForm(t)">Edit</button>
               <button class="secondary" @click="removeTask(t)">Delete</button>
             </td>
           </tr>
         </tbody>
       </table>
       <p v-if="filteredTasks().length === 0">No tasks found.</p>
-
-      <task-modal v-if="showModal" :task="editingTask" :key="editingTask ? editingTask.id : 'new'" @save="saveTask" @cancel="closeModal"></task-modal>
     </div>
   `,
 };
