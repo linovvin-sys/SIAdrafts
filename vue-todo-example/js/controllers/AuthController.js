@@ -1,5 +1,5 @@
 var AuthController = {
-  register: function (name, email, password, confirmPassword) {
+  register(name, email, password, confirmPassword) {
     var formData = new FormData();
     formData.append('action', 'register');
     formData.append('name', name);
@@ -15,7 +15,7 @@ var AuthController = {
     });
   },
 
-  login: function (email, password) {
+  login(email, password) {
     var formData = new FormData();
     formData.append('action', 'login');
     formData.append('email', email);
@@ -29,7 +29,7 @@ var AuthController = {
     });
   },
 
-  logout: function () {
+  logout() {
     var formData = new FormData();
     formData.append('action', 'logout');
 
@@ -41,7 +41,7 @@ var AuthController = {
     });
   },
 
-  checkSession: function () {
+  checkSession() {
     return fetch('./Backend/api/auth.php?action=session').then(function (response) {
       return response.json();
     });
