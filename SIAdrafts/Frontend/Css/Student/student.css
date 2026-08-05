@@ -1,0 +1,1330 @@
+/* ===== Student Portal — extends admin.css's token system (same ink/paper/
+   accent/semantic scale, same Fraunces+Inter+Plex Mono stack, same 0.15s
+   ease/radius language) instead of introducing a new palette. Density is
+   intentionally lower than the staff dashboards: students have four
+   destinations, not forty, so the layout stays closer to "art gallery"
+   than "cockpit". ===== */
+
+:root {
+  /* Same values as admin.css's :root (not imported directly, to avoid
+     pulling in unrelated staff-dashboard rules) — keep these numerically
+     identical if the base palette ever changes. */
+  --ink-950: #1F2E28;
+  --ink-800: #2A3D35;
+  --ink-600: #3E5A4F;
+
+  --paper-50: #FFFFFF;
+  --paper-100: #F7F4EC;
+  --line-200: rgba(31, 46, 40, 0.14);
+
+  --accent-600: #A47B3F;
+  --accent-text: #6F5027;
+  --accent-100: #F3ECDD;
+
+  --danger-600: #A6472E;
+  --danger-100: #F5E1DA;
+  --success-600: #345540;
+  --success-100: #E1EBE3;
+  --info-600: #35526E;
+  --info-100: #E2E8EF;
+
+  --slate-500: rgba(31, 46, 40, 0.80);
+  --slate-300: rgba(31, 46, 40, 0.42);
+
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-ui: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --shadow: 0 1px 2px rgba(31, 46, 40, 0.05), 0 8px 24px -18px rgba(31, 46, 40, 0.16);
+  --shadow-lift: 0 16px 32px -20px rgba(31, 46, 40, 0.35);
+  /* A softer, wider-spread shadow reserved for the dashboard's "floating
+     card" modules (Today card, stat cards) -- two layers (a close, faint
+     contact shadow + a big diffuse one) reads as elevated/hovering rather
+     than just "has a shadow", per the dribbble.com/shots/26072541
+     reference the dashboard's card language is modeled on. */
+  --shadow-float: 0 2px 6px -2px rgba(31, 46, 40, 0.08), 0 28px 48px -24px rgba(31, 46, 40, 0.30);
+
+  --sp-radius-sm: 10px;
+  --sp-radius-lg: 14px;
+  /* Larger radius for the same floating-card modules -- rounder than the
+     rest of the app's sections on purpose, to read as a distinct "card
+     system" rather than just bigger sp-sections. */
+  --sp-radius-xl: 22px;
+  --sp-nav-h: 68px;
+  --sp-tabbar-h: 64px;
+  --sp-sidebar-w: 232px;
+  --sp-sidebar-gap: 24px;
+  --sp-ease: cubic-bezier(0.23, 1, 0.32, 1);
+  /* Symmetric ease-in-out for things that move/morph on-screen (the nav
+     pill sliding between tabs) rather than entering/exiting -- --sp-ease
+     above is a strong ease-OUT, tuned for entrances, and reads as a
+     "snap" rather than a glide when used for lateral motion. */
+  --sp-ease-glide: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+*{ box-sizing: border-box; }
+
+/* Cross-document view transitions: each nav click is a full page load
+   (plain PHP, no SPA router), but this makes the active-pill indicator
+   morph its position/size across that reload instead of just popping into
+   place -- the browser matches elements by view-transition-name between
+   the old and new document and animates the shape between them. No JS
+   needed; unsupported browsers (Safari/Firefox as of writing) simply skip
+   it and navigate normally. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-group(root) {
+  animation-duration: 0.16s;
+}
+
+/* Group (position + size) and old/new (content crossfade) must share the
+   same duration/easing, or the box finishes resizing before its content
+   finishes fading and the motion reads as two mistimed animations instead
+   of one continuous glide. */
+::view-transition-group(sp-nav-pill),
+::view-transition-old(sp-nav-pill),
+::view-transition-new(sp-nav-pill) {
+  animation-duration: 0.36s;
+  animation-timing-function: var(--sp-ease-glide);
+}
+
+/* The UA default is mix-blend-mode: plus-lighter on the crossfading old/new
+   snapshots -- correct for translucent overlaps, but our pill is a solid
+   --ink-950 fill, so "plus-lighter" additively brightens the overlap and
+   produces a washed-out flash partway through the slide. Solid content
+   should blend normally. */
+::view-transition-old(sp-nav-pill),
+::view-transition-new(sp-nav-pill) {
+  mix-blend-mode: normal;
+}
+
+/* Shared-element continuity: the dashboard's Balance/Requirements stat
+   cards carry the same view-transition-name as their corresponding figure
+   on the Accountabilities detail page. Clicking the card doesn't just
+   navigate -- the number itself glides and resizes into its new, larger
+   home, so the two pages read as one continuous space instead of two
+   unrelated templates. Exactly one element per document holds each name. */
+.sp-vt-balance { view-transition-name: sp-balance; }
+.sp-vt-requirements { view-transition-name: sp-requirements; }
+
+::view-transition-group(sp-balance),
+::view-transition-old(sp-balance),
+::view-transition-new(sp-balance),
+::view-transition-group(sp-requirements),
+::view-transition-old(sp-requirements),
+::view-transition-new(sp-requirements) {
+  animation-duration: 0.36s;
+  animation-timing-function: var(--sp-ease-glide);
+}
+::view-transition-old(sp-balance),
+::view-transition-new(sp-balance),
+::view-transition-old(sp-requirements),
+::view-transition-new(sp-requirements) {
+  mix-blend-mode: normal;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+body.student-body {
+  margin: 0;
+  background: var(--paper-100);
+  color: var(--ink-950);
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+  position: relative;
+  overflow-x: hidden;
+}
+/* Ambient light, not decoration -- two large, static, very soft washes
+   anchored to the viewport (fixed, so they read as atmosphere, not
+   scrolling content). Cards sit solidly opaque on top, so this only ever
+   shows in the empty margins around them, which is exactly the point:
+   unfilled space reads as a considered choice instead of an unfinished
+   one. Static (no drift) because, unlike the login screen, this page gets
+   seen many times a day -- motion here would fatigue, not delight. */
+body.student-body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: -1;
+  pointer-events: none;
+  background-image:
+    radial-gradient(680px circle at 100% 0%, rgba(164, 123, 63, 0.08), transparent 62%),
+    radial-gradient(560px circle at 0% 100%, rgba(52, 85, 64, 0.05), transparent 62%);
+}
+
+.sp-skip-link{
+  position: absolute; left: -999px; top: 0;
+  background: var(--ink-950); color: #fff; padding: 10px 16px;
+  border-radius: 0 0 8px 0; z-index: 2000;
+}
+.sp-skip-link:focus{ left: 0; }
+
+/* Every interactive element in this file previously relied on the
+   browser's own default focus ring, which most reset/UA stylesheets
+   suppress or make nearly invisible on rounded, borderless elements
+   (nav pills, cards-as-links, icon buttons). Without this, a
+   keyboard-only user tabbing through the portal has no visible
+   indication of where they are -- a real accessibility failure, not a
+   style preference. `:focus-visible` (not `:focus`) so mouse clicks
+   don't show a ring, only keyboard/AT navigation does. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+.sp-tab:focus-visible {
+  outline: 2px solid var(--accent-600);
+  outline-offset: 2px;
+}
+.sp-logout:focus-visible {
+  outline-offset: 3px;
+}
+
+/* ---------- sidebar nav (desktop) ---------- */
+/* A floating, fixed vertical sidebar instead of a full-width top bar --
+   it's a permanent structural element on every page, which does real work
+   toward "the pages feel empty": there's always something substantial
+   occupying the left edge, not just a thin 68px strip. Reverts to the
+   original compact horizontal bar under 860px (see mobile block) where a
+   fixed sidebar would eat too much of a small screen. */
+
+.sp-nav {
+  position: fixed; top: var(--sp-sidebar-gap); left: var(--sp-sidebar-gap); bottom: var(--sp-sidebar-gap);
+  width: var(--sp-sidebar-w);
+  z-index: 1000;
+  display: flex; flex-direction: column;
+  padding: 22px 16px;
+  background: rgba(247, 244, 236, 0.92);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-xl);
+  box-shadow: var(--shadow-float);
+  overflow-y: auto;
+}
+
+.sp-brand {
+  display: flex; align-items: baseline; gap: 6px;
+  text-decoration: none; color: var(--ink-950);
+  font-family: var(--font-display);
+  font-size: 19px; font-weight: 500;
+  padding: 0 10px;
+  margin-bottom: 28px;
+}
+.sp-brand em {
+  color: var(--accent-600); font-style: italic;
+  display: inline-block;
+  transition: transform 0.2s var(--sp-ease);
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-brand:hover em { transform: translateY(-1px); }
+}
+.sp-brand:active em { transform: translateY(0) scale(0.96); }
+
+.sp-nav-links {
+  display: flex; flex-direction: column; align-items: stretch; gap: 4px;
+  list-style: none; margin: 0; padding: 0;
+}
+.sp-nav-link {
+  position: relative;
+  display: flex; align-items: center; gap: 9px;
+  width: 100%; box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 999px;
+  text-decoration: none;
+  color: var(--slate-500);
+  font-size: 14px; font-weight: 500;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+/* Hover fill is a separate layer that scales in, rather than an instant
+   background swap -- reads as a material responding, not a state flip. */
+.sp-nav-link::before {
+  content: '';
+  position: absolute; inset: 0;
+  border-radius: 999px;
+  background: var(--accent-100);
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 0.18s var(--sp-ease), transform 0.18s var(--sp-ease);
+  z-index: -1;
+}
+@media (hover: hover) and (pointer: fine) {
+  .sp-nav-link:not(.active):hover::before { opacity: 1; transform: scale(1); }
+  .sp-nav-link:not(.active):hover { color: var(--accent-text); }
+  .sp-nav-link:not(.active):hover iconify-icon { transform: translateY(-1px) scale(1.08); }
+}
+.sp-nav-link:active { transform: scale(0.96); }
+.sp-nav-link.active {
+  background: var(--ink-950); color: var(--paper-50);
+  animation: sp-nav-active-in 0.25s var(--sp-ease) both;
+  /* Only one element per document may hold this name -- safe here since
+     exactly one .sp-nav-link carries .active at a time. */
+  view-transition-name: sp-nav-pill;
+}
+/* Where the cross-document morph above actually runs, this extra pop-in
+   would fire right as the morph finishes and read as a second, mistimed
+   motion on top of the glide. Keep it only as the fallback affordance for
+   browsers that don't understand view-transition-name at all. */
+@supports (view-transition-name: none) {
+  .sp-nav-link.active { animation: none; }
+}
+.sp-nav-link iconify-icon {
+  font-size: 16px;
+  transition: transform 0.15s var(--sp-ease);
+}
+
+@keyframes sp-nav-active-in {
+  from { transform: scale(0.92); opacity: 0.6; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.sp-nav-user {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  margin-top: auto; padding: 16px 10px 0;
+  border-top: 1px solid var(--line-200);
+}
+.sp-nav-user-info {
+  display: flex; align-items: center; gap: 10px;
+  min-width: 0;
+}
+.sp-nav-user-text { min-width: 0; }
+.sp-nav-user-name, .sp-nav-user-id {
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.sp-nav-avatar {
+  position: relative;
+  width: 34px; height: 34px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-100); color: var(--accent-text);
+  font-family: var(--font-display); font-size: 13px; font-weight: 600;
+  letter-spacing: 0.01em;
+  animation: sp-card-in 0.4s var(--sp-ease) both;
+}
+/* A quiet "you're signed in" signal -- same breathing language as the
+   dashboard's live-class dot, so the two "alive" cues read as one system. */
+.sp-nav-avatar::after {
+  content: '';
+  position: absolute; right: -2px; bottom: -2px;
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--success-600);
+  border: 2px solid var(--paper-50);
+  animation: sp-pulse 2.4s ease-in-out infinite;
+}
+.sp-nav-user-name {
+  font-size: 13.5px; font-weight: 500; color: var(--ink-950);
+}
+.sp-nav-user-id {
+  font-family: var(--font-mono); font-size: 11.5px; color: var(--slate-300);
+}
+.sp-logout {
+  position: relative;
+  overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; flex-shrink: 0; border-radius: 50%;
+  color: var(--slate-500); text-decoration: none;
+  border: 1px solid var(--line-200);
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+/* Color slides up to fill the button on hover, and slides back down on
+   mouse-out, instead of an instant background swap -- a fill entering
+   from below reads as the button "warning up" rather than just flipping
+   state. Clipped to the circle by the parent's overflow:hidden. */
+.sp-logout::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: var(--danger-100);
+  transform: translateY(100%);
+  transition: transform 0.28s var(--sp-ease-glide);
+}
+.sp-logout:hover { color: var(--danger-600); }
+.sp-logout:hover::before { transform: translateY(0); }
+.sp-logout iconify-icon {
+  position: relative; z-index: 1;
+  transition: transform 0.2s var(--sp-ease);
+}
+.sp-logout:hover iconify-icon { transform: rotate(-10deg) scale(1.08); }
+.sp-logout:active { transform: scale(0.94); }
+@media (prefers-reduced-motion: reduce) {
+  .sp-logout::before { transition: none; }
+}
+
+/* ---------- page shell ---------- */
+
+.sp-main {
+  max-width: 1180px;
+  margin-left: calc(var(--sp-sidebar-gap) * 2 + var(--sp-sidebar-w));
+  /* Desktop has no tabbar, so it shouldn't reserve tabbar clearance --
+     that was previously ~112px of dead padding at the bottom of every
+     desktop page even though the tabbar only ever renders on mobile. */
+  padding: 40px 32px 40px 0;
+}
+
+/* The page previously just stopped after the last card, trailing into
+   raw background -- no element ever acknowledged "this is the end of the
+   page". A quiet footer gives it a deliberate close instead. */
+.sp-footer {
+  max-width: 1180px;
+  margin: -8px 0 0 calc(var(--sp-sidebar-gap) * 2 + var(--sp-sidebar-w));
+  padding: 20px 32px 40px 0;
+  text-align: center;
+}
+.sp-footer p {
+  margin: 0; padding-top: 20px;
+  border-top: 1px solid var(--line-200);
+  font-size: 12.5px; color: var(--slate-300);
+}
+.sp-footer em { font-style: italic; color: var(--accent-text); }
+@media (max-width: 860px) {
+  /* The fixed tabbar already serves as this page's "bottom" landmark on
+     mobile -- a text footer would just compete with it for scarce space. */
+  .sp-footer { display: none; }
+}
+
+.sp-greeting {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2.1rem);
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  margin: 0 0 6px;
+  color: var(--ink-950);
+}
+.sp-subline {
+  color: var(--slate-500);
+  font-size: 14.5px;
+  margin: 0 0 32px;
+}
+
+/* ---------- today card (dashboard "alive" module) ---------- */
+
+.sp-today {
+  position: relative;
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-xl);
+  padding: 26px 28px;
+  margin-bottom: 20px;
+  box-shadow: var(--shadow-float);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: sp-card-in 0.5s var(--sp-ease) forwards;
+  transition: background 0.3s ease;
+}
+/* A soft tint wash instead of the old accent-colored left border -- the
+   floating shadow + radius already signal "this card matters", so the
+   live/empty state only needs a quiet background shift, not a stripe. */
+.sp-today.is-live { background: var(--success-100); }
+
+.sp-today-status {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+  color: var(--slate-500); margin-bottom: 10px;
+}
+.sp-today-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--slate-300);
+  transition: background 0.2s ease;
+}
+.sp-today.is-live .sp-today-dot {
+  background: var(--success-600);
+  animation: sp-pulse 1.8s ease-in-out infinite;
+}
+@keyframes sp-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(52, 85, 64, 0.35); }
+  50% { box-shadow: 0 0 0 5px rgba(52, 85, 64, 0); }
+}
+
+.sp-today-subject {
+  font-family: var(--font-display); font-size: 19px; font-weight: 500;
+  margin: 0 0 4px; color: var(--ink-950);
+}
+.sp-today-meta { font-size: 13.5px; color: var(--slate-500); margin: 0 0 12px; }
+.sp-today-countdown {
+  display: inline-block;
+  font-family: var(--font-mono); font-size: 13px; font-weight: 600;
+  color: var(--accent-text); background: var(--accent-100);
+  padding: 4px 12px; border-radius: 999px;
+}
+
+/* Small floating color tiles instead of a plain divided list -- the same
+   "colored card" language as the reference's note tiles, but applied to
+   real schedule data and the tint palette already used on the schedule
+   grid, not an invented color. */
+.sp-today-upcoming {
+  list-style: none; margin: 18px 0 0; padding-top: 0; border-top: none;
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.sp-today-upcoming li {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 600; color: var(--ink-950);
+  padding: 7px 12px; border-radius: 999px;
+  background: var(--paper-100);
+  transition: transform 0.15s var(--sp-ease);
+}
+.sp-today-upcoming li.tint-1 { background: var(--accent-100); color: var(--accent-text); }
+.sp-today-upcoming li.tint-2 { background: var(--info-100); color: var(--info-600); }
+.sp-today-upcoming li.tint-3 { background: var(--success-100); color: var(--success-600); }
+.sp-today-upcoming li.tint-4 { background: var(--danger-100); color: var(--danger-600); }
+.sp-today-upcoming-when { color: inherit; opacity: 0.75; font-family: var(--font-mono); font-size: 11px; }
+@media (hover: hover) and (pointer: fine) {
+  .sp-today-upcoming li:hover { transform: translateY(-2px); }
+}
+
+/* ---------- summary cards (dashboard) ---------- */
+
+/* Dashboard two-column bento: a wider stat-card grid beside a narrower
+   sidebar (activity + quick actions), instead of one long single-column
+   stack -- density over a taller page, per the reference's asymmetric
+   split rather than everything at equal width. */
+.sp-dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 20px;
+  align-items: start;
+}
+.sp-dash-side { display: flex; flex-direction: column; gap: 20px; }
+.sp-dash-side .sp-section { margin-bottom: 0; }
+
+@media (max-width: 980px) {
+  .sp-dash-grid { grid-template-columns: 1fr; }
+}
+
+.sp-card-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+  margin-bottom: 0;
+}
+
+.sp-card {
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-xl);
+  padding: 22px;
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s var(--sp-ease), box-shadow 0.2s var(--sp-ease);
+  opacity: 0;
+  transform: translateY(10px);
+  animation: sp-card-in 0.5s var(--sp-ease) forwards;
+}
+.sp-card:nth-child(1) { animation-delay: 0ms; }
+.sp-card:nth-child(2) { animation-delay: 50ms; }
+.sp-card:nth-child(3) { animation-delay: 100ms; }
+
+@keyframes sp-card-in {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Cards sit calm at rest and genuinely lift on hover -- a real translateY,
+   not just a deepening shadow -- so they read as physically floating
+   rather than just glowing. */
+.sp-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-float); }
+.sp-card:active { transform: translateY(-2px) scale(0.98); }
+
+.sp-card-icon {
+  width: 38px; height: 38px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  margin-bottom: 14px;
+  background: var(--accent-100); color: var(--accent-text);
+}
+.sp-card.is-warning .sp-card-icon { background: var(--danger-100); color: var(--danger-600); }
+.sp-card.is-good .sp-card-icon { background: var(--success-100); color: var(--success-600); }
+
+.sp-card-label {
+  font-size: 12.5px; color: var(--slate-500); margin: 0 0 4px;
+  text-transform: uppercase; letter-spacing: 0.04em;
+}
+.sp-card-value {
+  font-family: var(--font-mono);
+  font-size: 22px; font-weight: 600; color: var(--ink-950);
+  margin: 0;
+}
+.sp-card-hint {
+  font-size: 13px; color: var(--slate-300); margin-top: 6px;
+}
+
+.sp-progress-track {
+  height: 5px; border-radius: 999px; background: var(--line-200);
+  margin: 10px 0 0; overflow: hidden;
+}
+.sp-progress-fill {
+  height: 100%; width: 0; border-radius: 999px;
+  background: var(--accent-600);
+  transition: width 0.9s var(--sp-ease);
+}
+.sp-card.is-good .sp-progress-fill { background: var(--success-600); }
+.sp-card.is-warning .sp-progress-fill { background: var(--danger-600); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-progress-fill { transition: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-card, .sp-today, .sp-nav-avatar, .sp-nav-link.active, .sp-empty { animation: none; opacity: 1; transform: none; }
+  .sp-today-dot, .sp-nav-avatar::after, .sp-tab.active iconify-icon, .sp-form-error.is-visible { animation: none; }
+}
+
+/* ---------- section shell (registration / accountabilities) ---------- */
+
+.sp-section {
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-lg);
+  padding: 28px;
+  margin-bottom: 20px;
+}
+/* Dashboard-only variant matching the Today/stat-card floating language --
+   scoped to a modifier class instead of changing .sp-section itself, since
+   that class is shared with registration/accountabilities/schedule, which
+   weren't part of this request. */
+.sp-section.sp-float {
+  border-radius: var(--sp-radius-xl);
+  box-shadow: var(--shadow-float);
+}
+.sp-section-title {
+  font-family: var(--font-display);
+  font-size: 18px; font-weight: 500; margin: 0 0 18px;
+}
+
+.sp-field-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 18px 28px;
+}
+.sp-field { border-top: 1px solid var(--line-200); padding-top: 10px; }
+.sp-field-label {
+  font-size: 12px; color: var(--slate-300);
+  text-transform: uppercase; letter-spacing: 0.04em;
+  margin: 0 0 4px;
+}
+.sp-field-value { font-size: 14.5px; color: var(--ink-950); margin: 0; }
+
+.sp-balance-hero {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between;
+  gap: 20px 32px; margin-bottom: 24px; padding-bottom: 22px;
+  border-bottom: 1px solid var(--line-200);
+}
+.sp-balance-figure {
+  font-family: var(--font-mono); font-size: clamp(2rem, 4vw, 2.6rem); font-weight: 600;
+  line-height: 1; margin: 4px 0 12px;
+}
+.sp-balance-meta { display: flex; gap: 28px; flex-wrap: wrap; }
+.sp-balance-due-chip.is-overdue { background: var(--danger-100); color: var(--danger-600); }
+
+/* A light, cheap cascade for table rows -- occasional per page view, so a
+   subtle stagger is appropriate (per emil-design-eng's frequency test);
+   kept short (30ms/row) so it never reads as a showy delay. */
+.sp-table-stagger tbody tr {
+  opacity: 0;
+  animation: sp-row-in 0.35s var(--sp-ease) forwards;
+  animation-delay: calc(var(--row-i, 0) * 30ms);
+}
+@keyframes sp-row-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-table-stagger tbody tr { animation: none; opacity: 1; transform: none; }
+}
+
+.sp-pill {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px;
+  font-size: 12.5px; font-weight: 600;
+}
+.sp-pill.enrolled { background: var(--success-100); color: var(--success-600); }
+.sp-pill.pending { background: var(--info-100); color: var(--info-600); }
+.sp-pill.attention { background: var(--danger-100); color: var(--danger-600); }
+
+table.sp-table { width: 100%; border-collapse: collapse; }
+table.sp-table th {
+  text-align: left; font-size: 11.5px; text-transform: uppercase;
+  letter-spacing: 0.04em; color: var(--slate-300);
+  padding: 0 10px 10px; font-weight: 600;
+}
+table.sp-table td { padding: 12px 10px; font-size: 14px; border-top: 1px solid var(--line-200); }
+table.sp-table td.sp-num { font-family: var(--font-mono); }
+
+/* ---------- schedule grid (the signature element) ---------- */
+
+.sp-schedule-scroll { overflow-x: auto; }
+.sp-schedule {
+  display: grid;
+  grid-template-columns: 64px repeat(6, minmax(140px, 1fr));
+  min-width: 900px;
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-lg);
+  overflow: hidden;
+}
+
+.sp-sch-corner, .sp-sch-day {
+  background: var(--ink-950); color: var(--paper-50);
+  padding: 12px 10px; font-size: 12.5px; font-weight: 600;
+  text-align: center; position: sticky; top: 0; z-index: 2;
+}
+.sp-sch-corner { position: sticky; left: 0; z-index: 3; }
+/* Today's column is otherwise indistinguishable from every other day --
+   the dashboard already knows and cares what day it is, the schedule grid
+   should too. */
+.sp-sch-day.is-today { background: var(--accent-600); color: var(--paper-50); }
+
+.sp-sch-time {
+  padding: 8px; font-family: var(--font-mono); font-size: 11px;
+  color: var(--slate-300); text-align: right;
+  border-top: 1px solid var(--line-200);
+  background: var(--paper-100);
+  position: sticky; left: 0;
+}
+
+.sp-sch-cell {
+  border-top: 1px solid var(--line-200);
+  border-left: 1px solid var(--line-200);
+  position: relative;
+  background: var(--paper-50);
+}
+.sp-sch-cell.is-today { background: var(--accent-100); }
+
+.sp-sch-block {
+  position: absolute;
+  top: 3px; left: 3px; right: 3px;
+  z-index: 2;
+  border-radius: 8px;
+  padding: 6px 8px;
+  overflow: hidden;
+  border-left: 3px solid var(--accent-600);
+  background: var(--accent-600);
+  box-shadow: 0 1px 3px rgba(31, 46, 40, 0.18);
+  transition: transform 0.15s var(--sp-ease), box-shadow 0.15s var(--sp-ease);
+  cursor: pointer;
+}
+.sp-sch-block:hover { transform: scale(1.02); z-index: 5; }
+/* Tap/click to bring a block to the front at a legible size -- useful on
+   mobile where text is small and there's no hover to rely on. Doesn't
+   reveal new data, just makes the existing block comfortable to read. */
+.sp-sch-block.is-expanded {
+  transform: scale(1.08);
+  overflow: visible;
+  z-index: 20;
+  box-shadow: 0 16px 28px -10px rgba(31, 46, 40, 0.4);
+}
+.sp-sch-block:focus-visible { outline: 2px solid var(--accent-600); outline-offset: 2px; }
+.sp-sch-block .sp-sch-subject { font-size: 12.5px; font-weight: 700; color: #fff; display: block; }
+.sp-sch-block .sp-sch-meta { font-size: 10.5px; color: rgba(255, 255, 255, 0.85); font-family: var(--font-mono); display: block; }
+
+/* -600 tones give clear contrast against the white grid; the pale -100
+   tokens (used elsewhere for subtle badge backgrounds) read as invisible
+   here since they're barely different from the cell background. */
+.sp-sch-block.tint-1 { background: var(--accent-600); border-color: var(--accent-text); }
+.sp-sch-block.tint-2 { background: var(--info-600); border-color: var(--ink-950); }
+.sp-sch-block.tint-3 { background: var(--success-600); border-color: var(--ink-950); }
+.sp-sch-block.tint-4 { background: var(--danger-600); border-color: var(--ink-950); }
+
+.sp-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 16px; }
+.sp-legend-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--slate-500); }
+.sp-legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+/* ---------- recent activity ---------- */
+
+.sp-activity-list { list-style: none; margin: 0; padding: 0; }
+.sp-activity-list li {
+  display: flex; align-items: center; gap: 12px;
+  padding: 11px 0; border-top: 1px solid var(--line-200);
+  font-size: 13.5px;
+}
+.sp-activity-list li:first-child { border-top: none; padding-top: 0; }
+.sp-activity-icon {
+  width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-100); color: var(--accent-text); font-size: 15px;
+}
+/* Color-coded by event type instead of one uniform tint -- a small nod to
+   the reference's varied color-blocked tiles, applied to a real
+   distinction (enrollment vs. payment) rather than for decoration alone. */
+.sp-activity-icon.is-payment { background: var(--success-100); color: var(--success-600); }
+.sp-activity-icon.is-enrollment { background: var(--info-100); color: var(--info-600); }
+.sp-activity-label { color: var(--ink-950); }
+.sp-activity-time {
+  margin-left: auto; color: var(--slate-300);
+  font-family: var(--font-mono); font-size: 11.5px; white-space: nowrap;
+}
+
+.sp-quickactions { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.sp-quickactions a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: var(--sp-radius-sm);
+  text-decoration: none; color: var(--ink-950);
+  font-size: 13.5px; font-weight: 500;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.sp-quickactions a:hover { background: var(--accent-100); }
+.sp-quickactions a:active { transform: scale(0.98); }
+.sp-quickaction-icon {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--paper-100); color: var(--accent-text); font-size: 15px;
+  transition: background 0.15s ease;
+}
+.sp-quickactions a:hover .sp-quickaction-icon { background: var(--paper-50); }
+.sp-quickaction-chevron {
+  margin-left: auto; color: var(--slate-300); font-size: 16px;
+  transition: transform 0.15s var(--sp-ease), color 0.15s ease;
+}
+.sp-quickactions a:hover .sp-quickaction-chevron { transform: translateX(2px); color: var(--accent-text); }
+
+/* ---------- empty state ---------- */
+
+.sp-empty {
+  text-align: center; padding: 56px 24px; color: var(--slate-500);
+  opacity: 0; transform: translateY(8px);
+  animation: sp-card-in 0.45s var(--sp-ease) forwards;
+}
+.sp-empty iconify-icon { font-size: 34px; color: var(--slate-300); margin-bottom: 12px; }
+.sp-empty p { margin: 4px 0; }
+
+/* ---------- buttons ---------- */
+
+.sp-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 20px; border-radius: var(--sp-radius-sm);
+  font-size: 14px; font-weight: 600; text-decoration: none;
+  border: none; cursor: pointer;
+  /* --mx/--my are written by the magnetic-button script (translate only);
+     keeping the offset in a custom property instead of JS setting
+     `transform` directly means :active's scale() below still composes
+     with it through the stylesheet, instead of the two fighting for the
+     same inline style. */
+  transform: translate(var(--mx, 0px), var(--my, 0px));
+  transition: transform 0.15s var(--sp-ease-glide), box-shadow 0.15s ease;
+}
+.sp-btn-primary { background: var(--ink-950); color: var(--paper-50); }
+.sp-btn-primary:hover { box-shadow: var(--shadow-lift); }
+.sp-btn-primary:active { transform: translate(var(--mx, 0px), var(--my, 0px)) scale(0.97); }
+.sp-btn-secondary {
+  background: var(--paper-50); color: var(--ink-950);
+  border: 1px solid var(--line-200);
+}
+.sp-btn-secondary:hover { background: var(--accent-100); border-color: var(--accent-600); color: var(--accent-text); }
+.sp-btn-secondary:active { transform: scale(0.97); }
+.sp-btn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+
+/* ---------- forms (login / change password) ---------- */
+
+/* Two-pane split instead of a centered box on empty space -- a centered
+   auth card is the single most templated layout in existence. The left
+   pane carries real, changing information (time-of-day greeting, a live
+   clock) instead of decoration for its own sake. */
+.sp-auth-shell {
+  min-height: 100dvh;
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+}
+
+.sp-auth-visual {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink-950);
+  color: var(--paper-50);
+  padding: 40px;
+  display: flex; flex-direction: column; justify-content: space-between;
+}
+/* A faint noise field so the flat dark fill reads as a material with
+   texture, not a solid CSS color -- cheap (one inline SVG, no image
+   request) and works in both themes since it's just luminance grain. */
+.sp-auth-visual::before {
+  content: '';
+  position: absolute; inset: 0; z-index: 0;
+  opacity: 0.05; mix-blend-mode: overlay; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+.sp-auth-brand {
+  position: relative; z-index: 1;
+  font-family: var(--font-display); font-size: 19px; font-weight: 500;
+  color: var(--paper-50); text-decoration: none;
+}
+.sp-auth-brand em {
+  color: var(--accent-600); font-style: italic;
+  display: inline-block;
+  transition: transform 0.2s var(--sp-ease);
+}
+/* This now links back to the public landing page rather than just sitting
+   there as static branding -- give it the same small hover affordance the
+   student-portal nav's logo already has, so it reads as clickable. */
+@media (hover: hover) and (pointer: fine) {
+  .sp-auth-brand:hover em { transform: translateY(-1px); }
+}
+.sp-auth-brand:active em { transform: translateY(0) scale(0.96); }
+
+.sp-auth-visual-topbar {
+  position: relative; z-index: 1;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; flex-wrap: wrap;
+}
+/* Explicit and always-visible -- a hover-only cue on the logo means
+   nothing to a first-time visitor, and nothing at all on touch devices,
+   which don't have hover to begin with. */
+.sp-auth-back {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12.5px; font-weight: 600;
+  color: rgba(255, 255, 255, 0.65);
+  text-decoration: none;
+  padding: 6px 12px; border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+}
+.sp-auth-back iconify-icon { font-size: 14px; transition: transform 0.15s var(--sp-ease); }
+.sp-auth-back:hover {
+  color: var(--paper-50); border-color: rgba(255, 255, 255, 0.35);
+  background: rgba(255, 255, 255, 0.08);
+}
+.sp-auth-back:hover iconify-icon { transform: translateX(-2px); }
+.sp-auth-back:active { transform: scale(0.96); }
+
+.sp-auth-visual-body { position: relative; z-index: 1; }
+.sp-auth-clock-date {
+  font-size: 12.5px; text-transform: uppercase; letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.55); margin: 0 0 6px;
+}
+.sp-auth-clock-time {
+  font-family: var(--font-mono); font-size: 15px; font-weight: 600;
+  color: var(--accent-600); margin: 0 0 18px;
+}
+.sp-auth-visual-title {
+  font-family: var(--font-display); font-size: clamp(2rem, 4vw, 2.8rem);
+  font-weight: 500; letter-spacing: -0.01em; line-height: 1.08;
+  margin: 0 0 12px;
+  /* A wipe reveal instead of a plain fade -- the headline is the one
+     element on this screen worth a considered entrance since it only
+     plays once per session. */
+  clip-path: inset(0 100% 0 0);
+  animation: sp-title-reveal 0.7s var(--sp-ease) 0.2s forwards;
+}
+@keyframes sp-title-reveal {
+  to { clip-path: inset(0 0 0 0); }
+}
+.sp-auth-visual-sub {
+  font-size: 14.5px; line-height: 1.55; color: rgba(255, 255, 255, 0.7);
+  max-width: 34ch; margin: 0;
+  opacity: 0;
+  animation: sp-card-in 0.5s var(--sp-ease) 0.5s forwards;
+}
+.sp-auth-visual-foot {
+  position: relative; z-index: 1;
+  font-size: 12.5px; color: rgba(255, 255, 255, 0.5); margin: 0;
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-auth-visual-title { clip-path: none; animation: none; }
+  .sp-auth-visual-sub { opacity: 1; animation: none; }
+}
+
+.sp-auth-dayprogress {
+  width: 160px; height: 3px; border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14); overflow: hidden;
+  margin-top: 14px;
+}
+.sp-auth-dayprogress-fill {
+  height: 100%; width: 0; border-radius: 999px;
+  background: var(--accent-600);
+  transition: width 1s linear;
+}
+
+/* Real content, not decoration -- what a first-time student actually gets
+   once they sign in. Fills the panel's empty middle with information
+   instead of more atmosphere, and doubles as a quiet answer to "why log
+   in" for anyone landing here who hasn't used the portal before. */
+.sp-auth-features {
+  list-style: none; margin: 26px 0 0; padding: 22px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex; flex-direction: column; gap: 14px;
+  max-width: 34ch;
+}
+.sp-auth-features li {
+  display: flex; align-items: flex-start; gap: 11px;
+  opacity: 0; transform: translateY(6px);
+  animation: sp-card-in 0.45s var(--sp-ease) forwards;
+}
+.sp-auth-features li:nth-child(1) { animation-delay: 0.55s; }
+.sp-auth-features li:nth-child(2) { animation-delay: 0.62s; }
+.sp-auth-features li:nth-child(3) { animation-delay: 0.69s; }
+.sp-auth-features iconify-icon {
+  flex-shrink: 0; margin-top: 1px;
+  font-size: 16px; color: var(--accent-600);
+}
+.sp-auth-features span {
+  font-size: 13.5px; line-height: 1.5; color: rgba(255, 255, 255, 0.75);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-auth-features li { animation: none; opacity: 1; transform: none; }
+}
+
+/* Soft, slow-drifting fields of color -- not a gradient-mesh cliché, just
+   two blurred accent circles that barely move, keeping the dark pane from
+   reading as flat/dead without competing with the text on top of it. */
+.sp-auth-orb {
+  position: absolute; border-radius: 50%; filter: blur(50px);
+  opacity: 0.6; pointer-events: none;
+}
+.sp-auth-orb-1 {
+  width: 340px; height: 340px; background: var(--accent-600);
+  top: -80px; right: -100px;
+  animation: sp-orb-drift-1 8s ease-in-out infinite;
+}
+.sp-auth-orb-2 {
+  width: 260px; height: 260px; background: var(--success-600);
+  bottom: -100px; left: -60px; opacity: 0.45;
+  animation: sp-orb-drift-2 10s ease-in-out infinite;
+}
+@keyframes sp-orb-drift-1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(-45px, 45px) scale(1.1); }
+}
+@keyframes sp-orb-drift-2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(30px, -30px) scale(1.06); }
+}
+/* Cursor-follow parallax (JS) takes over the orbs' transform on
+   pointer-fine devices -- pause the idle drift keyframe while it's active
+   so the two motions don't fight over the same property. Decorative only,
+   per emil-design-eng's note that spring-driven mouse tracking is fine
+   specifically because it serves no function here. */
+.sp-auth-visual.is-tracking .sp-auth-orb { animation-play-state: paused; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-auth-orb { animation: none; }
+}
+
+.sp-auth-form-side {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  padding: 24px;
+  background: var(--paper-100);
+}
+.sp-auth-side-note {
+  margin: 18px 0 0;
+  font-size: 13px; color: var(--slate-500);
+}
+.sp-auth-side-note a {
+  color: var(--accent-text); font-weight: 600; text-decoration: none;
+  transition: color 0.15s ease;
+}
+.sp-auth-side-note a:hover { color: var(--accent-600); }
+.sp-auth-card {
+  width: 100%; max-width: 380px;
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-lg);
+  padding: 32px;
+  box-shadow: var(--shadow-lift);
+  /* Materialize rather than just fade -- per emil-design-eng, blurring an
+     entrance blends the "not there yet" and "arrived" states into one
+     continuous transformation instead of two objects swapping. */
+  opacity: 0; transform: scale(0.97) translateY(6px); filter: blur(6px);
+  animation: sp-card-materialize 0.5s var(--sp-ease) forwards;
+}
+@keyframes sp-card-materialize {
+  to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-auth-card { animation: none; opacity: 1; transform: none; filter: none; }
+}
+.sp-auth-title {
+  font-family: var(--font-display); font-size: 22px; font-weight: 500;
+  margin: 0 0 6px;
+}
+.sp-auth-sub { color: var(--slate-500); font-size: 13.5px; margin: 0 0 24px; }
+.sp-auth-icon {
+  width: 38px; height: 38px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-100); color: var(--accent-text);
+}
+
+/* Staggered settle-in for the form itself -- this screen only appears
+   once per session for a returning user, so a little first-impression
+   motion is worth the cost (per emil-design-eng's frequency test, rare
+   screens can afford delight that a frequently-seen one can't). */
+.sp-auth-in {
+  opacity: 0; transform: translateY(8px);
+  animation: sp-card-in 0.45s var(--sp-ease) forwards;
+  animation-delay: calc(var(--i, 0) * 60ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-auth-in { animation: none; opacity: 1; transform: none; }
+}
+
+.sp-btn-spinner {
+  width: 14px; height: 14px; border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  border-top-color: #fff;
+  animation: sp-spin 0.6s linear infinite;
+}
+@keyframes sp-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .sp-btn-spinner { animation-duration: 1.2s; }
+}
+
+@media (max-width: 860px) {
+  .sp-auth-shell { grid-template-columns: 1fr; }
+  .sp-auth-visual { padding: 28px 24px; min-height: 240px; }
+  .sp-auth-visual-title { font-size: 1.7rem; }
+  .sp-auth-visual-sub { display: none; }
+  .sp-auth-features { display: none; }
+}
+
+.sp-form-group { margin-bottom: 16px; }
+.sp-form-group label {
+  display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-950);
+  margin-bottom: 6px;
+}
+.sp-form-group input {
+  width: 100%; padding: 11px 13px; border-radius: var(--sp-radius-sm);
+  border: 1px solid var(--line-200); font-size: 14.5px;
+  font-family: var(--font-ui); color: var(--ink-950);
+  background: var(--paper-100);
+  transition: border-color 0.15s ease, background 0.15s ease,
+    box-shadow 0.2s var(--sp-ease), transform 0.2s var(--sp-ease);
+}
+.sp-form-group input:focus {
+  border-color: var(--accent-600); background: var(--paper-50);
+  box-shadow: 0 0 0 4px var(--accent-100);
+  transform: translateY(-1px);
+}
+.sp-form-group input:focus-visible {
+  outline: 2px solid var(--accent-600); outline-offset: 2px;
+}
+
+.sp-input-wrap { position: relative; }
+.sp-input-wrap input { padding-right: 42px; }
+.sp-input-toggle {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 30px; height: 30px; border-radius: 8px; border: none;
+  background: transparent; color: var(--slate-500);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 16px;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.sp-input-toggle:hover { background: var(--accent-100); color: var(--accent-text); }
+.sp-input-toggle:active { transform: translateY(-50%) scale(0.92); }
+
+.sp-form-error {
+  background: var(--danger-100); color: var(--danger-600);
+  padding: 10px 13px; border-radius: var(--sp-radius-sm);
+  font-size: 13px; margin-bottom: 16px; display: none;
+}
+.sp-form-error.is-visible {
+  display: block;
+  animation: sp-shake 0.4s var(--sp-ease-glide);
+}
+.sp-form-error-msg { margin: 0 0 4px; font-weight: 600; }
+.sp-form-error-hint { margin: 0; font-size: 12px; opacity: 0.85; }
+
+@keyframes sp-shake {
+  10%, 90% { transform: translateX(-1px); }
+  20%, 80% { transform: translateX(2px); }
+  30%, 50%, 70% { transform: translateX(-3px); }
+  40%, 60% { transform: translateX(3px); }
+}
+
+/* ---------- mobile ---------- */
+
+.sp-tabbar { display: none; }
+
+@media (max-width: 860px) {
+  /* A fixed floating sidebar would eat too much of a small screen, so
+     mobile reverts to the original compact sticky top bar; the tabbar
+     below takes over primary navigation duty at this width. */
+  .sp-nav {
+    position: sticky; top: 0; left: auto; right: auto; bottom: auto;
+    width: 100%; box-sizing: border-box; height: var(--sp-nav-h);
+    flex-direction: row; align-items: center; justify-content: space-between;
+    padding: 0 20px;
+    border-width: 0 0 1px; border-radius: 0;
+    box-shadow: none;
+    overflow: visible;
+  }
+  .sp-nav-user-info { min-width: 0; }
+  .sp-nav-user-id { max-width: 90px; }
+  .sp-brand { padding: 0; margin-bottom: 0; }
+  .sp-nav-links { display: none; }
+  .sp-nav-user { margin-top: 0; padding: 0; border-top: none; }
+  .sp-nav-user-name { display: none; }
+
+  .sp-main { margin-left: 0; max-width: none; padding: 24px 20px calc(48px + var(--sp-tabbar-h)); }
+  .sp-footer { margin-left: 0; max-width: none; }
+
+  .sp-card-grid { grid-template-columns: 1fr; }
+  .sp-field-grid { grid-template-columns: 1fr; }
+
+  .sp-tabbar {
+    display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000;
+    height: var(--sp-tabbar-h);
+    background: rgba(247, 244, 236, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border-top: 1px solid var(--line-200);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .sp-tab {
+    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; text-decoration: none; color: var(--slate-300);
+    font-size: 10.5px; font-weight: 600;
+  }
+  .sp-tab iconify-icon { font-size: 21px; transition: transform 0.15s var(--sp-ease); }
+  .sp-tab.active { color: var(--accent-text); }
+  .sp-tab.active iconify-icon { animation: sp-tab-pop 0.22s var(--sp-ease) both; }
+  .sp-tab:active iconify-icon { transform: scale(0.88); }
+}
+
+@keyframes sp-tab-pop {
+  from { transform: scale(0.8); }
+  to { transform: scale(1); }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .sp-card:hover .sp-card-icon { transform: translateY(-1px); }
+}
+
+/* ---------- confirm dialog (shared, footer.php) ---------- */
+
+.sp-dialog {
+  border: none; padding: 0;
+  width: min(360px, calc(100vw - 48px));
+  border-radius: var(--sp-radius-xl);
+  background: var(--paper-50); color: var(--ink-950);
+  box-shadow: var(--shadow-float);
+  /* Native <dialog> already centers itself in the top layer -- no
+     transform-origin override needed, unlike an anchored popover. */
+  opacity: 0; transform: scale(0.95) translateY(6px);
+}
+.sp-dialog[open] {
+  animation: sp-dialog-in 0.22s var(--sp-ease) forwards;
+}
+@keyframes sp-dialog-in {
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+.sp-dialog::backdrop {
+  background: rgba(31, 46, 40, 0.4);
+  backdrop-filter: blur(2px);
+  animation: sp-dialog-backdrop-in 0.22s ease forwards;
+}
+@keyframes sp-dialog-backdrop-in {
+  from { opacity: 0; } to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-dialog[open], .sp-dialog::backdrop { animation: none; opacity: 1; transform: none; }
+}
+
+.sp-dialog-body { padding: 26px; }
+.sp-dialog-title {
+  font-family: var(--font-display); font-size: 19px; font-weight: 500;
+  margin: 0 0 8px;
+}
+.sp-dialog-message {
+  font-size: 13.5px; color: var(--slate-500); line-height: 1.55;
+  margin: 0 0 22px;
+}
+.sp-dialog-actions { display: flex; justify-content: flex-end; gap: 10px; }
+
+/* Same sliding color-fill hover as the public site's .e-btn (editorial-theme.css):
+   a solid inverted-color layer slides up from the bottom edge on hover
+   and back down on mouse-out, instead of an instant background swap.
+   isolation:isolate + the pseudo's z-index:-1 is what makes this work --
+   it puts the fill above the button's own background but below its label
+   text, so the color visibly slides in while the text stays legible the
+   whole time. Scoped to just the dialog so it doesn't change every button
+   in the app. */
+.sp-dialog-actions .sp-btn {
+  padding: 9px 16px;
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  transition: color 0.35s ease, transform 0.15s var(--sp-ease-glide), box-shadow 0.15s ease;
+}
+.sp-dialog-actions .sp-btn::before {
+  content: '';
+  position: absolute; inset: 0;
+  z-index: -1;
+  transform: translateY(101%);
+  transition: transform 0.4s var(--sp-ease-glide);
+}
+.sp-dialog-actions .sp-btn:hover::before { transform: translateY(0); }
+
+.sp-dialog-actions .sp-btn-primary::before { background: var(--paper-50); }
+.sp-dialog-actions .sp-btn-primary:hover { color: var(--ink-950); box-shadow: none; }
+
+.sp-dialog-actions .sp-btn-secondary::before { background: var(--ink-950); }
+.sp-dialog-actions .sp-btn-secondary:hover { color: var(--paper-50); border-color: var(--ink-950); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-dialog-actions .sp-btn::before { transition: none; }
+}
+
+/* ---------- toasts (shared, footer.php) ---------- */
+
+.sp-toast-host {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  z-index: 3000;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  pointer-events: none;
+}
+@media (max-width: 860px) {
+  .sp-toast-host { bottom: calc(var(--sp-tabbar-h) + 16px); }
+}
+.sp-toast {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--ink-950); color: var(--paper-50);
+  padding: 10px 16px; border-radius: 999px;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-lift);
+  opacity: 0; transform: translateY(10px) scale(0.96);
+  transition: opacity 0.25s var(--sp-ease-glide), transform 0.25s var(--sp-ease-glide);
+}
+.sp-toast.is-visible { opacity: 1; transform: translateY(0) scale(1); }
+.sp-toast iconify-icon { font-size: 16px; color: var(--accent-600); }
+@media (prefers-reduced-motion: reduce) {
+  .sp-toast { transition: opacity 0.2s ease; transform: none; }
+}
+
+/* A quiet, one-time acknowledgement when a real state actually changes for
+   the better (balance settles, requirements complete) -- not decoration,
+   gated in JS to fire only on the transition, not on every visit. */
+@keyframes sp-celebrate-pulse {
+  0% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-4px) scale(1.035); box-shadow: var(--shadow-float); }
+  100% { transform: translateY(0) scale(1); }
+}
+.sp-card.sp-celebrate { animation: sp-celebrate-pulse 0.7s var(--sp-ease-glide); }
+@media (prefers-reduced-motion: reduce) {
+  .sp-card.sp-celebrate { animation: none; }
+}
+
+/* ---------- print (Certificate of Registration) ---------- */
+
+.sp-print-letterhead { display: none; }
+
+@media print {
+  .sp-nav, .sp-tabbar, .sp-print-hide, .sp-toast-host, .sp-footer { display: none !important; }
+  body.student-body { background: #fff; }
+  .sp-main { max-width: none; padding: 0; margin: 0; }
+  .sp-section {
+    box-shadow: none; border: none; padding: 0 0 20px; margin-bottom: 20px;
+    border-bottom: 1px solid #ccc;
+  }
+  .sp-section:last-child { border-bottom: none; }
+  /* Entrance animations must not leave content stuck at opacity:0 if the
+     browser prints before they've finished settling. */
+  .sp-card, .sp-today, .sp-empty, .sp-table-stagger tbody tr {
+    animation: none !important; opacity: 1 !important; transform: none !important;
+  }
+  .sp-print-letterhead {
+    display: block; text-align: center; margin-bottom: 24px; padding-bottom: 16px;
+    border-bottom: 2px solid #000;
+  }
+  .sp-print-letterhead h2 { font-family: var(--font-display); font-size: 20px; margin: 0 0 4px; }
+  .sp-print-letterhead p { margin: 0; font-size: 12px; color: #444; }
+  a { color: inherit !important; text-decoration: none !important; }
+}
