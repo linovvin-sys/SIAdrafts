@@ -30,9 +30,7 @@
   .status-pending { background: #fff3cd; }
   .status-in_progress { background: #cfe2ff; }
   .status-completed { background: #d1e7dd; }
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 20; }
-  .modal { background: #fff; border-radius: 8px; padding: 24px; width: 360px; }
-  .modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+  .task-form { background: #f8f8f8; border: 1px solid #eee; border-radius: 6px; padding: 16px; margin: 16px 0; }
 </style>
 </head>
 <body>
@@ -45,7 +43,6 @@
 
   <script src="./js/controllers/AuthController.js"></script>
   <script src="./js/controllers/TaskController.js"></script>
-  <script src="./js/components/TaskModal.js"></script>
   <script src="./js/views/LoginView.js"></script>
   <script src="./js/views/RegisterView.js"></script>
   <script src="./js/views/DashboardView.js"></script>
