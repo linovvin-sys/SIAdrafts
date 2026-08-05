@@ -1,30 +1,16 @@
-var { ref, watch } = Vue;
+// Plain variables and a function inside setup().
+// Fields start from `task` once — the parent uses a :key so Vue
+// makes a fresh copy of this component whenever `task` changes.
+var { ref } = Vue;
 
 var TaskModal = {
   props: ['task'],
   emits: ['save', 'cancel'],
   setup(props, context) {
-    var title = ref('');
-    var notes = ref('');
-    var category = ref('');
-    var status = ref('pending');
-
-    function loadFromProp() {
-      if (props.task) {
-        title.value = props.task.title;
-        notes.value = props.task.notes;
-        category.value = props.task.category;
-        status.value = props.task.status;
-      } else {
-        title.value = '';
-        notes.value = '';
-        category.value = '';
-        status.value = 'pending';
-      }
-    }
-
-    loadFromProp();
-    watch(function () { return props.task; }, loadFromProp);
+    var title = ref(props.task ? props.task.title : '');
+    var notes = ref(props.task ? props.task.notes : '');
+    var category = ref(props.task ? props.task.category : '');
+    var status = ref(props.task ? props.task.status : 'pending');
 
     function submit() {
       context.emit('save', {

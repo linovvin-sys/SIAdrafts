@@ -1,4 +1,6 @@
-var { ref, computed } = Vue;
+// Plain variables and functions inside setup() — same pattern as
+// StudentController's getFiltered(), called directly in the template.
+var { ref } = Vue;
 
 var STATUS_LABELS = {
   pending: 'Pending',
@@ -26,27 +28,18 @@ var DashboardView = {
 
     loadTasks();
 
-    var filteredTasks = computed(function () {
+    function filteredTasks() {
       var lowerSearch = searchText.value.toLowerCase();
       return tasks.value.filter(function (t) {
         var matchesStatus = !statusFilter.value || t.status === statusFilter.value;
-        var matchesSearch = !lowerSearch ||
-          t.title.toLowerCase().indexOf(lowerSearch) !== -1 ||
-          (t.notes || '').toLowerCase().indexOf(lowerSearch) !== -1;
+        var matchesSearch = !lowerSearch || t.title.toLowerCase().indexOf(lowerSearch) !== -1;
         return matchesStatus && matchesSearch;
       });
-    });
+    }
 
-    var totalCount = computed(function () { return tasks.value.length; });
-    var pendingCount = computed(function () {
-      return tasks.value.filter(function (t) { return t.status === 'pending'; }).length;
-    });
-    var inProgressCount = computed(function () {
-      return tasks.value.filter(function (t) { return t.status === 'in_progress'; }).length;
-    });
-    var completedCount = computed(function () {
-      return tasks.value.filter(function (t) { return t.status === 'completed'; }).length;
-    });
+    function countByStatus(status) {
+      return tasks.value.filter(function (t) { return t.status === status; }).length;
+    }
 
     function statusLabel(status) {
       return STATUS_LABELS[status];
@@ -65,7 +58,6 @@ var DashboardView = {
       }).then(function (data) {
         if (data.success) {
           task.status = nextStatus;
-          errorMsg.value = '';
         } else {
           errorMsg.value = data.error;
         }
@@ -92,7 +84,6 @@ var DashboardView = {
 
       request.then(function (data) {
         if (data.success) {
-          errorMsg.value = '';
           loadTasks();
           closeModal();
         } else {
@@ -108,7 +99,6 @@ var DashboardView = {
 
       TaskController.deleteTask(task.id).then(function (data) {
         if (data.success) {
-          errorMsg.value = '';
           tasks.value = tasks.value.filter(function (t) { return t.id !== task.id; });
         } else {
           errorMsg.value = data.error;
@@ -130,10 +120,7 @@ var DashboardView = {
       editingTask,
       errorMsg,
       filteredTasks,
-      totalCount,
-      pendingCount,
-      inProgressCount,
-      completedCount,
+      countByStatus,
       statusLabel,
       cycleStatus,
       openAddModal,
@@ -155,19 +142,19 @@ var DashboardView = {
 
       <div class="cards">
         <div class="stat-card">
-          <div class="stat-value">{{ totalCount }}</div>
+          <div class="stat-value">{{ tasks.length }}</div>
           <div class="stat-label">Total</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">{{ pendingCount }}</div>
+          <div class="stat-value">{{ countByStatus('pending') }}</div>
           <div class="stat-label">Pending</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">{{ inProgressCount }}</div>
+          <div class="stat-value">{{ countByStatus('in_progress') }}</div>
           <div class="stat-label">In Progress</div>
         </div>
         <div class="stat-card">
-          <div class="stat-value">{{ completedCount }}</div>
+          <div class="stat-value">{{ countByStatus('completed') }}</div>
           <div class="stat-label">Completed</div>
         </div>
       </div>
@@ -196,7 +183,7 @@ var DashboardView = {
           </tr>
         </thead>
         <tbody>
-          <tr v-for="t in filteredTasks" :key="t.id">
+          <tr v-for="t in filteredTasks()" :key="t.id">
             <td>
               <strong>{{ t.title }}</strong>
               <div v-if="t.notes">{{ t.notes }}</div>
@@ -214,9 +201,9 @@ var DashboardView = {
           </tr>
         </tbody>
       </table>
-      <p v-if="filteredTasks.length === 0">No tasks found.</p>
+      <p v-if="filteredTasks().length === 0">No tasks found.</p>
 
-      <task-modal v-if="showModal" :task="editingTask" @save="saveTask" @cancel="closeModal"></task-modal>
+      <task-modal v-if="showModal" :task="editingTask" :key="editingTask ? editingTask.id : 'new'" @save="saveTask" @cancel="closeModal"></task-modal>
     </div>
   `,
 };
