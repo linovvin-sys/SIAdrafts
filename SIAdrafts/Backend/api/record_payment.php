@@ -18,7 +18,8 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_TREASURY, ROLE_ADMIN], true);
+// Admin is deliberately excluded — read-only monitoring only (see treasury.php).
+require_role([ROLE_TREASURY], true);
 
 csrf_verify();
 

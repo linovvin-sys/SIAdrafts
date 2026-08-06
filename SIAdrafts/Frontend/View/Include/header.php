@@ -26,4 +26,4 @@ $_pageCsrfToken = csrf_token();
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
 </head>
-<body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
+<body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>" data-readonly="<?= (($_SESSION['role_name'] ?? '') === 'Admin') ? '1' : '0' ?>">

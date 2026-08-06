@@ -1,6 +1,7 @@
 if (document.getElementById('confirm-app')) {
   Vue.createApp({
     data: () => ({
+      isReadonly:   document.body.dataset.readonly === '1',
       referenceId:  '',
       applicant:    null,
       lookupError:  '',

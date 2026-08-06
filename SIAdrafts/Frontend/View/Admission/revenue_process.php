@@ -6,7 +6,8 @@ $activePage = "revenue_process";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
-require_role([ROLE_TREASURY]);
+require_role([ROLE_TREASURY, ROLE_ADMIN]);
+$isAdminViewer = current_user_is(['Admin']);
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/unpaid_transfer.php';
 
@@ -45,6 +46,7 @@ function student_fullname_rpr(array $s): string {
 <div class="app-layout">
   <?php include '../Include/sidebar.php'; ?>
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="treasury-page">
 
@@ -70,7 +72,7 @@ function student_fullname_rpr(array $s): string {
                 <th>Balance</th>
                 <th>Due</th>
                 <th>Status</th>
-                <th></th>
+                <?php if (!$isAdminViewer): ?><th></th><?php endif; ?>
               </tr>
             </thead>
             <tbody>
@@ -90,9 +92,11 @@ function student_fullname_rpr(array $s): string {
                     ?>
                     <span class="status-pill <?= $cls ?>"><?= htmlspecialchars($st) ?></span>
                   </td>
+                  <?php if (!$isAdminViewer): ?>
                   <td>
                     <a class="btn-pay-row" href="/SIAdrafts/Frontend/View/Admission/treasury.php">Pay</a>
                   </td>
+                  <?php endif; ?>
                 </tr>
               <?php endforeach; ?>
             </tbody>

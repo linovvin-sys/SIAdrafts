@@ -1,6 +1,14 @@
 document.addEventListener('DOMContentLoaded', init);
 
 const API_BASE = '/SIAdrafts/Backend/api/';
+const IS_READONLY = document.body.dataset.readonly === '1';
+
+function actionButtonsHtml(idField, idValue) {
+  if (IS_READONLY) return '';
+  return `
+      <button type="button" class="btn-approve" data-approve="${idValue}">Approve</button>
+      <button type="button" class="btn-reject" data-reject="${idValue}">Reject</button>`;
+}
 
 // Small "3 pending" label next to each panel title, matching the count
 // badge convention used on registrar_dashboard.php's panels.
@@ -60,15 +68,14 @@ function buildCourseRow(item) {
     <td>${escHtml(item.course_code || '')}</td>
     <td>${escHtml(item.course_name || '')}</td>
     <td>${escHtml(item.total_units ?? '')}</td>
-    <td>
-      <button type="button" class="btn-approve" data-approve="${item.course_id}">Approve</button>
-      <button type="button" class="btn-reject" data-reject="${item.course_id}">Reject</button>
-    </td>`;
+    <td>${actionButtonsHtml('course_id', item.course_id)}</td>`;
 
-  tr.querySelector('[data-approve]').addEventListener('click', () =>
-    approveItem('approve_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
-  tr.querySelector('[data-reject]').addEventListener('click', () =>
-    rejectItem('reject_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
+  if (!IS_READONLY) {
+    tr.querySelector('[data-approve]').addEventListener('click', () =>
+      approveItem('approve_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
+    tr.querySelector('[data-reject]').addEventListener('click', () =>
+      rejectItem('reject_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
+  }
 
   return tr;
 }
@@ -100,15 +107,14 @@ function buildSectionRow(item) {
     <td>${escHtml(item.section_name || '')}</td>
     <td>${escHtml(item.course_code || '—')}</td>
     <td>${escHtml(item.capacity ?? '')}</td>
-    <td>
-      <button type="button" class="btn-approve" data-approve="${item.section_id}">Approve</button>
-      <button type="button" class="btn-reject" data-reject="${item.section_id}">Reject</button>
-    </td>`;
+    <td>${actionButtonsHtml('section_id', item.section_id)}</td>`;
 
-  tr.querySelector('[data-approve]').addEventListener('click', () =>
-    approveItem('approve_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
-  tr.querySelector('[data-reject]').addEventListener('click', () =>
-    rejectItem('reject_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
+  if (!IS_READONLY) {
+    tr.querySelector('[data-approve]').addEventListener('click', () =>
+      approveItem('approve_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
+    tr.querySelector('[data-reject]').addEventListener('click', () =>
+      rejectItem('reject_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
+  }
 
   return tr;
 }
@@ -141,15 +147,14 @@ function buildSubjectRow(item) {
     <td>${escHtml(item.subject_name || '')}</td>
     <td>${escHtml(item.units ?? '')}</td>
     <td>${escHtml(item.course_code || '—')}</td>
-    <td>
-      <button type="button" class="btn-approve" data-approve="${item.subject_id}">Approve</button>
-      <button type="button" class="btn-reject" data-reject="${item.subject_id}">Reject</button>
-    </td>`;
+    <td>${actionButtonsHtml('subject_id', item.subject_id)}</td>`;
 
-  tr.querySelector('[data-approve]').addEventListener('click', () =>
-    approveItem('approve_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
-  tr.querySelector('[data-reject]').addEventListener('click', () =>
-    rejectItem('reject_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
+  if (!IS_READONLY) {
+    tr.querySelector('[data-approve]').addEventListener('click', () =>
+      approveItem('approve_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
+    tr.querySelector('[data-reject]').addEventListener('click', () =>
+      rejectItem('reject_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
+  }
 
   return tr;
 }
@@ -183,15 +188,14 @@ function buildScheduleRow(item) {
     <td>${escHtml(item.room_name || '')}</td>
     <td>${escHtml((item.day || '').slice(0, 3))}</td>
     <td>${formatTime(item.time_start)} – ${formatTime(item.time_end)}</td>
-    <td>
-      <button type="button" class="btn-approve" data-approve="${item.schedule_id}">Approve</button>
-      <button type="button" class="btn-reject" data-reject="${item.schedule_id}">Reject</button>
-    </td>`;
+    <td>${actionButtonsHtml('schedule_id', item.schedule_id)}</td>`;
 
-  tr.querySelector('[data-approve]').addEventListener('click', () =>
-    approveItem('approve_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
-  tr.querySelector('[data-reject]').addEventListener('click', () =>
-    rejectItem('reject_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
+  if (!IS_READONLY) {
+    tr.querySelector('[data-approve]').addEventListener('click', () =>
+      approveItem('approve_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
+    tr.querySelector('[data-reject]').addEventListener('click', () =>
+      rejectItem('reject_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
+  }
 
   return tr;
 }

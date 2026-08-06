@@ -16,6 +16,7 @@ include '../Include/header.php';
     <?php include '../Include/sidebar.php'; ?>
 
     <main class="page-content">
+        <?php include '../Include/readonly_banner.php'; ?>
 
         <div class="panel">
 

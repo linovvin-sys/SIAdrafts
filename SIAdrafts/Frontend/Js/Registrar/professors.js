@@ -68,13 +68,16 @@ document.addEventListener('DOMContentLoaded', function () {
       const middle_name   = document.getElementById('newProfessorMiddleName').value.trim();
       const last_name     = document.getElementById('newProfessorLastName').value.trim();
       const department_id = document.getElementById('newProfessorDepartment').value;
+      const email          = document.getElementById('newProfessorEmail').value.trim();
+      const username       = document.getElementById('newProfessorUsername').value.trim();
+      const password       = document.getElementById('newProfessorPassword').value;
 
       if (!first_name || !last_name || !department_id) {
         Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'First name, last name, and department are required.' });
         return;
       }
 
-      const result = await postJSON('save_professor.php', { first_name, middle_name, last_name, department_id });
+      const result = await postJSON('save_professor.php', { first_name, middle_name, last_name, department_id, email, username, password });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add professor', text: result.error });
         return;

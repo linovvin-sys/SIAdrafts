@@ -5,9 +5,10 @@ $pageScript = "schedule";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 
-$isHead = current_user_is(['Head Registrar']);
+$isHead        = current_user_is(['Head Registrar']);
+$isAdminViewer = current_user_is(['Admin']);
 
 include '../Include/header.php';
 ?>
@@ -17,6 +18,7 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <!-- ===== PAGE HEADER ===== -->
     <div class="sched-page-header">
@@ -28,7 +30,9 @@ include '../Include/header.php';
             : 'View schedules. New schedules you add are submitted for Head Registrar approval.' ?>
         </p>
       </div>
+      <?php if (!$isAdminViewer): ?>
       <button type="button" class="btn btn-primary" data-open="addScheduleModal">+ Add Schedule</button>
+      <?php endif; ?>
     </div>
 
     <!-- ===== FILTER BAR ===== -->

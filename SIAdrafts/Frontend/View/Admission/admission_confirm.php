@@ -62,6 +62,10 @@ include '../Include/header.php';
 
     <div v-if="lookupError" class="alert-box alert-error mb-3">{{ lookupError }}</div>
 
+    <div v-if="isReadonly" class="alert-box alert-info mb-3">
+      Read-only view — Admin can look up and review applicants here, but document verification and confirmation must be done by Admission staff.
+    </div>
+
     <div v-if="applicant">
 
       <div class="form-section">
@@ -85,8 +89,8 @@ include '../Include/header.php';
 
       <div v-if="applicant.duplicate_match_status === 'pending_review'" class="alert-box alert-warning mb-3">
         Possible returning student — a matching record was found.
-        <button type="button" class="btn btn-outline" style="margin-left:8px;" @click="reviewDuplicate('confirm')">Confirm match</button>
-        <button type="button" class="btn btn-outline" style="margin-left:8px;" @click="reviewDuplicate('dismiss')">Dismiss</button>
+        <button type="button" class="btn btn-outline" style="margin-left:8px;" :disabled="isReadonly" @click="reviewDuplicate('confirm')">Confirm match</button>
+        <button type="button" class="btn btn-outline" style="margin-left:8px;" :disabled="isReadonly" @click="reviewDuplicate('dismiss')">Dismiss</button>
       </div>
 
       <div class="form-section">
@@ -99,14 +103,14 @@ include '../Include/header.php';
         </div>
         <div v-if="applicant.authorization_note && !applicant.cleared_at" class="alert-box alert-info mb-2">
           {{ applicant.authorization_note }}
-          <button type="button" class="btn btn-outline" style="margin-left:8px;" @click="clearAuthorization">Clear</button>
+          <button type="button" class="btn btn-outline" style="margin-left:8px;" :disabled="isReadonly" @click="clearAuthorization">Clear</button>
         </div>
         <div v-else class="row g-2">
           <div class="col-md-9">
-            <input type="text" class="form-control" v-model="authorizationNote" placeholder="e.g. Authorized pending PSA submission">
+            <input type="text" class="form-control" v-model="authorizationNote" placeholder="e.g. Authorized pending PSA submission" :disabled="isReadonly">
           </div>
           <div class="col-md-3">
-            <button type="button" class="btn btn-submit w-100" @click="setAuthorization">Save note</button>
+            <button type="button" class="btn btn-submit w-100" :disabled="isReadonly" @click="setAuthorization">Save note</button>
           </div>
         </div>
       </div>
@@ -126,7 +130,7 @@ include '../Include/header.php';
 
         <div class="doc-checklist">
           <div class="doc-item" v-for="doc in requiredDocs" :key="doc">
-            <input type="checkbox" :id="doc" v-model="checkedDocs" :value="doc" :disabled="laterDocs.includes(doc)">
+            <input type="checkbox" :id="doc" v-model="checkedDocs" :value="doc" :disabled="isReadonly || laterDocs.includes(doc)">
             <label :for="doc">{{ doc }}</label>
             <template v-if="onlineRecordFor(doc)">
               <a v-if="onlineRecordFor(doc).file_path"
@@ -143,7 +147,7 @@ include '../Include/header.php';
             <span v-else class="doc-online-badge doc-online-badge--none">Not submitted online</span>
             <span class="req" v-if="isCritical(doc)">Required</span>
             <label class="doc-later" v-else>
-              <input type="checkbox" :checked="laterDocs.includes(doc)" @change="toggleLater(doc)">
+              <input type="checkbox" :checked="laterDocs.includes(doc)" :disabled="isReadonly" @change="toggleLater(doc)">
               To follow
             </label>
           </div>
@@ -160,7 +164,7 @@ include '../Include/header.php';
 
           <div class="subject-credit-list">
             <div class="doc-item" v-for="sub in creditableSubjects" :key="sub.subject_id">
-              <input type="checkbox" :id="'cr_'+sub.subject_id" v-model="creditedSubjectIds" :value="sub.subject_id">
+              <input type="checkbox" :id="'cr_'+sub.subject_id" v-model="creditedSubjectIds" :value="sub.subject_id" :disabled="isReadonly">
               <label :for="'cr_'+sub.subject_id">{{ sub.subject_code }} — {{ sub.subject_name }} ({{ sub.year_level }}Y, Sem {{ sub.semester }})</label>
             </div>
           </div>
@@ -170,7 +174,7 @@ include '../Include/header.php';
 
         <div class="form-actions">
           <span class="hint">This finalizes verification — it can't be undone from here.</span>
-          <button type="button" class="btn btn-submit" @click="confirm" :disabled="confirming">
+          <button type="button" class="btn btn-submit" @click="confirm" :disabled="isReadonly || confirming">
             {{ confirming ? 'Confirming…' : 'Confirm admission' }}
           </button>
         </div>

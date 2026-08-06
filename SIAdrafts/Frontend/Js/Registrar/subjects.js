@@ -101,6 +101,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      if (!(Number(units) > 0)) {
+        Swal.fire({ icon: 'warning', title: 'Invalid units', text: 'Units must be greater than zero.' });
+        return;
+      }
+
       const result = await postJSON('save_subject.php', { course_id, subject_code, subject_name, units, category_id, year_level, semester });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add subject', text: result.error });
