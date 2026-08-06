@@ -37,19 +37,24 @@ $applicant_id = (int)$applicant['applicant_id'];
 $course_id    = (int)$applicant['course_id'];
 
 // Full curriculum for this applicant's course, all year levels/semesters —
-// a transferee may have completed multiple terms elsewhere.
+// a transferee may have completed multiple terms elsewhere. Course
+// membership is resolved via subject_course (the authoritative many-to-many
+// mapping, per Backend/subject_course.php's documented convention), falling
+// back to subject.course_id only for subjects with zero subject_course
+// rows. Deliberately not joined through `schedule` — a subject that's part
+// of the curriculum but hasn't been scheduled yet is still creditable.
 $stmt = $conn->prepare(
     "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
             sub.year_level, sub.semester, sc.category_name
      FROM subject sub
      JOIN subject_category sc ON sub.category_id = sc.category_id
-     JOIN section sec ON sec.course_id = ?
-     JOIN schedule sch ON sch.section_id = sec.section_id AND sch.subject_id = sub.subject_id
-     WHERE 1=1
+     LEFT JOIN subject_course scr ON scr.subject_id = sub.subject_id
+     WHERE scr.course_id = ?
+        OR (scr.subject_id IS NULL AND sub.course_id = ?)
      GROUP BY sub.subject_id
      ORDER BY sub.year_level, sub.semester, sc.category_name, sub.subject_code"
 );
-$stmt->bind_param('i', $course_id);
+$stmt->bind_param('ii', $course_id, $course_id);
 $stmt->execute();
 $subjects = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
 $stmt->close();

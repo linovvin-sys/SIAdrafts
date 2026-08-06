@@ -93,6 +93,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      if (!(Number(capacity) > 0)) {
+        Swal.fire({ icon: 'warning', title: 'Invalid capacity', text: 'Capacity must be a positive number.' });
+        return;
+      }
+
       const result = await postJSON('save_section.php', { section_name, capacity, course_id });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add section', text: result.error });

@@ -53,7 +53,7 @@ if (!$staffRow || empty($staffRow['staff_id'])) {
 $requested_by = $staffRow['staff_id'];
 
 // Make sure the enrollment actually exists.
-$check = $conn->prepare("SELECT enrollment_id, student_id FROM enrollment WHERE enrollment_id = ? LIMIT 1");
+$check = $conn->prepare("SELECT enrollment_id, student_id, school_year, semester FROM enrollment WHERE enrollment_id = ? LIMIT 1");
 $check->bind_param('i', $enrollment_id);
 $check->execute();
 $enrollmentRow = $check->get_result()->fetch_assoc();
@@ -99,6 +99,31 @@ if ($dupe->get_result()->fetch_assoc()) {
     exit;
 }
 $dupe->close();
+
+// If a schedule_id was supplied (irregular add), never trust it blind —
+// confirm it exists, actually offers this subject, and belongs to this
+// student's current term. Mirrors the same re-validation save_enrollment.php
+// already does for irregular picks.
+if ($schedule_id !== null) {
+    $schedCheck = $conn->prepare(
+        "SELECT schedule_id FROM schedule
+         WHERE schedule_id = ? AND subject_id = ?
+           AND school_year = ? AND semester = ? AND is_active = 1
+         LIMIT 1"
+    );
+    $schedCheck->bind_param(
+        'iisi',
+        $schedule_id, $subject_id, $enrollmentRow['school_year'], $enrollmentRow['semester']
+    );
+    $schedCheck->execute();
+    $validSchedule = $schedCheck->get_result()->fetch_assoc();
+    $schedCheck->close();
+
+    if (!$validSchedule) {
+        echo json_encode(['error' => 'Selected schedule is not valid for this subject and term.']);
+        exit;
+    }
+}
 
 $conn->begin_transaction();
 

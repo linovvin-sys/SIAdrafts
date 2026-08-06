@@ -40,6 +40,11 @@ if (!$course_id || $code === '' || $name === '' || !$category_id || !$year_level
     exit;
 }
 
+if ($units <= 0) {
+    echo json_encode(['error' => 'Units must be greater than zero.']);
+    exit;
+}
+
 // Head Registrar submissions go live immediately.
 // Registrar Staff submissions need Head Registrar approval first.
 $isHeadRegistrar = current_user_is(['Head Registrar']);
