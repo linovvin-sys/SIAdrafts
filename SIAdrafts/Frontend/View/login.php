@@ -72,6 +72,11 @@ $page_scripts = [
 
             </form>
 
+            <p class="text-center text-ink-soft small mt-4 mb-0">
+              Looking for the student portal?
+              <a href="/SIAdrafts/Frontend/View/Student/login.php">Log in here</a>
+            </p>
+
           </div>
         </div>
 
