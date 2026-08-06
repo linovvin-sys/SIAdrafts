@@ -4,13 +4,13 @@ var ReceiptView = {
     return { lastOrder };
   },
   template: `
-    <div class="page">
+    <div class="container">
       <h1>🧾 Receipt</h1>
       <p>Order ID: <strong>{{ orderId }}</strong></p>
       <p>Customer: {{ lastOrder.customerName }}</p>
       <p>Payment Method: {{ lastOrder.paymentMethod }}</p>
 
-      <table>
+      <table class="table">
         <thead>
           <tr>
             <th>Item</th>
@@ -33,7 +33,7 @@ var ReceiptView = {
       <p>VAT (12%): ₱{{ lastOrder.vat.toFixed(2) }}</p>
       <p><strong>Total Paid: ₱{{ lastOrder.total.toFixed(2) }}</strong></p>
 
-      <router-link to="/" class="order-more">Order More Food</router-link>
+      <router-link to="/" class="btn btn-dark mt-3">Order More Food</router-link>
     </div>
   `,
 };

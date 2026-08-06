@@ -1,7 +1,3 @@
-// ================= MODEL =================
-// Shared reactive state — cartItems and lastOrder live here (not inside
-// any one view's setup()) so the Kiosk badge, Cart page, and Receipt
-// page all see the same data.
 var { reactive } = Vue;
 
 var cartItems = reactive([]);
@@ -16,7 +12,7 @@ var lastOrder = reactive({
   total: 0,
 });
 
-// ================= CONTROLLER =================
+// controller
 var CartController = {
   increaseQuantity(item, menuItems) {
     var menuItem = menuItems.find(function (m) { return m.id === item.id; });

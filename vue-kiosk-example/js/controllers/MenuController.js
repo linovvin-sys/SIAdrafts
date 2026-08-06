@@ -1,5 +1,3 @@
-// ================= MODEL =================
-// Plain static data — a normal JS array, no server involved.
 var menuItems = [
   { id: 1, name: 'Chicken Rice Bowl', category: 'Meals', price: 89, stock: 10, icon: '🍗' },
   { id: 2, name: 'Beef Burger', category: 'Meals', price: 99, stock: 8, icon: '🍔' },
@@ -13,7 +11,7 @@ var menuItems = [
   { id: 10, name: 'Chocolate Cake', category: 'Desserts', price: 60, stock: 0, icon: '🍰' },
 ];
 
-// ================= CONTROLLER =================
+// contoller
 var MenuController = {
   searchItems(items, searchText) {
     var lowerSearch = searchText.toLowerCase();

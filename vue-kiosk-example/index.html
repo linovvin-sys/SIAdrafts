@@ -4,39 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vue Kiosk Example</title>
+<link rel="stylesheet" href="./css/bootstrap.min.css">
 <style>
-  body { font-family: system-ui, sans-serif; margin: 0; color: #222; }
-  .page { max-width: 900px; margin: 0 auto; padding: 96px 20px 40px; }
-  h1 { font-size: 1.5rem; margin: 0; }
-  a { color: inherit; }
-  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 10; background: #fff; padding: 16px 20px; border-bottom: 1px solid #eee; display: flex; align-items: center; justify-content: space-between; }
-  .topbar nav a { margin-left: 12px; text-decoration: none; }
-  .topbar nav a:hover { text-decoration: underline; }
-  .cart-btn { position: relative; padding: 8px 16px; border: 1px solid #222; border-radius: 4px; text-decoration: none; margin-left: auto; }
-  .badge { position: absolute; top: -8px; right: -8px; background: #b00020; color: #fff; border-radius: 50%; font-size: 0.75rem; padding: 2px 6px; }
-  .filter-bar { display: flex; align-items: center; gap: 8px; margin: 16px 0; flex-wrap: wrap; }
-  .filter-bar button { padding: 6px 14px; cursor: pointer; border: 1px solid #ccc; background: #fff; border-radius: 4px; }
-  .filter-bar button.active { background: #222; color: #fff; border-color: #222; }
-  .search-box { width: 100%; padding: 8px 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 4px; }
-  .toast { background: #d1e7dd; border: 1px solid #a3cfbb; padding: 10px 14px; border-radius: 4px; margin-top: 12px; }
-  .menu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin-top: 16px; }
-  .menu-card { border: 1px solid #eee; border-radius: 6px; padding: 16px; text-align: center; }
-  .menu-icon { font-size: 2rem; }
-  .menu-name { font-weight: bold; margin-top: 6px; }
-  .menu-price { color: #222; margin-top: 2px; }
-  .menu-stock { color: #666; font-size: 0.8rem; margin: 4px 0 8px; }
-  .menu-card button { cursor: pointer; padding: 6px 12px; border: 1px solid #222; background: #222; color: #fff; border-radius: 4px; }
-  .menu-card button:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
-  button.secondary { cursor: pointer; padding: 4px 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px; }
-  table { width: 100%; border-collapse: collapse; margin-top: 12px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; }
-  .cart-layout { display: flex; gap: 24px; align-items: flex-start; margin-top: 12px; }
-  .cart-layout table { flex: 1; margin-top: 0; }
-  .summary { background: #f8f8f8; border: 1px solid #eee; border-radius: 6px; padding: 16px 20px; width: 280px; flex-shrink: 0; }
-  .summary input, .summary select { width: 100%; box-sizing: border-box; padding: 8px 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
-  .summary button { width: 100%; padding: 10px; cursor: pointer; border: 1px solid #222; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; }
-  .summary button:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
-  .order-more { display: inline-block; margin-top: 20px; padding: 10px 16px; border: 1px solid #222; background: #222; color: #fff; border-radius: 4px; text-decoration: none; }
+  body { padding-top: 76px; }
+  .menu-icon { font-size: 2.5rem; }
 </style>
 </head>
 <body>
