@@ -1,17 +1,8 @@
 <?php
-session_start();
+require_once '../require_professor.php';
+require_professor(true);
 require_once '../db.php';
-require_once '../roles.php';
-require_once '../require_role.php';
 header('Content-Type: application/json');
-
-if (empty($_SESSION['professor_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized.']);
-    exit;
-}
-
-require_role([ROLE_PROFESSOR], true);
 
 $schedule_id = (int)($_GET['schedule_id'] ?? 0);
 

@@ -1,13 +1,11 @@
 <?php
-$pageTitle  = "MY PROFILE";
+$pageTitle  = "My Profile";
 $activePage = "profile";
 $pageScript = "profile";
 
-require_once '../../../Backend/auth.php';
-require_once '../../../Backend/require_role.php';
-require_once '../../../Backend/roles.php';
-require_role([ROLE_PROFESSOR]);
-require_once '../../../Backend/db.php';
+require_once __DIR__ . '/../../../Backend/require_professor.php';
+require_professor();
+require_once __DIR__ . '/../../../Backend/db.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -25,86 +23,91 @@ $professor = $profStmt->get_result()->fetch_assoc();
 $profStmt->close();
 $db->close();
 
-$extraCss = ['/SIAdrafts/Frontend/Css/Professor/professor.css'];
-include '../Include/header.php';
+include __DIR__ . '/Include/header.php';
 ?>
 
-<div class="app-layout">
+<h1 class="sp-greeting">My Profile</h1>
+<p class="sp-subline">Your account information and portal credentials.</p>
 
-  <?php include '../Include/sidebar.php'; ?>
+<?php if (!$professor): ?>
+  <div class="sp-empty">
+    <iconify-icon icon="mdi:account-alert-outline"></iconify-icon>
+    <p><strong>Your account is not yet linked to a professor record.</strong></p>
+    <p>Please contact the Registrar's Office.</p>
+  </div>
+<?php else: ?>
 
-  <main class="page-content">
-
-    <?php if (!$professor): ?>
-      <div class="panel">
-        <div class="panel-body" style="padding:24px;">
-          <p>Your account is not yet linked to a professor record. Please contact the Registrar's Office.</p>
-        </div>
+  <div class="sp-section">
+    <h2 class="sp-section-title">My Information</h2>
+    <div class="sp-field-grid">
+      <div class="sp-field">
+        <p class="sp-field-label">Name</p>
+        <p class="sp-field-value"><?= htmlspecialchars(trim($professor['first_name'] . ' ' . ($professor['middle_name'] ?? '') . ' ' . $professor['last_name']), ENT_QUOTES) ?></p>
       </div>
-    <?php else: ?>
-
-      <div class="panel" style="margin-bottom:20px;">
-        <div class="panel-header">
-          <span class="panel-title">My Information</span>
-        </div>
-        <div class="panel-body" style="padding:20px 24px;">
-          <div class="form-group">
-            <label class="form-label">Name</label>
-            <div><?= htmlspecialchars(trim($professor['first_name'] . ' ' . ($professor['middle_name'] ?? '') . ' ' . $professor['last_name'])) ?></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Department</label>
-            <div><?= htmlspecialchars($professor['department_code']) ?> — <?= htmlspecialchars($professor['department_name']) ?></div>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Username</label>
-            <div><?= htmlspecialchars($professor['username'] ?? '') ?></div>
-          </div>
-        </div>
+      <div class="sp-field">
+        <p class="sp-field-label">Department</p>
+        <p class="sp-field-value"><?= htmlspecialchars($professor['department_code'] . ' — ' . $professor['department_name'], ENT_QUOTES) ?></p>
       </div>
-
-      <div class="panel" style="margin-bottom:20px;">
-        <div class="panel-header">
-          <span class="panel-title">Update Email</span>
-        </div>
-        <div class="panel-body" style="padding:20px 24px;">
-          <div class="form-group">
-            <label class="form-label">Email</label>
-            <input type="email" id="profileEmail" class="form-input" value="<?= htmlspecialchars($professor['email'] ?? '') ?>">
-          </div>
-          <button type="button" class="btn btn-primary" id="saveEmailBtn">Save Email</button>
-        </div>
+      <div class="sp-field">
+        <p class="sp-field-label">Username</p>
+        <p class="sp-field-value"><?= htmlspecialchars($professor['username'] ?? '', ENT_QUOTES) ?></p>
       </div>
+    </div>
+  </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Change Password</span>
-        </div>
-        <div class="panel-body" style="padding:20px 24px;">
-          <div class="form-group">
-            <label class="form-label">Current Password</label>
-            <input type="password" id="currentPassword" class="form-input">
-          </div>
-          <div class="form-group">
-            <label class="form-label">New Password</label>
-            <input type="password" id="newPassword" class="form-input" minlength="8" placeholder="Min. 8 characters">
-          </div>
-          <div class="form-group">
-            <label class="form-label">Confirm New Password</label>
-            <input type="password" id="confirmPassword" class="form-input">
-          </div>
-          <button type="button" class="btn btn-primary" id="changePasswordBtn">Change Password</button>
-        </div>
+  <div class="sp-section">
+    <h2 class="sp-section-title">Update Email</h2>
+    <div class="sp-form-error" id="emailError" role="alert" aria-live="assertive">
+      <p class="sp-form-error-msg" id="emailErrorMsg"></p>
+    </div>
+    <div class="sp-form-group">
+      <label for="profileEmail">Email</label>
+      <input type="email" id="profileEmail" value="<?= htmlspecialchars($professor['email'] ?? '', ENT_QUOTES) ?>">
+    </div>
+    <button type="button" class="sp-btn sp-btn-primary" id="saveEmailBtn">
+      <span class="sp-btn-spinner" hidden></span>
+      <span class="sp-btn-label">Save Email</span>
+    </button>
+  </div>
+
+  <div class="sp-section">
+    <h2 class="sp-section-title">Change Password</h2>
+    <div class="sp-form-error" id="pwError" role="alert" aria-live="assertive">
+      <p class="sp-form-error-msg" id="pwErrorMsg"></p>
+    </div>
+    <div class="sp-form-group">
+      <label for="currentPassword">Current password</label>
+      <div class="sp-input-wrap">
+        <input type="password" id="currentPassword" autocomplete="current-password">
+        <button type="button" class="sp-input-toggle" data-for="currentPassword" aria-label="Show password" aria-pressed="false">
+          <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+        </button>
       </div>
+    </div>
+    <div class="sp-form-group">
+      <label for="newPassword">New password</label>
+      <div class="sp-input-wrap">
+        <input type="password" id="newPassword" autocomplete="new-password" minlength="8">
+        <button type="button" class="sp-input-toggle" data-for="newPassword" aria-label="Show password" aria-pressed="false">
+          <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+        </button>
+      </div>
+    </div>
+    <div class="sp-form-group">
+      <label for="confirmPassword">Confirm new password</label>
+      <div class="sp-input-wrap">
+        <input type="password" id="confirmPassword" autocomplete="new-password" minlength="8">
+        <button type="button" class="sp-input-toggle" data-for="confirmPassword" aria-label="Show password" aria-pressed="false">
+          <iconify-icon icon="mdi:eye-outline"></iconify-icon>
+        </button>
+      </div>
+    </div>
+    <button type="button" class="sp-btn sp-btn-primary" id="changePasswordBtn">
+      <span class="sp-btn-spinner" hidden></span>
+      <span class="sp-btn-label">Change Password</span>
+    </button>
+  </div>
 
-    <?php endif; ?>
+<?php endif; ?>
 
-  </main>
-</div>
-
-<?php
-$extraScripts = [
-    '/SIAdrafts/Frontend/Js/Professor/' . ($pageScript ?? 'professor') . '.js',
-];
-include '../Include/footer.php';
-?>
+<?php include __DIR__ . '/Include/footer.php'; ?>

@@ -1,190 +1,185 @@
 <?php
-$pageTitle  = "MY SCHEDULE";
+$pageTitle  = "Schedule";
 $activePage = "schedule";
 $pageScript = "schedule";
 
-require_once '../../../Backend/auth.php';
-require_once '../../../Backend/require_role.php';
-require_once '../../../Backend/roles.php';
-require_role([ROLE_PROFESSOR]);
-require_once '../../../Backend/db.php';
-require_once '../../../Backend/settings.php';
+require_once __DIR__ . '/../../../Backend/require_professor.php';
+require_professor();
+require_once __DIR__ . '/../../../Backend/db.php';
+require_once __DIR__ . '/../../../Backend/settings.php';
+require_once __DIR__ . '/../../../Backend/Professor/schedule_data.php';
 
 $db   = new Database();
 $conn = $db->connect();
 
-$profStmt = $conn->prepare("SELECT professor_id FROM professor WHERE professor_id = ? LIMIT 1");
-$profStmt->bind_param('i', $_SESSION['professor_id']);
-$profStmt->execute();
-$professor = $profStmt->get_result()->fetch_assoc();
-$profStmt->close();
+$professorId = (int)$_SESSION['professor_id'];
 
-$byDay = [];
-$days  = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-foreach ($days as $d) { $byDay[$d] = []; }
+$terms      = get_professor_terms($conn, $professorId);
+$schoolYear = $_GET['school_year'] ?? (get_setting('current_school_year') ?? '');
+$semester   = (int)($_GET['semester'] ?? (get_setting('current_semester') ?? 0));
 
-$terms          = [];
-$school_year    = '';
-$semester       = 0;
-$pendingClasses = [];
-
-if ($professor) {
-    $professor_id = $professor['professor_id'];
-
-    $termStmt = $conn->prepare("
-        SELECT DISTINCT school_year, semester
-        FROM schedule
-        WHERE professor_id = ?
-        ORDER BY school_year DESC, semester DESC
-    ");
-    $termStmt->bind_param('i', $professor_id);
-    $termStmt->execute();
-    $terms = $termStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $termStmt->close();
-
-    $school_year = $_GET['school_year'] ?? (get_setting('current_school_year') ?? '');
-    $semester    = (int)($_GET['semester'] ?? (get_setting('current_semester') ?? 0));
-
-    $stmt = $conn->prepare("
-        SELECT s.day, s.time_start, s.time_end, s.school_year, s.semester,
-               sub.subject_code, sub.subject_name, sec.section_name, r.room_name
-        FROM schedule s
-        JOIN subject sub ON sub.subject_id = s.subject_id
-        JOIN section sec ON sec.section_id = s.section_id
-        JOIN room r       ON r.room_id = s.room_id
-        WHERE s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved'
-          AND s.school_year = ? AND s.semester = ?
-        ORDER BY FIELD(s.day,'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'), s.time_start
-    ");
-    $stmt->bind_param('isi', $professor_id, $school_year, $semester);
-    $stmt->execute();
-    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $stmt->close();
-
-    foreach ($rows as $row) {
-        if (isset($byDay[$row['day']])) {
-            $byDay[$row['day']][] = $row;
-        }
-    }
-
-    $pendingStmt = $conn->prepare("
-        SELECT sub.subject_code, sub.subject_name, sec.section_name, s.day, s.time_start, s.time_end
-        FROM schedule s
-        JOIN subject sub ON sub.subject_id = s.subject_id
-        JOIN section sec ON sec.section_id = s.section_id
-        WHERE s.professor_id = ? AND s.status = 'Pending'
-        ORDER BY s.day, s.time_start
-    ");
-    $pendingStmt->bind_param('i', $professor_id);
-    $pendingStmt->execute();
-    $pendingClasses = $pendingStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $pendingStmt->close();
-}
+$scheduled      = get_professor_schedule($conn, $professorId, $schoolYear, $semester);
+$pendingClasses = get_professor_pending($conn, $professorId);
 
 $db->close();
 
-$extraCss = ['/SIAdrafts/Frontend/Css/Professor/professor.css'];
-include '../Include/header.php';
+$days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+$todayName = date('l');
+$slotMinutes = 30;
+
+$toMinutes = fn(string $t) => (int)substr($t, 0, 2) * 60 + (int)substr($t, 3, 2);
+
+$minMinutes = 7 * 60;
+$maxMinutes = 18 * 60;
+foreach ($scheduled as $s) {
+    $start = (int)(floor($toMinutes($s['time_start']) / 60) * 60);
+    $end   = (int)(ceil($toMinutes($s['time_end']) / 60) * 60);
+    $minMinutes = min($minMinutes, $start);
+    $maxMinutes = max($maxMinutes, $end);
+}
+$rowCount = (int)(($maxMinutes - $minMinutes) / $slotMinutes);
+
+$tintClasses = ['tint-1', 'tint-2', 'tint-3', 'tint-4'];
+$subjectTints = [];
+$tintIndex = 0;
+foreach ($scheduled as $s) {
+    if (!isset($subjectTints[$s['subject_code']])) {
+        $subjectTints[$s['subject_code']] = $tintClasses[$tintIndex % count($tintClasses)];
+        $tintIndex++;
+    }
+}
+
+include __DIR__ . '/Include/header.php';
 ?>
 
-<div class="app-layout">
-
-  <?php include '../Include/sidebar.php'; ?>
-
-  <main class="page-content">
-
-    <div class="sched-page-header no-print">
-      <div>
-        <h1 class="sched-page-title">My Weekly Schedule</h1>
-        <p class="sched-page-sub">Your class assignments for the selected term, as set by the Registrar's Office.</p>
-      </div>
-      <button type="button" class="btn btn-outline" onclick="window.print()">Print / Save as PDF</button>
-    </div>
-
-    <?php if (!$professor): ?>
-      <div class="panel">
-        <div class="panel-body" style="padding:24px;">
-          <p>Your account is not yet linked to a professor record. Please contact the Registrar's Office.</p>
-        </div>
-      </div>
-    <?php else: ?>
-
-      <?php if (!empty($terms)): ?>
-        <form method="get" class="filter-bar no-print" style="margin-bottom:16px;">
-          <div class="select-wrapper sched-select">
-            <select name="school_year_semester" class="form-input form-select" onchange="
-              var v = this.value.split('|');
-              window.location = '?school_year=' + encodeURIComponent(v[0]) + '&semester=' + encodeURIComponent(v[1]);
-            ">
-              <?php foreach ($terms as $t): ?>
-                <option value="<?= htmlspecialchars($t['school_year']) ?>|<?= (int)$t['semester'] ?>"
-                  <?= ($t['school_year'] === $school_year && (int)$t['semester'] === $semester) ? 'selected' : '' ?>>
-                  <?= htmlspecialchars($t['school_year']) ?>, Semester <?= (int)$t['semester'] ?>
-                </option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-        </form>
-      <?php endif; ?>
-
-      <?php if (!empty($pendingClasses)): ?>
-        <div class="panel no-print" style="margin-bottom:16px; border-left:3px solid var(--gold);">
-          <div class="panel-header">
-            <span class="panel-title"><?= count($pendingClasses) ?> class<?= count($pendingClasses) === 1 ? '' : 'es' ?> pending Registrar approval</span>
-          </div>
-          <div class="panel-body" style="padding:0;">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr><th>Subject</th><th>Section</th><th>Day / Time</th></tr>
-                </thead>
-                <tbody>
-                  <?php foreach ($pendingClasses as $p): ?>
-                    <tr>
-                      <td><?= htmlspecialchars($p['subject_code']) ?><div class="text-muted"><?= htmlspecialchars($p['subject_name']) ?></div></td>
-                      <td><?= htmlspecialchars($p['section_name']) ?></td>
-                      <td><?= htmlspecialchars($p['day']) ?>, <?= htmlspecialchars(date('g:i A', strtotime($p['time_start']))) ?> – <?= htmlspecialchars(date('g:i A', strtotime($p['time_end']))) ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      <?php endif; ?>
-
-      <div class="prof-week-grid">
-        <?php foreach ($byDay as $day => $classes): ?>
-          <div class="prof-day-col">
-            <div class="prof-day-head"><?= htmlspecialchars($day) ?></div>
-            <div class="prof-day-body">
-              <?php if (empty($classes)): ?>
-                <div class="prof-day-empty">No classes</div>
-              <?php else: ?>
-                <?php foreach ($classes as $c): ?>
-                  <div class="prof-class-card">
-                    <div class="prof-class-time">
-                      <?= htmlspecialchars(date('g:i A', strtotime($c['time_start']))) ?> – <?= htmlspecialchars(date('g:i A', strtotime($c['time_end']))) ?>
-                    </div>
-                    <div class="prof-class-subject"><?= htmlspecialchars($c['subject_code']) ?></div>
-                    <div class="prof-class-name"><?= htmlspecialchars($c['subject_name']) ?></div>
-                    <div class="prof-class-meta"><?= htmlspecialchars($c['section_name']) ?> · <?= htmlspecialchars($c['room_name']) ?></div>
-                  </div>
-                <?php endforeach; ?>
-              <?php endif; ?>
-            </div>
-          </div>
+<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+  <div>
+    <h1 class="sp-greeting">Weekly schedule</h1>
+    <p class="sp-subline">Your class assignments for <?= htmlspecialchars($schoolYear . ', Semester ' . $semester, ENT_QUOTES) ?>.</p>
+  </div>
+  <div class="sp-print-hide" style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+    <?php if (!empty($terms)): ?>
+      <select class="sp-select" id="termSelect">
+        <?php foreach ($terms as $t): ?>
+          <option value="<?= htmlspecialchars($t['school_year'], ENT_QUOTES) ?>|<?= (int)$t['semester'] ?>"
+            <?= ($t['school_year'] === $schoolYear && (int)$t['semester'] === $semester) ? 'selected' : '' ?>>
+            <?= htmlspecialchars($t['school_year'], ENT_QUOTES) ?>, Semester <?= (int)$t['semester'] ?>
+          </option>
         <?php endforeach; ?>
-      </div>
-
+      </select>
     <?php endif; ?>
-
-  </main>
+    <?php if (!empty($scheduled)): ?>
+      <a href="/SIAdrafts/Backend/api/professor_schedule_ics.php?school_year=<?= urlencode($schoolYear) ?>&semester=<?= $semester ?>" class="sp-btn sp-btn-secondary js-ics-download">
+        <iconify-icon icon="mdi:calendar-plus-outline"></iconify-icon> Add to calendar
+      </a>
+    <?php endif; ?>
+    <button type="button" class="sp-btn sp-btn-secondary" onclick="window.print()">
+      <iconify-icon icon="mdi:printer-outline"></iconify-icon> Print / Save as PDF
+    </button>
+  </div>
 </div>
 
+<?php if (!empty($pendingClasses)): ?>
+  <div class="sp-section sp-print-hide">
+    <h2 class="sp-section-title">Pending approval</h2>
+    <table class="sp-table sp-table-stagger">
+      <thead><tr><th>Subject</th><th>Section</th><th>Schedule</th></tr></thead>
+      <tbody>
+        <?php foreach ($pendingClasses as $i => $p): ?>
+          <tr style="--row-i: <?= $i ?>;">
+            <td><?= htmlspecialchars($p['subject_code'], ENT_QUOTES) ?> — <?= htmlspecialchars($p['subject_name'], ENT_QUOTES) ?></td>
+            <td><span class="sp-pill pending"><?= htmlspecialchars($p['section_name'], ENT_QUOTES) ?></span></td>
+            <td class="sp-num"><?= htmlspecialchars($p['day'], ENT_QUOTES) ?>, <?= date('g:ia', strtotime($p['time_start'])) ?>–<?= date('g:ia', strtotime($p['time_end'])) ?></td>
+          </tr>
+        <?php endforeach; ?>
+      </tbody>
+    </table>
+  </div>
+<?php endif; ?>
+
+<?php if (empty($scheduled)): ?>
+  <div class="sp-empty">
+    <iconify-icon icon="mdi:calendar-blank-outline"></iconify-icon>
+    <p><strong>No schedule to show yet.</strong></p>
+    <p>Your teaching schedule will appear here once the Registrar's Office assigns your classes for this term.</p>
+  </div>
+<?php else: ?>
+
 <?php
-$extraScripts = [
-    '/SIAdrafts/Frontend/Js/Professor/' . ($pageScript ?? 'professor') . '.js',
-];
-include '../Include/footer.php';
+$blocksByStartCell = [];
+foreach ($scheduled as $s) {
+    $dayIndex = array_search($s['day'], $days, true);
+    if ($dayIndex === false) continue;
+    $rowStart = 2 + (int)(($toMinutes($s['time_start']) - $minMinutes) / $slotMinutes);
+    $rowEnd   = 2 + (int)(($toMinutes($s['time_end'])   - $minMinutes) / $slotMinutes);
+    $blocksByStartCell["{$rowStart}_" . ($dayIndex + 2)] = $s + ['rowSpan' => $rowEnd - $rowStart];
+}
 ?>
+<div class="sp-section">
+  <div class="sp-schedule-scroll">
+    <div class="sp-schedule" style="grid-template-rows: auto repeat(<?= $rowCount ?>, 24px);">
+      <div class="sp-sch-corner"></div>
+      <?php foreach ($days as $d): ?>
+        <div class="sp-sch-day <?= $d === $todayName ? 'is-today' : '' ?>"><?= substr($d, 0, 3) ?></div>
+      <?php endforeach; ?>
+
+      <?php for ($r = 0; $r < $rowCount; $r++):
+          $rowMinutes = $minMinutes + $r * $slotMinutes;
+          $isHour = $rowMinutes % 60 === 0;
+          $gridRow = $r + 2;
+      ?>
+        <div class="sp-sch-time" style="grid-row: <?= $gridRow ?>; grid-column: 1; border-top-color: <?= $isHour ? 'var(--line-200)' : 'transparent' ?>;">
+          <?= $isHour ? date('g A', strtotime(sprintf('%02d:%02d', intdiv($rowMinutes, 60), $rowMinutes % 60))) : '' ?>
+        </div>
+        <?php foreach ($days as $di => $d):
+            $gridCol = $di + 2;
+            $block = $blocksByStartCell["{$gridRow}_{$gridCol}"] ?? null;
+        ?>
+          <div class="sp-sch-cell <?= $d === $todayName ? 'is-today' : '' ?>" style="grid-row: <?= $gridRow ?>; grid-column: <?= $gridCol ?>;">
+            <?php if ($block): ?>
+              <div class="sp-sch-block <?= $subjectTints[$block['subject_code']] ?>" style="height: <?= $block['rowSpan'] * 24 - 6 ?>px;">
+                <span class="sp-sch-subject"><?= htmlspecialchars($block['subject_code'], ENT_QUOTES) ?></span>
+                <span class="sp-sch-meta"><?= date('g:ia', strtotime($block['time_start'])) ?>–<?= date('g:ia', strtotime($block['time_end'])) ?></span>
+                <span class="sp-sch-meta"><?= htmlspecialchars($block['room_name'] ?? 'TBA', ENT_QUOTES) ?></span>
+              </div>
+            <?php endif; ?>
+          </div>
+        <?php endforeach; ?>
+      <?php endfor; ?>
+    </div>
+  </div>
+
+  <?php $tintColorVar = ['tint-1' => 'accent-600', 'tint-2' => 'info-600', 'tint-3' => 'success-600', 'tint-4' => 'danger-600']; ?>
+  <div class="sp-legend">
+    <?php foreach ($subjectTints as $code => $tint): ?>
+      <div class="sp-legend-item">
+        <span class="sp-legend-swatch" style="background: var(--<?= $tintColorVar[$tint] ?>);"></span>
+        <?= htmlspecialchars($code, ENT_QUOTES) ?>
+      </div>
+    <?php endforeach; ?>
+  </div>
+</div>
+
+<div class="sp-section">
+  <h2 class="sp-section-title">Class list</h2>
+  <table class="sp-table sp-table-stagger">
+    <thead>
+      <tr><th>Code</th><th>Subject</th><th>Schedule</th><th>Room</th><th>Section</th></tr>
+    </thead>
+    <tbody>
+      <?php foreach ($scheduled as $i => $s): ?>
+        <tr style="--row-i: <?= $i ?>;">
+          <td class="sp-num"><?= htmlspecialchars($s['subject_code'], ENT_QUOTES) ?></td>
+          <td><?= htmlspecialchars($s['subject_name'], ENT_QUOTES) ?></td>
+          <td class="sp-num"><?= htmlspecialchars($s['day'], ENT_QUOTES) ?>, <?= date('g:ia', strtotime($s['time_start'])) ?>–<?= date('g:ia', strtotime($s['time_end'])) ?></td>
+          <td><?= htmlspecialchars($s['room_name'] ?? 'TBA', ENT_QUOTES) ?></td>
+          <td><span class="sp-pill enrolled"><?= htmlspecialchars($s['section_name'], ENT_QUOTES) ?></span></td>
+        </tr>
+      <?php endforeach; ?>
+    </tbody>
+  </table>
+</div>
+
+<?php endif; ?>
+
+<?php include __DIR__ . '/Include/footer.php'; ?>

@@ -1,197 +1,194 @@
 <?php
-$pageTitle  = "DASHBOARD";
+$pageTitle  = "Dashboard";
 $activePage = "dashboard";
 $pageScript = "dashboard";
 
-require_once '../../../Backend/auth.php';
-require_once '../../../Backend/require_role.php';
-require_once '../../../Backend/roles.php';
-require_role([ROLE_PROFESSOR]);
-require_once '../../../Backend/db.php';
-require_once '../../../Backend/settings.php';
+require_once __DIR__ . '/../../../Backend/require_professor.php';
+require_professor();
+require_once __DIR__ . '/../../../Backend/db.php';
+require_once __DIR__ . '/../../../Backend/settings.php';
+require_once __DIR__ . '/../../../Backend/Professor/schedule_data.php';
 
 $db   = new Database();
 $conn = $db->connect();
 
-$profStmt = $conn->prepare("SELECT professor_id, first_name, last_name FROM professor WHERE professor_id = ? LIMIT 1");
-$profStmt->bind_param('i', $_SESSION['professor_id']);
+$professorId = (int)$_SESSION['professor_id'];
+
+$profStmt = $conn->prepare("
+    SELECT p.first_name, p.last_name, d.department_code, d.department_name
+    FROM professor p JOIN department d ON d.department_id = p.department_id
+    WHERE p.professor_id = ? LIMIT 1
+");
+$profStmt->bind_param('i', $professorId);
 $profStmt->execute();
 $professor = $profStmt->get_result()->fetch_assoc();
 $profStmt->close();
 
-$todayClasses   = [];
-$totalClasses   = 0;
-$totalStudents  = 0;
-$pendingClasses = [];
+$schoolYear = get_setting('current_school_year') ?? '';
+$semester   = (int)(get_setting('current_semester') ?? 0);
 
-if ($professor) {
-    $professor_id = $professor['professor_id'];
-    $today        = date('l'); // e.g. "Monday"
-    $school_year  = get_setting('current_school_year') ?? '';
-    $semester     = (int)(get_setting('current_semester') ?? 0);
+$scheduleList = order_professor_schedule_by_next_occurrence(get_professor_schedule($conn, $professorId, $schoolYear, $semester));
+$totalClasses = count($scheduleList);
+$nextClass    = $scheduleList[0] ?? null;
+$upcoming     = array_slice($scheduleList, 1, 6);
 
-    $todayStmt = $conn->prepare("
-        SELECT sub.subject_code, sub.subject_name, sec.section_name, r.room_name,
-               s.time_start, s.time_end
-        FROM schedule s
-        JOIN subject sub ON sub.subject_id = s.subject_id
-        JOIN section sec ON sec.section_id = s.section_id
-        JOIN room r       ON r.room_id = s.room_id
-        WHERE s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved' AND s.day = ?
-        ORDER BY s.time_start
-    ");
-    $todayStmt->bind_param('is', $professor_id, $today);
-    $todayStmt->execute();
-    $todayClasses = $todayStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $todayStmt->close();
-
-    $countStmt = $conn->prepare("SELECT COUNT(*) AS cnt FROM schedule WHERE professor_id = ? AND is_active = 1 AND status = 'Approved'");
-    $countStmt->bind_param('i', $professor_id);
-    $countStmt->execute();
-    $totalClasses = (int)($countStmt->get_result()->fetch_assoc()['cnt'] ?? 0);
-    $countStmt->close();
-
-    // Distinct students across all of this professor's approved offerings
-    // for the current term — same applicant_id join fix as the roster
-    // endpoints (enrollment.student_id is really applicants.applicant_id).
-    $headcountStmt = $conn->prepare("
-        SELECT COUNT(DISTINCT st.student_id) AS cnt
-        FROM schedule s
-        JOIN enrollment e ON e.section_id = s.section_id AND e.school_year = s.school_year AND e.semester = s.semester
-        JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.subject_id = s.subject_id AND es.status = 'Enrolled'
-        JOIN student st ON st.applicant_id = e.student_id
-        WHERE s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved'
-          AND s.school_year = ? AND s.semester = ?
-    ");
-    $headcountStmt->bind_param('isi', $professor_id, $school_year, $semester);
-    $headcountStmt->execute();
-    $totalStudents = (int)($headcountStmt->get_result()->fetch_assoc()['cnt'] ?? 0);
-    $headcountStmt->close();
-
-    $pendingStmt = $conn->prepare("
-        SELECT sub.subject_code, sub.subject_name, sec.section_name, s.day, s.time_start, s.time_end
-        FROM schedule s
-        JOIN subject sub ON sub.subject_id = s.subject_id
-        JOIN section sec ON sec.section_id = s.section_id
-        WHERE s.professor_id = ? AND s.status = 'Pending'
-        ORDER BY s.day, s.time_start
-    ");
-    $pendingStmt->bind_param('i', $professor_id);
-    $pendingStmt->execute();
-    $pendingClasses = $pendingStmt->get_result()->fetch_all(MYSQLI_ASSOC);
-    $pendingStmt->close();
+$tintClasses  = ['tint-1', 'tint-2', 'tint-3', 'tint-4'];
+$subjectTints = [];
+foreach ($scheduleList as $s) {
+    if (!isset($subjectTints[$s['subject_code']])) {
+        $subjectTints[$s['subject_code']] = $tintClasses[count($subjectTints) % count($tintClasses)];
+    }
 }
+
+// Distinct students across this term's approved offerings — same
+// applicant_id join fix used everywhere else (enrollment.student_id is
+// really applicants.applicant_id, not student.student_id).
+$headcountStmt = $conn->prepare("
+    SELECT COUNT(DISTINCT st.student_id) AS cnt
+    FROM schedule s
+    JOIN enrollment e ON e.section_id = s.section_id AND e.school_year = s.school_year AND e.semester = s.semester
+    JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.subject_id = s.subject_id AND es.status = 'Enrolled'
+    JOIN student st ON st.applicant_id = e.student_id
+    WHERE s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved'
+      AND s.school_year = ? AND s.semester = ?
+");
+$headcountStmt->bind_param('isi', $professorId, $schoolYear, $semester);
+$headcountStmt->execute();
+$totalStudents = (int)($headcountStmt->get_result()->fetch_assoc()['cnt'] ?? 0);
+$headcountStmt->close();
+
+$pendingClasses = get_professor_pending($conn, $professorId);
 
 $db->close();
 
-include '../Include/header.php';
+$firstName = $professor['first_name'] ?? '';
+$hour = (int)date('G');
+$greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
+
+include __DIR__ . '/Include/header.php';
 ?>
 
-<div class="app-layout">
+<h1 class="sp-greeting"><?= $greeting ?><?= $firstName ? ', ' . htmlspecialchars($firstName, ENT_QUOTES) : '' ?>.</h1>
+<p class="sp-subline">
+  <?= htmlspecialchars(($professor['department_code'] ?? '') . ' · ' . $schoolYear . ', Semester ' . $semester, ENT_QUOTES) ?>
+</p>
 
-  <?php include '../Include/sidebar.php'; ?>
+<div class="sp-today <?= $nextClass ? ($nextClass['is_live'] ? 'is-live' : '') : 'is-empty' ?>">
+  <?php if ($nextClass): ?>
+    <div class="sp-today-status">
+      <span class="sp-today-dot"></span>
+      <span class="sp-today-status-label"><?= $nextClass['is_live'] ? 'Happening now' : 'Next class' ?></span>
+    </div>
+    <p class="sp-today-subject"><?= htmlspecialchars($nextClass['subject_code'], ENT_QUOTES) ?> · <?= htmlspecialchars($nextClass['subject_name'], ENT_QUOTES) ?></p>
+    <p class="sp-today-meta">
+      <?= htmlspecialchars($nextClass['day'], ENT_QUOTES) ?>, <?= date('g:ia', strtotime($nextClass['time_start'])) ?>–<?= date('g:ia', strtotime($nextClass['time_end'])) ?>
+      · <?= htmlspecialchars($nextClass['room_name'] ?? 'TBA', ENT_QUOTES) ?>
+      · Section <?= htmlspecialchars($nextClass['section_name'], ENT_QUOTES) ?>
+    </p>
+    <p class="sp-today-countdown" data-start="<?= $nextClass['start_epoch_ms'] ?>" data-end="<?= $nextClass['end_epoch_ms'] ?>">&nbsp;</p>
 
-  <main class="page-content">
-
-    <?php if (!$professor): ?>
-      <div class="panel">
-        <div class="panel-body" style="padding:24px;">
-          <p>Your account is not yet linked to a professor record. Please contact the Registrar's Office.</p>
-        </div>
-      </div>
-    <?php else: ?>
-
-      <div class="panel" style="margin-bottom:20px;">
-        <div class="panel-body" style="padding:20px 24px;">
-          <div style="font-size:14px;color:var(--text-muted);">Welcome back,</div>
-          <div style="font-size:22px;font-weight:700;color:var(--navy);"><?= htmlspecialchars($professor['first_name'] . ' ' . $professor['last_name']) ?></div>
-        </div>
-      </div>
-
-      <div style="display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap;">
-        <div class="panel" style="flex:1; min-width:200px;">
-          <div class="panel-body" style="padding:20px 24px;">
-            <div style="font-size:13px;color:var(--text-muted);">Active class offerings</div>
-            <div style="font-size:28px;font-weight:700;color:var(--navy);"><?= $totalClasses ?></div>
-          </div>
-        </div>
-        <div class="panel" style="flex:1; min-width:200px;">
-          <div class="panel-body" style="padding:20px 24px;">
-            <div style="font-size:13px;color:var(--text-muted);">Students this term</div>
-            <div style="font-size:28px;font-weight:700;color:var(--navy);"><?= $totalStudents ?></div>
-          </div>
-        </div>
-      </div>
-
-      <?php if (!empty($pendingClasses)): ?>
-        <div class="panel" style="margin-bottom:20px; border-left:3px solid var(--gold);">
-          <div class="panel-header">
-            <span class="panel-title"><?= count($pendingClasses) ?> class<?= count($pendingClasses) === 1 ? '' : 'es' ?> pending Registrar approval</span>
-          </div>
-          <div class="panel-body" style="padding:0;">
-            <div class="table-responsive">
-              <table class="data-table">
-                <thead>
-                  <tr>
-                    <th>Subject</th>
-                    <th>Section</th>
-                    <th>Day / Time</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php foreach ($pendingClasses as $p): ?>
-                    <tr>
-                      <td><?= htmlspecialchars($p['subject_code']) ?><div class="text-muted"><?= htmlspecialchars($p['subject_name']) ?></div></td>
-                      <td><?= htmlspecialchars($p['section_name']) ?></td>
-                      <td><?= htmlspecialchars($p['day']) ?>, <?= htmlspecialchars(date('g:i A', strtotime($p['time_start']))) ?> – <?= htmlspecialchars(date('g:i A', strtotime($p['time_end']))) ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      <?php endif; ?>
-
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Today's Classes (<?= htmlspecialchars(date('l')) ?>)</span>
-        </div>
-        <div class="panel-body" style="padding:0;">
-          <div class="table-responsive">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>Subject</th>
-                  <th>Section</th>
-                  <th>Room</th>
-                  <th>Time</th>
-                </tr>
-              </thead>
-              <tbody>
-                <?php if (!empty($todayClasses)): ?>
-                  <?php foreach ($todayClasses as $c): ?>
-                    <tr>
-                      <td><?= htmlspecialchars($c['subject_code']) ?><div class="text-muted"><?= htmlspecialchars($c['subject_name']) ?></div></td>
-                      <td><?= htmlspecialchars($c['section_name']) ?></td>
-                      <td><?= htmlspecialchars($c['room_name']) ?></td>
-                      <td><?= htmlspecialchars(date('g:i A', strtotime($c['time_start']))) ?> – <?= htmlspecialchars(date('g:i A', strtotime($c['time_end']))) ?></td>
-                    </tr>
-                  <?php endforeach; ?>
-                <?php else: ?>
-                  <tr><td colspan="4" style="text-align:center;">No classes scheduled today.</td></tr>
-                <?php endif; ?>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
+    <?php if ($upcoming): ?>
+      <ul class="sp-today-upcoming">
+        <?php foreach ($upcoming as $u): ?>
+          <li class="<?= $subjectTints[$u['subject_code']] ?>">
+            <?= htmlspecialchars($u['subject_code'], ENT_QUOTES) ?>
+            <span class="sp-today-upcoming-when"><?= substr($u['day'], 0, 3) ?>, <?= date('g:ia', strtotime($u['time_start'])) ?></span>
+          </li>
+        <?php endforeach; ?>
+      </ul>
     <?php endif; ?>
-
-  </main>
+  <?php else: ?>
+    <div class="sp-today-status">
+      <span class="sp-today-dot"></span>
+      <span class="sp-today-status-label">No classes scheduled</span>
+    </div>
+    <p class="sp-today-meta">Your teaching schedule will appear here once the Registrar's Office assigns your classes.</p>
+  <?php endif; ?>
 </div>
 
-<?php
-include '../Include/footer.php';
-?>
+<div class="sp-dash-grid">
+  <div class="sp-dash-main">
+    <div class="sp-card-grid">
+      <a href="/SIAdrafts/Frontend/View/Professor/classes.php" class="sp-card">
+        <div class="sp-card-icon"><iconify-icon icon="mdi:google-classroom" style="font-size:19px;"></iconify-icon></div>
+        <p class="sp-card-label">Active class offerings</p>
+        <p class="sp-card-value"><?= $totalClasses ?></p>
+        <p class="sp-card-hint">This term</p>
+      </a>
+
+      <a href="/SIAdrafts/Frontend/View/Professor/classes.php" class="sp-card">
+        <div class="sp-card-icon"><iconify-icon icon="mdi:account-group-outline" style="font-size:19px;"></iconify-icon></div>
+        <p class="sp-card-label">Students this term</p>
+        <p class="sp-card-value"><?= $totalStudents ?></p>
+        <p class="sp-card-hint">Across all sections</p>
+      </a>
+
+      <div class="sp-card <?= count($pendingClasses) > 0 ? 'is-warning' : 'is-good' ?>">
+        <div class="sp-card-icon"><iconify-icon icon="mdi:clock-alert-outline" style="font-size:19px;"></iconify-icon></div>
+        <p class="sp-card-label">Pending approval</p>
+        <p class="sp-card-value"><?= count($pendingClasses) ?></p>
+        <p class="sp-card-hint"><?= count($pendingClasses) > 0 ? 'Awaiting Registrar sign-off' : 'Nothing pending' ?></p>
+      </div>
+    </div>
+
+    <?php if (!empty($pendingClasses)): ?>
+      <div class="sp-section" style="margin-top:20px;">
+        <h2 class="sp-section-title">Pending approval</h2>
+        <table class="sp-table sp-table-stagger">
+          <thead>
+            <tr><th>Subject</th><th>Section</th><th>Schedule</th></tr>
+          </thead>
+          <tbody>
+            <?php foreach ($pendingClasses as $i => $p): ?>
+              <tr style="--row-i: <?= $i ?>;">
+                <td><?= htmlspecialchars($p['subject_code'], ENT_QUOTES) ?> — <?= htmlspecialchars($p['subject_name'], ENT_QUOTES) ?></td>
+                <td><span class="sp-pill pending"><?= htmlspecialchars($p['section_name'], ENT_QUOTES) ?></span></td>
+                <td class="sp-num"><?= htmlspecialchars($p['day'], ENT_QUOTES) ?>, <?= date('g:ia', strtotime($p['time_start'])) ?>–<?= date('g:ia', strtotime($p['time_end'])) ?></td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+  </div>
+
+  <aside class="sp-dash-side">
+    <div class="sp-section sp-float">
+      <h2 class="sp-section-title">Quick actions</h2>
+      <ul class="sp-quickactions">
+        <li>
+          <a href="/SIAdrafts/Frontend/View/Professor/schedule.php">
+            <span class="sp-quickaction-icon"><iconify-icon icon="mdi:calendar-week"></iconify-icon></span>
+            <span>View schedule</span>
+            <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
+          </a>
+        </li>
+        <?php if ($nextClass): ?>
+        <li>
+          <a href="/SIAdrafts/Backend/api/professor_schedule_ics.php" class="js-ics-download">
+            <span class="sp-quickaction-icon"><iconify-icon icon="mdi:calendar-plus-outline"></iconify-icon></span>
+            <span>Add schedule to calendar</span>
+            <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
+          </a>
+        </li>
+        <?php endif; ?>
+        <li>
+          <a href="/SIAdrafts/Frontend/View/Professor/classes.php">
+            <span class="sp-quickaction-icon"><iconify-icon icon="mdi:account-group-outline"></iconify-icon></span>
+            <span>My classes &amp; rosters</span>
+            <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
+          </a>
+        </li>
+        <li>
+          <a href="/SIAdrafts/Frontend/View/Professor/profile.php">
+            <span class="sp-quickaction-icon"><iconify-icon icon="mdi:account-circle-outline"></iconify-icon></span>
+            <span>My profile</span>
+            <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </aside>
+</div>
+
+<?php include __DIR__ . '/Include/footer.php'; ?>

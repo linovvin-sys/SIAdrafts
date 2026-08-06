@@ -1,18 +1,9 @@
 <?php
-session_start();
+require_once '../require_professor.php';
+require_professor(true);
 require_once '../db.php';
-require_once '../roles.php';
-require_once '../require_role.php';
 require_once '../csrf.php';
 header('Content-Type: application/json');
-
-if (empty($_SESSION['professor_id'])) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Unauthorized.']);
-    exit;
-}
-
-require_role([ROLE_PROFESSOR], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
