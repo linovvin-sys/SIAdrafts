@@ -456,6 +456,28 @@ try {
             throw new RuntimeException('Database error: ' . $conn->error);
         }
         $insStudent->close();
+
+        // First-time enrollee — mint their student portal credentials now,
+        // alongside the student_no minted above. Temp password is the
+        // student's lowercased last name + the last 5 digits of their
+        // student number (e.g. "delacruz00042"); forced to change it on
+        // first login. Never overwritten on re-enrollment (see the $upd
+        // branch above), since only first-time enrollees reach this insert.
+        $lastNameKey = strtolower(preg_replace('/[^A-Za-z]/', '', $applicant['last_name']));
+        $studentNoDigits = preg_replace('/[^0-9]/', '', $student_no);
+        $tempPassword = $lastNameKey . substr($studentNoDigits, -5);
+        $tempPasswordHash = password_hash($tempPassword, PASSWORD_DEFAULT);
+
+        $insPortal = $conn->prepare(
+            "INSERT INTO student_portal_account (applicant_id, student_no, password_hash, must_change_password)
+             VALUES (?, ?, ?, 1)"
+        );
+        $insPortal->bind_param('iss', $student_id, $student_no, $tempPasswordHash);
+        if (!$insPortal->execute()) {
+            $insPortal->close();
+            throw new RuntimeException('Database error (portal account): ' . $conn->error);
+        }
+        $insPortal->close();
     }
 
     // Insert enrollment. Status starts as "Pending Payment" — the payment
