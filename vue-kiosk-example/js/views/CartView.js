@@ -46,43 +46,45 @@ var CartView = {
 
       <p v-if="cartItems.length === 0">Your cart is currently empty.</p>
 
-      <table v-else>
-        <thead>
-          <tr>
-            <th>Item</th>
-            <th>Price</th>
-            <th>Quantity</th>
-            <th>Subtotal</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="item in cartItems" :key="item.id">
-            <td>{{ item.icon }} {{ item.name }}</td>
-            <td>₱{{ item.price }}</td>
-            <td>
-              <button class="secondary" @click="decreaseQuantity(item)">-</button>
-              {{ item.quantity }}
-              <button class="secondary" @click="increaseQuantity(item)">+</button>
-            </td>
-            <td>₱{{ item.price * item.quantity }}</td>
-            <td><button class="secondary" @click="removeItem(item)">Remove</button></td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="cart-layout" v-else>
+        <table>
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th>Subtotal</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="item in cartItems" :key="item.id">
+              <td>{{ item.icon }} {{ item.name }}</td>
+              <td>₱{{ item.price }}</td>
+              <td>
+                <button class="secondary" @click="decreaseQuantity(item)">-</button>
+                {{ item.quantity }}
+                <button class="secondary" @click="increaseQuantity(item)">+</button>
+              </td>
+              <td>₱{{ item.price * item.quantity }}</td>
+              <td><button class="secondary" @click="removeItem(item)">Remove</button></td>
+            </tr>
+          </tbody>
+        </table>
 
-      <div class="summary" v-if="cartItems.length > 0">
-        <h2>Order Summary</h2>
-        <input v-model="customerName" placeholder="Customer Name" />
-        <select v-model="paymentMethod">
-          <option value="Cash">Cash</option>
-          <option value="GCash">GCash</option>
-          <option value="Card">Card</option>
-        </select>
-        <p>Subtotal: ₱{{ subtotal().toFixed(2) }}</p>
-        <p>VAT (12%): ₱{{ vat().toFixed(2) }}</p>
-        <p><strong>Total: ₱{{ total().toFixed(2) }}</strong></p>
-        <button @click="confirmPayment" :disabled="customerName.trim() === ''">Confirm Payment</button>
+        <div class="summary">
+          <h2>Order Summary</h2>
+          <input v-model="customerName" placeholder="Customer Name" />
+          <select v-model="paymentMethod">
+            <option value="Cash">Cash</option>
+            <option value="GCash">GCash</option>
+            <option value="Card">Card</option>
+          </select>
+          <p>Subtotal: ₱{{ subtotal().toFixed(2) }}</p>
+          <p>VAT (12%): ₱{{ vat().toFixed(2) }}</p>
+          <p><strong>Total: ₱{{ total().toFixed(2) }}</strong></p>
+          <button @click="confirmPayment" :disabled="customerName.trim() === ''">Confirm Payment</button>
+        </div>
       </div>
     </div>
   `,
