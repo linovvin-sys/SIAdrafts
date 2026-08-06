@@ -5,7 +5,8 @@ $pageScript = "add_drop_subject";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
+$isAdminViewer = current_user_is(['Admin']);
 require_once __DIR__ . '/../../../Backend/admin/enrollment.php';
 
 include '../Include/header.php';
@@ -16,6 +17,7 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="panel-stack">
 
@@ -50,7 +52,9 @@ include '../Include/header.php';
     <div class="panel" id="subjectsPanel" style="display:none;">
       <div class="panel-header">
         <span class="panel-title">Enrolled Subjects</span>
+        <?php if (!$isAdminViewer): ?>
         <button type="button" class="btn btn-primary" id="openAddSubjectBtn">+ Add Subject</button>
+        <?php endif; ?>
       </div>
       <div class="panel-body" style="padding:0;">
         <table class="data-table" id="enrolledSubjectsTable">

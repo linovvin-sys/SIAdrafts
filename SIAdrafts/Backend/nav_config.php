@@ -47,6 +47,48 @@ return [
     'admin' => [
         ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php', 'icon' => 'dashboard'],
         ['label' => 'Manage User', 'page' => 'manage_user', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_user.php', 'icon' => 'users'],
+        [
+            'group' => 'Monitor: Admissions',
+            'icon' => 'admission',
+            'items' => [
+                ['label' => 'Admission Queue', 'page' => 'admission', 'url' => '/SIAdrafts/Frontend/View/Admission/admission.php', 'icon' => 'admission'],
+                ['label' => 'Pending Documents', 'page' => 'pending_documents', 'url' => '/SIAdrafts/Frontend/View/Admission/pending_documents.php', 'icon' => 'approval'],
+                ['label' => 'Ready to Enroll', 'page' => 'enrollment', 'url' => '/SIAdrafts/Frontend/View/Admission/enrollment.php', 'icon' => 'enrollment'],
+                ['label' => 'Total Enrolees', 'page' => 'total_enrolees', 'url' => '/SIAdrafts/Frontend/View/Admission/total_enrolees.php', 'icon' => 'enrolees'],
+            ],
+        ],
+        [
+            'group' => 'Monitor: Payments',
+            'icon' => 'treasury',
+            'items' => [
+                ['label' => 'Treasury', 'page' => 'treasury', 'url' => '/SIAdrafts/Frontend/View/Admission/treasury.php', 'icon' => 'treasury'],
+                ['label' => 'Revenue — Paid', 'page' => 'revenue_paid', 'url' => '/SIAdrafts/Frontend/View/Admission/revenue_paid.php', 'icon' => 'paid'],
+                ['label' => 'Revenue — Process', 'page' => 'revenue_process', 'url' => '/SIAdrafts/Frontend/View/Admission/revenue_process.php', 'icon' => 'process'],
+                ['label' => 'Unpaid Students', 'page' => 'unpaid_students', 'url' => '/SIAdrafts/Frontend/View/Admission/unpaid_students.php', 'icon' => 'unpaid'],
+            ],
+        ],
+        [
+            'group' => 'Monitor: Curriculum',
+            'icon' => 'course',
+            'items' => [
+                ['label' => 'Courses', 'page' => 'courses', 'url' => '/SIAdrafts/Frontend/View/Registrar/courses.php', 'icon' => 'course'],
+                ['label' => 'Sections', 'page' => 'sections', 'url' => '/SIAdrafts/Frontend/View/Registrar/sections.php', 'icon' => 'sections'],
+                ['label' => 'Subjects', 'page' => 'subjects', 'url' => '/SIAdrafts/Frontend/View/Registrar/subjects.php', 'icon' => 'subjects'],
+                ['label' => 'Professors', 'page' => 'professors', 'url' => '/SIAdrafts/Frontend/View/Registrar/professors.php', 'icon' => 'professors'],
+            ],
+        ],
+        [
+            'group' => 'Monitor: Registrar',
+            'icon' => 'schedule',
+            'items' => [
+                ['label' => 'Schedule', 'page' => 'schedule', 'url' => '/SIAdrafts/Frontend/View/Registrar/schedule.php', 'icon' => 'schedule'],
+                ['label' => 'Add/Drop Subject', 'page' => 'addDrop', 'url' => '/SIAdrafts/Frontend/View/Registrar/add_drop_subject.php', 'icon' => 'addDrop'],
+                ['label' => 'Pending Approval', 'page' => 'pending', 'url' => '/SIAdrafts/Frontend/View/Registrar/pending_approval.php', 'icon' => 'approval'],
+                ['label' => 'Enrollment Records', 'page' => 'enrollment', 'url' => '/SIAdrafts/Frontend/View/Registrar/enrollment.php', 'icon' => 'enrollment'],
+                ['label' => 'Messaging Activity', 'page' => 'messages', 'url' => '/SIAdrafts/Frontend/View/Registrar/messages.php', 'icon' => 'messages'],
+                ['label' => 'Notifications', 'page' => 'notifications', 'url' => '/SIAdrafts/Frontend/View/Registrar/notifications.php', 'icon' => 'notifications'],
+            ],
+        ],
         ['label' => 'Settings', 'page' => 'settings', 'url' => '/SIAdrafts/Frontend/View/Admin/settings.php', 'icon' => 'settings'],
     ],
     'registrar staff' => [

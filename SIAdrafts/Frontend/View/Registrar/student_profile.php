@@ -4,7 +4,7 @@ $activePage = "enrollment";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -105,6 +105,7 @@ include '../Include/header.php';
     <?php include '../Include/sidebar.php'; ?>
 
     <main class="page-content">
+        <?php include '../Include/readonly_banner.php'; ?>
 
         <?php if (!$student): ?>
             <div class="surface-2 rd-empty-state">

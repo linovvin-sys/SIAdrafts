@@ -6,7 +6,8 @@ $activePage = "treasury";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
-require_role([ROLE_TREASURY]);
+require_role([ROLE_TREASURY, ROLE_ADMIN]);
+$isAdminViewer = current_user_is(['Admin']);
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/unpaid_transfer.php';
 
@@ -93,6 +94,7 @@ function student_fullname_t(array $s): string {
 <div class="app-layout">
   <?php include '../Include/sidebar.php'; ?>
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
 <div class="treasury-page">
  
@@ -212,7 +214,7 @@ function student_fullname_t(array $s): string {
               <th>Due</th>
               <th>Balance</th>
               <th>Status</th>
-              <th></th>
+              <?php if (!$isAdminViewer): ?><th></th><?php endif; ?>
             </tr>
           </thead>
           <tbody>
@@ -230,11 +232,13 @@ function student_fullname_t(array $s): string {
                   ?>
                   <span class="status-pill <?= $cls ?>"><?= htmlspecialchars($st) ?></span>
                 </td>
+                <?php if (!$isAdminViewer): ?>
                 <td>
                   <button class="btn-pay-row" data-payment-id="<?= (int)$row['payment_id'] ?>" data-student="<?= htmlspecialchars(student_fullname_t($row), ENT_QUOTES) ?>">
                     Pay
                   </button>
                 </td>
+                <?php endif; ?>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -251,7 +255,7 @@ function student_fullname_t(array $s): string {
               <th>Subject</th>
               <th>Action</th>
               <th>Amount</th>
-              <th></th>
+              <?php if (!$isAdminViewer): ?><th></th><?php endif; ?>
             </tr>
           </thead>
           <tbody>
@@ -262,11 +266,13 @@ function student_fullname_t(array $s): string {
                 <td><?= htmlspecialchars($row['subject_code'] . ' — ' . $row['subject_name']) ?> (<?= htmlspecialchars($row['units']) ?> units)</td>
                 <td><span class="status-pill <?= $row['action'] === 'Add' ? 'down' : 'unpaid' ?>"><?= htmlspecialchars($row['action']) ?></span></td>
                 <td>₱<?= number_format((float)$row['amount'], 2) ?></td>
+                <?php if (!$isAdminViewer): ?>
                 <td>
                   <button class="btn-pay-row" data-fee-id="<?= (int)$row['fee_id'] ?>" data-student="<?= htmlspecialchars(student_fullname_t($row), ENT_QUOTES) ?>">
                     Pay
                   </button>
                 </td>
+                <?php endif; ?>
               </tr>
             <?php endforeach; ?>
           </tbody>
@@ -293,9 +299,13 @@ function student_fullname_t(array $s): string {
               <th>Student</th>
               <th>ID</th>
               <th>SY / Sem</th>
+              <?php if ($isAdminViewer): ?>
+              <th>Status</th>
+              <?php else: ?>
               <th>Amount Due</th>
               <th>Due Date</th>
               <th></th>
+              <?php endif; ?>
             </tr>
           </thead>
           <tbody>
@@ -304,6 +314,9 @@ function student_fullname_t(array $s): string {
                 <td><?= htmlspecialchars(student_fullname_t($row)) ?></td>
                 <td><?= htmlspecialchars(fmt_id_t($row['display_id'])) ?></td>
                 <td><?= htmlspecialchars($row['school_year']) ?> &middot; Sem <?= (int)$row['semester'] ?></td>
+                <?php if ($isAdminViewer): ?>
+                <td><span class="status-pill unpaid">Needs setup</span></td>
+                <?php else: ?>
                 <td><input type="number" class="setup-amount" min="0" step="0.01" placeholder="0.00"></td>
                 <td><input type="date" class="setup-due-date"></td>
                 <td>
@@ -311,6 +324,7 @@ function student_fullname_t(array $s): string {
                     Set Up
                   </button>
                 </td>
+                <?php endif; ?>
               </tr>
             <?php endforeach; ?>
           </tbody>

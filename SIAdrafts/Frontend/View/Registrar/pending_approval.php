@@ -5,7 +5,7 @@ $pageScript = "pending";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Head Registrar']); // this page is Head Registrar only
+require_role(['Head Registrar', 'Admin']); // Head Registrar can act; Admin gets read-only visibility (see pending.js IS_READONLY)
 
 include '../Include/header.php';
 ?>
@@ -15,6 +15,7 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="sched-page-header">
       <div>

@@ -40,6 +40,8 @@ function fmtOrNumber(transactionId) {
   return 'OR-' + String(transactionId).padStart(6, '0');
 }
 
+const IS_READONLY = document.body.dataset.readonly === '1';
+
 // ===== Renders the search-result payment card (also reused after "Pay" from queue) =====
 function renderPayCard(data) {
   const resultDiv = document.getElementById('payResult');
@@ -79,7 +81,7 @@ function renderPayCard(data) {
           '</div>' +
           '<div class="pending-fee-action">' +
             '<span class="pending-fee-amount">' + fmtMoney(f.amount) + '</span>' +
-            '<button type="button" class="btn-record-fee" data-fee-id="' + f.fee_id + '">Record payment</button>' +
+            (IS_READONLY ? '' : '<button type="button" class="btn-record-fee" data-fee-id="' + f.fee_id + '">Record payment</button>') +
           '</div>' +
         '</div>';
       }).join('')
@@ -114,7 +116,7 @@ function renderPayCard(data) {
         </div>
       ` : ''}
 
-      ${balance > 0 ? `
+      ${balance > 0 ? (IS_READONLY ? '' : `
         <div class="pay-form">
           <div class="field">
             <label>Amount to record</label>
@@ -128,7 +130,7 @@ function renderPayCard(data) {
             Record payment
           </button>
         </div>
-      ` : `<div class="t-banner success">Fully paid. No balance remaining.</div>`}
+      `) : `<div class="t-banner success">Fully paid. No balance remaining.</div>`}
 
       <div class="pay-history">
         <h4>Payment history</h4>

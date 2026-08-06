@@ -5,11 +5,13 @@ $pageScript = "professors";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
 $conn = $db->connect();
+
+$isAdminViewer = current_user_is(['Admin']);
 
 $professors = $conn->query("
     SELECT p.professor_id, p.first_name, p.middle_name, p.last_name, p.username,
@@ -42,11 +44,14 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">Professors</span>
+        <?php if (!$isAdminViewer): ?>
         <button type="button" class="btn btn-primary" data-open="addProfessorModal">+ Add Professor</button>
+        <?php endif; ?>
       </div>
 
       <div class="panel-body" style="padding:16px 24px 0;">
@@ -78,6 +83,7 @@ include '../Include/header.php';
                     <td><span class="status-pill status-pill--<?= $row['status_name'] === 'Active' ? 'approved' : 'rejected' ?>"><?= htmlspecialchars($row['status_name']) ?></span></td>
                     <td><span class="status-pill status-pill--<?= $row['username'] ? 'approved' : 'pending' ?>"><?= $row['username'] ? 'Enabled' : 'No account' ?></span></td>
                     <td>
+                      <?php if (!$isAdminViewer): ?>
                       <div class="row-actions">
                         <?php if ($row['status_name'] === 'Active'): ?>
                           <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px" data-toggle-professor="<?= (int)$row['professor_id'] ?>" data-toggle-action="deactivate">Deactivate</button>
@@ -85,6 +91,7 @@ include '../Include/header.php';
                           <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px" data-toggle-professor="<?= (int)$row['professor_id'] ?>" data-toggle-action="activate">Activate</button>
                         <?php endif; ?>
                       </div>
+                      <?php endif; ?>
                     </td>
                   </tr>
                 <?php endforeach; ?>

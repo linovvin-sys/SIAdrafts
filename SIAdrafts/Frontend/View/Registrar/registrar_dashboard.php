@@ -5,13 +5,14 @@ $pageScript = "dashboard";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
 $conn = $db->connect();
 
-$isHead = current_user_is(['Head Registrar']);
+$isHead        = current_user_is(['Head Registrar']);
+$isAdminViewer = current_user_is(['Admin']);
 
 $totalCourses  = (int)($conn->query("SELECT COUNT(*) c FROM course")->fetch_assoc()['c'] ?? 0);
 $totalSections = (int)($conn->query("SELECT COUNT(*) c FROM section")->fetch_assoc()['c'] ?? 0);
@@ -110,6 +111,7 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="stats-grid">
       <div class="stat-card">
