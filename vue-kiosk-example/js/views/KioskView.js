@@ -37,10 +37,10 @@ var KioskView = {
     <div class="page">
       <div class="topbar">
         <h1>🍽️ Kiosk Menu</h1>
-        <router-link to="/cart" class="cart-btn">
-          Cart
-          <span class="badge" v-if="cartCount() > 0">{{ cartCount() }}</span>
-        </router-link>
+        <nav>
+          <router-link to="/">Kiosk Menu</router-link>
+          <router-link to="/cart">Shopping Cart</router-link>
+        </nav>
       </div>
 
       <div class="filter-bar">
@@ -49,6 +49,10 @@ var KioskView = {
         <button @click="category = 'Drinks'" :class="{ active: category === 'Drinks' }">Drinks</button>
         <button @click="category = 'Snacks'" :class="{ active: category === 'Snacks' }">Snacks</button>
         <button @click="category = 'Desserts'" :class="{ active: category === 'Desserts' }">Desserts</button>
+        <router-link to="/cart" class="cart-btn">
+          Cart
+          <span class="badge" v-if="cartCount() > 0">{{ cartCount() }}</span>
+        </router-link>
       </div>
 
       <input v-model="searchText" class="search-box" placeholder="Search items..." />

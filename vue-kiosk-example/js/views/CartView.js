@@ -41,7 +41,10 @@ var CartView = {
     <div class="page">
       <div class="topbar">
         <h1>🛒 Shopping Cart</h1>
-        <router-link to="/">&larr; Back to Menu</router-link>
+        <nav>
+          <router-link to="/">Kiosk Menu</router-link>
+          <router-link to="/cart">Shopping Cart</router-link>
+        </nav>
       </div>
 
       <p v-if="cartItems.length === 0">Your cart is currently empty.</p>
