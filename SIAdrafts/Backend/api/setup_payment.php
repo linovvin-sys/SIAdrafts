@@ -13,7 +13,13 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_ADMIN], true);
+// This is the backend for treasury.php's "Needs payment setup" tab, so
+// Treasury is the correct role here — Admin is deliberately excluded for
+// read-only monitoring (see treasury.php). Note: gating this ROLE_ADMIN-only
+// was already a pre-existing bug independent of that change — it meant
+// Treasury staff could never actually call this endpoint even though its
+// own UI button lives on a Treasury-only page.
+require_role([ROLE_TREASURY], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

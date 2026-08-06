@@ -36,6 +36,11 @@ if ($section_name === '' || $course_id <= 0) {
     exit;
 }
 
+if ($capacity <= 0) {
+    echo json_encode(['error' => 'Capacity must be a positive number.']);
+    exit;
+}
+
 // Head Registrar submissions go live immediately.
 // Registrar Staff submissions need Head Registrar approval first.
 $isHeadRegistrar = current_user_is(['Head Registrar']);

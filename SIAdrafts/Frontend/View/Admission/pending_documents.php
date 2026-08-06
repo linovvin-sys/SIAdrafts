@@ -6,6 +6,7 @@ require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
 require_role([ROLE_ADMISSION, ROLE_ADMIN]);
+$isAdminViewer = current_user_is(['Admin']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -54,6 +55,7 @@ include '../Include/header.php';
     <?php include '../Include/sidebar.php'; ?>
 
     <main class="page-content">
+        <?php include '../Include/readonly_banner.php'; ?>
 
         <div class="panel">
 
@@ -102,7 +104,7 @@ include '../Include/header.php';
                                                 <tr>
                                                     <th style="padding-left:48px;">Document</th>
                                                     <th>Flagged On</th>
-                                                    <th style="width:140px;">Action</th>
+                                                    <?php if (!$isAdminViewer): ?><th style="width:140px;">Action</th><?php endif; ?>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -110,11 +112,13 @@ include '../Include/header.php';
                                                     <tr>
                                                         <td style="padding-left:48px;"><?= htmlspecialchars($doc['document_name']) ?></td>
                                                         <td><?= date('M d, Y', strtotime($doc['uploaded_at'])) ?></td>
+                                                        <?php if (!$isAdminViewer): ?>
                                                         <td>
                                                             <button type="button" class="btn btn-outline btn-mark-received" style="padding:4px 10px;font-size:12px" data-document-id="<?= (int)$doc['document_id'] ?>">
                                                                 Mark Received
                                                             </button>
                                                         </td>
+                                                        <?php endif; ?>
                                                     </tr>
                                                 <?php endforeach; ?>
                                             </tbody>

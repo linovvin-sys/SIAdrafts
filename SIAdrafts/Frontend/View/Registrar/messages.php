@@ -5,16 +5,59 @@ $pageScript = "messages";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/api/can_message.php';
+
+$isAdminViewer = current_user_is(['Admin']);
 
 $db   = new Database();
 $conn = $db->connect();
 
-$myId         = (int)$_SESSION['user_id'];
-$contacts     = get_allowed_contacts($conn, $myId);
-$unreadCounts = get_unread_counts($conn, $myId);
+if (!$isAdminViewer) {
+    $myId         = (int)$_SESSION['user_id'];
+    $contacts     = get_allowed_contacts($conn, $myId);
+    $unreadCounts = get_unread_counts($conn, $myId);
+} else {
+    // Admin gets activity metadata only — who's talking to whom, how much,
+    // and how recently — never message bodies. This is a deliberate privacy
+    // boundary, not an oversight: staff messages are correspondence, and
+    // Admin's oversight need is "is this being used / responsive", not
+    // "what did they say." Grouped by unordered participant pair so an
+    // A->B and B->A thread count as one conversation.
+    $activityStmt = $conn->prepare(
+        "SELECT
+            LEAST(m.sender_id, m.recipient_id)    AS user_a,
+            GREATEST(m.sender_id, m.recipient_id) AS user_b,
+            COUNT(*)                              AS message_count,
+            SUM(m.read_at IS NULL)                AS unread_count,
+            MAX(m.sent_at)                        AS last_activity
+         FROM messages m
+         GROUP BY user_a, user_b
+         ORDER BY last_activity DESC"
+    );
+    $activityStmt->execute();
+    $activityRows = $activityStmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $activityStmt->close();
+
+    $userIds = [];
+    foreach ($activityRows as $row) {
+        $userIds[(int)$row['user_a']] = true;
+        $userIds[(int)$row['user_b']] = true;
+    }
+    $userNames = [];
+    if (!empty($userIds)) {
+        $ids = array_keys($userIds);
+        $ph  = implode(',', array_fill(0, count($ids), '?'));
+        $nameStmt = $conn->prepare("SELECT user_id, first_name, last_name FROM users WHERE user_id IN ($ph)");
+        $nameStmt->bind_param(str_repeat('i', count($ids)), ...$ids);
+        $nameStmt->execute();
+        foreach ($nameStmt->get_result()->fetch_all(MYSQLI_ASSOC) as $u) {
+            $userNames[(int)$u['user_id']] = trim($u['first_name'] . ' ' . $u['last_name']);
+        }
+        $nameStmt->close();
+    }
+}
 $db->close();
 
 function initials(string $first, string $last): string {
@@ -25,6 +68,58 @@ function initials(string $first, string $last): string {
 
 include '../Include/header.php';
 ?>
+
+<?php if ($isAdminViewer): ?>
+
+<div class="app-layout">
+
+  <?php include '../Include/sidebar.php'; ?>
+
+  <main class="page-content">
+
+    <div class="panel">
+      <div class="panel-header">
+        <span class="panel-title">Messaging Activity</span>
+        <span class="text-muted" style="font-size:12px;">Metadata only — message content is private to participants</span>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <div class="table-responsive">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Participants</th>
+              <th>Messages</th>
+              <th>Unread</th>
+              <th>Last activity</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php if (empty($activityRows)): ?>
+              <tr><td colspan="4" style="text-align:center;">No messaging activity yet.</td></tr>
+            <?php else: ?>
+              <?php foreach ($activityRows as $row): ?>
+                <?php
+                  $nameA = $userNames[(int)$row['user_a']] ?? 'Unknown';
+                  $nameB = $userNames[(int)$row['user_b']] ?? 'Unknown';
+                ?>
+                <tr>
+                  <td><?= htmlspecialchars($nameA) ?> &harr; <?= htmlspecialchars($nameB) ?></td>
+                  <td class="mono"><?= (int)$row['message_count'] ?></td>
+                  <td class="mono"><?= (int)$row['unread_count'] ?></td>
+                  <td class="mono"><?= htmlspecialchars(date('M j, Y g:i A', strtotime($row['last_activity']))) ?></td>
+                </tr>
+              <?php endforeach; ?>
+            <?php endif; ?>
+          </tbody>
+        </table>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<?php else: ?>
 
 <div class="app-layout">
 
@@ -101,10 +196,8 @@ include '../Include/header.php';
   const CURRENT_USER_ID = <?= (int)$_SESSION['user_id'] ?>;
 </script>
 
-<?php
-$extraScripts = [
-    'https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js',
-    '/SIAdrafts/Frontend/Js/Registrar/' . ($pageScript ?? 'registrar') . '.js',
-];
-include '../Include/footer.php';
-?>
+<?php $extraScripts = ['https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js', '/SIAdrafts/Frontend/Js/Registrar/messages.js']; ?>
+
+<?php endif; ?>
+
+<?php include '../Include/footer.php'; ?>

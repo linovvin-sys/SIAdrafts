@@ -5,7 +5,7 @@ $pageScript = "sections";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
@@ -25,7 +25,8 @@ $approvedCourses = array_values(array_filter($courses, fn($c) => $c['status'] ==
 
 $db->close();
 
-$isHead = current_user_is(['Head Registrar']);
+$isHead        = current_user_is(['Head Registrar']);
+$isAdminViewer = current_user_is(['Admin']);
 
 include '../Include/header.php';
 ?>
@@ -35,11 +36,14 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">Sections</span>
+        <?php if (!$isAdminViewer): ?>
         <button type="button" class="btn btn-primary" data-open="addSectionModal">+ Add Section</button>
+        <?php endif; ?>
       </div>
 
       <div class="panel-body" style="padding:16px 24px 0;">

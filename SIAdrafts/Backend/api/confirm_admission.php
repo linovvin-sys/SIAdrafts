@@ -17,7 +17,8 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_ADMISSION, ROLE_ADMIN], true);
+// Admin is deliberately excluded — read-only monitoring only (see admission_confirm.php).
+require_role([ROLE_ADMISSION], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

@@ -24,7 +24,10 @@ Vue.createApp({
       try {
         const r = await fetch('/SIAdrafts/Backend/api/save_enrollment.php', {
           method:  'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.body.dataset.csrf || '',
+          },
           body:    JSON.stringify({
             student_id:  ENROLLMENT_PAYLOAD.student_id,
             school_year: ENROLLMENT_PAYLOAD.school_year,

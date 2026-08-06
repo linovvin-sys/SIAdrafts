@@ -6,6 +6,7 @@ require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
 require_role([ROLE_STAFF, ROLE_ADMIN]);
+$isAdminViewer = current_user_is(['Admin']);
 
 // Show success flash if returning from a completed enrollment
 $enrolled_ref = isset($_GET['enrolled'], $_GET['ref']) ? (int)$_GET['ref'] : null;
@@ -50,6 +51,7 @@ include '../Include/header.php';
 <?php include '../Include/sidebar.php'; ?>
 
 <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <?php if ($enrolled_ref): ?>
     <div class="alert-box alert-success" style="margin-bottom:24px;">
@@ -97,7 +99,7 @@ include '../Include/header.php';
                         <th>Program</th>
                         <th>Year Level</th>
                         <th>Verified On</th>
-                        <th style="width:110px;"></th>
+                        <?php if (!$isAdminViewer): ?><th style="width:110px;"></th><?php endif; ?>
                     </tr>
                 </thead>
                 <tbody>
@@ -111,11 +113,13 @@ include '../Include/header.php';
                                 <td><?= htmlspecialchars($row['program']) ?></td>
                                 <td><?= (int)$row['year_level'] ?></td>
                                 <td><?= !empty($row['verified_at']) ? date('M d, Y', strtotime($row['verified_at'])) : '—' ?></td>
+                                <?php if (!$isAdminViewer): ?>
                                 <td>
                                     <a href="enrollment_profile.php?reference_id=<?= urlencode($row['reference_id']) ?>" class="btn btn-outline" style="padding:4px 10px;font-size:12px">
                                         Enroll
                                     </a>
                                 </td>
+                                <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
                     <?php endif; ?>

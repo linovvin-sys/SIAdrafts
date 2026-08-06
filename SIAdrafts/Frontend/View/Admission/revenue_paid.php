@@ -6,7 +6,7 @@ $activePage = "revenue_paid";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
-require_role([ROLE_TREASURY]);
+require_role([ROLE_TREASURY, ROLE_ADMIN]);
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/unpaid_transfer.php';
 
@@ -41,6 +41,7 @@ function student_fullname_rp(array $s): string {
 <div class="app-layout">
   <?php include '../Include/sidebar.php'; ?>
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="treasury-page">
 
