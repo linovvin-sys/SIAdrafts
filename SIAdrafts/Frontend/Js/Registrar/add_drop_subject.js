@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   const API = '/SIAdrafts/Backend/api/';
+  const IS_READONLY = document.body.dataset.readonly === '1';
 
   function csrfToken() {
     return document.body.dataset.csrf || '';
@@ -126,6 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function actionCell(sub) {
+    if (IS_READONLY) return '';
     if (sub.status === 'Pending Payment' || sub.status === 'Pending Drop') {
       return `<button type="button" class="btn-outline" data-cancel-fee="${sub.enrollment_subject_id}">Cancel</button>`;
     }
@@ -237,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // ----- Add subject -----
-  openAddBtn.addEventListener('click', async () => {
+  if (openAddBtn) openAddBtn.addEventListener('click', async () => {
     if (!currentEnrollmentId) return;
     addSubjectSelect.innerHTML = '<option value="">Loading…</option>';
     addScheduleInfo.style.display = 'none';
