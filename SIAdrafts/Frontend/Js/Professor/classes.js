@@ -4,77 +4,44 @@ function escHtml(s) {
 
 document.addEventListener('DOMContentLoaded', function () {
 
-  function openModal(modal) {
-    modal.classList.add('active');
-    document.body.style.overflow = 'hidden';
-  }
-  function closeModal(modal) {
-    modal.classList.remove('active');
-    document.body.style.overflow = '';
-  }
-
-  document.querySelectorAll('[data-close]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const target = document.getElementById(btn.getAttribute('data-close'));
-      if (target) closeModal(target);
-    });
-  });
-  document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) closeModal(overlay);
-    });
-  });
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') {
-      document.querySelectorAll('.modal-overlay.active').forEach(closeModal);
-    }
-  });
-
   const API = '/SIAdrafts/Backend/api/';
 
-  // ----- Search (plain show/hide, no DataTables — the section-group/child
-  // row structure here mirrors Registrar/schedule.js's own hand-rolled
-  // grouping, which intentionally avoids DataTables for the same reason) -----
+  // ----- Search (plain show/hide across section groups + their rows) -----
   const searchEl = document.getElementById('classesSearch');
-  const tableBody = document.querySelector('#classesTable tbody');
-  if (searchEl && tableBody) {
+  const list = document.getElementById('classesList');
+  if (searchEl && list) {
     searchEl.addEventListener('input', () => {
       const q = searchEl.value.trim().toLowerCase();
-      const rows = Array.from(tableBody.querySelectorAll('tr'));
-      let currentGroupRow = null;
-      let currentGroupMatches = false;
-      let groupChildRows = [];
-
-      function flushGroup() {
-        if (!currentGroupRow) return;
-        const anyChildMatch = groupChildRows.some(r => r.dataset.matched);
-        const show = !q || currentGroupMatches || anyChildMatch;
-        currentGroupRow.style.display = show ? '' : 'none';
-        groupChildRows.forEach(r => {
-          r.style.display = show && (!q || currentGroupMatches || r.dataset.matched) ? '' : 'none';
+      list.querySelectorAll('.sp-class-group').forEach(group => {
+        const groupMatches = !q || (group.dataset.search || '').includes(q);
+        let anyRowMatches = false;
+        group.querySelectorAll('.sp-class-row').forEach(row => {
+          const rowMatches = !q || groupMatches || (row.dataset.search || '').includes(q);
+          row.style.display = rowMatches ? '' : 'none';
+          if (rowMatches) anyRowMatches = true;
         });
-      }
-
-      rows.forEach(row => {
-        if (row.classList.contains('section-group-row')) {
-          flushGroup();
-          currentGroupRow = row;
-          currentGroupMatches = !q || (row.dataset.search || '').includes(q);
-          groupChildRows = [];
-        } else if (row.classList.contains('subject-row')) {
-          const matched = !q || (row.dataset.search || '').includes(q);
-          row.dataset.matched = matched ? '1' : '';
-          groupChildRows.push(row);
-        }
+        group.style.display = (groupMatches || anyRowMatches) ? '' : 'none';
       });
-      flushGroup();
     });
   }
 
-  const rosterModal    = document.getElementById('rosterModal');
+  // ----- Roster dialog (native <dialog>, same open/close mechanics as the shared spConfirm) -----
+  const rosterDialog   = document.getElementById('rosterDialog');
   const rosterSubtitle = document.getElementById('rosterSubtitle');
   const rosterBody     = document.getElementById('rosterTableBody');
   let lastRosterStudents = [];
+
+  function openRoster() {
+    if (typeof rosterDialog.showModal === 'function') rosterDialog.showModal();
+  }
+  function closeRoster() {
+    rosterDialog.close();
+  }
+
+  document.getElementById('closeRosterDialog')?.addEventListener('click', closeRoster);
+  rosterDialog?.addEventListener('click', (e) => {
+    if (e.target === rosterDialog) closeRoster();
+  });
 
   function renderRoster(students) {
     lastRosterStudents = students || [];
@@ -86,7 +53,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const name = [s.last_name, s.first_name].filter(Boolean).join(', ') +
         (s.middle_name ? ' ' + s.middle_name.charAt(0) + '.' : '');
       return '<tr>' +
-        '<td>' + escHtml(s.student_no) + '</td>' +
+        '<td class="sp-num">' + escHtml(s.student_no) + '</td>' +
         '<td>' + escHtml(name) + '</td>' +
         '</tr>';
     }).join('');
@@ -97,11 +64,11 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', async () => {
       const scheduleId = btn.getAttribute('data-view-roster');
       const row = btn.closest('tr');
-      const subjectLabel = row ? row.querySelector('.subject-name')?.textContent.trim() : '';
+      const subjectLabel = row ? row.querySelector('.sp-class-subject')?.textContent.trim() : '';
 
       rosterSubtitle.textContent = subjectLabel || 'Class roster';
       rosterBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Loading…</td></tr>';
-      openModal(rosterModal);
+      openRoster();
 
       try {
         const res = await fetch(API + 'get_professor_roster.php?schedule_id=' + encodeURIComponent(scheduleId));
@@ -127,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       rosterSubtitle.textContent = sectionName + ' — Master List (' + schoolYear + ', Sem ' + semester + ')';
       rosterBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Loading…</td></tr>';
-      openModal(rosterModal);
+      openRoster();
 
       try {
         const params = new URLSearchParams({ section_id: sectionId, school_year: schoolYear, semester: semester });

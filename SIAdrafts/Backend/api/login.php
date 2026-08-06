@@ -71,9 +71,10 @@ if ($user && password_verify($password, $user['password'])) {
     // `professor` table rather than a `users` row, so check there before
     // giving up.
     $profStmt = $conn->prepare(
-        "SELECT professor_id, first_name, last_name, username, password
-         FROM professor
-         WHERE username = ? AND status_id = 1
+        "SELECT p.professor_id, p.first_name, p.last_name, p.username, p.password, d.department_code
+         FROM professor p
+         JOIN department d ON d.department_id = p.department_id
+         WHERE p.username = ? AND p.status_id = 1
          LIMIT 1"
     );
     $profStmt->bind_param('s', $username);
@@ -88,10 +89,11 @@ if ($user && password_verify($password, $user['password'])) {
 
     session_regenerate_id(true);
 
-    $_SESSION['professor_id'] = $professor['professor_id'];
-    $_SESSION['username']     = $professor['username'];
-    $_SESSION['role_name']    = 'Professor';
-    $_SESSION['full_name']    = trim($professor['first_name'] . ' ' . $professor['last_name']);
+    $_SESSION['professor_id']         = $professor['professor_id'];
+    $_SESSION['username']             = $professor['username'];
+    $_SESSION['role_name']            = 'Professor';
+    $_SESSION['full_name']            = trim($professor['first_name'] . ' ' . $professor['last_name']);
+    $_SESSION['professor_department'] = $professor['department_code'];
 
     $loginStmt = $conn->prepare("UPDATE professor SET last_login = NOW() WHERE professor_id = ?");
     $loginStmt->bind_param('i', $professor['professor_id']);

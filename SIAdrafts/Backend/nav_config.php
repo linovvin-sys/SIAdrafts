@@ -44,12 +44,6 @@ return [
     'admission' => $admissionRoleNav,
     'staff'     => $staffRoleNav,
     'treasury'  => $treasuryRoleNav,
-    'professor' => [
-        ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Professor/professor_dashboard.php', 'icon' => 'dashboard'],
-        ['label' => 'My Schedule', 'page' => 'schedule', 'url' => '/SIAdrafts/Frontend/View/Professor/schedule.php', 'icon' => 'schedule'],
-        ['label' => 'My Classes', 'page' => 'classes', 'url' => '/SIAdrafts/Frontend/View/Professor/classes.php', 'icon' => 'sections'],
-        ['label' => 'My Profile', 'page' => 'profile', 'url' => '/SIAdrafts/Frontend/View/Professor/profile.php', 'icon' => 'settings'],
-    ],
     'admin' => [
         ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php', 'icon' => 'dashboard'],
         ['label' => 'Manage User', 'page' => 'manage_user', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_user.php', 'icon' => 'users'],

@@ -1,102 +1,108 @@
-/* ===== WEEKLY SCHEDULE (agenda-style, grouped by day) ===== */
-.prof-week-grid {
-  display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 14px;
-}
-@media (max-width: 1100px) {
-  .prof-week-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-@media (max-width: 700px) {
-  .prof-week-grid { grid-template-columns: 1fr; }
-}
+/* ===== PROFESSOR PORTAL — additive only =====
+   Loaded after Frontend/Css/Student/student.css, which is reused directly
+   (its tokens/components are role-agnostic — see its own top comment).
+   Everything below is a genuinely new component the Student portal has no
+   precedent for; anything reusable verbatim (.sp-card, .sp-table, .sp-btn,
+   .sp-today, .sp-schedule, .sp-dialog, .sp-pill, etc.) is NOT duplicated
+   here. */
 
-.prof-day-col {
-  background: #fff;
-  border: 1px solid #ece6db;
-  border-radius: 10px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+/* ---------- term picker (Schedule page — Student has no dropdown at all) ---------- */
+.sp-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 9px 34px 9px 14px;
+  border-radius: var(--sp-radius-sm);
+  border: 1px solid var(--line-200);
+  background: var(--paper-50);
+  color: var(--ink-950);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%233E5A4F' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-.prof-day-head {
-  background: var(--navy);
-  color: var(--text-light);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  padding: 10px 12px;
-}
-.prof-day-body {
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  flex: 1;
-}
-.prof-day-empty {
-  color: var(--text-muted);
+.sp-select:hover { border-color: var(--accent-600); }
+.sp-select:focus-visible { outline: 2px solid var(--accent-600); outline-offset: 2px; }
+
+/* ---------- row action button (My Classes — Student's tables are 100% read-only) ---------- */
+/* Modeled on .sp-input-toggle's minimal hover-tint icon-button treatment,
+   the closest existing "icon button living inside another element"
+   precedent in the Student portal. */
+.sp-table-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 12px;
+  border-radius: var(--sp-radius-sm);
+  border: 1px solid var(--line-200);
+  background: transparent;
+  color: var(--ink-950);
   font-size: 12.5px;
-  padding: 8px 2px;
-}
-.prof-class-card {
-  border: 1px solid #ece6db;
-  border-left: 3px solid var(--gold);
-  border-radius: 7px;
-  padding: 8px 10px;
-  background: #f8f5ef;
-}
-.prof-class-time {
-  font-size: 11px;
-  color: var(--text-muted);
   font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
 }
-.prof-class-subject {
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--navy);
-  margin-top: 2px;
+.sp-table-action:hover { background: var(--accent-100); border-color: var(--accent-600); color: var(--accent-text); }
+.sp-table-action iconify-icon { font-size: 14px; }
+.sp-table-action.is-primary { background: var(--ink-950); color: var(--paper-50); border-color: var(--ink-950); }
+.sp-table-action.is-primary:hover { background: var(--accent-600); border-color: var(--accent-600); color: var(--paper-50); }
+
+/* ---------- section group header (My Classes grouping) ---------- */
+.sp-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 14px 4px;
+  border-top: 1px solid var(--line-200);
 }
-.prof-class-name {
+.sp-group-header:first-of-type { border-top: none; }
+.sp-group-header-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.sp-group-term {
   font-size: 12px;
-  color: var(--navy);
-}
-.prof-class-meta {
-  font-size: 11.5px;
-  color: var(--text-muted);
-  margin-top: 4px;
+  color: var(--slate-300);
+  font-family: var(--font-mono);
 }
 
-/* ===== MASTER LIST section grouping on My Classes =====
-   Reuses .section-group-row / .subject-row / .sec-tag / .group-label /
-   .group-meta / .expand-cell / .child-indent-cell / .child-arrow from
-   Frontend/Css/Admin/schedule.css (loaded globally) — only page-specific
-   tweaks live here. */
-#classesTable .section-group-row td {
-  vertical-align: middle;
+/* ---------- wide dialog variant (roster table — Student's dialog is a small confirm prompt) ---------- */
+.sp-dialog-lg {
+  width: min(680px, calc(100vw - 48px));
+  max-height: min(600px, calc(100vh - 80px));
+  display: flex;
+  flex-direction: column;
 }
-#classesTable .subject-row td {
-  vertical-align: middle;
+.sp-dialog-lg .sp-dialog-body {
+  overflow-y: auto;
+}
+.sp-dialog-lg .sp-dialog-actions {
+  padding: 0 26px 26px;
 }
 
-/* ===== PRINT ===== */
-@media print {
-  .sidebar,
-  .top-header,
-  .sidebar-overlay,
-  .no-print,
-  .modal-footer {
-    display: none !important;
-  }
-  .main-content {
-    margin: 0 !important;
-  }
-  .page-content {
-    padding: 0 !important;
-  }
-  .panel {
-    box-shadow: none !important;
-    border: 1px solid #ccc !important;
-  }
+/* ---------- search box (My Classes) ---------- */
+.sp-search-bar { margin-bottom: 20px; }
+.sp-search-bar input {
+  width: 100%;
+  max-width: 320px;
+  padding: 10px 14px;
+  border-radius: var(--sp-radius-sm);
+  border: 1px solid var(--line-200);
+  background: var(--paper-100);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  color: var(--ink-950);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.2s var(--sp-ease);
+}
+.sp-search-bar input:focus {
+  border-color: var(--accent-600);
+  background: var(--paper-50);
+  box-shadow: 0 0 0 4px var(--accent-100);
+  outline: none;
 }
