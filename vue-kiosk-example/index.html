@@ -28,7 +28,9 @@
   button.secondary { cursor: pointer; padding: 4px 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px; }
   table { width: 100%; border-collapse: collapse; margin-top: 12px; }
   th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid #eee; }
-  .summary { background: #f8f8f8; border: 1px solid #eee; border-radius: 6px; padding: 16px 20px; margin-top: 20px; max-width: 320px; }
+  .cart-layout { display: flex; gap: 24px; align-items: flex-start; margin-top: 12px; }
+  .cart-layout table { flex: 1; margin-top: 0; }
+  .summary { background: #f8f8f8; border: 1px solid #eee; border-radius: 6px; padding: 16px 20px; width: 280px; flex-shrink: 0; }
   .summary input, .summary select { width: 100%; box-sizing: border-box; padding: 8px 10px; margin: 8px 0; border: 1px solid #ccc; border-radius: 4px; }
   .summary button { width: 100%; padding: 10px; cursor: pointer; border: 1px solid #222; background: #222; color: #fff; border-radius: 4px; margin-top: 8px; }
   .summary button:disabled { background: #ccc; border-color: #ccc; cursor: not-allowed; }
