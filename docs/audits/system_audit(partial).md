@@ -8,7 +8,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 1. Section capacity check silently allows unlimited over-enrollment
+## 1. Section capacity check silently allows unlimited over-enrollment — ✅ FIXED 2026-08-06
 **Severity:** Critical
 **File:** `SIAdrafts/Backend/api/save_enrollment.php:238-253`
 
@@ -18,7 +18,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 2. `save_enrollment.php` has no CSRF protection
+## 2. `save_enrollment.php` has no CSRF protection — ✅ FIXED 2026-08-06
 **Severity:** Critical
 **File:** `SIAdrafts/Backend/api/save_enrollment.php` (backend), `SIAdrafts/Frontend/Js/Admission/enrollment-finalize.js:25-38` (frontend caller)
 
@@ -28,7 +28,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 3. Professor roster silently drops irregular students
+## 3. Professor roster silently drops irregular students — ✅ FIXED 2026-08-06
 **Severity:** High
 **File:** `SIAdrafts/Backend/api/get_professor_roster.php:39-47`
 
@@ -38,7 +38,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 4. `add_subject_registrar.php` trusts a client-supplied `schedule_id` with no validation
+## 4. `add_subject_registrar.php` trusts a client-supplied `schedule_id` with no validation — ✅ FIXED 2026-08-06
 **Severity:** High
 **File:** `SIAdrafts/Backend/api/add_subject_registrar.php:33-35, 108-118`
 
@@ -48,7 +48,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 5. Duplicate-enrollment warning is silently broken
+## 5. Duplicate-enrollment warning is silently broken — ✅ FIXED 2026-08-06
 **Severity:** High
 **File:** `SIAdrafts/Frontend/Js/Admission/dup-enrollment-check.js:19`
 
@@ -58,7 +58,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 6. Negative/zero capacity and units accepted; client-side validation is entirely decorative
+## 6. Negative/zero capacity and units accepted; client-side validation is entirely decorative — ✅ FIXED 2026-08-06 (server-side checks added to save_section/save_subject/save_course; client-side checks added to the three JS handlers; note: the underlying "Add X" modals are still not real `<form>` elements, so native HTML5 constraint validation still won't fire — the fix here is explicit manual checks, not restoring `reportValidity()`)
 **Severity:** High
 **Files:** `SIAdrafts/Backend/api/save_section.php:31`, `save_subject.php:33-38`, `save_course.php:33`; `SIAdrafts/Frontend/View/Registrar/{sections,subjects,courses,professors}.php`
 
@@ -78,7 +78,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 8. `get_creditable_subjects.php` determines course membership by schedule existence, not the real mapping
+## 8. `get_creditable_subjects.php` determines course membership by schedule existence, not the real mapping — ✅ FIXED 2026-08-06
 **Severity:** High
 **File:** `SIAdrafts/Backend/api/get_creditable_subjects.php:41-51`
 
@@ -198,7 +198,7 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ---
 
-## 20. Zero-unit subjects allowed both client- and server-side
+## 20. Zero-unit subjects allowed both client- and server-side — ✅ FIXED 2026-08-06 (resolved alongside #6: `save_subject.php` now checks `units > 0` server-side, `subjects.js` checks it client-side, and the field's `min` was corrected from `0` to `0.5`)
 **Severity:** Medium
 **Files:** `SIAdrafts/Frontend/View/Registrar/subjects.php:144`, `SIAdrafts/Backend/api/save_subject.php:38`
 
@@ -310,11 +310,13 @@ Findings are numbered 1 (highest priority) → 30 (lowest). Each entry has what'
 
 ## Summary
 
-| Severity | Count |
-|---|---|
-| Critical | 2 |
-| High | 6 |
-| Medium | 13 |
-| Low | 9 |
+| Severity | Count | Fixed |
+|---|---|---|
+| Critical | 2 | 2/2 |
+| High | 6 | 5/6 (#7 resolved by context, not a code patch — see note below) |
+| Medium | 13 | 1/13 |
+| Low | 9 | 0/9 |
 
-**Suggested fix order:** #1–#5 first (small diffs, outsized real-world impact: over-enrollment, forged enrollments, invisible students, a broken safety check, an unvalidated schedule assignment). #7 is a decision, not a patch — raise with the team before touching it. Everything else can be batched into a general hardening pass.
+**Status as of 2026-08-06:** #1, #2, #3, #4, #5, #6, #8, and #20 are fixed (see inline ✅ markers above). #7 (`student_portal_account` with no code) is resolved by context, not by this pass — the Student portal was built after this audit and now reads/writes that table; the flag can be considered closed. Remaining open: #9–#19, #21–#30 (Medium/Low hardening pass, not yet started).
+
+**Suggested fix order (original):** #1–#5 first (small diffs, outsized real-world impact: over-enrollment, forged enrollments, invisible students, a broken safety check, an unvalidated schedule assignment). #7 is a decision, not a patch — raise with the team before touching it. Everything else can be batched into a general hardening pass.

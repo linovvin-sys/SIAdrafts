@@ -4,6 +4,7 @@ require_once '../db.php';
 require_once '../roles.php';
 require_once '../require_role.php';
 require_once '../prereq.php';
+require_once '../csrf.php';
 
 header('Content-Type: application/json');
 
@@ -13,13 +14,18 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_STAFF, ROLE_ADMIN], true);
+// Admin is deliberately excluded here — Admin's UI for this workflow is
+// read-only monitoring (see enrollment.php), so the write endpoint must
+// reject the action even if called directly, not just hide the button.
+require_role([ROLE_STAFF], true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed.']);
     exit;
 }
+
+csrf_verify();
 
 $db   = new Database();
 $conn = $db->connect();
@@ -238,7 +244,7 @@ try {
         $capStmt = $conn->prepare(
             "SELECT sec.capacity,
                     (SELECT COUNT(*) FROM enrollment e
-                     JOIN student st ON st.student_id = e.student_id
+                     JOIN student st ON st.applicant_id = e.student_id
                      WHERE e.section_id = sec.section_id
                        AND e.school_year = ? AND e.semester = ?
                        AND st.applicant_id != ?) AS taken

@@ -37,6 +37,11 @@ if ($code === '' || $name === '') {
     exit;
 }
 
+if ($units <= 0) {
+    echo json_encode(['error' => 'Total units must be greater than zero.']);
+    exit;
+}
+
 // Head Registrar submissions go live immediately.
 // Registrar Staff submissions need Head Registrar approval first.
 $isHeadRegistrar = current_user_is(['Head Registrar']);

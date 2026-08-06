@@ -62,6 +62,11 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
+      if (!(Number(total_units) > 0)) {
+        Swal.fire({ icon: 'warning', title: 'Invalid total units', text: 'Total units must be greater than zero.' });
+        return;
+      }
+
       const result = await postJSON('save_course.php', { course_code, course_name, total_units });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add course', text: result.error });

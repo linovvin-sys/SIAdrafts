@@ -5,11 +5,13 @@ $pageScript = "subjects";
 
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
-require_role(['Registrar Staff', 'Head Registrar']);
+require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 require_once '../../../Backend/db.php';
 
 $db   = new Database();
 $conn = $db->connect();
+
+$isAdminViewer = current_user_is(['Admin']);
 
 $courses = $conn->query("SELECT course_id, course_code, course_name, status FROM course ORDER BY course_name")->fetch_all(MYSQLI_ASSOC);
 $approvedCourses = array_values(array_filter($courses, fn($c) => $c['status'] === 'Approved'));
@@ -54,15 +56,18 @@ include '../Include/header.php';
   <?php include '../Include/sidebar.php'; ?>
 
   <main class="page-content">
+    <?php include '../Include/readonly_banner.php'; ?>
 
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">Subjects</span>
+        <?php if (!$isAdminViewer): ?>
         <div class="row-actions">
           <a href="/SIAdrafts/Backend/api/curriculum_template.php" class="btn btn-outline">Download template</a>
           <button type="button" class="btn btn-outline" data-open="importCurriculumModal">Import Curriculum (CSV)</button>
           <button type="button" class="btn btn-primary" data-open="addSubjectModal">+ Add Subject</button>
         </div>
+        <?php endif; ?>
       </div>
 
       <div class="panel-body" style="padding:16px 24px 0;">
@@ -141,7 +146,7 @@ include '../Include/header.php';
           </div>
           <div class="form-group">
             <label class="form-label">Units</label>
-            <input type="number" id="newSubjectUnits" class="form-input" value="3" min="0" step="0.5" required>
+            <input type="number" id="newSubjectUnits" class="form-input" value="3" min="0.5" step="0.5" required>
           </div>
           <div class="form-group">
             <label class="form-label">Category<span class="required">*</span></label>
