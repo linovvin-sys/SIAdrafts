@@ -10,3 +10,5 @@ SIAdrafts/Backend/uploads/requirements/*
 SIAdrafts/storage/rate_limit/*
 !SIAdrafts/storage/rate_limit/.gitkeep
 .superpowers/
+SIAdrafts/composer.phar
+/enrollment_db_sia_final.sql
