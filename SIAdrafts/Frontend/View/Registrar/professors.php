@@ -12,7 +12,7 @@ $db   = new Database();
 $conn = $db->connect();
 
 $professors = $conn->query("
-    SELECT p.professor_id, p.first_name, p.middle_name, p.last_name,
+    SELECT p.professor_id, p.first_name, p.middle_name, p.last_name, p.username,
            d.department_code, d.department_name,
            p.status_id, st.status_name
     FROM professor p
@@ -63,6 +63,7 @@ include '../Include/header.php';
                 <th>Name</th>
                 <th>Department</th>
                 <th>Status</th>
+                <th>Portal</th>
                 <th style="width:150px">Actions</th>
               </tr>
             </thead>
@@ -75,6 +76,7 @@ include '../Include/header.php';
                       <div class="text-muted"><?= htmlspecialchars($row['department_name']) ?></div>
                     </td>
                     <td><span class="status-pill status-pill--<?= $row['status_name'] === 'Active' ? 'approved' : 'rejected' ?>"><?= htmlspecialchars($row['status_name']) ?></span></td>
+                    <td><span class="status-pill status-pill--<?= $row['username'] ? 'approved' : 'pending' ?>"><?= $row['username'] ? 'Enabled' : 'No account' ?></span></td>
                     <td>
                       <div class="row-actions">
                         <?php if ($row['status_name'] === 'Active'): ?>
@@ -87,7 +89,7 @@ include '../Include/header.php';
                   </tr>
                 <?php endforeach; ?>
               <?php else: ?>
-                <tr><td colspan="4" style="text-align:center;">No professors found.</td></tr>
+                <tr><td colspan="5" style="text-align:center;">No professors found.</td></tr>
               <?php endif; ?>
             </tbody>
           </table>
@@ -134,6 +136,25 @@ include '../Include/header.php';
                 <?php endforeach; ?>
               </select>
             </div>
+          </div>
+          <hr>
+          <div class="form-group">
+            <label class="form-label">Portal Account (optional)</label>
+            <div class="text-muted" style="font-size:12px;margin-bottom:8px;">
+              Fill these in to let this professor log in to the Professor Portal. Leave blank to add the record only.
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input type="email" id="newProfessorEmail" class="form-input" placeholder="professor@school.edu">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username</label>
+            <input type="text" id="newProfessorUsername" class="form-input" placeholder="e.g. mreyes">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password</label>
+            <input type="password" id="newProfessorPassword" class="form-input" placeholder="Min. 8 characters" minlength="8">
           </div>
         </div>
 

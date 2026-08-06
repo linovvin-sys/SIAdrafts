@@ -1,0 +1,102 @@
+/* ===== WEEKLY SCHEDULE (agenda-style, grouped by day) ===== */
+.prof-week-grid {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 14px;
+}
+@media (max-width: 1100px) {
+  .prof-week-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 700px) {
+  .prof-week-grid { grid-template-columns: 1fr; }
+}
+
+.prof-day-col {
+  background: #fff;
+  border: 1px solid #ece6db;
+  border-radius: 10px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.prof-day-head {
+  background: var(--navy);
+  color: var(--text-light);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 10px 12px;
+}
+.prof-day-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+.prof-day-empty {
+  color: var(--text-muted);
+  font-size: 12.5px;
+  padding: 8px 2px;
+}
+.prof-class-card {
+  border: 1px solid #ece6db;
+  border-left: 3px solid var(--gold);
+  border-radius: 7px;
+  padding: 8px 10px;
+  background: #f8f5ef;
+}
+.prof-class-time {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+.prof-class-subject {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-top: 2px;
+}
+.prof-class-name {
+  font-size: 12px;
+  color: var(--navy);
+}
+.prof-class-meta {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ===== MASTER LIST section grouping on My Classes =====
+   Reuses .section-group-row / .subject-row / .sec-tag / .group-label /
+   .group-meta / .expand-cell / .child-indent-cell / .child-arrow from
+   Frontend/Css/Admin/schedule.css (loaded globally) — only page-specific
+   tweaks live here. */
+#classesTable .section-group-row td {
+  vertical-align: middle;
+}
+#classesTable .subject-row td {
+  vertical-align: middle;
+}
+
+/* ===== PRINT ===== */
+@media print {
+  .sidebar,
+  .top-header,
+  .sidebar-overlay,
+  .no-print,
+  .modal-footer {
+    display: none !important;
+  }
+  .main-content {
+    margin: 0 !important;
+  }
+  .page-content {
+    padding: 0 !important;
+  }
+  .panel {
+    box-shadow: none !important;
+    border: 1px solid #ccc !important;
+  }
+}
