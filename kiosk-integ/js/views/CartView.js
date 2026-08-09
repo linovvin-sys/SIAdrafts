@@ -5,18 +5,12 @@ var CartView = {
   setup() {
     var customerName = ref(''), paymentMethod = ref('Cash');
 
-    function totals() {
-      var subtotal = CartController.getSubtotal(cartItems);
-      var vat = CartController.getVat(subtotal);
-      return { subtotal: subtotal, vat: vat, total: CartController.getTotal(subtotal, vat) };
-    }
-
     function confirmPayment() {
       var orderId = CartController.checkout(cartItems, customerName.value, paymentMethod.value);
       window.location.hash = '#/receipt/' + orderId;
     }
 
-    return { cartItems, menuItems, paymentMethods, customerName, paymentMethod, CartController, totals, confirmPayment };
+    return { cartItems, menuItems, paymentMethods, customerName, paymentMethod, CartController, confirmPayment };
   },
   template: `
     <div class="container">
@@ -64,9 +58,9 @@ var CartView = {
             <select v-model="paymentMethod" class="form-select mb-2">
               <option v-for="m in paymentMethods" :key="m" :value="m">{{ m }}</option>
             </select>
-            <p class="mb-1">Subtotal: ₱{{ totals().subtotal.toFixed(2) }}</p>
-            <p class="mb-1">VAT (12%): ₱{{ totals().vat.toFixed(2) }}</p>
-            <p><strong>Total: ₱{{ totals().total.toFixed(2) }}</strong></p>
+            <p class="mb-1">Subtotal: ₱{{ CartController.getTotals(cartItems).subtotal.toFixed(2) }}</p>
+            <p class="mb-1">VAT (12%): ₱{{ CartController.getTotals(cartItems).vat.toFixed(2) }}</p>
+            <p><strong>Total: ₱{{ CartController.getTotals(cartItems).total.toFixed(2) }}</strong></p>
             <button class="btn btn-dark w-100" @click="confirmPayment" :disabled="customerName.trim() === ''">Confirm Payment</button>
           </div>
         </div>

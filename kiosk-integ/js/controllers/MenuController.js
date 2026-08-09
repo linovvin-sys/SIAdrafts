@@ -24,8 +24,9 @@ var MenuController = {
     return item.stock - (found ? found.quantity : 0);
   },
   addToCart(cart, item) {
-    if (MenuController.remainingStock(cart, item) <= 0) return false;
     var existing = cart.find(function (c) { return c.id === item.id; });
+    var inCart = existing ? existing.quantity : 0;
+    if (inCart >= item.stock) return false;
     if (existing) existing.quantity++;
     else cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1, icon: item.icon });
     return true;
