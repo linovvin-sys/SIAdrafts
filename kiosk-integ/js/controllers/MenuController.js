@@ -14,24 +14,44 @@ var menuItems = [
 var MenuController = {
   searchItems(items, searchText) {
     var s = searchText.toLowerCase();
-    return items.filter(function (item) { return !s || item.name.toLowerCase().indexOf(s) !== -1; });
+    return items.filter(function (item) {
+      return !s || item.name.toLowerCase().indexOf(s) !== -1;
+    });
   },
+
   matchesCategory(item, category) {
     return category === 'All' || item.category === category;
   },
+
   remainingStock(cart, item) {
-    var found = cart.find(function (c) { return c.id === item.id; });
+    var found = cart.find(function (c) {
+      return c.id === item.id;
+    });
     return item.stock - (found ? found.quantity : 0);
   },
+
   addToCart(cart, item) {
-    var existing = cart.find(function (c) { return c.id === item.id; });
+    var existing = cart.find(function (c) {
+      return c.id === item.id;
+    });
     var inCart = existing ? existing.quantity : 0;
-    if (inCart >= item.stock) return false;
-    if (existing) existing.quantity++;
-    else cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1, icon: item.icon });
+
+    if (inCart >= item.stock) {
+      return false;
+    }
+
+    if (existing) {
+      existing.quantity++;
+    } else {
+      cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1, icon: item.icon });
+    }
+
     return true;
   },
+
   cartCount(cart) {
-    return cart.reduce(function (sum, c) { return sum + c.quantity; }, 0);
+    return cart.reduce(function (sum, c) {
+      return sum + c.quantity;
+    }, 0);
   },
 };
