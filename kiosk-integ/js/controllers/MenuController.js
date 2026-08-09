@@ -11,39 +11,29 @@ var menuItems = [
   { id: 10, name: 'Chocolate Cake', category: 'Desserts', price: 60, stock: 0, icon: '🍰' },
 ];
 
-// contoller
+// controller
 var MenuController = {
   searchItems(items, searchText) {
-    var lowerSearch = searchText.toLowerCase();
-    return items.filter(function (item) {
-      return !lowerSearch || item.name.toLowerCase().indexOf(lowerSearch) !== -1;
-    });
+    var s = searchText.toLowerCase();
+    return items.filter(function (item) { return !s || item.name.toLowerCase().indexOf(s) !== -1; });
   },
 
   matchesCategory(item, category) {
     return category === 'All' || item.category === category;
   },
 
-  quantityInCart(cart, itemId) {
-    var found = cart.find(function (c) { return c.id === itemId; });
-    return found ? found.quantity : 0;
-  },
-
   remainingStock(cart, item) {
-    return item.stock - MenuController.quantityInCart(cart, item.id);
+    var found = cart.find(function (c) { return c.id === item.id; });
+    return item.stock - (found ? found.quantity : 0);
   },
 
   addToCart(cart, item) {
-    if (MenuController.remainingStock(cart, item) <= 0) {
-      return false;
-    }
+    if (MenuController.remainingStock(cart, item) <= 0) return false;
 
     var existing = cart.find(function (c) { return c.id === item.id; });
-    if (existing) {
-      existing.quantity++;
-    } else {
-      cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1, icon: item.icon });
-    }
+    if (existing) existing.quantity++;
+    else cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1, icon: item.icon });
+
     return true;
   },
 

@@ -1,4 +1,3 @@
-// Plain variables and functions inside setup().
 var { ref } = Vue;
 
 var KioskView = {
