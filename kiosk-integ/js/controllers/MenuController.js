@@ -11,32 +11,25 @@ var menuItems = [
   { id: 10, name: 'Chocolate Cake', category: 'Desserts', price: 60, stock: 0, icon: '🍰' },
 ];
 
-// controller
 var MenuController = {
   searchItems(items, searchText) {
     var s = searchText.toLowerCase();
     return items.filter(function (item) { return !s || item.name.toLowerCase().indexOf(s) !== -1; });
   },
-
   matchesCategory(item, category) {
     return category === 'All' || item.category === category;
   },
-
   remainingStock(cart, item) {
     var found = cart.find(function (c) { return c.id === item.id; });
     return item.stock - (found ? found.quantity : 0);
   },
-
   addToCart(cart, item) {
     if (MenuController.remainingStock(cart, item) <= 0) return false;
-
     var existing = cart.find(function (c) { return c.id === item.id; });
     if (existing) existing.quantity++;
     else cart.push({ id: item.id, name: item.name, price: item.price, quantity: 1, icon: item.icon });
-
     return true;
   },
-
   cartCount(cart) {
     return cart.reduce(function (sum, c) { return sum + c.quantity; }, 0);
   },
