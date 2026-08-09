@@ -1,10 +1,9 @@
 var { ref } = Vue;
+var categories = ['All', 'Meals', 'Drinks', 'Snacks', 'Desserts'];
 
 var KioskView = {
   setup() {
-    var category = ref('All');
-    var searchText = ref('');
-    var toastMessage = ref('');
+    var category = ref('All'), searchText = ref(''), toastMessage = ref('');
 
     function addToCart(item) {
       if (!MenuController.addToCart(cartItems, item)) return;
@@ -12,7 +11,7 @@ var KioskView = {
       setTimeout(function () { toastMessage.value = ''; }, 2000);
     }
 
-    return { category, searchText, toastMessage, menuItems, cartItems, MenuController, addToCart };
+    return { category, searchText, toastMessage, categories, menuItems, cartItems, MenuController, addToCart };
   },
   template: `
     <div class="container">
@@ -25,23 +24,15 @@ var KioskView = {
           </div>
         </div>
       </nav>
-
       <div class="d-flex align-items-center gap-2 flex-wrap my-3">
-        <button class="btn btn-outline-dark" @click="category = 'All'" :class="{ active: category === 'All' }">All</button>
-        <button class="btn btn-outline-dark" @click="category = 'Meals'" :class="{ active: category === 'Meals' }">Meals</button>
-        <button class="btn btn-outline-dark" @click="category = 'Drinks'" :class="{ active: category === 'Drinks' }">Drinks</button>
-        <button class="btn btn-outline-dark" @click="category = 'Snacks'" :class="{ active: category === 'Snacks' }">Snacks</button>
-        <button class="btn btn-outline-dark" @click="category = 'Desserts'" :class="{ active: category === 'Desserts' }">Desserts</button>
+        <button v-for="c in categories" :key="c" class="btn btn-outline-dark" @click="category = c" :class="{ active: category === c }">{{ c }}</button>
         <router-link to="/cart" class="btn btn-dark ms-auto position-relative">
           Cart
           <span class="badge rounded-pill bg-danger position-absolute top-0 start-100 translate-middle" v-if="MenuController.cartCount(cartItems) > 0">{{ MenuController.cartCount(cartItems) }}</span>
         </router-link>
       </div>
-
       <input v-model="searchText" class="form-control mb-3" placeholder="Search items...">
-
       <div class="alert alert-success" v-if="toastMessage">{{ toastMessage }}</div>
-
       <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
         <template v-for="item in MenuController.searchItems(menuItems, searchText)" :key="item.id">
           <div class="col" v-if="MenuController.matchesCategory(item, category)">

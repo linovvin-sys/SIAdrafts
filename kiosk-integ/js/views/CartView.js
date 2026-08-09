@@ -1,9 +1,9 @@
 var { ref } = Vue;
+var paymentMethods = ['Cash', 'GCash', 'Card'];
 
 var CartView = {
   setup() {
-    var customerName = ref('');
-    var paymentMethod = ref('Cash');
+    var customerName = ref(''), paymentMethod = ref('Cash');
 
     function totals() {
       var subtotal = CartController.getSubtotal(cartItems);
@@ -16,7 +16,7 @@ var CartView = {
       window.location.hash = '#/receipt/' + orderId;
     }
 
-    return { cartItems, menuItems, customerName, paymentMethod, CartController, totals, confirmPayment };
+    return { cartItems, menuItems, paymentMethods, customerName, paymentMethod, CartController, totals, confirmPayment };
   },
   template: `
     <div class="container">
@@ -29,9 +29,7 @@ var CartView = {
           </div>
         </div>
       </nav>
-
       <p class="mt-3" v-if="cartItems.length === 0">Your cart is currently empty.</p>
-
       <div class="row mt-3" v-else>
         <div class="col-md-8">
           <table class="table align-middle">
@@ -59,15 +57,12 @@ var CartView = {
             </tbody>
           </table>
         </div>
-
         <div class="col-md-4">
           <div class="card p-3">
             <h2 class="h5">Order Summary</h2>
             <input v-model="customerName" class="form-control mb-2" placeholder="Customer Name">
             <select v-model="paymentMethod" class="form-select mb-2">
-              <option value="Cash">Cash</option>
-              <option value="GCash">GCash</option>
-              <option value="Card">Card</option>
+              <option v-for="m in paymentMethods" :key="m" :value="m">{{ m }}</option>
             </select>
             <p class="mb-1">Subtotal: ₱{{ totals().subtotal.toFixed(2) }}</p>
             <p class="mb-1">VAT (12%): ₱{{ totals().vat.toFixed(2) }}</p>
