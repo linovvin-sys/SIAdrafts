@@ -3,33 +3,23 @@ var { reactive } = Vue;
 var cartItems = reactive([]);
 
 var lastOrder = reactive({
-  orderId: '',
-  customerName: '',
-  paymentMethod: '',
-  items: [],
-  subtotal: 0,
-  vat: 0,
-  total: 0,
+  orderId: '', customerName: '', paymentMethod: '',
+  items: [], subtotal: 0, vat: 0, total: 0,
 });
 
 // controller
 var CartController = {
   increaseQuantity(item, menuItems) {
     var menuItem = menuItems.find(function (m) { return m.id === item.id; });
-    if (item.quantity < menuItem.stock) {
-      item.quantity++;
-    }
+    if (item.quantity < menuItem.stock) item.quantity++;
   },
 
   decreaseQuantity(item) {
-    if (item.quantity > 1) {
-      item.quantity--;
-    }
+    if (item.quantity > 1) item.quantity--;
   },
 
   removeItem(cart, item) {
-    var index = cart.indexOf(item);
-    cart.splice(index, 1);
+    cart.splice(cart.indexOf(item), 1);
   },
 
   getSubtotal(cart) {
@@ -45,8 +35,7 @@ var CartController = {
   },
 
   generateOrderId() {
-    var digits = Math.floor(100000 + Math.random() * 900000);
-    return 'ORID-' + digits;
+    return 'ORID-' + Math.floor(100000 + Math.random() * 900000);
   },
 
   checkout(cart, customerName, paymentMethod) {
