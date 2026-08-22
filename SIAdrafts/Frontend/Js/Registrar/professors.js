@@ -60,6 +60,22 @@ document.addEventListener('DOMContentLoaded', function () {
     searchEl.addEventListener('input', () => professorTable.search(searchEl.value).draw());
   }
 
+  // ----- Department / Status filters -----
+  const departmentFilterEl = document.getElementById('professorDepartmentFilter');
+  const statusFilterEl = document.getElementById('professorStatusFilter');
+  if (professorTable && (departmentFilterEl || statusFilterEl)) {
+    $.fn.dataTable.ext.search.push(function (settings, searchData, index) {
+      if (settings.nTable.id !== 'professorTable') return true;
+      const row = professorTable.row(index).node();
+      if (!row) return true;
+      if (departmentFilterEl && departmentFilterEl.value && row.dataset.department !== departmentFilterEl.value) return false;
+      if (statusFilterEl && statusFilterEl.value && row.dataset.status !== statusFilterEl.value) return false;
+      return true;
+    });
+    if (departmentFilterEl) departmentFilterEl.addEventListener('change', () => professorTable.draw());
+    if (statusFilterEl) statusFilterEl.addEventListener('change', () => professorTable.draw());
+  }
+
   // ----- Add Professor -----
   const confirmAddProfessor = document.getElementById('confirmAddProfessor');
   if (confirmAddProfessor) {

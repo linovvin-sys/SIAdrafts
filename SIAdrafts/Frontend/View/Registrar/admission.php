@@ -59,7 +59,7 @@ include '../Include/header.php';
 
             <div class="panel-body" style="padding:0;">
                 <div class="table-responsive">
-                <table class="data-table" id="admissionTable">
+                <table class="data-table rd-table-stagger" id="admissionTable">
 
                     <thead>
                         <tr>
@@ -76,7 +76,7 @@ include '../Include/header.php';
 
                     <?php if (!empty($admissions)): ?>
 
-                        <?php foreach ($admissions as $row): ?>
+                        <?php foreach ($admissions as $rowIndex => $row): ?>
 
                             <?php
                                 $status = strtolower($row['status']);
@@ -107,7 +107,7 @@ include '../Include/header.php';
                                 $admissionDateKey = date('Y-m', strtotime($row['created_at']));
                             ?>
 
-                            <tr data-status="<?= htmlspecialchars($row['status']) ?>" data-date="<?= htmlspecialchars($admissionDateKey) ?>" data-search="<?= htmlspecialchars($admissionSearchKey) ?>">
+                            <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;" data-status="<?= htmlspecialchars($row['status']) ?>" data-date="<?= htmlspecialchars($admissionDateKey) ?>" data-search="<?= htmlspecialchars($admissionSearchKey) ?>">
 
                                 <td class="mono"><?= $row['reference_id']; ?></td>
 

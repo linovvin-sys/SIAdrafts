@@ -37,32 +37,49 @@
   border-collapse: collapse;
   font-size: 13.5px;
 }
+/* Was a solid dark navy bar before — unmistakably "the header" regardless
+   of theme, at the cost of inverting into a pale bar in dark mode (the
+   same class of bug modal-header had). The fix isn't just "swap to a
+   neutral token": a flat --paper-100 fill with no border read as no
+   header at all — too close to the card's own background in both
+   themes, especially in dark mode where paper-100 is *darker* than the
+   card, so it looked recessed instead of like a bar. A 2px accent
+   underline gives it back a clear edge without reintroducing a solid
+   fill that has to be re-solved per theme. */
 .sched-table thead tr {
-  background: var(--navy);
+  background: var(--paper-100);
+  border-bottom: 2px solid var(--accent-600);
 }
 .sched-table thead th {
   padding: 13px 16px;
-  color: var(--text-light);
+  color: var(--ink-950);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   text-align: left;
   white-space: nowrap;
 }
 
-/* ===== SECTION GROUP ROW ===== */
+/* ===== SECTION GROUP ROW =====
+   --paper-100 was the wrong token here too, same mistake as the panel-
+   header border: it's a fixed-lightness surface tone, meant to sit right
+   next to --paper-50 with barely any difference — fine for "this is a
+   slightly different surface," useless for "this bar needs to actually
+   stand out." --line-200 is alpha-based (a tint of ink at low opacity),
+   so it stays visibly distinct from whatever's behind it in both themes,
+   instead of needing a different literal value per theme. */
 .section-group-row {
-  background: #e8e2d8;
+  background: var(--line-200);
   cursor: pointer;
   user-select: none;
-  border-top: 3px solid #d6cfc4;
+  border-top: 3px solid var(--accent-600);
 }
 .section-group-row:first-of-type {
   border-top: none;
 }
 .section-group-row:hover {
-  background: #e0d9cd;
+  background: var(--accent-100);
 }
 .section-group-row td {
   padding: 14px 16px;
@@ -83,14 +100,14 @@
   width: 28px;
   height: 28px;
   border-radius: 7px;
-  background: rgba(26,35,64,0.12);
+  background: var(--line-200);
   color: var(--navy);
   font-size: 10px;
   font-weight: 700;
   transition: background 0.15s;
 }
 .section-group-row:hover .expand-arrow {
-  background: rgba(26,35,64,0.2);
+  background: var(--accent-100);
 }
 
 /* ===== GROUP LABEL (course badge + year) ===== */
@@ -135,7 +152,7 @@
   border-radius: 5px;
   font-size: 11.5px;
   font-weight: 700;
-  background: rgba(26,35,64,0.1);
+  background: var(--line-200);
   color: var(--navy);
   white-space: nowrap;
   letter-spacing: 0.02em;
@@ -144,8 +161,8 @@
 /* ===== SUBJECT CHILD ROWS ===== */
 .subject-row td {
   padding: 13px 16px;
-  border-bottom: 1px solid #ece6db;
-  background: #f5f1eb;
+  border-bottom: 1px solid var(--line-200);
+  background: var(--paper-100);
   color: var(--navy);
   vertical-align: middle;
 }
@@ -155,7 +172,7 @@
   border-bottom: none;
 }
 .subject-row:hover td {
-  background: #efe9e0;
+  background: var(--accent-100);
 }
 
 /* indent cell */
@@ -185,7 +202,7 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 700;
-  background: rgba(26,35,64,0.09);
+  background: var(--line-200);
   color: var(--navy);
   margin: 2px 1px;
   white-space: nowrap;
@@ -244,7 +261,7 @@
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border: 1.5px solid #ddd4c0;
+  border: 1.5px solid var(--line-200);
   border-radius: 6px;
   cursor: pointer;
   font-size: 13px;
@@ -261,7 +278,7 @@
 }
 .day-check-item:has(input:checked) {
   border-color: var(--gold);
-  background: rgba(232,168,32,0.08);
+  background: var(--accent-100);
   color: var(--gold-dark);
 }
 
@@ -294,5 +311,5 @@
   font-weight: 700;
   letter-spacing: .5px;
 }
-.type-lab { background: #dbeafe; color: #1d4ed8; }
-.type-lec { background: #dcfce7; color: #15803d; }
+.type-lab { background: var(--info-100); color: var(--info-600); }
+.type-lec { background: var(--success-100); color: var(--success-600); }

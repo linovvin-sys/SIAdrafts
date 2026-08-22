@@ -9,7 +9,30 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.style.overflow = '';
   }
 
-  if (document.getElementById('courseTable')) initDataTable('#courseTable', { order: [] });
+  const courseTableEl = document.getElementById('courseTable');
+  const courseTable = courseTableEl ? initDataTable('#courseTable', { order: [] }) : null;
+
+  // Text search wired directly through DataTables' own search API — same
+  // pattern as sections.js/professors.js. This page never had a search
+  // box or status filter at all before, unlike every other list page in
+  // Registrar.
+  const courseSearchEl = document.getElementById('courseSearch');
+  const courseStatusFilterEl = document.getElementById('courseStatusFilter');
+  if (courseTable) {
+    if (courseSearchEl) {
+      courseSearchEl.addEventListener('input', () => courseTable.search(courseSearchEl.value).draw());
+    }
+    if (courseStatusFilterEl) {
+      $.fn.dataTable.ext.search.push(function (settings, searchData, index) {
+        if (settings.nTable.id !== 'courseTable') return true;
+        const status = courseStatusFilterEl.value;
+        if (!status) return true;
+        const row = courseTable.row(index).node();
+        return !!row && row.dataset.status === status;
+      });
+      courseStatusFilterEl.addEventListener('change', () => courseTable.draw());
+    }
+  }
 
   document.querySelectorAll('[data-open]').forEach(btn => {
     btn.addEventListener('click', () => {

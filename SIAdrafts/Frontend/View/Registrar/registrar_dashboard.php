@@ -103,6 +103,21 @@ if ($isHead) {
 
 $db->close();
 
+$firstName = explode(' ', trim($_SESSION['full_name'] ?? ''))[0] ?? '';
+$hour = (int)date('G');
+$greeting = $hour < 12 ? 'Good morning' : ($hour < 18 ? 'Good afternoon' : 'Good evening');
+
+function rd_initials(string $name): string {
+    $parts = preg_split('/\s+/', trim($name));
+    $letters = '';
+    foreach ($parts as $p) {
+        if ($p === '') continue;
+        $letters .= strtoupper($p[0]);
+        if (strlen($letters) >= 2) break;
+    }
+    return $letters ?: '?';
+}
+
 include '../Include/header.php';
 ?>
 
@@ -112,6 +127,32 @@ include '../Include/header.php';
 
   <main class="page-content">
     <?php include '../Include/readonly_banner.php'; ?>
+
+    <h1 class="rd-greeting"><?= $greeting ?><?= $firstName ? ', ' . htmlspecialchars($firstName, ENT_QUOTES) : '' ?>.</h1>
+    <p class="rd-greeting-sub">
+      <?php if ($isAdminViewer): ?>
+        <?= $totalPending ?> schedule<?= $totalPending === 1 ? '' : 's' ?> currently pending across the Registrar's Office.
+      <?php elseif ($isHead): ?>
+        <?= $totalPending > 0
+            ? $totalPending . ' schedule' . ($totalPending === 1 ? '' : 's') . ' waiting on your approval.'
+            : "You're all caught up — nothing waiting on approval." ?>
+      <?php else: ?>
+        <?= $totalPending > 0
+            ? $totalPending . ' of your submissions ' . ($totalPending === 1 ? 'is' : 'are') . ' still pending.'
+            : 'All your submissions have been reviewed.' ?>
+      <?php endif; ?>
+    </p>
+
+    <?php if ($isHead && !$isAdminViewer && $totalPending > 0): ?>
+      <a href="pending_approval.php" class="rd-hero rd-hero--attention">
+        <div class="rd-hero-status">
+          <span class="rd-hero-dot"></span>
+          <span class="rd-hero-status-label">Needs your attention</span>
+        </div>
+        <p class="rd-hero-figure"><?= $totalPending ?> schedule<?= $totalPending === 1 ? '' : 's' ?> pending approval</p>
+        <p class="rd-hero-meta">Review and approve or reject &rarr;</p>
+      </a>
+    <?php endif; ?>
 
     <div class="stats-grid">
       <div class="stat-card">
@@ -152,151 +193,152 @@ include '../Include/header.php';
       </div>
     </div>
 
-    <div class="grid-2" style="margin-bottom:24px;">
+    <div class="rd-dash-grid">
 
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Approvals Overview</span>
-        </div>
-        <div class="panel-body">
-          <div class="chart-container">
-            <canvas id="approvalsChart"></canvas>
+      <div class="rd-dash-main">
+
+        <div class="grid-2" style="margin-bottom:24px;">
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Approvals Overview</span>
+            </div>
+            <div class="panel-body">
+              <div class="chart-container">
+                <canvas id="approvalsChart"></canvas>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Approved Class Load by Day</span>
-        </div>
-        <div class="panel-body">
-          <div class="chart-container">
-            <canvas id="dayLoadChart"></canvas>
-          </div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="grid-2">
-
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Recent Schedule Submissions</span>
-        </div>
-        <div class="panel-body" style="padding:16px 24px 0;">
-          <div class="filter-bar">
-            <div class="select-wrapper">
-              <select class="form-input form-select" id="scheduleStatusFilter">
-                <option value="">All Statuses</option>
-                <option value="Pending">Pending</option>
-                <option value="Approved">Approved</option>
-                <option value="Rejected">Rejected</option>
-              </select>
+          <div class="panel">
+            <div class="panel-header">
+              <span class="panel-title">Class Load by Day</span>
+            </div>
+            <div class="panel-body">
+              <div class="chart-container">
+                <canvas id="dayLoadChart"></canvas>
+              </div>
             </div>
           </div>
         </div>
-        <div class="panel-body" style="padding:0;">
-          <div class="table-responsive">
-          <table class="data-table" id="recentSchedulesTable">
-            <thead>
-              <tr>
-                <th>Subject / Section</th>
-                <th>Day / Time</th>
-                <th>Submitted By</th>
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody id="recentSchedulesBody">
-              <?php if (!empty($recentSchedules)): ?>
-                <?php foreach ($recentSchedules as $row): ?>
-                  <?php
-                    $scheduleSearchKey = strtolower($row['subject_code'] . ' ' . $row['subject_name'] . ' '
-                        . $row['course_code'] . ' ' . $row['section_name'] . ' ' . ($row['requested_by_name'] ?? ''));
-                  ?>
-                  <tr data-status="<?= htmlspecialchars($row['status']) ?>" data-search="<?= htmlspecialchars($scheduleSearchKey) ?>">
-                    <td>
-                      <?= htmlspecialchars($row['subject_code'] . ' — ' . $row['subject_name']) ?>
-                      <div class="text-muted"><?= htmlspecialchars($row['course_code'] . ' ' . $row['section_name']) ?></div>
-                    </td>
-                    <td><?= htmlspecialchars(substr($row['day'], 0, 3)) ?>, <?= date('g:i A', strtotime($row['time_start'])) ?>–<?= date('g:i A', strtotime($row['time_end'])) ?></td>
-                    <td><?= htmlspecialchars($row['requested_by_name'] ?? '—') ?></td>
-                    <td><span class="status-pill status-pill--<?= strtolower($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span></td>
-                  </tr>
-                <?php endforeach; ?>
-              <?php else: ?>
-                <tr><td colspan="4" style="text-align:center;">No schedule submissions yet.</td></tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
-          </div>
-        </div>
-      </div>
 
-      <?php if ($isHead): ?>
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Registrar Staff Accounts</span>
-          <span class="text-muted" style="font-size:12px;"><?= count($registrarStaff) ?> account<?= count($registrarStaff) === 1 ? '' : 's' ?></span>
-        </div>
-        <div class="panel-body" style="padding:16px 24px 0;">
-          <div class="filter-bar">
-            <div class="select-wrapper">
-              <select class="form-input form-select" id="staffStatusFilter">
-                <option value="">All Statuses</option>
-                <option value="Active">Active</option>
-                <option value="Inactive">Inactive</option>
-              </select>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Recent Schedule Submissions</span>
+          </div>
+          <div class="panel-body" style="padding:16px 24px 0;">
+            <div class="filter-bar">
+              <div class="select-wrapper">
+                <select class="form-input form-select" id="scheduleStatusFilter">
+                  <option value="">All Statuses</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Approved">Approved</option>
+                  <option value="Rejected">Rejected</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="panel-body" style="padding:0;">
+            <div class="table-responsive">
+            <table class="data-table rd-table-stagger" id="recentSchedulesTable">
+              <thead>
+                <tr>
+                  <th>Subject / Section</th>
+                  <th>Day / Time</th>
+                  <th>Submitted By</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recentSchedulesBody">
+                <?php if (!empty($recentSchedules)): ?>
+                  <?php foreach ($recentSchedules as $rowIndex => $row): ?>
+                    <?php
+                      $scheduleSearchKey = strtolower($row['subject_code'] . ' ' . $row['subject_name'] . ' '
+                          . $row['course_code'] . ' ' . $row['section_name'] . ' ' . ($row['requested_by_name'] ?? ''));
+                    ?>
+                    <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;" data-status="<?= htmlspecialchars($row['status']) ?>" data-search="<?= htmlspecialchars($scheduleSearchKey) ?>">
+                      <td>
+                        <?= htmlspecialchars($row['subject_code'] . ' — ' . $row['subject_name']) ?>
+                        <div class="text-muted"><?= htmlspecialchars($row['course_code'] . ' ' . $row['section_name']) ?></div>
+                      </td>
+                      <td><?= htmlspecialchars(substr($row['day'], 0, 3)) ?>, <?= date('g:i A', strtotime($row['time_start'])) ?>–<?= date('g:i A', strtotime($row['time_end'])) ?></td>
+                      <td><?= htmlspecialchars($row['requested_by_name'] ?? '—') ?></td>
+                      <td><span class="status-pill status-pill--<?= strtolower($row['status']) ?>"><?= htmlspecialchars($row['status']) ?></span></td>
+                    </tr>
+                  <?php endforeach; ?>
+                <?php else: ?>
+                  <tr><td colspan="4" style="text-align:center;">No schedule submissions yet.</td></tr>
+                <?php endif; ?>
+              </tbody>
+            </table>
             </div>
           </div>
         </div>
-        <div class="panel-body" style="padding:0;">
-          <div class="table-responsive">
-          <table class="data-table" id="registrarStaffTable">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Username</th>
-                <th>Status</th>
-                <th>Last Login</th>
-              </tr>
-            </thead>
-            <tbody id="registrarStaffBody">
-              <?php if (!empty($registrarStaff)): ?>
+
+      </div>
+
+      <aside class="rd-dash-aside">
+
+        <?php if ($isHead): ?>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Registrar Staff</span>
+            <span class="text-muted" style="font-size:12px;"><?= count($registrarStaff) ?></span>
+          </div>
+          <div class="panel-body">
+            <?php if (!empty($registrarStaff)): ?>
+              <div class="rd-people-list">
                 <?php foreach ($registrarStaff as $row): ?>
-                  <?php
-                    $badge = strtolower($row['status_name']) === 'active' ? 'success' : 'pending';
-                    $staffSearchKey = strtolower($row['full_name'] . ' ' . $row['username'] . ' ' . $row['email']);
-                  ?>
-                  <tr data-status="<?= htmlspecialchars($row['status_name']) ?>" data-search="<?= htmlspecialchars($staffSearchKey) ?>">
-                    <td>
-                      <?= htmlspecialchars($row['full_name']) ?>
-                      <div class="text-muted"><?= htmlspecialchars($row['email']) ?></div>
-                    </td>
-                    <td><?= htmlspecialchars($row['username']) ?></td>
-                    <td><span class="badge badge-<?= $badge ?>"><?= htmlspecialchars($row['status_name']) ?></span></td>
-                    <td><?= !empty($row['last_login']) ? date('M d, Y h:i A', strtotime($row['last_login'])) : 'Never' ?></td>
-                  </tr>
+                  <div class="rd-people-row">
+                    <span class="rd-avatar sky"><?= htmlspecialchars(rd_initials($row['full_name'])) ?></span>
+                    <div style="min-width:0; flex:1;">
+                      <div class="rd-people-name"><?= htmlspecialchars($row['full_name']) ?></div>
+                      <div class="rd-people-meta"><?= !empty($row['last_login']) ? 'Active ' . date('M d', strtotime($row['last_login'])) : 'Never logged in' ?></div>
+                    </div>
+                    <span class="badge badge-<?= strtolower($row['status_name']) === 'active' ? 'success' : 'pending' ?>"><?= htmlspecialchars($row['status_name']) ?></span>
+                  </div>
                 <?php endforeach; ?>
-              <?php else: ?>
-                <tr><td colspan="4" style="text-align:center;">No Registrar Staff accounts found.</td></tr>
-              <?php endif; ?>
-            </tbody>
-          </table>
+              </div>
+            <?php else: ?>
+              <p class="text-muted" style="font-size:13px;">No Registrar Staff accounts found.</p>
+            <?php endif; ?>
           </div>
         </div>
-      </div>
-      <?php else: ?>
-      <div class="panel">
-        <div class="panel-header">
-          <span class="panel-title">Quick Links</span>
+        <?php endif; ?>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Quick Links</span>
+          </div>
+          <div class="panel-body">
+            <ul class="rd-quicklinks">
+              <li>
+                <a href="courses.php">
+                  <span class="rd-quicklink-icon"><iconify-icon icon="mdi:book-open-page-variant"></iconify-icon></span>
+                  <span>Manage Courses &amp; Sections</span>
+                  <iconify-icon icon="mdi:chevron-right" class="rd-quicklink-chevron"></iconify-icon>
+                </a>
+              </li>
+              <li>
+                <a href="schedule.php">
+                  <span class="rd-quicklink-icon"><iconify-icon icon="mdi:calendar-week"></iconify-icon></span>
+                  <span>View / Add Class Schedules</span>
+                  <iconify-icon icon="mdi:chevron-right" class="rd-quicklink-chevron"></iconify-icon>
+                </a>
+              </li>
+              <?php if ($isHead && !$isAdminViewer): ?>
+              <li>
+                <a href="pending_approval.php">
+                  <span class="rd-quicklink-icon"><iconify-icon icon="mdi:checkbox-marked-outline"></iconify-icon></span>
+                  <span>Review Pending Approvals</span>
+                  <iconify-icon icon="mdi:chevron-right" class="rd-quicklink-chevron"></iconify-icon>
+                </a>
+              </li>
+              <?php endif; ?>
+            </ul>
+          </div>
         </div>
-        <div class="panel-body">
-          <p><a href="courses.php">Manage Courses &amp; Sections</a></p>
-          <p><a href="schedule.php">View / Add Class Schedules</a></p>
-        </div>
-      </div>
-      <?php endif; ?>
+
+      </aside>
 
     </div>
 

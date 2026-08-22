@@ -25,11 +25,23 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/login.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admission/treasury.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/required.css">
+<?php if (isset($activePage)): ?>
+<!-- $activePage is only ever set by pages that include Include/sidebar.php
+     (13 of the 14 Admission pages routed through this header — every one
+     except online_admission.php). Those pages need the real dashboard
+     shell (.app-layout/.sidebar/.top-header/.page-content), which lives in
+     admin.css and, until now, was never loaded here — so the sidebar and
+     its top bar were rendering as an unstyled stack of links dumped above
+     the page, which is what made every one of these pages (Treasury
+     included) look like it had a huge gap up top. -->
+<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css">
+<?php endif; ?>
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
 <body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 
+  <?php if (!isset($activePage)): ?>
   <div class="nav-wrap" id="navWrap">
     <nav class="navbar <?= !$_logged_in ? 'navbar-guest' : '' ?>">
       <a class="brand" href="<?= $_logged_in ? '/SIAdrafts/Frontend/View/Admission/enrollment.php' : '/SIAdrafts/Frontend/View/index.php' ?>">
@@ -124,3 +136,4 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
       <a href="/SIAdrafts/Frontend/View/login.php" class="active">Login</a>
     <?php endif; ?>
   </div>
+  <?php endif; ?>

@@ -62,7 +62,7 @@ include '../Include/header.php';
 
       <div class="panel-body" style="padding:0;">
         <div class="table-wrap">
-          <table class="data-table" id="sectionTable">
+          <table class="data-table rd-table-stagger" id="sectionTable">
             <thead>
               <tr>
                 <th>Section</th>
@@ -74,8 +74,8 @@ include '../Include/header.php';
             </thead>
             <tbody id="sectionListBody">
               <?php if (!empty($sections)): ?>
-                <?php foreach ($sections as $row): ?>
-                  <tr data-row-id="<?= (int)$row['section_id'] ?>" data-course-id="<?= (int)$row['course_id'] ?>" data-search="<?= htmlspecialchars(strtolower($row['section_name'] . ' ' . ($row['course_code'] ?? ''))) ?>">
+                <?php foreach ($sections as $rowIndex => $row): ?>
+                  <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;" data-row-id="<?= (int)$row['section_id'] ?>" data-course-id="<?= (int)$row['course_id'] ?>" data-search="<?= htmlspecialchars(strtolower($row['section_name'] . ' ' . ($row['course_code'] ?? ''))) ?>">
                     <td><?= htmlspecialchars($row['section_name']) ?></td>
                     <td><?= htmlspecialchars($row['course_code'] ?? '—') ?></td>
                     <td><?= htmlspecialchars($row['capacity']) ?></td>

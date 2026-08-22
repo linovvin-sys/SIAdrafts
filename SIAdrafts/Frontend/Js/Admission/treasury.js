@@ -8,6 +8,26 @@ const setupPanel = document.getElementById('setupPanel');
 const searchPanel = document.getElementById('searchPanel');
 const revenuePanel = document.getElementById('revenuePanel');
 
+// ===== DataTables =====
+// Revenue/Queue/Setup panels all start hidden except the active tab (plain
+// display:none, not removed from the DOM), so a table initialized while its
+// panel is hidden gets a 0-width layout from DataTables — columns.adjust()
+// on the table's own panel becoming visible fixes that up.
+const treasuryTables = {};
+function initTreasuryTable(id, options) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  treasuryTables[id] = initDataTable('#' + id, options);
+}
+initTreasuryTable('revenueByCourseTable', { order: [], paging: false, info: false, dom: '<"dt-toolbar"f>rt' });
+initTreasuryTable('paymentQueueTable', { order: [] });
+initTreasuryTable('feeQueueTable', { order: [] });
+initTreasuryTable('setupQueueTable', { order: [] });
+
+function adjustTreasuryTable(id) {
+  if (treasuryTables[id]) treasuryTables[id].columns.adjust();
+}
+
 function showTab(tab) {
   tabQueue.classList.toggle('active', tab === tabQueue);
   tabSetup.classList.toggle('active', tab === tabSetup);
@@ -17,6 +37,10 @@ function showTab(tab) {
   setupPanel.style.display = tab === tabSetup ? 'block' : 'none';
   searchPanel.classList.toggle('active', tab === tabSearch);
   revenuePanel.style.display = tab === tabRevenue ? 'block' : 'none';
+
+  if (tab === tabQueue) { adjustTreasuryTable('paymentQueueTable'); adjustTreasuryTable('feeQueueTable'); }
+  if (tab === tabSetup) adjustTreasuryTable('setupQueueTable');
+  if (tab === tabRevenue) adjustTreasuryTable('revenueByCourseTable');
 }
 
 tabQueue.addEventListener('click', function () { showTab(tabQueue); });
@@ -40,7 +64,96 @@ function fmtOrNumber(transactionId) {
   return 'OR-' + String(transactionId).padStart(6, '0');
 }
 
+// "Last, First Middle" -> "LF". Falls back to "?" for anything unparseable
+// rather than showing a blank circle.
+function getInitials(fullName) {
+  const parts = String(fullName || '').split(',').map(function (s) { return s.trim(); });
+  const initials = (parts[0] ? parts[0].charAt(0) : '') + (parts[1] ? parts[1].charAt(0) : '');
+  return initials.toUpperCase() || '?';
+}
+
+// Deterministic tint per student so the same person's avatar looks the same
+// across searches, without needing a stored color.
+const AVATAR_TINTS = ['amber', 'sage', 'ink'];
+function avatarTintFor(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) hash = (hash * 31 + str.charCodeAt(i)) >>> 0;
+  return AVATAR_TINTS[hash % AVATAR_TINTS.length];
+}
+
 const IS_READONLY = document.body.dataset.readonly === '1';
+
+// ===== Payment terminal =====
+// Orchestrates the processing overlay for both record_payment.php and
+// record_subject_fee_payment.php. `run` performs the actual network call;
+// this only sequences the perceived steps around it and reflects the real
+// result — it never fabricates success.
+const STEP_MS = 480;
+
+function runPaymentTerminal(steps, run) {
+  const terminal = document.getElementById('payTerminal');
+  const stage = terminal.querySelector('.pay-terminal-stage');
+  const stepEl = document.getElementById('payTerminalStep');
+  const fillEl = document.getElementById('payTerminalFill');
+  const resultEl = document.getElementById('payTerminalResult');
+
+  stage.classList.remove('is-success', 'is-error');
+  resultEl.innerHTML = '';
+  fillEl.style.transition = 'none';
+  fillEl.style.width = '0%';
+  stepEl.textContent = steps[0];
+  terminal.classList.add('is-open');
+  terminal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+
+  requestAnimationFrame(function () {
+    fillEl.style.transition = 'width ' + (steps.length * STEP_MS) + 'ms ' + 'var(--ease-in-out)';
+    fillEl.style.width = '92%';
+  });
+
+  let i = 0;
+  const stepTimer = setInterval(function () {
+    i++;
+    if (i < steps.length) stepEl.textContent = steps[i];
+  }, STEP_MS);
+
+  const minWait = new Promise(function (resolve) { setTimeout(resolve, steps.length * STEP_MS); });
+
+  return Promise.all([run().catch(function () { return { success: false, errors: ['Could not reach the server. Please try again.'] }; }), minWait])
+    .then(function (results) {
+      const result = results[0];
+      clearInterval(stepTimer);
+      fillEl.style.transition = 'width 200ms ease-out';
+      fillEl.style.width = '100%';
+
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          if (result && result.success) {
+            stepEl.textContent = 'Payment recorded';
+            stage.classList.add('is-success');
+          } else {
+            stepEl.textContent = 'Payment failed';
+            stage.classList.add('is-error');
+            const errors = (result && result.errors) || ['Something went wrong. Please try again.'];
+            resultEl.innerHTML = '<span>' + errors.map(escapeHtml).join('<br>') + '</span>' +
+              '<button type="button" class="retry-btn" data-terminal-dismiss>Close</button>';
+          }
+          resolve(result);
+        }, 220);
+      });
+    });
+}
+
+function closePayTerminal() {
+  const terminal = document.getElementById('payTerminal');
+  terminal.classList.remove('is-open');
+  terminal.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = '';
+}
+
+document.getElementById('payTerminal').addEventListener('click', function (e) {
+  if (e.target.closest('[data-terminal-dismiss]')) closePayTerminal();
+});
 
 // ===== Renders the search-result payment card (also reused after "Pay" from queue) =====
 function renderPayCard(data) {
@@ -55,6 +168,10 @@ function renderPayCard(data) {
   const s = data.student;
   const balance = parseFloat(p.balance);
   const totalPaid = parseFloat(p.amount_due) - balance;
+  const pct = parseFloat(p.amount_due) > 0 ? Math.min(100, Math.round((totalPaid / parseFloat(p.amount_due)) * 100)) : 0;
+  const isOverdue = balance > 0 && !!p.due_date && new Date(p.due_date) < new Date(new Date().toDateString());
+  const initials = getInitials(s.full_name);
+  const avatarTint = avatarTintFor(String(s.full_name));
 
   const historyHtml = data.history.length
     ? data.history.map(function (h) {
@@ -63,7 +180,7 @@ function renderPayCard(data) {
           : 'Staff';
         const date = new Date(h.paid_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
         const orNumber = fmtOrNumber(h.transaction_id);
-        return '<div class="pay-history-row"><span>' + date + ' &middot; ' + escapeHtml(staffName) + ' &middot; ' + orNumber + '</span><span>' + fmtMoney(h.amount) + '</span></div>';
+        return '<div class="pay-history-row"><span><span class="pay-history-dot"></span>' + date + ' &middot; ' + escapeHtml(staffName) + ' &middot; ' + orNumber + '</span><span>' + fmtMoney(h.amount) + '</span></div>';
       }).join('')
     : '<p style="color:var(--ink-soft); font-size:0.88rem;">No payments recorded yet.</p>';
 
@@ -89,22 +206,42 @@ function renderPayCard(data) {
 
   resultDiv.innerHTML = `
     <div class="pay-student-card">
-      <h3 class="pay-student-name">${escapeHtml(s.full_name)}</h3>
-      <div class="pay-student-meta">${escapeHtml(String(s.student_id))} &middot; ${escapeHtml(p.school_year)} &middot; Sem ${escapeHtml(String(p.semester))}</div>
+      <div class="psc-head">
+        <div class="psc-avatar tint-${avatarTint}">${escapeHtml(initials)}</div>
+        <div class="psc-head-text">
+          <h3 class="pay-student-name">${escapeHtml(s.full_name)}</h3>
+          <div class="pay-student-meta">${escapeHtml(String(s.student_id))} &middot; ${escapeHtml(p.school_year)} &middot; Sem ${escapeHtml(String(p.semester))}</div>
+        </div>
+        ${isOverdue ? '<span class="psc-flag">Overdue</span>' : ''}
+      </div>
 
       <div class="pay-stats">
         <div class="pay-stat">
-          <div class="k">Amount due</div>
-          <div class="v">${fmtMoney(p.amount_due)}</div>
+          <div class="pay-stat-icon tint-ink">₱</div>
+          <div class="pay-stat-text">
+            <div class="k">Amount due</div>
+            <div class="v">${fmtMoney(p.amount_due)}</div>
+          </div>
         </div>
         <div class="pay-stat">
-          <div class="k">Total paid</div>
-          <div class="v">${fmtMoney(totalPaid)}</div>
+          <div class="pay-stat-icon tint-sage">&#10003;</div>
+          <div class="pay-stat-text">
+            <div class="k">Total paid</div>
+            <div class="v">${fmtMoney(totalPaid)}</div>
+          </div>
         </div>
-        <div class="pay-stat">
-          <div class="k">Balance</div>
-          <div class="v balance">${fmtMoney(balance)}</div>
+        <div class="pay-stat${isOverdue ? ' is-overdue' : ''}">
+          <div class="pay-stat-icon ${isOverdue ? 'tint-rose' : 'tint-amber'}">${isOverdue ? '!' : '₱'}</div>
+          <div class="pay-stat-text">
+            <div class="k">Balance</div>
+            <div class="v balance">${fmtMoney(balance)}</div>
+          </div>
         </div>
+      </div>
+
+      <div class="pay-progress">
+        <div class="pay-progress-track"><div class="pay-progress-fill${pct < 40 ? ' is-partial' : ''}" style="width:${pct}%"></div></div>
+        <div class="pay-progress-label">${pct}% paid</div>
       </div>
 
       <div id="payFormBanner"></div>
@@ -119,12 +256,15 @@ function renderPayCard(data) {
       ${balance > 0 ? (IS_READONLY ? '' : `
         <div class="pay-form">
           <div class="field">
-            <label>Amount to record</label>
-            <input type="number" id="payAmountInput" min="0.01" step="0.01" placeholder="0.00">
+            <label for="payAmountInput">Amount to record</label>
+            <div class="money-input">
+              <span class="money-prefix">₱</span>
+              <input type="number" id="payAmountInput" min="0.01" step="0.01" placeholder="0.00">
+            </div>
           </div>
           <div class="field">
             <label>Payment method</label>
-            <input type="text" value="Cash" disabled>
+            <div class="method-pill">Cash</div>
           </div>
           <button class="btn-record-pay" id="recordPayBtn" data-payment-id="${p.payment_id}">
             Record payment
@@ -155,27 +295,24 @@ function renderPayCard(data) {
         if (!ok) return;
 
         btn.disabled = true;
-        btn.textContent = 'Recording…';
 
-        fetch('/SIAdrafts/Backend/api/Treasury/record_subject_fee_payment.php', {
-          method: 'POST',
-          body: new URLSearchParams({ fee_id: feeId, csrf_token: document.body.dataset.csrf || '' }),
-        })
-          .then(function (res) { return res.json(); })
-          .then(function (result) {
-            if (!result.success) {
-              Swal.fire({ icon: 'error', title: 'Could not record payment', text: (result.errors || []).join(' ') });
-              btn.disabled = false;
-              btn.textContent = 'Record payment';
-              return;
-            }
-            fetchAndRenderByPaymentId(p.payment_id);
-          })
-          .catch(function () {
-            Swal.fire({ icon: 'error', title: 'Could not reach the server. Please try again.' });
-            btn.disabled = false;
-            btn.textContent = 'Record payment';
-          });
+        runPaymentTerminal(
+          ['Verifying fee…', 'Posting to ledger…'],
+          function () {
+            return fetch('/SIAdrafts/Backend/api/Treasury/record_subject_fee_payment.php', {
+              method: 'POST',
+              body: new URLSearchParams({ fee_id: feeId, csrf_token: document.body.dataset.csrf || '' }),
+            }).then(function (res) { return res.json(); });
+          }
+        ).then(function (result) {
+          btn.disabled = false;
+          if (result && result.success) {
+            setTimeout(function () {
+              closePayTerminal();
+              fetchAndRenderByPaymentId(p.payment_id);
+            }, 900);
+          }
+        });
       });
     });
   });
@@ -203,26 +340,27 @@ function renderPayCard(data) {
 
       const doRecord = function () {
         recordBtn.disabled = true;
-        recordBtn.textContent = 'Recording…';
 
-        const body = new URLSearchParams({ payment_id: paymentId, amount: amount, csrf_token: document.body.dataset.csrf || '' });
-
-        fetch('/SIAdrafts/Backend/api/Treasury/record_payment.php', { method: 'POST', body: body })
-          .then(function (res) { return res.json(); })
-          .then(function (result) {
-            if (!result.success) {
-              banner.innerHTML = '<div class="t-banner error">' + result.errors.map(escapeHtml).join('<br>') + '</div>';
-              recordBtn.disabled = false;
-              recordBtn.textContent = 'Record payment';
-              return;
+        runPaymentTerminal(
+          ['Verifying amount…', 'Checking balance…', 'Posting to ledger…'],
+          function () {
+            const body = new URLSearchParams({ payment_id: paymentId, amount: amount, csrf_token: document.body.dataset.csrf || '' });
+            return fetch('/SIAdrafts/Backend/api/Treasury/record_payment.php', { method: 'POST', body: body })
+              .then(function (res) { return res.json(); });
+          }
+        ).then(function (result) {
+          recordBtn.disabled = false;
+          if (result && result.success) {
+            const resultEl = document.getElementById('payTerminalResult');
+            if (result.or_number) {
+              resultEl.innerHTML = '<span>Receipt</span><span class="or-number">' + escapeHtml(result.or_number) + '</span>';
             }
-            fetchAndRenderByPaymentId(p.payment_id);
-          })
-          .catch(function () {
-            banner.innerHTML = '<div class="t-banner error">Could not reach the server. Please try again.</div>';
-            recordBtn.disabled = false;
-            recordBtn.textContent = 'Record payment';
-          });
+            setTimeout(function () {
+              closePayTerminal();
+              fetchAndRenderByPaymentId(p.payment_id);
+            }, 1100);
+          }
+        });
       };
 
       const confirmFn = window.confirmAction || function (opts) {

@@ -1,4 +1,11 @@
-<?php $page_scripts = $page_scripts ?? []; ?>
+<?php
+// $extraScripts is the variable name several pages (treasury.php,
+// total_enrolees.php, enrollment_confirm.php, etc.) actually set, but this
+// loop previously only read $page_scripts — so every one of those pages'
+// own JS silently never loaded. Support both names rather than renaming
+// every call site.
+$page_scripts = array_merge($page_scripts ?? [], $extraScripts ?? []);
+?>
   <!--<script src="/SIAdrafts/Frontend/Js/Admission/nav-scroll.js"></script>-->
   <script src="/SIAdrafts/Frontend/Js/Admission/nav-toggle.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/nav-user-dropdown.js"></script>

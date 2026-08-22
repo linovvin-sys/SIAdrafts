@@ -270,3 +270,10 @@ chatForm.addEventListener('submit', (e) => {
       chatInput.focus();
     });
 });
+
+// Messaging Activity table (server-rendered, separate from the live chat
+// widget above) was never wired to DataTables at all — it just rendered
+// every row with no pagination.
+if (document.getElementById('messageActivityTable')) {
+  initDataTable('#messageActivityTable', { order: [[3, 'desc']] });
+}

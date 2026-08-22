@@ -58,7 +58,7 @@ include '../Include/header.php';
 
       <div class="panel-body" style="padding:0;">
         <div class="table-responsive">
-          <table class="data-table" id="professorTable">
+          <table class="data-table rd-table-stagger" id="professorTable">
             <thead>
               <tr>
                 <th>Name</th>
@@ -70,8 +70,8 @@ include '../Include/header.php';
             </thead>
             <tbody id="professorListBody">
               <?php if (!empty($professors)): ?>
-                <?php foreach ($professors as $row): ?>
-                  <tr data-row-id="<?= (int)$row['professor_id'] ?>" data-search="<?= htmlspecialchars(strtolower(professor_fullname($row) . ' ' . $row['department_code'] . ' ' . $row['department_name'])) ?>">
+                <?php foreach ($professors as $rowIndex => $row): ?>
+                  <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;" data-row-id="<?= (int)$row['professor_id'] ?>" data-search="<?= htmlspecialchars(strtolower(professor_fullname($row) . ' ' . $row['department_code'] . ' ' . $row['department_name'])) ?>">
                     <td><?= htmlspecialchars(professor_fullname($row)) ?></td>
                     <td><?= htmlspecialchars($row['department_code']) ?>
                       <div class="text-muted"><?= htmlspecialchars($row['department_name']) ?></div>

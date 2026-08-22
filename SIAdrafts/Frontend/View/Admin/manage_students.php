@@ -49,7 +49,7 @@ include '../Include/header.php';
 
       <div class="panel-body" style="padding:0;">
         <div class="table-responsive">
-          <table class="data-table" id="studentAccountTable">
+          <table class="data-table rd-table-stagger" id="studentAccountTable">
             <thead>
               <tr>
                 <th>Student No.</th>
@@ -61,8 +61,8 @@ include '../Include/header.php';
             </thead>
             <tbody>
               <?php if (!empty($students)): ?>
-                <?php foreach ($students as $row): ?>
-                  <tr data-search="<?= htmlspecialchars(strtolower(student_account_fullname($row) . ' ' . $row['student_no'])) ?>">
+                <?php foreach ($students as $rowIndex => $row): ?>
+                  <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;" data-search="<?= htmlspecialchars(strtolower(student_account_fullname($row) . ' ' . $row['student_no'])) ?>">
                     <td class="mono"><?= htmlspecialchars($row['student_no']) ?></td>
                     <td><?= htmlspecialchars(student_account_fullname($row)) ?></td>
                     <td class="mono">

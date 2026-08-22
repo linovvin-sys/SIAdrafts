@@ -175,7 +175,27 @@ document.addEventListener('DOMContentLoaded', function () {
   // ----- All Enrolled Students list -----
   const allStudentsTable = document.getElementById('allStudentsTable');
   if (allStudentsTable) {
-    initDataTable('#allStudentsTable', { order: [] });
+    const allStudentsDT = initDataTable('#allStudentsTable', { order: [] });
+
+    const allStudentsSearchEl = document.getElementById('allStudentsSearch');
+    const allStudentsCourseFilterEl = document.getElementById('allStudentsCourseFilter');
+    const allStudentsStatusFilterEl = document.getElementById('allStudentsStatusFilter');
+
+    if (allStudentsSearchEl) {
+      allStudentsSearchEl.addEventListener('input', () => allStudentsDT.search(allStudentsSearchEl.value).draw());
+    }
+    if (allStudentsCourseFilterEl || allStudentsStatusFilterEl) {
+      $.fn.dataTable.ext.search.push(function (settings, searchData, index) {
+        if (settings.nTable.id !== 'allStudentsTable') return true;
+        const row = allStudentsDT.row(index).node();
+        if (!row) return true;
+        if (allStudentsCourseFilterEl && allStudentsCourseFilterEl.value && row.dataset.course !== allStudentsCourseFilterEl.value) return false;
+        if (allStudentsStatusFilterEl && allStudentsStatusFilterEl.value && row.dataset.status !== allStudentsStatusFilterEl.value) return false;
+        return true;
+      });
+      if (allStudentsCourseFilterEl) allStudentsCourseFilterEl.addEventListener('change', () => allStudentsDT.draw());
+      if (allStudentsStatusFilterEl) allStudentsStatusFilterEl.addEventListener('change', () => allStudentsDT.draw());
+    }
 
     allStudentsTable.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-manage-student]');

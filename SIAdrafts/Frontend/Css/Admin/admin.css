@@ -13,13 +13,19 @@
   --paper-100: #F7F4EC;
   --line-200: rgba(31, 46, 40, 0.14);
 
-  /* the one accent — same --accent (bronze) as editorial-theme.css.
-     Reserved for borders, hover states, active-nav marker, badges-on-tint
-     -- never as a large solid fill under white text (index.php never does
-     this either: its .e-btn is ink-filled, not accent-filled). */
-  --accent-600: #A47B3F;
-  --accent-text: #6F5027; /* darkened for 4.5:1+ as text-on-light */
-  --accent-100: #F3ECDD;
+  /* the one accent — DLSU's official green (Pantone 342C, #046A38),
+     replacing the bronze this system used before. Reserved for borders,
+     hover states, active-nav marker, badges-on-tint -- never as a large
+     solid fill under white text (index.php never does this either: its
+     .e-btn is ink-filled, not accent-filled).
+     Contrast check: #046A38 on white is ~6.7:1 (WCAG AA needs 4.5:1 for
+     text), so unlike the old bronze (3.5:1, needed a separately darkened
+     --accent-text) the base green is already safe as text on its own —
+     --accent-text is a touch darker only for visual hierarchy, not
+     because contrast requires it. */
+  --accent-600: #046A38;
+  --accent-text: #035A30;
+  --accent-100: #E2EFE8;
 
   /* semantic states (not present on the marketing page -- necessary
      additions for a working admin app, kept muted/warm to stay in the
@@ -51,7 +57,7 @@
   --navy-hover: var(--ink-800);
   --gold: var(--accent-600);
   --gold-dark: var(--accent-text);
-  --gold-light: #B68F55;
+  --gold-light: #0C7F44; /* lighter/brighter green, used for hover states */
   --cream: var(--paper-100);
   --white: var(--paper-50);
   --text-muted: var(--slate-500);
@@ -59,11 +65,18 @@
   --sidebar-width: 216px;
   --header-height: 70px;
   --transition: 0.15s ease;
+  /* Stronger ease-out for card hover/press — same curve Student's
+     student.css calls --sp-ease. --transition above is intentionally weak
+     for small hover tweaks (nav items, buttons); cards need the punch. */
+  --rd-ease: cubic-bezier(0.23, 1, 0.32, 1);
   /* soft layered elevation, same language as the landing page's card
      hover (`0 16px 32px -20px rgba(31,46,40,...)`) at resting strength */
   --shadow: 0 1px 2px rgba(31, 46, 40, 0.05), 0 8px 24px -18px rgba(31, 46, 40, 0.16);
   --shadow-lift: 0 16px 32px -20px rgba(31, 46, 40, 0.35);
-  --radius: 6px;
+  /* Rounder than the original 6px — matches Student's card language
+     (--sp-radius-lg: 14px) so panels/stat-cards read as the same family
+     instead of visibly tighter/older. */
+  --radius: 16px;
 
   /* ---- Registrar's Desk-era token names, aliased so every screen
      built in that pass (stamps, role badges, avatar tints, focus rings)
@@ -98,6 +111,91 @@
   --space-3: 12px;
   --space-4: 16px;
   --space-5: 20px;
+
+  /* Tells the browser which palette to use for UI it renders natively —
+     scrollbars, date/time pickers, and critically a <select>'s open
+     dropdown list, whose popup is OS-drawn and ignores our CSS
+     background entirely without this. Explains "the filter only goes
+     dark when active": the closed select was already correctly themed,
+     the popup wasn't. */
+  color-scheme: light;
+}
+
+/* ===== DARK MODE =====
+   Same token set, redefined — every component below is built on these
+   variables (not raw hex), so this one block re-themes the whole portal
+   without touching component rules. Two selectors carry the same values
+   on purpose: the media query covers "system says dark, user hasn't
+   overridden it"; the [data-theme="dark"] attribute (set by the toggle
+   in Include/sidebar.php) covers an explicit choice, so it wins even
+   when the OS is in light mode. Accent green is brightened from the
+   brand's #046A38 — that exact shade reads as near-black on a dark
+   surface; a dark-mode accent needs more luminance to still function as
+   an accent, not just to look nice. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --ink-950: #C9D1C4;
+    --ink-800: #A9B2A3;
+    --ink-600: #7E8A7A;
+
+    --paper-50: #242E29;
+    --paper-100: #1C2320;
+    --line-200: rgba(201, 209, 196, 0.12);
+
+    --accent-600: #2FA36B;
+    --accent-text: #57C48B;
+    --accent-100: #253F30;
+
+    --danger-600: #E0715A;
+    --danger-100: #46281F;
+    --success-600: #5FA37C;
+    --success-100: #26392C;
+    --info-600: #85A6CC;
+    --info-100: #27323F;
+
+    --slate-500: rgba(201, 209, 196, 0.82);
+    --slate-300: rgba(201, 209, 196, 0.38);
+
+    --gold-light: #3DBD80;
+    --text-light: rgba(16, 21, 18, 0.72);
+
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -18px rgba(0, 0, 0, 0.55);
+    --shadow-lift: 0 16px 32px -20px rgba(0, 0, 0, 0.65);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --ink-950: #C9D1C4;
+  --ink-800: #A9B2A3;
+  --ink-600: #7E8A7A;
+
+  --paper-50: #242E29;
+  --paper-100: #1C2320;
+  --line-200: rgba(201, 209, 196, 0.12);
+
+  --accent-600: #2FA36B;
+  --accent-text: #57C48B;
+  --accent-100: #253F30;
+
+  --danger-600: #E0715A;
+  --danger-100: #46281F;
+  --success-600: #5FA37C;
+  --success-100: #26392C;
+  --info-600: #85A6CC;
+  --info-100: #27323F;
+
+  --slate-500: rgba(201, 209, 196, 0.82);
+  --slate-300: rgba(201, 209, 196, 0.38);
+
+  --gold-light: #3DBD80;
+  --text-light: rgba(16, 21, 18, 0.72);
+
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -18px rgba(0, 0, 0, 0.55);
+  --shadow-lift: 0 16px 32px -20px rgba(0, 0, 0, 0.65);
+  color-scheme: dark;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
 }
 
 /* ===== RESET & BASE ===== */
@@ -127,10 +225,18 @@ a {
   min-height: 100vh;
 }
 
-/* ===== SIDEBAR ===== */
+/* ===== SIDEBAR =====
+   Previously a solid dark-ink block (light text on --navy) — visually
+   nothing like Student's portal, which never uses a dark surface at all.
+   Rebuilt as a light paper surface with a right border, matching
+   Student's .sp-nav: dark ink text on parchment, bronze for the active
+   state instead of white-on-dark. Kept as a left rail (not Student's top
+   bar) because this portal's nav tree is far deeper — Registrar alone
+   has grouped items Student's flat 4-tab nav has no equivalent of. */
 .sidebar {
   width: var(--sidebar-width);
-  background: var(--navy);
+  background: var(--paper-50);
+  border-right: 1px solid var(--line-200);
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -150,37 +256,38 @@ a {
   gap: 12px;
   padding: 0 20px;
   height: var(--header-height);
-  border-bottom: 1px solid rgba(255,255,255,0.06);
+  border-bottom: 1px solid var(--line-200);
   flex-shrink: 0;
 }
 
 .brand-icon {
-  width: 42px;
-  height: 42px;
-  background: var(--gold);
-  border-radius: 10px;
+  width: 40px;
+  height: 40px;
+  background: var(--accent-100);
+  border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 20px;
-  color: #fff; /* icon glyph on the bronze tile (graphics need 3:1 -- white is 3.8:1) */
+  font-size: 19px;
+  color: var(--accent-text);
   flex-shrink: 0;
 }
 
 .brand-name {
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--white);
-  letter-spacing: -0.3px;
+  font-family: var(--font-display);
+  font-size: 19px;
+  font-weight: 500;
+  color: var(--ink-950);
+  letter-spacing: -0.01em;
 }
 
 .brand-name span {
-  color: var(--seal-100);
+  color: var(--accent-600);
 }
 
 /* Nav sections */
 .nav-section {
-  padding: 24px 0 8px;
+  padding: 20px 0 8px;
 }
 
 .nav-label {
@@ -188,7 +295,7 @@ a {
   font-weight: 700;
   letter-spacing: 1.2px;
   text-transform: uppercase;
-  color: rgba(255, 255, 255, 0.62); /* on the dark sidebar -- --text-muted is dark ink and would vanish here */
+  color: var(--slate-300);
   padding: 0 24px 10px;
 }
 
@@ -196,8 +303,8 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 11px 20px 11px 24px;
-  color: var(--text-light);
+  padding: 10px 20px 10px 21px;
+  color: var(--slate-500);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -207,20 +314,39 @@ a {
 }
 
 .nav-item:hover {
-  background: var(--navy-hover);
-  color: var(--white);
+  background: var(--paper-100);
+  color: var(--ink-950);
 }
 
 .nav-item.active {
-  background: var(--navy-light);
-  color: #fff;
-  border-left-color: var(--gold);
+  background: var(--accent-100);
+  color: var(--accent-text);
+  border-left-color: var(--accent-600);
+  font-weight: 600;
 }
 
 .nav-item .nav-icon {
-  font-size: 16px;
+  font-size: 17px;
   width: 20px;
   text-align: center;
+  flex-shrink: 0;
+}
+
+/* Pending-count badge (sidebar.php sets the animation; had no visual
+   styling at all before this — just plain inline text). */
+.nav-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--accent-600);
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
 }
 
@@ -228,15 +354,13 @@ a {
 .sidebar-user {
   margin-top: auto;
   padding: 16px 20px;
-  border-top: 1px solid rgba(255,255,255,0.06);
+  border-top: 1px solid var(--line-200);
   display: flex;
   align-items: center;
   gap: 12px;
 }
 
 .user-avatar {
-  /* lives on the dark sidebar, so a parchment-tint circle with ink
-     initials (an ink fill would vanish against the sidebar itself) */
   width: 38px;
   height: 38px;
   border-radius: 50%;
@@ -253,12 +377,12 @@ a {
 .user-info .user-name {
   font-size: 14px;
   font-weight: 600;
-  color: var(--white);
+  color: var(--ink-950);
 }
 
 .user-info .user-role {
   font-size: 11px;
-  color: rgba(255, 255, 255, 0.62); /* same dark-sidebar rule as .nav-label */
+  color: var(--slate-500);
 }
 
 /* ===== MAIN CONTENT AREA ===== */
@@ -328,7 +452,7 @@ a {
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  border: 2px solid #e0d8c8;
+  border: 2px solid var(--line-200);
   background: transparent;
   display: flex;
   align-items: center;
@@ -341,9 +465,21 @@ a {
 }
 
 .btn-notif:hover {
-  border-color: var(--gold);
-  background: rgba(232,168,32,0.08);
+  border-color: var(--accent-600);
+  background: var(--accent-100);
 }
+
+/* Theme toggle — reuses .btn-notif's circular shape. Only one of the two
+   icons is ever visible; which one depends on the theme actually in
+   effect right now, mirroring the same three-state logic (system dark /
+   explicit dark / explicit light) the color tokens themselves use. */
+.theme-icon-moon { display: none; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .theme-icon-sun { display: none; }
+  :root:not([data-theme="light"]) .theme-icon-moon { display: inline-flex; }
+}
+:root[data-theme="dark"] .theme-icon-sun { display: none; }
+:root[data-theme="dark"] .theme-icon-moon { display: inline-flex; }
 
 .notif-dot {
   position: absolute;
@@ -380,7 +516,7 @@ a {
   position: absolute;
   top: calc(100% + 10px);
   right: 0;
-  background: #fff;
+  background: var(--paper-50);
   border-radius: 14px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.13);
   min-width: 170px;
@@ -425,6 +561,110 @@ a {
   flex: 1;
 }
 
+/* Personalized page header — modeled on Student's own dashboard greeting
+   (.sp-greeting/.sp-subline), brought over as inspiration rather than
+   copied verbatim: same idea (name the person, name what's waiting for
+   them today) in this portal's own type scale. Opt-in per page, not
+   forced onto every screen — a filter-heavy list page doesn't want a
+   headline, a dashboard does. */
+.rd-greeting {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: clamp(22px, 3vw, 30px);
+  color: var(--ink-950);
+  margin: 4px 0 4px;
+  letter-spacing: -0.01em;
+}
+.rd-greeting-sub {
+  color: var(--slate-500);
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+
+/* Hero callout for "the one thing that needs a decision today" — same
+   role as Student's .sp-today card, adapted for a backlog rather than a
+   live class: the dot is static (a flag, not a "happening now" signal),
+   since a real-time pulse would be dishonest here and would wear thin on
+   a page Head Registrar opens many times a day. */
+.rd-hero {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  border-radius: 22px;
+  padding: 22px 26px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow);
+  transition: transform 0.2s var(--rd-ease), box-shadow 0.2s var(--rd-ease);
+}
+.rd-hero:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); }
+.rd-hero:active { transform: translateY(-1px) scale(0.995); }
+.rd-hero--attention {
+  background: linear-gradient(135deg, var(--accent-100), var(--paper-50) 70%);
+  border: 1px solid var(--accent-100);
+}
+.rd-hero-status { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.rd-hero-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-600); flex-shrink: 0; }
+.rd-hero-status-label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent-text); }
+.rd-hero-figure { font-family: var(--font-display); font-size: 22px; font-weight: 500; color: var(--ink-950); margin: 0 0 4px; }
+.rd-hero-meta { font-size: 13px; color: var(--slate-500); margin: 0; }
+
+/* Asymmetric main+aside dashboard layout — Student's own dashboard is
+   never a stack of equal-width panels; it's one dominant column plus a
+   narrower rail of smaller modules (activity, quick actions). Opt-in
+   per page via .rd-dash-grid, not forced on every .grid-2 usage
+   (most pages genuinely want two equal columns — forms, chart pairs). */
+.rd-dash-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 320px);
+  gap: 24px;
+  align-items: start;
+}
+.rd-dash-aside { display: flex; flex-direction: column; gap: 24px; }
+@media (max-width: 980px) {
+  .rd-dash-grid { grid-template-columns: 1fr; }
+}
+
+/* Quick-links list for the aside rail — icon chip, label, chevron that
+   slides on hover. Same recipe as Student's .sp-quickactions. */
+.rd-quicklinks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.rd-quicklinks a {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 10px; border-radius: 10px;
+  text-decoration: none; color: var(--ink-950);
+  font-size: 13.5px; font-weight: 500;
+  transition: background 0.15s ease, transform 0.1s ease;
+}
+.rd-quicklinks a:hover { background: var(--accent-100); }
+.rd-quicklinks a:active { transform: scale(0.98); }
+.rd-quicklink-icon {
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--paper-100); color: var(--accent-text); font-size: 16px;
+  transition: background 0.15s ease;
+}
+.rd-quicklinks a:hover .rd-quicklink-icon { background: var(--paper-50); }
+.rd-quicklink-chevron {
+  margin-left: auto; color: var(--slate-300); font-size: 17px;
+  transition: transform 0.15s var(--rd-ease), color 0.15s ease;
+}
+.rd-quicklinks a:hover .rd-quicklink-chevron { transform: translateX(2px); color: var(--accent-text); }
+
+/* Compact person-list for the aside — same avatar+name pattern as the
+   full data-table version, just without the table chrome (headers,
+   zebra rows) that doesn't suit a narrow rail. */
+.rd-people-list { display: flex; flex-direction: column; }
+.rd-people-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 4px; border-bottom: 1px solid var(--line-200);
+}
+.rd-people-row:last-child { border-bottom: none; }
+.rd-people-name { font-size: 13.5px; font-weight: 500; color: var(--ink-950); }
+.rd-people-meta { font-size: 11.5px; color: var(--slate-500); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rd-quicklinks a, .rd-quicklink-icon, .rd-quicklink-chevron { transition: none; }
+}
+
 /* ===== STAT CARDS ===== */
 .stats-grid {
   display: grid;
@@ -433,37 +673,81 @@ a {
   margin-bottom: 32px;
 }
 
+/* Entrance stagger for .stat-card / .rd-stat-card — both were static
+   (hover-lift only, no arrival). Matches the recipe already shipped in
+   Student's student.css (--sp-ease / sp-card-in): fade + rise, staggered
+   per card, plays once per page load — not a loop, so pages staff open
+   dozens of times a day (Admin's user list, Registrar's student search)
+   don't get an animation that wears thin. */
+@keyframes statCardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.stats-grid > .stat-card,
+.stat-grid > .rd-stat-card {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: statCardIn 0.42s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+.stats-grid > *:nth-child(1), .stat-grid > *:nth-child(1) { animation-delay: 0ms; }
+.stats-grid > *:nth-child(2), .stat-grid > *:nth-child(2) { animation-delay: 50ms; }
+.stats-grid > *:nth-child(3), .stat-grid > *:nth-child(3) { animation-delay: 100ms; }
+.stats-grid > *:nth-child(4), .stat-grid > *:nth-child(4) { animation-delay: 150ms; }
+
+/* Rebuilt as a vertical tile — icon chip on top, figure below it — the
+   actual shape of Student's .sp-card, not just its colors. The old
+   version was a horizontal strip (icon left, number right): same tokens,
+   a completely different silhouette, which is why recoloring it alone
+   still read as "the same card." Markup is untouched (icon div, then a
+   wrapper div with value+label) — this is a pure layout-direction
+   change: row → column. */
 .stat-card {
   background: var(--white);
-  border-radius: var(--radius);
-  padding: 24px;
+  border: 1px solid var(--line-200);
+  border-radius: 22px;
+  padding: 22px;
   box-shadow: var(--shadow);
   display: flex;
-  align-items: center;
-  gap: 18px;
-  border: 1px solid rgba(0,0,0,0.04);
-  transition: transform var(--transition), box-shadow var(--transition);
+  flex-direction: column;
+  align-items: flex-start;
+  transition: transform 0.2s var(--rd-ease), box-shadow 0.2s var(--rd-ease);
 }
 
 .stat-card:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   box-shadow: var(--shadow-lift);
+}
+.stat-card:active {
+  transform: translateY(-2px) scale(0.98);
+}
+
+.rd-stat-card {
+  border-radius: 22px;
+  transition: transform 0.2s var(--rd-ease), box-shadow 0.2s var(--rd-ease);
+}
+.rd-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lift);
+}
+.rd-stat-card:active {
+  transform: translateY(-2px) scale(0.98);
 }
 
 .stat-icon {
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   border-radius: 12px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 22px;
+  font-size: 17px;
   flex-shrink: 0;
+  margin-bottom: 14px;
 }
 
 .stat-icon svg {
-  width: 24px;
-  height: 24px;
+  width: 18px;
+  height: 18px;
 }
 
 .stat-icon.gold   { background: var(--amber-tint); color: var(--amber-tint-text); }
@@ -473,18 +757,50 @@ a {
 .stat-icon.coral  { background: var(--coral-tint); color: var(--coral-tint-text); }
 
 .stat-value {
-  font-size: 28px;
-  font-weight: 800;
+  font-family: var(--font-mono);
+  font-size: 26px;
+  font-weight: 600;
   color: var(--navy);
   line-height: 1;
 }
 
 /* ===== SUBJECT CARDS ===== */
+/* Fixed 4-per-row (not auto-fit) so it lines up exactly with the 8-per-
+   page pagination below it — 2 full rows per page, predictably, instead
+   of however many columns happen to fit the viewport. */
 .subject-card-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(4, 1fr);
   gap: 16px;
 }
+@media (max-width: 1100px) {
+  .subject-card-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 560px) {
+  .subject-card-grid { grid-template-columns: 1fr; }
+}
+
+/* Same gap .stat-card had: hover existed, arrival didn't. Stagger is
+   CSS-only (nth-child) since this grid has no per-item --row-i wiring;
+   capped at 8 cards so a long subject list doesn't take visibly long to
+   finish settling. */
+.subject-card-grid > .subject-card {
+  opacity: 0;
+  transform: translateY(10px);
+  animation: statCardIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+.subject-card-grid > *:nth-child(1) { animation-delay: 0ms; }
+.subject-card-grid > *:nth-child(2) { animation-delay: 30ms; }
+.subject-card-grid > *:nth-child(3) { animation-delay: 60ms; }
+.subject-card-grid > *:nth-child(4) { animation-delay: 90ms; }
+.subject-card-grid > *:nth-child(5) { animation-delay: 120ms; }
+.subject-card-grid > *:nth-child(6) { animation-delay: 150ms; }
+.subject-card-grid > *:nth-child(7) { animation-delay: 180ms; }
+.subject-card-grid > *:nth-child(8) { animation-delay: 210ms; }
+.subject-card-grid > *:nth-child(9) { animation-delay: 240ms; }
+.subject-card-grid > *:nth-child(10) { animation-delay: 270ms; }
+.subject-card-grid > *:nth-child(11) { animation-delay: 300ms; }
+.subject-card-grid > *:nth-child(12) { animation-delay: 330ms; }
 
 .subject-card {
   background: var(--white);
@@ -520,7 +836,7 @@ a {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .02em;
-  background: #f0e8d8;
+  background: var(--paper-100);
   color: var(--text-muted);
   white-space: nowrap;
 }
@@ -544,15 +860,17 @@ a {
   justify-content: space-between;
   padding: 12px 4px 0;
   margin-top: 12px;
-  border-top: 1px solid #ede8de;
+  border-top: 1px solid var(--line-200);
   color: var(--navy);
 }
 
 .stat-label {
-  font-size: 12px;
+  font-size: 12.5px;
   color: var(--text-muted);
   margin-top: 4px;
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 /* ===== PANELS / CARDS ===== */
@@ -576,16 +894,23 @@ a {
 
 .panel-header {
   padding: 18px 24px;
-  border-bottom: 1px solid #f0e8d8;
+  border-bottom: 1px solid var(--line-200);
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
 
+/* Was small bold sans-serif everywhere — the single most-repeated text
+   element in the app (every panel, every page) and the biggest reason
+   the whole portal still read as a generic dashboard rather than this
+   app's own identity. Matches Student's .sp-section-title exactly:
+   Fraunces at 18px, weight 500. */
 .panel-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--navy);
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--ink-950);
+  letter-spacing: -0.005em;
 }
 
 .panel-body {
@@ -612,33 +937,197 @@ a {
 
 .data-table th {
   text-align: left;
-  padding: 10px 14px;
+  padding: 12px 14px;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  color: var(--text-muted);
-  background: #faf7f2;
-  border-bottom: 1px solid #ede8de;
+  color: var(--slate-500);
+  background: var(--paper-100);
+  border-bottom: 1px solid var(--line-200);
 }
 
 .data-table td {
-  padding: 13px 14px;
-  border-bottom: 1px solid #f5f0e8;
-  color: var(--navy);
+  padding: 14px;
+  border-bottom: 1px solid var(--line-200);
+  color: var(--ink-950);
   font-variant-numeric: tabular-nums;
+  transition: background 0.15s ease, box-shadow 0.15s var(--rd-ease);
 }
 
-.data-table tbody tr:nth-child(even) td {
-  background: #fcfaf6;
-}
-
+/* No zebra striping — a flat surface + a real hover response reads as
+   calmer and more deliberate than alternating tints, and puts the
+   emphasis on the row you're actually looking at rather than a fixed
+   pattern. */
 .data-table tr:last-child td {
   border-bottom: none;
 }
 
-.data-table tr:hover td {
-  background: #faf3e4;
+/* Hover: a green-tinted wash plus an accent bar that grows in from the
+   left edge on the row's first cell — inset box-shadow, not a real
+   border, so it doesn't shift column widths. */
+.data-table tbody tr td {
+  box-shadow: inset 0 0 0 rgba(0,0,0,0);
+}
+.data-table tbody tr:hover td {
+  background: var(--accent-100);
+}
+.data-table tbody tr:hover td:first-child {
+  box-shadow: inset 3px 0 0 var(--accent-600);
+}
+
+/* Row "pop" on hover — requested with the known tradeoff acknowledged:
+   a <tr> scaling up doesn't push neighboring rows out of the way (tables
+   don't reflow around a transformed sibling), so it will visually
+   overlap the row above/below. Kept as small as possible (1.4%) and
+   sold as an intentional "lifted card" rather than a glitch via
+   z-index (renders above its neighbors, doesn't get clipped under them)
+   and a real shadow underneath. A bigger scale would break the illusion. */
+.data-table tbody tr {
+  transition: transform 0.16s var(--rd-ease);
+  transform: scale(1);
+}
+.data-table tbody tr:hover {
+  position: relative;
+  z-index: 5;
+  transform: scale(1.014);
+  box-shadow: 0 10px 24px -12px rgba(31, 46, 40, 0.28);
+}
+.data-table tbody tr:hover td:first-child {
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+.data-table tbody tr:hover td:last-child {
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+/* Entrance stagger, driven by DataTables' own draw event (see
+   datatable-init.js) so it replays on pagination, search, and sort — not
+   just the initial page load. Safe to fire on every redraw now that
+   every table caps at 10 rows per page. Kept as a class DataTables adds/
+   removes per row rather than a blanket rule, so tables NOT run through
+   initDataTable() (the deliberate JS-managed queues, master-detail
+   pairs) are unaffected. */
+.dt-row-in {
+  opacity: 0;
+  animation: rdRowIn 0.32s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation-delay: calc(var(--row-i, 0) * 28ms);
+}
+@keyframes rdRowIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+/* Legacy opt-in (student_profile.php's ledger, a couple of manually
+   wired pages) — same animation, kept for pages not yet on the
+   DataTables-driven version. */
+.rd-table-stagger tbody tr {
+  opacity: 0;
+  animation: rdRowIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation-delay: calc(var(--row-i, 0) * 30ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rd-table-stagger tbody tr, .dt-row-in { animation: none; opacity: 1; transform: none; }
+  .data-table tbody tr, .data-table tbody tr:hover { transition: none; transform: none; }
+}
+
+/* ===== DATATABLES CHROME =====
+   Was 100% unstyled Bootstrap defaults (dataTables.bootstrap5.min.css) —
+   a generic blue-and-grey toolbar sitting directly under a redesigned,
+   branded table. Restyled to match: pill pagination, bronze→green accent
+   on the active page, a real search field instead of Bootstrap's bare
+   .form-control. */
+/* Standalone case: a table with no pre-existing filter row above it —
+   .dt-toolbar is the only control row, needs its own padding. */
+.dt-toolbar { padding: 16px 20px 0; }
+.dt-toolbar .dataTables_filter { display: flex; justify-content: flex-end; }
+
+/* Merged case (see initDataTable's dt-search-inline handling): the
+   search box moves into an existing .filter-bar/.user-filter-bar row,
+   which is already display:flex — push it to the row's trailing edge
+   rather than stacking a second row underneath. */
+.dataTables_filter.dt-search-inline {
+  margin-left: auto;
+  display: flex;
+}
+.dataTables_filter label { display: flex; align-items: center; gap: 0; margin: 0; width: 100%; max-width: 280px; }
+/* !important here specifically: DataTables' bootstrap5 integration adds
+   its own "form-control" class to the search input it generates, and
+   Bootstrap's .form-control sets a hardcoded white background — on an
+   element whose exact class list we don't control, so we can't just
+   raise our own selector's specificity to win normally. */
+.dataTables_filter input {
+  flex: 1; border: 1.5px solid var(--line-200); border-radius: 10px;
+  padding: 9px 14px; font-size: 13.5px; font-family: var(--font-ui);
+  color: var(--ink-950) !important; background: var(--paper-50) !important;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.dataTables_filter input:focus {
+  outline: none; border-color: var(--accent-600);
+  box-shadow: 0 0 0 3px var(--accent-100);
+}
+.dataTables_filter input::placeholder { color: var(--slate-300); }
+
+.dt-footer {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; flex-wrap: wrap; gap: 12px;
+}
+.dataTables_info { font-size: 12.5px; color: var(--slate-500); }
+
+/* .rd-paginate reuses this exact pill styling for non-DataTables
+   pagination (subjects.php's card grid isn't a <table>, so DataTables
+   itself doesn't apply — but the same pager look should). */
+.dataTables_paginate .pagination, .rd-paginate .pagination { display: flex; gap: 4px; margin: 0; list-style: none; padding: 0; }
+.dataTables_paginate .page-item .page-link, .rd-paginate .page-item .page-link {
+  display: flex; align-items: center; justify-content: center;
+  min-width: 30px; height: 30px; padding: 0 8px;
+  border-radius: 8px; border: none;
+  font-size: 12.5px; font-weight: 600; color: var(--slate-500);
+  background: transparent; text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  cursor: pointer;
+}
+.dataTables_paginate .page-item .page-link:hover, .rd-paginate .page-item .page-link:hover { background: var(--paper-100); color: var(--ink-950); }
+.dataTables_paginate .page-item .page-link:active, .rd-paginate .page-item .page-link:active { transform: scale(0.94); }
+.dataTables_paginate .page-item.active .page-link, .rd-paginate .page-item.active .page-link {
+  background: var(--accent-600); color: #fff;
+}
+.dataTables_paginate .page-item.disabled .page-link, .rd-paginate .page-item.disabled .page-link { color: var(--slate-300); cursor: default; }
+.dataTables_paginate .page-item.disabled .page-link:hover, .rd-paginate .page-item.disabled .page-link:hover { background: transparent; }
+
+.rd-paginate {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; flex-wrap: wrap; gap: 12px;
+}
+.rd-paginate-info { font-size: 12.5px; color: var(--slate-500); }
+
+/* Sortable column headers */
+table.dataTable thead th { cursor: pointer; position: relative; }
+table.dataTable thead th.sorting,
+table.dataTable thead th.sorting_asc,
+table.dataTable thead th.sorting_desc {
+  padding-right: 22px;
+}
+table.dataTable thead th.sorting::after,
+table.dataTable thead th.sorting_asc::after,
+table.dataTable thead th.sorting_desc::after {
+  content: ''; position: absolute; right: 8px; top: 50%;
+  width: 7px; height: 7px;
+  border-right: 1.5px solid var(--slate-300); border-bottom: 1.5px solid var(--slate-300);
+  transform: translateY(-70%) rotate(45deg);
+  transition: border-color 0.15s ease;
+}
+table.dataTable thead th.sorting_asc::after {
+  transform: translateY(-30%) rotate(-135deg);
+  border-color: var(--accent-600);
+}
+table.dataTable thead th.sorting_desc::after {
+  border-color: var(--accent-600);
+}
+table.dataTable thead th:hover::after { border-color: var(--accent-text); }
+
+@media (prefers-reduced-motion: reduce) {
+  .dataTables_filter input, .dataTables_paginate .page-item .page-link, .rd-paginate .page-item .page-link { transition: none; }
 }
 
 /* ===== CHART CONTAINERS (fixed height so charts never stretch oddly) ===== */
@@ -733,16 +1222,26 @@ a:focus-visible {
   border-left: 4px solid var(--status-blue);
   position: relative;
 }
-.subject-card.accent-blue  { border-left-color: var(--status-blue); }
+/* Dedicated colors, not the --gold/--teal aliases used elsewhere in the
+   app — both of those got repointed to the brand green during the DLSU
+   rebrand (--gold: var(--accent-600); --teal: var(--success-600), itself
+   a muted green), so two of these four rotating accents were silently
+   both rendering as "some shade of green" alongside the new dedicated
+   accent-green. These are fixed literals rather than theme tokens on
+   purpose: they're identity colors for telling courses apart at a
+   glance, not semantic UI state, so they intentionally don't change
+   between light and dark mode. */
+.subject-card.accent-blue  { border-left-color: #2563EB; }
 .subject-card.accent-coral { border-left-color: var(--coral); }
-.subject-card.accent-teal  { border-left-color: var(--teal); }
-.subject-card.accent-gold  { border-left-color: var(--gold); }
+.subject-card.accent-teal  { border-left-color: #0D9488; }
+.subject-card.accent-gold  { border-left-color: #C2790C; }
+.subject-card.accent-green { border-left-color: var(--accent-600); }
 
 /* ===== TABLE SUBTOTAL / TOTAL ROW (Treasury revenue table) ===== */
 .data-table tr.subtotal-row td {
   font-weight: 700;
   background: var(--cream);
-  border-top: 1.5px solid #e0d8c8;
+  border-top: 1.5px solid var(--line-200);
 }
 .data-table tr.total-row td {
   font-weight: 800;
@@ -781,7 +1280,7 @@ a:focus-visible {
   flex: 1;
   height: 8px;
   border-radius: 4px;
-  background: #f0e8d8;
+  background: var(--paper-100);
   overflow: hidden;
 }
 .fill-bar-fill {
@@ -829,7 +1328,7 @@ a:focus-visible {
 .btn-outline {
   background: transparent;
   color: var(--navy);
-  border: 1.5px solid #ddd4c0;
+  border: 1.5px solid var(--line-200);
 }
 
 .btn-outline:hover {
@@ -995,7 +1494,7 @@ a:focus-visible {
   align-items: center;
   justify-content: space-between;
   padding: 20px 24px;
-  border-bottom: 1px solid #ede8de;
+  border-bottom: 1px solid var(--line-200);
   flex-shrink: 0;
 }
 
@@ -1008,7 +1507,7 @@ a:focus-visible {
 .modal-icon {
   width: 42px;
   height: 42px;
-  background: rgba(232,168,32,0.12);
+  background: var(--accent-100);
   border-radius: 10px;
   display: flex;
   align-items: center;
@@ -1033,7 +1532,7 @@ a:focus-visible {
   width: 32px;
   height: 32px;
   border: none;
-  background: #f5f0e8;
+  background: var(--paper-100);
   border-radius: 8px;
   cursor: pointer;
   font-size: 14px;
@@ -1081,22 +1580,41 @@ a:focus-visible {
   color: #e03a3a;
 }
 
+/* !important on background/border/radius/color specifically: every
+   <select> here also carries Bootstrap's own "form-select" class (for
+   its layout/spacing), and Bootstrap's .form-select sets these same
+   properties from ITS OWN CSS variables (--bs-body-bg, --bs-border-
+   radius, ...) — a completely separate system our dark-mode tokens
+   never touch. Same conflict already solved for the DataTables search
+   box; this is every OTHER filter <select> hitting the identical issue
+   (pill-shaped, stuck-light, Bootstrap's native caret showing through
+   instead of ours) that never got the same fix. */
 .form-input {
   width: 100%;
   padding: 9px 12px;
-  border: 1.5px solid #ddd4c0;
-  border-radius: 8px;
+  border: 1.5px solid var(--line-200) !important;
+  border-radius: 8px !important;
   font-size: 14px;
-  color: var(--navy);
-  background: var(--white);
+  color: var(--navy) !important;
+  background: var(--paper-50) !important;
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
   font-family: inherit;
 }
 
+/* The <select> box itself was already themed — its open dropdown list
+   wasn't: color-scheme alone isn't reliably respected by every browser
+   for <option> rendering, so style them directly too. --paper-50/
+   --ink-950 already resolve to the correct light/dark value on their
+   own, so this one rule covers both themes without duplication. */
+select option {
+  background: var(--paper-50);
+  color: var(--ink-950);
+}
+
 .form-input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(232,168,32,0.14);
+  border-color: var(--accent-600) !important;
+  box-shadow: 0 0 0 3px var(--accent-100);
 }
 
 .select-wrapper {
@@ -1115,7 +1633,9 @@ a:focus-visible {
 }
 
 .form-select {
-  appearance: none;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background-image: none !important;
   cursor: pointer;
   padding-right: 32px;
 }
@@ -1144,7 +1664,7 @@ a:focus-visible {
 
 .modal-divider {
   height: 1px;
-  background: #ede8de;
+  background: var(--line-200);
   margin: 2px 0;
 }
 
@@ -1220,7 +1740,7 @@ a:focus-visible {
   justify-content: flex-end;
   gap: 10px;
   padding: 16px 24px;
-  border-top: 1px solid #ede8de;
+  border-top: 1px solid var(--line-200);
   flex-shrink: 0;
 }
 
@@ -1279,6 +1799,54 @@ a:focus-visible {
 .ledger-row:hover { background: var(--paper-100); }
 .row-primary { font-size: 13.5px; font-weight: 500; color: var(--ink-950); }
 .row-secondary { font-size: 12px; color: var(--slate-500); }
+
+/* Per-record profile view (student_profile.php, and any future admission/
+   enrollment detail page shaped the same way: avatar+summary card next to
+   an activity ledger) — entrance modeled directly on Student's own
+   dashboard (.sp-card-in), not a generic fade. Opt-in via .rd-profile-grid
+   so ordinary .grid-2 usage (dense forms) is untouched. */
+.rd-profile-grid > * {
+  opacity: 0; transform: translateY(10px);
+  animation: statCardIn 0.45s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+.rd-profile-grid > *:nth-child(1) { animation-delay: 0ms; }
+.rd-profile-grid > *:nth-child(2) { animation-delay: 80ms; }
+
+/* Opt-in ledger-row stagger, same --row-i pattern as .rd-table-stagger.
+   Capped by callers to a handful of rows (see student_profile.php) — an
+   activity feed can run long, and staggering all of it would read as
+   slow rather than alive. */
+.rd-ledger-stagger .ledger-row {
+  opacity: 0;
+  animation: rdRowIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+  animation-delay: calc(150ms + var(--row-i, 0) * 30ms);
+}
+
+/* Balance figure on a profile card: neutral by default, flagged only
+   when there's actually something owed — replaces a one-off inline
+   ternary style with a reusable, semantic modifier. */
+.rd-balance { font-family: var(--font-mono); font-weight: 600; }
+.rd-balance.is-due { color: var(--seal-600); }
+.rd-balance.is-clear { color: var(--teal-600); }
+
+@media (prefers-reduced-motion: reduce) {
+  .rd-profile-grid > * { animation: none; opacity: 1; transform: none; }
+  .rd-ledger-stagger .ledger-row { animation: none; opacity: 1; }
+}
+
+/* Single restrained fade — for document/form-review pages (admission_view.php)
+   where a card-stagger would be wrong: it's one panel, not a set of tiles,
+   and print (window.print()) should never show it mid-animation. */
+.rd-fade-in {
+  opacity: 0; transform: translateY(8px);
+  animation: statCardIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+}
+@media print {
+  .rd-fade-in { animation: none; opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rd-fade-in { animation: none; opacity: 1; transform: none; }
+}
 @media (prefers-reduced-motion: reduce) { .ledger-row { transition: none; } }
 
 /* avatar (role/id tinted circle, replaces flat initials-on-gold) */
@@ -1308,7 +1876,7 @@ a:focus-visible {
 /* form field */
 .rd-field { margin-bottom: 16px; }
 .rd-field label { display: block; font-size: 12.5px; font-weight: 500; color: var(--ink-800); margin-bottom: 6px; }
-.rd-field input, .rd-field select, .rd-field textarea { width: 100%; border: 1px solid var(--line-200); border-radius: 6px; padding: 10px 12px; font-family: var(--font-ui); font-size: 13.5px; background: #fff; color: var(--ink-950); }
+.rd-field input, .rd-field select, .rd-field textarea { width: 100%; border: 1px solid var(--line-200); border-radius: 6px; padding: 10px 12px; font-family: var(--font-ui); font-size: 13.5px; background: var(--paper-50); color: var(--ink-950); }
 .rd-field input:focus, .rd-field select:focus, .rd-field textarea:focus { outline: 2px solid var(--seal-600); outline-offset: 1px; border-color: var(--seal-600); }
 .rd-field .hint { font-size: 11.5px; color: var(--slate-500); margin-top: 5px; }
 
@@ -1360,13 +1928,19 @@ a:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   .stat-card, .rd-stat-card, .subject-card, .btn, .btn-primary,
   .btn-outline, .btn-notif, .nav-item, .fill-bar-fill,
-  .rd-progress-fill, .toggle-slider, .toggle-slider::before {
+  .rd-progress-fill, .toggle-slider, .toggle-slider::before, .rd-hero {
     transition: none !important;
+  }
+  .rd-hero:hover, .rd-hero:active { transform: none; }
+  .stats-grid > .stat-card, .stat-grid > .rd-stat-card, .subject-card-grid > .subject-card {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
   }
   .btn:active, .btn-primary:active, .btn-outline:active, .btn-notif:active {
     transform: none;
   }
-  .stat-card:hover, .subject-card:hover { transform: none; }
+  .stat-card:hover, .subject-card:hover, .rd-stat-card:hover { transform: none; }
 }
 
 
