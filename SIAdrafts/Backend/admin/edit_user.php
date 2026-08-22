@@ -5,7 +5,7 @@ require_once "../db.php";   // Change this if your db.php is in another folder
 require_once __DIR__ . '/../roles.php';
 require_once __DIR__ . '/../require_role.php';
 require_once __DIR__ . '/../csrf.php';
-require_role([ROLE_ADMIN], true);
+require_role([ROLE_ADMIN, ROLE_HEAD_REGISTRAR], true);
 
 // Optional: Allow only admins
 /*
@@ -49,16 +49,39 @@ if (
     die("Please complete all required fields.");
 }
 
-// Make sure the user actually exists
-$stmt = $conn->prepare("SELECT user_id FROM users WHERE user_id = ?");
+// Make sure the user actually exists, and grab their current role/status
+// while we're at it — both the last-admin guard below and the Head
+// Registrar scope check need it.
+$stmt = $conn->prepare("
+    SELECT r.role_name, st.status_name FROM users u
+    JOIN roles r ON r.role_id = u.role_id
+    JOIN statuses st ON st.status_id = u.status_id
+    WHERE u.user_id = ?
+");
 $stmt->bind_param("i", $user_id);
 $stmt->execute();
-$stmt->store_result();
+$targetCurrent = $stmt->get_result()->fetch_assoc();
+$stmt->close();
 
-if ($stmt->num_rows === 0) {
+if (!$targetCurrent) {
     die("User not found.");
 }
-$stmt->close();
+
+// A Head Registrar may only edit accounts within the staff branches below
+// them, and may only move an account to another role within that same
+// scope — never into Admin/Head Registrar, and never an Admin/Head
+// Registrar account out of it (those accounts are simply invisible to
+// them per Backend/admin/manage_user.php's list filter, but the backend
+// enforces it independently rather than trusting that the row never
+// reached the edit form).
+if (current_user_is([ROLE_HEAD_REGISTRAR])) {
+    if (!in_array($targetCurrent['role_name'], ROLES_HEAD_REGISTRAR_MANAGEABLE, true)) {
+        die("You do not have permission to edit this account.");
+    }
+    if (!in_array($role_name, ROLES_HEAD_REGISTRAR_MANAGEABLE, true)) {
+        die("You can only assign Admission, Registrar Staff, Treasury, or Staff roles.");
+    }
+}
 
 // Check duplicate email (excluding this user)
 $stmt = $conn->prepare("SELECT user_id FROM users WHERE email = ? AND user_id != ?");
@@ -124,18 +147,7 @@ if ($isSelf && $status_name !== 'Active') {
 // last remaining active Admin — demoting/deactivating them the same way
 // would leave the system with no one who can manage users at all.
 if ($role_name !== 'Admin' || $status_name !== 'Active') {
-    $stmt = $conn->prepare("
-        SELECT r.role_name, st.status_name FROM users u
-        JOIN roles r ON r.role_id = u.role_id
-        JOIN statuses st ON st.status_id = u.status_id
-        WHERE u.user_id = ?
-    ");
-    $stmt->bind_param("i", $user_id);
-    $stmt->execute();
-    $current = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    if ($current && $current['role_name'] === 'Admin' && $current['status_name'] === 'Active') {
+    if ($targetCurrent['role_name'] === 'Admin' && $targetCurrent['status_name'] === 'Active') {
         $stmt = $conn->prepare("
             SELECT COUNT(*) AS cnt FROM users u
             JOIN roles r ON r.role_id = u.role_id

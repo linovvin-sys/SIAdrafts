@@ -6,8 +6,26 @@ $activePage = "manage_user";
 require_once '../../../Backend/auth.php';
 require_once '../../../Backend/roles.php';
 require_once '../../../Backend/require_role.php';
-require_role([ROLE_ADMIN]);
+require_role([ROLE_ADMIN, ROLE_HEAD_REGISTRAR]);
 require_once __DIR__ . '/../../../Backend/admin/manage_user.php';
+
+/**
+ * Role <option>s offered in the Add/Edit modals: Admin sees every role;
+ * a Head Registrar only sees the branches they're allowed to manage
+ * (see ROLES_HEAD_REGISTRAR_MANAGEABLE) — Admin and Head Registrar
+ * itself are never offered to them.
+ */
+$roleOptions = [
+    'Admin'           => 'System Administrator',
+    'Head Registrar'  => 'Head Registrar',
+    'Registrar Staff' => 'Registrar Staff',
+    'Admission'       => 'Admission Staff',
+    'Treasury'        => 'Cashier',
+    'Staff'           => 'Staff (Enrollment)',
+];
+if ($isHeadRegistrar) {
+    $roleOptions = array_intersect_key($roleOptions, array_flip(ROLES_HEAD_REGISTRAR_MANAGEABLE));
+}
 
 function role_badge_class(string $role): string {
     $role = strtolower($role);
@@ -325,12 +343,9 @@ include '../Include/header.php';
                                 required>
 
                             <option value="">Select role</option>
-                            <option value="Admin">System Administrator</option>
-                            <option value="Head Registrar">Head Registrar</option>
-                            <option value="Registrar Staff">Registrar Staff</option>
-                            <option value="Admission">Admission Staff</option>
-                            <option value="Treasury">Cashier</option>
-                            <option value="Staff">Staff (Enrollment)</option>
+                            <?php foreach ($roleOptions as $roleValue => $roleLabel): ?>
+                                <option value="<?= htmlspecialchars($roleValue) ?>"><?= htmlspecialchars($roleLabel) ?></option>
+                            <?php endforeach; ?>
 
                         </select>
                     </div>
@@ -510,12 +525,9 @@ include '../Include/header.php';
                                 required>
 
                             <option value="">Select role</option>
-                            <option value="Admin">System Administrator</option>
-                            <option value="Head Registrar">Head Registrar</option>
-                            <option value="Registrar Staff">Registrar Staff</option>
-                            <option value="Admission">Admission Staff</option>
-                            <option value="Treasury">Cashier</option>
-                            <option value="Staff">Staff (Enrollment)</option>
+                            <?php foreach ($roleOptions as $roleValue => $roleLabel): ?>
+                                <option value="<?= htmlspecialchars($roleValue) ?>"><?= htmlspecialchars($roleLabel) ?></option>
+                            <?php endforeach; ?>
 
                         </select>
                     </div>

@@ -3,7 +3,12 @@
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../roles.php';
 require_once __DIR__ . '/../require_role.php';
-require_role([ROLE_ADMIN], true);
+require_role([ROLE_ADMIN, ROLE_HEAD_REGISTRAR], true);
+
+// A Head Registrar only manages the staff branches below them (see
+// ROLES_HEAD_REGISTRAR_MANAGEABLE) — Admin and other Head Registrar
+// accounts never even appear in their list, let alone become editable.
+$isHeadRegistrar = current_user_is([ROLE_HEAD_REGISTRAR]);
 
 $db = new Database();
 $conn = $db->connect();
@@ -39,7 +44,10 @@ INNER JOIN roles r
 
 INNER JOIN statuses s
     ON u.status_id = s.status_id
-
+" . ($isHeadRegistrar
+    ? "WHERE r.role_name IN ('" . implode("','", array_map(fn($r) => $conn->real_escape_string($r), ROLES_HEAD_REGISTRAR_MANAGEABLE)) . "')"
+    : ""
+) . "
 ORDER BY u.first_name, u.last_name
 ";
 

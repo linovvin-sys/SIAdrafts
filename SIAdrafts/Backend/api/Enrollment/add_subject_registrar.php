@@ -12,7 +12,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role(['Head Registrar', 'Registrar Staff'], true);
+require_registrar_tier(REGISTRAR_TIER_STAFF, true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

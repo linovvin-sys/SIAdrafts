@@ -5,6 +5,7 @@
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js"></script>
 <script src="/SIAdrafts/Frontend/Js/datatable-init.js"></script>
+<script src="/SIAdrafts/Frontend/Js/required-marker.js"></script>
 <?php foreach ($extraScripts as $src): ?>
   <script src="<?= htmlspecialchars($src, ENT_QUOTES) ?>"></script>
 <?php endforeach; ?>
