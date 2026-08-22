@@ -38,7 +38,7 @@ if (document.getElementById('enroll-app')) {
         const mode = this.nameMode ? 'name' : 'id';
         try {
       const r = await fetch(
-          `/SIAdrafts/Backend/api/get_student.php?q=${encodeURIComponent(this.query)}&mode=${mode}`
+          `/SIAdrafts/Backend/api/Enrollment/get_student.php?q=${encodeURIComponent(this.query)}&mode=${mode}`
       );
           const d = await r.json();
           this.results   = Array.isArray(d) ? d : [];

@@ -157,7 +157,7 @@ function renderPayCard(data) {
         btn.disabled = true;
         btn.textContent = 'Recording…';
 
-        fetch('/SIAdrafts/Backend/api/record_subject_fee_payment.php', {
+        fetch('/SIAdrafts/Backend/api/Treasury/record_subject_fee_payment.php', {
           method: 'POST',
           body: new URLSearchParams({ fee_id: feeId, csrf_token: document.body.dataset.csrf || '' }),
         })
@@ -207,7 +207,7 @@ function renderPayCard(data) {
 
         const body = new URLSearchParams({ payment_id: paymentId, amount: amount, csrf_token: document.body.dataset.csrf || '' });
 
-        fetch('/SIAdrafts/Backend/api/record_payment.php', { method: 'POST', body: body })
+        fetch('/SIAdrafts/Backend/api/Treasury/record_payment.php', { method: 'POST', body: body })
           .then(function (res) { return res.json(); })
           .then(function (result) {
             if (!result.success) {
@@ -246,7 +246,7 @@ function renderPayCard(data) {
 
 function fetchAndRenderByStudentId(studentId) {
   const resultDiv = document.getElementById('payResult');
-  fetch('/SIAdrafts/Backend/api/get_payment_info.php?q=' + encodeURIComponent(studentId))
+  fetch('/SIAdrafts/Backend/api/Treasury/get_payment_info.php?q=' + encodeURIComponent(studentId))
     .then(function (res) {
       if (!res.ok) {
         return res.text().then(function (body) {
@@ -267,7 +267,7 @@ function fetchAndRenderByStudentId(studentId) {
 // or an ambiguous search never swaps in the wrong record.
 function fetchAndRenderByPaymentId(paymentId) {
   const resultDiv = document.getElementById('payResult');
-  fetch('/SIAdrafts/Backend/api/get_payment_info.php?payment_id=' + encodeURIComponent(paymentId))
+  fetch('/SIAdrafts/Backend/api/Treasury/get_payment_info.php?payment_id=' + encodeURIComponent(paymentId))
     .then(function (res) {
       if (!res.ok) {
         return res.text().then(function (body) {

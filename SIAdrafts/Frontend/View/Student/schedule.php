@@ -53,7 +53,7 @@ include __DIR__ . '/Include/header.php';
     <p class="sp-subline">Your class schedule for <?= $enrollment ? htmlspecialchars($enrollment['school_year'] . ', Semester ' . $enrollment['semester'], ENT_QUOTES) : 'the current term' ?>.</p>
   </div>
   <?php if (!empty($scheduled)): ?>
-    <a href="/SIAdrafts/Backend/api/student_schedule_ics.php" class="sp-btn sp-btn-secondary js-ics-download">
+    <a href="/SIAdrafts/Backend/api/Scheduling/student_schedule_ics.php" class="sp-btn sp-btn-secondary js-ics-download">
       <iconify-icon icon="mdi:calendar-plus-outline"></iconify-icon> Add to calendar
     </a>
   <?php endif; ?>

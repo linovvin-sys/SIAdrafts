@@ -158,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
       Swal.fire({ icon: 'warning', title: 'Enter a student ID' });
       return;
     }
-    const data = await getJSON(`get_student_for_addrop.php?student_no=${encodeURIComponent(q)}`);
+    const data = await getJSON(`Enrollment/get_student_for_addrop.php?student_no=${encodeURIComponent(q)}`);
     if (data.error) {
       resultPanel.style.display = 'none';
       subjectsPanel.style.display = 'none';
@@ -204,7 +204,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       if (!confirmResult.isConfirmed) return;
 
-      const result = await postJSON('drop_subject_registrar.php', { enrollment_subject_id });
+      const result = await postJSON('Enrollment/drop_subject_registrar.php', { enrollment_subject_id });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not drop subject', text: result.error });
         return;
@@ -228,7 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       if (!confirmResult.isConfirmed) return;
 
-      const result = await postJSON('cancel_subject_fee.php', { enrollment_subject_id });
+      const result = await postJSON('Treasury/cancel_subject_fee.php', { enrollment_subject_id });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not cancel request', text: result.error });
         return;
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
     addScheduleInfo.style.display = 'none';
     openModal(addSubjectModal);
 
-    const data = await getJSON(`get_available_subjects_addrop.php?enrollment_id=${currentEnrollmentId}`);
+    const data = await getJSON(`Enrollment/get_available_subjects_addrop.php?enrollment_id=${currentEnrollmentId}`);
     if (data.error) {
       addSubjectSelect.innerHTML = '<option value="">' + esc(data.error) + '</option>';
       return;
@@ -283,7 +283,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const scheduleIdRaw = opt.getAttribute('data-schedule-id');
     const schedule_id = scheduleIdRaw ? scheduleIdRaw : null;
 
-    const result = await postJSON('add_subject_registrar.php', {
+    const result = await postJSON('Enrollment/add_subject_registrar.php', {
       enrollment_id: currentEnrollmentId,
       subject_id,
       schedule_id,

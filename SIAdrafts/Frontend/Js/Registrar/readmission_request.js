@@ -24,7 +24,7 @@ Vue.createApp({
 
       this.looking = true;
       try {
-        const r = await fetch(`/SIAdrafts/Backend/api/lookup_student.php?student_no=${encodeURIComponent(sid)}`);
+        const r = await fetch(`/SIAdrafts/Backend/api/Enrollment/lookup_student.php?student_no=${encodeURIComponent(sid)}`);
         const d = await r.json();
         if (d.error) {
           this.lookupError = d.error;
@@ -61,7 +61,7 @@ Vue.createApp({
       if (this.isShifting) body.append('new_course_id', this.newCourseId);
 
       try {
-        const r = await fetch('/SIAdrafts/Backend/api/submit_readmission.php', { method: 'POST', body });
+        const r = await fetch('/SIAdrafts/Backend/api/Enrollment/submit_readmission.php', { method: 'POST', body });
         const d = await r.json();
         if (d.success) {
           this.submitted = true;

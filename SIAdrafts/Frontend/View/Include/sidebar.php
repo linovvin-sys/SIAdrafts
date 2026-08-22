@@ -295,7 +295,7 @@ $iconMap = [
           <a href="/SIAdrafts/Frontend/View/profile.php" class="dropdown-item">
             <i class="bi bi-person-circle"></i> My profile
           </a>
-          <a href="/SIAdrafts/Backend/api/logout.php" class="dropdown-item dropdown-item--danger">
+          <a href="/SIAdrafts/Backend/api/Auth/logout.php" class="dropdown-item dropdown-item--danger">
             <i class="bi bi-box-arrow-right"></i> Log out
           </a>
         </div>

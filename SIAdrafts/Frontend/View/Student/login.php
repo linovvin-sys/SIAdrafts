@@ -1,5 +1,6 @@
 <?php
 session_start();
+require_once __DIR__ . '/../../../Backend/config.php'; // sets the app's real timezone (Asia/Manila) before the date('G') greeting below
 
 if (!empty($_SESSION['student_id'])) {
     header('Location: /SIAdrafts/Frontend/View/Student/dashboard.php');
@@ -70,7 +71,7 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
         <iconify-icon icon="mdi:school-outline" style="font-size:19px;"></iconify-icon>
       </div>
       <h2 class="sp-auth-title sp-auth-in" style="--i:1;">Student Portal</h2>
-      <p class="sp-auth-sub sp-auth-in" style="--i:2;">Sign in with the student number and password from your enrollment confirmation slip.</p>
+      
 
       <div class="sp-form-error" id="loginError" role="alert" aria-live="assertive">
         <p class="sp-form-error-msg" id="loginErrorMsg"></p>

@@ -17,7 +17,7 @@ class Database
         $this->host     = config('DB_HOST') ?? 'localhost';
         $this->username = config('DB_USERNAME') ?? 'root';
         $this->password = config('DB_PASSWORD') ?? 'root';
-        $this->database = config('DB_DATABASE') ?? 'enrollment_db_sia_final';
+        $this->database = config('DB_DATABASE') ?? 'sia_project';
         $this->port     = config('DB_PORT') ?? '8889';
     }
 

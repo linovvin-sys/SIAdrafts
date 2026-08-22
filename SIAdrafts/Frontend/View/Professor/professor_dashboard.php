@@ -165,7 +165,7 @@ include __DIR__ . '/Include/header.php';
         </li>
         <?php if ($nextClass): ?>
         <li>
-          <a href="/SIAdrafts/Backend/api/professor_schedule_ics.php" class="js-ics-download">
+          <a href="/SIAdrafts/Backend/api/Scheduling/professor_schedule_ics.php" class="js-ics-download">
             <span class="sp-quickaction-icon"><iconify-icon icon="mdi:calendar-plus-outline"></iconify-icon></span>
             <span>Add schedule to calendar</span>
             <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>

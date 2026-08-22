@@ -38,7 +38,7 @@ form.addEventListener('submit', async (e) => {
   body.append('csrf_token', csrfToken);
 
   try {
-    const res = await fetch('/SIAdrafts/Backend/api/student_change_password.php', { method: 'POST', body });
+    const res = await fetch('/SIAdrafts/Backend/api/Auth/student_change_password.php', { method: 'POST', body });
     const data = await res.json();
     if (data.success) {
       window.location.href = data.redirect;

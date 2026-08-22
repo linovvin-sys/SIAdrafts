@@ -118,9 +118,12 @@ include __DIR__ . '/Include/header.php';
                 <td class="sp-class-subject"><?= htmlspecialchars($c['subject_code'], ENT_QUOTES) ?><div style="color:var(--slate-300); font-size:12.5px;"><?= htmlspecialchars($c['subject_name'], ENT_QUOTES) ?></div></td>
                 <td class="sp-num"><?= htmlspecialchars($c['day'], ENT_QUOTES) ?>, <?= date('g:ia', strtotime($c['time_start'])) ?>–<?= date('g:ia', strtotime($c['time_end'])) ?></td>
                 <td><?= htmlspecialchars($c['room_name'], ENT_QUOTES) ?></td>
-                <td class="sp-print-hide">
+                <td class="sp-print-hide" style="display:flex; gap:6px;">
                   <button type="button" class="sp-table-action" data-view-roster="<?= (int)$c['schedule_id'] ?>">
                     <iconify-icon icon="mdi:eye-outline"></iconify-icon> View
+                  </button>
+                  <button type="button" class="sp-table-action" data-announce="<?= (int)$c['schedule_id'] ?>">
+                    <iconify-icon icon="mdi:bullhorn-outline"></iconify-icon> Announce
                   </button>
                 </td>
               </tr>
@@ -149,6 +152,37 @@ include __DIR__ . '/Include/header.php';
   <div class="sp-dialog-actions">
     <button type="button" class="sp-btn sp-btn-secondary" id="exportRosterCsv">Export CSV</button>
     <button type="button" class="sp-btn sp-btn-primary" id="closeRosterDialog">Close</button>
+  </div>
+</dialog>
+
+<!-- Announcement dialog -->
+<dialog class="sp-dialog sp-dialog-lg" id="announceDialog">
+  <div class="sp-dialog-body">
+    <p class="sp-dialog-title">Class Announcements</p>
+    <p class="sp-dialog-message" id="announceSubtitle"></p>
+
+    <form id="announceForm">
+      <div class="sp-form-group">
+        <label for="announceTitleInput">Title</label>
+        <input type="text" id="announceTitleInput" maxlength="150" required>
+      </div>
+      <div class="sp-form-group">
+        <label for="announceBodyInput">Message</label>
+        <textarea id="announceBodyInput" rows="3" required></textarea>
+      </div>
+      <div class="sp-form-error" id="announceFormError" role="alert" aria-live="assertive">
+        <p class="sp-form-error-msg" id="announceFormErrorMsg"></p>
+      </div>
+      <button type="submit" class="sp-btn sp-btn-primary" id="announcePostBtn">
+        <span class="sp-btn-spinner" hidden></span>
+        <span class="sp-btn-label">Post announcement</span>
+      </button>
+    </form>
+
+    <ul class="sp-announce-list" id="announceList"></ul>
+  </div>
+  <div class="sp-dialog-actions">
+    <button type="button" class="sp-btn sp-btn-secondary" id="closeAnnounceDialog">Close</button>
   </div>
 </dialog>
 

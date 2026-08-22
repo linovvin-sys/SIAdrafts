@@ -69,7 +69,7 @@ include __DIR__ . '/Include/header.php';
       </select>
     <?php endif; ?>
     <?php if (!empty($scheduled)): ?>
-      <a href="/SIAdrafts/Backend/api/professor_schedule_ics.php?school_year=<?= urlencode($schoolYear) ?>&semester=<?= $semester ?>" class="sp-btn sp-btn-secondary js-ics-download">
+      <a href="/SIAdrafts/Backend/api/Scheduling/professor_schedule_ics.php?school_year=<?= urlencode($schoolYear) ?>&semester=<?= $semester ?>" class="sp-btn sp-btn-secondary js-ics-download">
         <iconify-icon icon="mdi:calendar-plus-outline"></iconify-icon> Add to calendar
       </a>
     <?php endif; ?>

@@ -36,7 +36,7 @@ function formatBytes(bytes) {
 }
 
 function renderAttachment(m) {
-  const url = `/SIAdrafts/Backend/api/download_attachment.php?message_id=${m.message_id}`;
+  const url = `/SIAdrafts/Backend/api/Messaging/download_attachment.php?message_id=${m.message_id}`;
 
   if ((m.attachment_type || '').startsWith('image/')) {
     const link = document.createElement('a');
@@ -173,7 +173,7 @@ function openConversation(btn) {
 
   if (eventSource) eventSource.close();
 
-  fetch(`/SIAdrafts/Backend/api/get_conversations.php?with=${userId}`)
+  fetch(`/SIAdrafts/Backend/api/Messaging/get_conversations.php?with=${userId}`)
     .then(r => r.json())
     .then(d => {
       if (d.error) {
@@ -188,7 +188,7 @@ function openConversation(btn) {
 
 function connectStream(userId) {
   eventSource = new EventSource(
-    `/SIAdrafts/Backend/api/message_stream.php?with=${userId}&last_id=${lastMessageId}`
+    `/SIAdrafts/Backend/api/Messaging/message_stream.php?with=${userId}&last_id=${lastMessageId}`
   );
   eventSource.onmessage = (e) => {
     const newMessages = JSON.parse(e.data);
@@ -241,7 +241,7 @@ chatForm.addEventListener('submit', (e) => {
   formData.append('body', body);
   if (selectedFile) formData.append('attachment', selectedFile);
 
-  fetch('/SIAdrafts/Backend/api/send_message.php', { method: 'POST', body: formData })
+  fetch('/SIAdrafts/Backend/api/Messaging/send_message.php', { method: 'POST', body: formData })
     .then(r => r.json())
     .then(d => {
       if (d.success) {

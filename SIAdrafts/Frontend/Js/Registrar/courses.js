@@ -67,7 +67,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const result = await postJSON('save_course.php', { course_code, course_name, total_units });
+      const result = await postJSON('Curriculum/save_course.php', { course_code, course_name, total_units });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add course', text: result.error });
         return;
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       if (!confirm.isConfirmed) return;
 
-      const result = await postJSON('delete_course.php', { course_id });
+      const result = await postJSON('Curriculum/delete_course.php', { course_id });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not remove course', text: result.error });
         return;
@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
       openModal(modal);
 
       try {
-        const res = await fetch(`${API}get_course_subjects.php?course_id=${course_id}`);
+        const res = await fetch(`${API}Curriculum/get_course_subjects.php?course_id=${course_id}`);
         const data = await res.json();
 
         if (data.error) {

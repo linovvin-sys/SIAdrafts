@@ -67,7 +67,7 @@ include '../Include/header.php';
       <div class="panel">
         <div class="panel-header">
           <span class="panel-title">Enrolees by Course &amp; Year Level</span>
-          <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_enrolees_csv.php">Export Report</a>
+          <a class="btn btn-outline" href="/SIAdrafts/Backend/api/Enrollment/export_enrolees_csv.php">Export Report</a>
         </div>
 
         <div class="panel-body" style="padding:16px 24px 24px;">

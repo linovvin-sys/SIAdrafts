@@ -58,7 +58,7 @@ document.getElementById('settingsForm').addEventListener('submit', async functio
 
   for (const [key, value] of fields) {
     const body = new URLSearchParams({ csrf_token: csrfToken, setting_key: key, setting_value: value });
-    const res = await fetch('/SIAdrafts/Backend/api/update_setting.php', { method: 'POST', body });
+    const res = await fetch('/SIAdrafts/Backend/api/Settings/update_setting.php', { method: 'POST', body });
     const data = await res.json();
     if (!data.success) {
       msgEl.textContent = data.error || 'Failed to save ' + key;

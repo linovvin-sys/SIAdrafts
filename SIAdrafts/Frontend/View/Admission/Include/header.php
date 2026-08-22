@@ -57,7 +57,7 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
                   <?= $_full_name ?>
                 </div>
                 <div class="nud-divider"></div>
-                <a href="/SIAdrafts/Backend/api/logout.php" class="nud-logout">
+                <a href="/SIAdrafts/Backend/api/Auth/logout.php" class="nud-logout">
                   <iconify-icon icon="mdi:logout" style="font-size:15px;"></iconify-icon>
                   Log out
                 </a>
@@ -86,7 +86,7 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
                   <?= $_full_name ?>
                 </div>
                 <div class="nud-divider"></div>
-                <a href="/SIAdrafts/Backend/api/logout.php" class="nud-logout">
+                <a href="/SIAdrafts/Backend/api/Auth/logout.php" class="nud-logout">
                   <iconify-icon icon="mdi:logout" style="font-size:15px;"></iconify-icon>
                   Log out
                 </a>
@@ -115,7 +115,7 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
   <div class="mobile-panel" id="mobilePanel">
     <?php if ($_logged_in): ?>
       <a href="/SIAdrafts/Frontend/View/Admission/enrollment.php" <?= in_array($_cur, $_enroll_pages) ? 'class="active"' : '' ?>>Enrollment</a>
-      <a href="/SIAdrafts/Backend/api/logout.php" class="btn-enroll" style="background:var(--ink);color:#fff;justify-content:center;">
+      <a href="/SIAdrafts/Backend/api/Auth/logout.php" class="btn-enroll" style="background:var(--ink);color:#fff;justify-content:center;">
         Log out <iconify-icon icon="mdi:logout" style="font-size:14px;"></iconify-icon>
       </a>
     <?php else: ?>
