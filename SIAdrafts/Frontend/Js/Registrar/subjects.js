@@ -9,31 +9,95 @@ document.addEventListener('DOMContentLoaded', function () {
     document.body.style.overflow = '';
   }
 
-  // ----- Search + course filter, combined -----
+  // ----- Search + course filter, combined with pagination -----
+  // Same card design as before, just capped to a page at a time instead of
+  // dumping every subject on screen at once — 4 per row × 2 rows.
+  const PAGE_SIZE = 12;
   const searchEl = document.getElementById('subjectSearch');
   const courseFilterEl = document.getElementById('subjectCourseFilter');
   const grid = document.getElementById('subjectCardGrid');
   const emptyEl = document.getElementById('subjectListEmptyState');
+  const paginateEl = document.getElementById('subjectPaginate');
+  const paginateInfoEl = document.getElementById('subjectPaginateInfo');
+  const paginateListEl = document.getElementById('subjectPaginateList');
   const cards = grid ? [...grid.querySelectorAll('.subject-card[data-search]')] : [];
 
-  function applySubjectFilter() {
+  let currentPage = 1;
+
+  function matchingCards() {
     const search = (searchEl?.value || '').trim().toLowerCase();
     const courseId = courseFilterEl?.value || '';
-    let visible = 0;
-
-    cards.forEach(card => {
+    return cards.filter(card => {
       const matchesSearch = !search || card.dataset.search.includes(search);
       const matchesCourse = !courseId || card.dataset.courseId === courseId;
-      const show = matchesSearch && matchesCourse;
-      card.style.display = show ? '' : 'none';
-      if (show) visible++;
+      return matchesSearch && matchesCourse;
     });
-
-    if (emptyEl) emptyEl.style.display = visible ? 'none' : 'block';
   }
 
-  if (searchEl) searchEl.addEventListener('input', applySubjectFilter);
-  if (courseFilterEl) courseFilterEl.addEventListener('change', applySubjectFilter);
+  function renderPageLink(label, targetPage, opts) {
+    opts = opts || {};
+    const li = document.createElement('li');
+    li.className = 'page-item' + (opts.active ? ' active' : '') + (opts.disabled ? ' disabled' : '');
+    const a = document.createElement('a');
+    a.className = 'page-link';
+    a.href = '#';
+    a.textContent = label;
+    if (!opts.disabled) {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        currentPage = targetPage;
+        applySubjectFilter();
+      });
+    }
+    li.appendChild(a);
+    return li;
+  }
+
+  function renderPagination(totalPages) {
+    if (!paginateListEl) return;
+    paginateListEl.innerHTML = '';
+    if (totalPages <= 1) {
+      if (paginateEl) paginateEl.style.display = 'none';
+      return;
+    }
+    if (paginateEl) paginateEl.style.display = 'flex';
+
+    paginateListEl.appendChild(renderPageLink('‹', currentPage - 1, { disabled: currentPage === 1 }));
+    for (let p = 1; p <= totalPages; p++) {
+      paginateListEl.appendChild(renderPageLink(String(p), p, { active: p === currentPage }));
+    }
+    paginateListEl.appendChild(renderPageLink('›', currentPage + 1, { disabled: currentPage === totalPages }));
+  }
+
+  function applySubjectFilter() {
+    const matches = matchingCards();
+    const totalPages = Math.max(1, Math.ceil(matches.length / PAGE_SIZE));
+    if (currentPage > totalPages) currentPage = totalPages;
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const end = start + PAGE_SIZE;
+    const pageSet = new Set(matches.slice(start, end));
+
+    cards.forEach(card => {
+      card.style.display = pageSet.has(card) ? '' : 'none';
+    });
+
+    if (emptyEl) emptyEl.style.display = matches.length ? 'none' : 'block';
+
+    if (paginateInfoEl) {
+      paginateInfoEl.textContent = matches.length
+        ? `Showing ${start + 1}–${Math.min(end, matches.length)} of ${matches.length}`
+        : '';
+    }
+    renderPagination(totalPages);
+  }
+
+  function resetToFirstPage() {
+    currentPage = 1;
+    applySubjectFilter();
+  }
+
+  if (searchEl) searchEl.addEventListener('input', resetToFirstPage);
+  if (courseFilterEl) courseFilterEl.addEventListener('change', resetToFirstPage);
   // Apply once on load — the course filter may already be pre-selected via
   // a "Manage subjects" link carrying ?course_id=, rendered server-side.
   if (cards.length) applySubjectFilter();

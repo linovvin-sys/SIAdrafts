@@ -115,7 +115,7 @@ include '../Include/header.php';
                 <a href="enrollment.php" class="btn-secondary" style="margin-top:8px;">&larr; Back to Enrollment</a>
             </div>
         <?php else: ?>
-            <div class="grid-2">
+            <div class="grid-2 rd-profile-grid">
                 <div class="surface-2" style="padding:24px; text-align:center;">
                     <div class="rd-avatar seal" style="width:64px;height:64px;font-size:20px; margin:0 auto 14px;">
                         <?= htmlspecialchars(sp_initials($student['first_name'], $student['last_name'])) ?>
@@ -139,7 +139,7 @@ include '../Include/header.php';
                         </div>
                         <div class="flex" style="justify-content:space-between; padding:8px 0;">
                             <span class="row-secondary">Balance</span>
-                            <span class="mono" style="color:<?= $balance > 0 ? 'var(--seal-600)' : 'var(--teal-600)' ?>;">₱<?= number_format($balance, 2) ?></span>
+                            <span class="rd-balance <?= $balance > 0 ? 'is-due' : 'is-clear' ?>">₱<?= number_format($balance, 2) ?></span>
                         </div>
                     </div>
                 </div>
@@ -152,9 +152,9 @@ include '../Include/header.php';
                             <div class="rd-empty-sub">Enrollment and payment history will appear here.</div>
                         </div>
                     <?php else: ?>
-                        <div class="ledger">
-                            <?php foreach ($activity as $a): ?>
-                                <div class="ledger-row">
+                        <div class="ledger rd-ledger-stagger">
+                            <?php foreach ($activity as $i => $a): ?>
+                                <div class="ledger-row" style="--row-i: <?= min((int)$i, 7) ?>;">
                                     <div style="flex:1;"><?= htmlspecialchars($a['label']) ?></div>
                                     <div class="mono row-secondary"><?= date('M d, Y', strtotime($a['ts'])) ?></div>
                                 </div>

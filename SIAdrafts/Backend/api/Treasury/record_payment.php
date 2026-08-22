@@ -63,7 +63,7 @@ try {
     ");
 
     if (!$stmt) {
-        throw new Exception($conn->error);
+        throw new DbError($conn->error);
     }
 
     $stmt->bind_param("i", $payment_id);
@@ -108,7 +108,7 @@ try {
     ");
 
     if (!$stmt) {
-        throw new Exception($conn->error);
+        throw new DbError($conn->error);
     }
 
     $stmt->bind_param(
@@ -151,7 +151,7 @@ try {
     ");
 
     if (!$stmt) {
-        throw new Exception($conn->error);
+        throw new DbError($conn->error);
     }
 
     $stmt->bind_param(
@@ -177,7 +177,7 @@ try {
     ");
 
     if (!$stmt) {
-        throw new Exception($conn->error);
+        throw new DbError($conn->error);
     }
 
     $stmt->bind_param(
@@ -199,7 +199,7 @@ try {
     ");
 
     if (!$stmt) {
-        throw new Exception($conn->error);
+        throw new DbError($conn->error);
     }
 
     $stmt->bind_param("i", $payment_id);
@@ -211,7 +211,7 @@ try {
     // mark it rather than deleting, so there's still a record it was late.
     $stmt = $conn->prepare("UPDATE unpaid_students SET status = 'Resolved' WHERE payment_id = ? AND status = 'Pending'");
     if (!$stmt) {
-        throw new Exception($conn->error);
+        throw new DbError($conn->error);
     }
     $stmt->bind_param("i", $payment_id);
     $stmt->execute();
@@ -225,6 +225,16 @@ try {
         "applicant_status" => $applicantStatus,
         "balance" => $newBalance,
         "or_number" => $orNumber
+    ]);
+
+} catch (DbError $e) {
+
+    $conn->rollback();
+    error_log($e->getMessage());
+
+    echo json_encode([
+        "success" => false,
+        "errors" => ["A database error occurred. Please try again."]
     ]);
 
 } catch (Exception $e) {

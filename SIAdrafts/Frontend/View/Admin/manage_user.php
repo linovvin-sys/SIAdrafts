@@ -132,7 +132,7 @@ include '../Include/header.php';
             <div class="panel-body" style="padding:0;">
 
                 <div class="table-responsive">
-                <table class="data-table" id="userTable">
+                <table class="data-table rd-table-stagger" id="userTable">
 
                     <thead>
                         <tr>
@@ -150,7 +150,7 @@ include '../Include/header.php';
 
                     <?php if (!empty($users)): ?>
 
-                        <?php foreach ($users as $row): ?>
+                        <?php foreach ($users as $userRowIndex => $row): ?>
 
                             <?php
                             $status = strtolower($row['status_name']);
@@ -169,7 +169,7 @@ include '../Include/header.php';
                             }
                             ?>
 
-                            <tr data-role="<?= htmlspecialchars($row['role_name']) ?>" data-status="<?= htmlspecialchars($row['status_name']) ?>" data-search="<?= htmlspecialchars(strtolower($row['full_name'] . ' ' . $row['email'] . ' ' . ($row['staff_id'] ?? ''))) ?>">
+                            <tr style="--row-i: <?= (int)$userRowIndex ?>;" data-role="<?= htmlspecialchars($row['role_name']) ?>" data-status="<?= htmlspecialchars($row['status_name']) ?>" data-search="<?= htmlspecialchars(strtolower($row['full_name'] . ' ' . $row['email'] . ' ' . ($row['staff_id'] ?? ''))) ?>">
 
                                 <td class="mono"><?= htmlspecialchars($row['staff_id'] ?? '—'); ?></td>
 

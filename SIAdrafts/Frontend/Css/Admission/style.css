@@ -1,15 +1,41 @@
 :root{
     /* matches editorial-theme.css (index.php) -- was navy/bright-gold
-       from an older iteration of the site, now aligned to the same
-       ink-green/parchment/bronze identity as the landing page */
+       from an older iteration of the site, then bronze, now DLSU green
+       (Pantone 342C), same identity as the landing page */
     --ink:#1F2E28;
     --paper:#F7F4EC;
-    --amber:#A47B3F;
+    --amber:#046A38;
     --sage:#7C9885;
     --white:#FFFFFF;
     --ink-soft: rgba(31,46,40,0.80); /* AAA 7:1 */
     --ink-line: rgba(31,46,40,0.14);
     --nav-h: 76px;
+  }
+
+  /* Dark mode — this file has its own independent token set (not
+     admin.css's), so the toggle in Include/sidebar.php (which every page
+     loading this file also includes) had zero effect here until now.
+     Same values as admin.css's dark block, mapped onto this file's own
+     token names. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]){
+      --ink:#C9D1C4;
+      --paper:#1C2320;
+      --amber:#2FA36B;
+      --sage:#5FA37C;
+      --white:#242E29;
+      --ink-soft: rgba(201,209,196,0.80);
+      --ink-line: rgba(201,209,196,0.14);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#C9D1C4;
+    --paper:#1C2320;
+    --amber:#2FA36B;
+    --sage:#5FA37C;
+    --white:#242E29;
+    --ink-soft: rgba(201,209,196,0.80);
+    --ink-line: rgba(201,209,196,0.14);
   }
 
   *{ 
@@ -21,7 +47,7 @@
 
   body{
     background:
-      radial-gradient(1200px 500px at 50% 0%, rgba(164,123,63,0.10), transparent 60%),
+      radial-gradient(1200px 500px at 50% 0%, rgba(4,106,56,0.10), transparent 60%),
       var(--paper);
     font-family: 'Inter', -apple-system, sans-serif;
     color: var(--ink);
@@ -86,7 +112,7 @@
     height: 38px;
     flex: none;
     border-radius: 11px;
-    background: linear-gradient(155deg, var(--ink) 0%, #16241E 100%);
+    background: linear-gradient(155deg, #1F2E28 0%, #16241E 100%);
     display:flex;
     align-items:center;
     justify-content:center;
@@ -102,7 +128,7 @@
     background: var(--amber);
     top: 6px;
     right: 6px;
-    box-shadow: 0 0 0 3px rgba(164,123,63,0.18);
+    box-shadow: 0 0 0 3px rgba(4,106,56,0.18);
   }
 
   .brand-mark iconify-icon{ display:flex; }
@@ -204,7 +230,7 @@
     font-size: 0.9rem;
     padding: 11px 20px;
     border-radius: 999px;
-    box-shadow: 0 8px 18px -8px rgba(164,123,63,0.65);
+    box-shadow: 0 8px 18px -8px rgba(4,106,56,0.65);
     transition: transform .2s ease, box-shadow .2s ease, background .2s ease;
   }
 
@@ -212,6 +238,7 @@
     transform: translateY(-1px);
     box-shadow: 0 10px 22px -8px rgba(31,46,40,0.6);
     background: #2A3D35;
+    /* fixed dark hover, intentionally not theme-linked -- see the gradient above */
   }
 
   .btn-enroll iconify-icon{ font-size:15px; transition: transform .25s ease; }
@@ -365,12 +392,12 @@
     border: none;
     border-radius: 999px;
     padding: 11px 40px;
-    box-shadow: 0 10px 20px -8px rgba(164,123,63,0.65);
+    box-shadow: 0 10px 20px -8px rgba(4,106,56,0.65);
     cursor: pointer;
     transition: background .2s ease, transform .2s ease;
   }
   .btn-search:hover{
-    background: #B68F55;
+    background: #0C7F44;
     transform: translateY(-1px);
   }
   .btn-back{
@@ -399,7 +426,7 @@
   .login-mark{
     width: 56px; height: 56px;
     border-radius: 16px;
-    background: linear-gradient(155deg, var(--ink) 0%, #16241E 100%);
+    background: linear-gradient(155deg, #1F2E28 0%, #16241E 100%);
     color: #fff;
     font-size: 26px;
   }
@@ -417,7 +444,8 @@
     transition: background .2s ease, transform .2s ease;
     cursor: pointer;
   }
-  .btn-login:hover{ background: #2A3D35; transform: translateY(-1px); }
+  .btn-login:hover{ background: #2A3D35;
+    /* fixed dark hover, intentionally not theme-linked -- see the gradient above */ transform: translateY(-1px); }
   .btn-icon{ background: transparent; border-left: none !important; }
 
   /* ── Nav user / logout ── */
@@ -465,8 +493,8 @@
     color: #b91c1c;
   }
   .alert-warning{
-    background: rgba(164,123,63,0.12);
-    border: 1px solid rgba(164,123,63,0.3);
+    background: rgba(4,106,56,0.12);
+    border: 1px solid rgba(4,106,56,0.3);
     color: #92400e;
   }
   .alert-success{
@@ -500,7 +528,7 @@
   .action-icon{
     width: 52px; height: 52px; flex: none;
     border-radius: 14px;
-    background: linear-gradient(155deg, var(--ink) 0%, #16241E 100%);
+    background: linear-gradient(155deg, #1F2E28 0%, #16241E 100%);
     color: #fff;
     display: flex;
     align-items: center;
@@ -592,7 +620,8 @@
     transition: background .2s ease, transform .2s ease, opacity .2s ease;
     white-space: nowrap;
   }
-  .btn-primary-action:hover:not(:disabled){ background: #2A3D35; transform: translateY(-1px); }
+  .btn-primary-action:hover:not(:disabled){ background: #2A3D35;
+    /* fixed dark hover, intentionally not theme-linked -- see the gradient above */ transform: translateY(-1px); }
   .btn-primary-action:disabled{ opacity: 0.6; cursor: not-allowed; }
 
   /* ── Small outline button ── */
@@ -640,7 +669,7 @@
   .student-avatar{
     width: 48px; height: 48px; flex: none;
     border-radius: 50%;
-    background: linear-gradient(155deg, var(--ink) 0%, #16241E 100%);
+    background: linear-gradient(155deg, #1F2E28 0%, #16241E 100%);
     color: #fff;
     display: flex;
     align-items: center;

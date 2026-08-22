@@ -21,6 +21,5 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   wireTableFilter({ tableId: 'recentSchedulesTable', statusId: 'scheduleStatusFilter' });
-  wireTableFilter({ tableId: 'registrarStaffTable', statusId: 'staffStatusFilter' });
 
 });

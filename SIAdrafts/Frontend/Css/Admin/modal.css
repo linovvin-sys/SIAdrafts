@@ -30,9 +30,17 @@
   to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Header — reuses --navy, --white, --text-muted, --text-light, --transition from admin.css */
+/* Header — a colored accent bar, deliberately NOT using --navy/--white/
+   --text-muted: those tokens flip value between light and dark mode
+   (--navy = --ink-950, which is dark text in light mode but light text
+   in dark mode), which is correct for body content but wrong here — a
+   "dark bar, light text" accent header needs to stay a dark bar with
+   light text in BOTH themes, not invert into a light bar with dark text
+   whenever dark mode is on. Anchored to --accent-600 (always a
+   saturated, reasonably dark green in both palettes) with literal white
+   text instead. */
 .modal-header {
-  background: var(--navy);
+  background: var(--accent-600);
   padding: 20px 24px;
   display: flex;
   align-items: center;
@@ -43,30 +51,31 @@
 .modal-icon {
   width: 38px;
   height: 38px;
-  background: rgba(232, 168, 32, 0.18); /* --gold at 18% */
+  background: rgba(255,255,255,0.16);
   border-radius: var(--radius);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 18px;
   flex-shrink: 0;
+  color: #fff;
 }
-.modal-title   { font-size: 16px; font-weight: 700; color: var(--white); letter-spacing: 0.3px; }
-.modal-subtitle{ font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+.modal-title   { font-size: 16px; font-weight: 700; color: #fff; letter-spacing: 0.3px; }
+.modal-subtitle{ font-size: 12px; color: rgba(255,255,255,0.78); margin-top: 2px; }
 
 .modal-close {
   width: 32px; height: 32px;
   border-radius: var(--radius);
-  background: rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.12);
   border: none;
-  color: var(--text-light);
+  color: rgba(255,255,255,0.85);
   font-size: 16px;
   cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: background var(--transition), color var(--transition);
   line-height: 1;
 }
-.modal-close:hover { background: rgba(255,255,255,0.18); color: var(--white); }
+.modal-close:hover { background: rgba(255,255,255,0.24); color: #fff; }
 
 /* Body */
 .modal-body {
@@ -89,23 +98,28 @@
 }
 .form-label .required { color: #e03a3a; margin-left: 2px; }
 
+/* !important on background/border/radius/color: same Bootstrap conflict
+   as admin.css's .form-input — every <select> here also carries
+   Bootstrap's own "form-select" class, which paints its own background/
+   border/caret from Bootstrap's own CSS variables regardless of our
+   tokens. */
 .form-input {
   width: 100%;
   padding: 9px 12px;
-  border: 1.5px solid #ddd4c0;
-  border-radius: var(--radius);
+  border: 1.5px solid var(--line-200) !important;
+  border-radius: 8px !important;
   font-size: 14px;
-  color: var(--navy);
-  background: #fdfaf6;
+  color: var(--navy) !important;
+  background: var(--paper-50) !important;
   outline: none;
   transition: border-color var(--transition), box-shadow var(--transition);
   font-family: inherit;
 }
-.form-input::placeholder { color: #b8a990; }
+.form-input::placeholder { color: var(--slate-300); }
 .form-input:focus {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 3px rgba(232, 168, 32, 0.12);
-  background: var(--white);
+  border-color: var(--accent-600) !important;
+  box-shadow: 0 0 0 3px var(--accent-100);
+  background: var(--paper-50) !important;
 }
 
 /* Select — extends .form-input */
@@ -120,7 +134,7 @@
   border-bottom: none;
   pointer-events: none;
 }
-.form-select { appearance: none; -webkit-appearance: none; padding-right: 32px; cursor: pointer; }
+.form-select { appearance: none !important; -webkit-appearance: none !important; background-image: none !important; padding-right: 32px; cursor: pointer; }
 
 /* Password wrapper */
 .pass-wrapper { position: relative; }
@@ -138,7 +152,7 @@
 .pass-toggle:hover { color: var(--navy); }
 
 /* Divider */
-.modal-divider { height: 1px; background: #f0e8d8; }
+.modal-divider { height: 1px; background: var(--line-200); }
 
 /* Status / toggle row */
 .modal-status-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
@@ -150,7 +164,7 @@
 .toggle-switch input { opacity: 0; width: 0; height: 0; position: absolute; }
 .toggle-slider {
   position: absolute; inset: 0;
-  background: #ddd4c0;
+  background: var(--line-200);
   border-radius: 12px;
   transition: background var(--transition);
 }
@@ -169,8 +183,8 @@
 /* Footer — reuses .btn, .btn-primary, .btn-outline from admin.css */
 .modal-footer {
   padding: 16px 24px;
-  background: #faf7f2;
-  border-top: 1px solid #ede8de;
+  background: var(--paper-100);
+  border-top: 1px solid var(--line-200);
   display: flex;
   align-items: center;
   justify-content: flex-end;

@@ -26,7 +26,7 @@ include '../Include/header.php';
 
             <div class="panel-body" style="padding:0;">
                 <div class="table-responsive">
-                <table class="data-table" id="admissionTable">
+                <table class="data-table rd-table-stagger" id="admissionTable">
                     <thead>
                         <tr>
                             <th>Reference ID</th>
@@ -38,8 +38,8 @@ include '../Include/header.php';
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($admissions as $row): ?>
-                            <tr>
+                        <?php foreach ($admissions as $rowIndex => $row): ?>
+                            <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;">
                                 <td><?= htmlspecialchars($row['reference_id']) ?></td>
                                 <td><?= htmlspecialchars($row['applicant_name']) ?></td>
                                 <td><?= htmlspecialchars($row['program']) ?></td>

@@ -2,6 +2,14 @@
 
 require_once __DIR__ . '/config.php';
 
+// Thrown for raw mysqli/driver failures whose message may contain schema
+// details. Kept distinct from RuntimeException/Exception so endpoints can
+// catch it separately and return a generic message instead of echoing
+// $conn->error to the client.
+class DbError extends RuntimeException
+{
+}
+
 class Database
 {
     private string $host;

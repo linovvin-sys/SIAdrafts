@@ -41,9 +41,23 @@ include '../Include/header.php';
         <?php endif; ?>
       </div>
 
+      <div class="panel-body" style="padding:16px 24px 0;">
+        <div class="filter-bar">
+          <input type="text" class="form-input" id="courseSearch" placeholder="Search code or course name…">
+          <div class="select-wrapper">
+            <select class="form-input form-select" id="courseStatusFilter">
+              <option value="">All Statuses</option>
+              <option value="Approved">Approved</option>
+              <option value="Pending">Pending</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div class="panel-body" style="padding:0;">
         <div class="table-wrap">
-          <table class="data-table" id="courseTable">
+          <table class="data-table rd-table-stagger" id="courseTable">
             <thead>
               <tr>
                 <th>Code</th>
@@ -55,8 +69,8 @@ include '../Include/header.php';
             </thead>
             <tbody id="courseListBody">
               <?php if (!empty($courses)): ?>
-                <?php foreach ($courses as $row): ?>
-                  <tr data-row-id="<?= (int)$row['course_id'] ?>" data-search="<?= htmlspecialchars(strtolower($row['course_code'] . ' ' . $row['course_name'])) ?>">
+                <?php foreach ($courses as $rowIndex => $row): ?>
+                  <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;" data-row-id="<?= (int)$row['course_id'] ?>" data-status="<?= htmlspecialchars($row['status']) ?>" data-search="<?= htmlspecialchars(strtolower($row['course_code'] . ' ' . $row['course_name'])) ?>">
                     <td><?= htmlspecialchars($row['course_code']) ?></td>
                     <td><?= htmlspecialchars($row['course_name']) ?></td>
                     <td>

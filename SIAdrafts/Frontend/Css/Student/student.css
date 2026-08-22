@@ -17,9 +17,9 @@
   --paper-100: #F7F4EC;
   --line-200: rgba(31, 46, 40, 0.14);
 
-  --accent-600: #A47B3F;
-  --accent-text: #6F5027;
-  --accent-100: #F3ECDD;
+  --accent-600: #046A38; /* DLSU green (Pantone 342C) — was bronze */
+  --accent-text: #035A30;
+  --accent-100: #E2EFE8;
 
   --danger-600: #A6472E;
   --danger-100: #F5E1DA;
@@ -154,7 +154,7 @@ body.student-body::before {
   position: fixed; inset: 0; z-index: -1;
   pointer-events: none;
   background-image:
-    radial-gradient(680px circle at 100% 0%, rgba(164, 123, 63, 0.08), transparent 62%),
+    radial-gradient(680px circle at 100% 0%, rgba(4, 106, 56, 0.08), transparent 62%),
     radial-gradient(560px circle at 0% 100%, rgba(52, 85, 64, 0.05), transparent 62%);
 }
 

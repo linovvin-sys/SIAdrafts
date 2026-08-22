@@ -8,7 +8,7 @@
   --paper: #F7F4EC;
   --ink: #1F2E28;
   --ink-soft: rgba(31, 46, 40, 0.80); /* AAA 7:1 */
-  --accent: #A47B3F;
+  --accent: #046A38; /* DLSU green (Pantone 342C) — was bronze #A47B3F */
   --line: rgba(31, 46, 40, 0.12);
   --surface: #FFFFFF;
   --nav-h: 84px;
@@ -515,7 +515,7 @@ body.editorial-body{
    were the two things it was missing relative to its own standard. */
 
 ::selection{
-  background: rgba(164, 123, 63, 0.25);
+  background: rgba(4, 106, 56, 0.25);
   color: var(--ink);
 }
 

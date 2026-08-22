@@ -84,7 +84,7 @@ include '../Include/header.php';
       </div>
       <div class="panel-body" style="padding:0;">
         <div class="table-responsive">
-        <table class="data-table">
+        <table class="data-table rd-table-stagger" id="messageActivityTable">
           <thead>
             <tr>
               <th>Participants</th>
@@ -97,12 +97,12 @@ include '../Include/header.php';
             <?php if (empty($activityRows)): ?>
               <tr><td colspan="4" style="text-align:center;">No messaging activity yet.</td></tr>
             <?php else: ?>
-              <?php foreach ($activityRows as $row): ?>
+              <?php foreach ($activityRows as $rowIndex => $row): ?>
                 <?php
                   $nameA = $userNames[(int)$row['user_a']] ?? 'Unknown';
                   $nameB = $userNames[(int)$row['user_b']] ?? 'Unknown';
                 ?>
-                <tr>
+                <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;">
                   <td><?= htmlspecialchars($nameA) ?> &harr; <?= htmlspecialchars($nameB) ?></td>
                   <td class="mono"><?= (int)$row['message_count'] ?></td>
                   <td class="mono"><?= (int)$row['unread_count'] ?></td>

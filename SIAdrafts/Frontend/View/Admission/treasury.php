@@ -1,5 +1,11 @@
-<?php 
-$extraScripts = ['/SIAdrafts/Frontend/Js/Admission/treasury.js'];
+<?php
+$extraScripts = [
+    'https://code.jquery.com/jquery-3.7.1.min.js',
+    'https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js',
+    'https://cdn.datatables.net/1.13.8/js/dataTables.bootstrap5.min.js',
+    '/SIAdrafts/Frontend/Js/datatable-init.js',
+    '/SIAdrafts/Frontend/Js/Admission/treasury.js',
+];
 $extraCss = ['/SIAdrafts/Frontend/Css/Admission/treasury.css'];
 $pageTitle = "Treasury";
 $activePage = "treasury";
@@ -139,7 +145,7 @@ function student_fullname_t(array $s): string {
         </div>
         <div class="panel-body" style="padding:0">
           <div class="table-responsive">
-          <table class="data-table">
+          <table class="data-table" id="revenueByCourseTable">
             <thead>
               <tr>
                 <th>Course</th>
@@ -181,6 +187,10 @@ function student_fullname_t(array $s): string {
                 <td class="mono" style="color:<?= $row['balance'] > 0 ? 'var(--seal-600)' : 'inherit' ?>;">₱<?= number_format($row['balance'], 2) ?></td>
               </tr>
               <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+            <?php if (!empty($revenueByCourse)): ?>
+            <tfoot>
               <tr class="total-row">
                 <td style="font-weight:600;">Total</td>
                 <td class="mono"><?= $sumEnrolled ?></td>
@@ -190,8 +200,8 @@ function student_fullname_t(array $s): string {
                 <td class="mono"><?= $sumExpected > 0 ? round(($sumCollected / $sumExpected) * 100) : 0 ?>%</td>
                 <td class="mono" style="color:var(--seal-600);">₱<?= number_format($sumBalance, 2) ?></td>
               </tr>
-              <?php endif; ?>
-            </tbody>
+            </tfoot>
+            <?php endif; ?>
           </table>
           </div>
         </div>
@@ -205,7 +215,7 @@ function student_fullname_t(array $s): string {
           <p>No pending payments right now.</p>
         </div>
       <?php else: ?>
-        <table class="queue-table">
+        <table class="queue-table" id="paymentQueueTable">
           <thead>
             <tr>
               <th>Student</th>
@@ -247,7 +257,7 @@ function student_fullname_t(array $s): string {
 
       <?php if (!empty($feeQueue)): ?>
         <h3 style="margin:24px 0 12px;">Pending Subject-Change Fees</h3>
-        <table class="queue-table">
+        <table class="queue-table" id="feeQueueTable">
           <thead>
             <tr>
               <th>Student</th>
@@ -293,7 +303,7 @@ function student_fullname_t(array $s): string {
           New enrollments get their payment set up automatically from the fee schedule at finalize time.
           The rows below are older enrollments (or edge cases) that still need it done manually.
         </div>
-        <table class="queue-table">
+        <table class="queue-table" id="setupQueueTable">
           <thead>
             <tr>
               <th>Student</th>
@@ -344,7 +354,33 @@ function student_fullname_t(array $s): string {
   </div>
 </div>
 
+<!-- ===== PAYMENT TERMINAL — processing overlay shown while a payment or
+     fee is being recorded. Purely a front-end sequencing/perception layer;
+     record_payment.php / record_subject_fee_payment.php still do the real
+     work. See runPaymentTerminal() in treasury.js. ===== -->
+<div class="pay-terminal" id="payTerminal" aria-hidden="true">
+  <div class="pay-terminal-backdrop" data-terminal-dismiss></div>
+  <div class="pay-terminal-card" role="dialog" aria-modal="true" aria-labelledby="payTerminalStep">
+    <div class="pay-terminal-stage">
+      <div class="pay-terminal-ring">
+        <svg class="pay-terminal-glyph pay-terminal-check" viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="pay-terminal-glyph-ring" cx="26" cy="26" r="23"/>
+          <path class="pay-terminal-glyph-mark" d="M15 27l7.2 7.2L37.5 19"/>
+        </svg>
+        <svg class="pay-terminal-glyph pay-terminal-x" viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="pay-terminal-glyph-ring" cx="26" cy="26" r="23"/>
+          <path class="pay-terminal-glyph-mark" d="M18 18l16 16M34 18L18 34"/>
+        </svg>
+      </div>
+      <p class="pay-terminal-step" id="payTerminalStep" aria-live="polite">Verifying amount&hellip;</p>
+      <div class="pay-terminal-track"><div class="pay-terminal-fill" id="payTerminalFill"></div></div>
+    </div>
+    <div class="pay-terminal-result" id="payTerminalResult" aria-live="polite"></div>
+  </div>
+</div>
+
   </main>
+  </div><!-- /.main-content, opened by Include/sidebar.php -->
 </div>
 
 <?php include '../Include/footer.php'; ?>

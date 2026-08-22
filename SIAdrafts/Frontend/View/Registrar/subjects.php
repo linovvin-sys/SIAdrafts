@@ -39,13 +39,35 @@ if (isset($_GET['course_id']) && ctype_digit((string)$_GET['course_id'])) {
     }
 }
 
-// Stable color assignment per course code, so the same course always gets
-// the same accent bar across page loads (not random per-render).
-function course_accent_class(?string $courseCode): string {
+// Stable color assignment per course code, built directly from the actual
+// course list instead of a hash. crc32($code) % 4 looked "random" but with
+// only a handful of real course codes it produced real collisions — e.g.
+// BSCRIM, BSCS, and BSPSYCH all happened to hash to the same bucket
+// (gold), leaving blue used once and teal unused entirely. Assigning in
+// order from the real course list guarantees no two courses share a color
+// as long as there are 4 or fewer non-BSIT courses (true today); a 5th
+// would cycle back and share with the 1st, which is still strictly better
+// than the hash's uneven 3-way collision.
+function build_course_accent_map(array $courses): array {
     $accents = ['accent-blue', 'accent-coral', 'accent-teal', 'accent-gold'];
-    if (!$courseCode) return $accents[0];
-    $index = crc32($courseCode) % count($accents);
-    return $accents[$index];
+    $map = [];
+    $i = 0;
+    foreach ($courses as $c) {
+        $code = $c['course_code'];
+        if ($code === 'BSIT') {
+            $map[$code] = 'accent-green';
+            continue;
+        }
+        $map[$code] = $accents[$i % count($accents)];
+        $i++;
+    }
+    return $map;
+}
+$courseAccentMap = build_course_accent_map($courses);
+
+function course_accent_class(?string $courseCode, array $map): string {
+    if (!$courseCode) return 'accent-blue';
+    return $map[$courseCode] ?? 'accent-blue';
 }
 
 include '../Include/header.php';
@@ -88,7 +110,7 @@ include '../Include/header.php';
         <div class="subject-card-grid" id="subjectCardGrid">
           <?php if (!empty($subjects)): ?>
             <?php foreach ($subjects as $s): ?>
-              <div class="subject-card <?= course_accent_class($s['course_code']) ?>" data-course-id="<?= (int)$s['course_id'] ?>" data-search="<?= htmlspecialchars(strtolower($s['subject_code'] . ' ' . $s['subject_name'] . ' ' . ($s['course_code'] ?? ''))) ?>">
+              <div class="subject-card <?= course_accent_class($s['course_code'], $courseAccentMap) ?>" data-course-id="<?= (int)$s['course_id'] ?>" data-search="<?= htmlspecialchars(strtolower($s['subject_code'] . ' ' . $s['subject_name'] . ' ' . ($s['course_code'] ?? ''))) ?>">
                 <div class="subject-card-top">
                   <span class="subject-card-code mono"><?= htmlspecialchars($s['subject_code']) ?></span>
                   <span class="subject-card-category"><?= htmlspecialchars($s['category_name'] ?? 'Uncategorized') ?></span>
@@ -104,6 +126,10 @@ include '../Include/header.php';
         </div>
         <div class="empty-state" id="subjectListEmptyState" style="display:<?= empty($subjects) ? 'block' : 'none' ?>;">
           <p>No subjects found.</p>
+        </div>
+        <div class="rd-paginate" id="subjectPaginate" style="display:none;">
+          <span class="rd-paginate-info" id="subjectPaginateInfo"></span>
+          <ul class="pagination" id="subjectPaginateList"></ul>
         </div>
       </div>
     </div>

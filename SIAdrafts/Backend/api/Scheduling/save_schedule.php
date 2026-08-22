@@ -130,7 +130,7 @@ try {
     ";
     $conflictStmt = $conn->prepare($conflictSql);
     if (!$conflictStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError($conn->error);
     }
     $types  = 'si' . str_repeat('s', count($days)) . 'ssii' . $excludeTypes;
     $params = array_merge(
@@ -154,12 +154,12 @@ try {
         $delPlaceholders = implode(',', array_fill(0, count($existing_ids), '?'));
         $delStmt = $conn->prepare("DELETE FROM schedule WHERE schedule_id IN ($delPlaceholders)");
         if (!$delStmt) {
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError($conn->error);
         }
         $delStmt->bind_param(str_repeat('i', count($existing_ids)), ...$existing_ids);
         if (!$delStmt->execute()) {
             $delStmt->close();
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError($conn->error);
         }
         $delStmt->close();
     }
@@ -170,7 +170,7 @@ try {
         VALUES (?,?,?,?,?,?,?,?,?)
     ");
     if (!$insStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError($conn->error);
     }
 
     $new_ids = [];
@@ -183,7 +183,7 @@ try {
         );
         if (!$insStmt->execute()) {
             $insStmt->close();
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError($conn->error);
         }
         $new_ids[] = (int)$conn->insert_id;
     }
@@ -196,6 +196,10 @@ try {
         'ids'     => $new_ids,
     ]);
 
+} catch (DbError $e) {
+    $conn->rollback();
+    error_log($e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 } catch (RuntimeException $e) {
     $conn->rollback();
     echo json_encode(['error' => $e->getMessage()]);

@@ -8,6 +8,11 @@ require_once '../../../Backend/require_role.php';
 require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 $isAdminViewer = current_user_is(['Admin']);
 require_once __DIR__ . '/../../../Backend/admin/enrollment.php';
+require_once __DIR__ . '/../../../Backend/db.php';
+$db = new Database();
+$conn = $db->connect();
+$addDropCourses = $conn->query("SELECT course_code FROM course ORDER BY course_code")->fetch_all(MYSQLI_ASSOC);
+$db->close();
 
 include '../Include/header.php';
 ?>
@@ -32,7 +37,10 @@ include '../Include/header.php';
             <label class="form-label">Student ID</label>
             <input type="text" id="studentSearchInput" class="form-input" placeholder="e.g. 2026-00005" autocomplete="off">
           </div>
-          <button type="button" class="btn btn-primary" id="searchStudentBtn">Search</button>
+          <div class="form-group" style="margin-bottom:0;">
+            <label class="form-label">&nbsp;</label>
+            <button type="button" class="btn btn-primary" id="searchStudentBtn">Search</button>
+          </div>
         </div>
         <div id="searchEmptyState" class="addrop-empty">Search a student ID above, or pick one from the list below, to view their enrollment and manage subjects.</div>
       </div>
@@ -80,9 +88,34 @@ include '../Include/header.php';
       <div class="panel-header">
         <span class="panel-title">Enrolled Students</span>
       </div>
-      <div class="panel-body" style="padding:16px 24px;">
+      <div class="panel-body" style="padding:16px 24px 0;">
+        <div class="filter-bar">
+          <input type="text" class="form-input" id="allStudentsSearch" placeholder="Search student ID or name…">
+          <div class="select-wrapper">
+            <select class="form-input form-select" id="allStudentsCourseFilter">
+              <option value="">All Courses</option>
+              <?php foreach ($addDropCourses as $c): ?>
+                <option value="<?= htmlspecialchars($c['course_code']) ?>"><?= htmlspecialchars($c['course_code']) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+          <div class="select-wrapper">
+            <select class="form-input form-select" id="allStudentsStatusFilter">
+              <option value="">All Statuses</option>
+              <?php
+                $statusOptions = array_values(array_unique(array_map(fn($r) => $r['status'], $enrollmentList)));
+                sort($statusOptions);
+              ?>
+              <?php foreach ($statusOptions as $status): ?>
+                <option value="<?= htmlspecialchars($status) ?>"><?= htmlspecialchars($status) ?></option>
+              <?php endforeach; ?>
+            </select>
+          </div>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0 24px 16px;">
         <div class="table-responsive">
-        <table class="data-table" id="allStudentsTable">
+        <table class="data-table rd-table-stagger" id="allStudentsTable">
           <thead>
             <tr>
               <th>Student ID</th>
@@ -96,8 +129,8 @@ include '../Include/header.php';
           </thead>
           <tbody>
             <?php if (!empty($enrollmentList)): ?>
-              <?php foreach ($enrollmentList as $row): ?>
-                <tr>
+              <?php foreach ($enrollmentList as $rowIndex => $row): ?>
+                <tr style="--row-i: <?= min((int)$rowIndex, 12) ?>;" data-course="<?= htmlspecialchars($row['course_code'] ?? '') ?>" data-status="<?= htmlspecialchars($row['status']) ?>">
                   <td class="mono"><?= htmlspecialchars($row['student_no']) ?></td>
                   <td><?= htmlspecialchars($row['student_name']) ?></td>
                   <td><?= htmlspecialchars($row['course_name'] ?? '—') ?></td>

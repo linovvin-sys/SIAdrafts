@@ -1,11 +1,61 @@
 :root{
-    --ink:#1B2A4A; --paper:#FAF7F0; --amber:#E8A33D; --sage:#7C9885;
-    --ink-soft: rgba(31,46,40,0.80); --ink-line: rgba(31,46,40,0.12);
+    /* Realigned to the site's actual identity (style.css / admin.css /
+       editorial-theme.css): ink-green + bronze + parchment. This file used
+       to carry its own stray --ink (navy #1B2A4A) and --amber (#E8A33D,
+       unused) that silently diverged from every other portal — Treasury
+       was quietly off-brand. Fixed here rather than left as-is. */
+    --ink:#1F2E28; --paper:#F7F4EC; --amber:#046A38; --sage:#7C9885;
+    --white:#FFFFFF;
+    --ink-soft: rgba(31,46,40,0.80); --ink-line: rgba(31,46,40,0.14);
+
+    --seal: var(--amber);
+    --seal-tint: #E2EFE8;
+    --sage-tint: #E7EEE9;
+    --rose: #A6472E;
+    --rose-tint: #F5E1DA;
+
+    --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+    --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   }
- 
+
+  /* Dark mode — same gap as style.css: independent token set, never
+     connected to admin.css's dark block, so the toggle had zero effect
+     on Treasury despite it living behind the same sidebar. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]){
+      --ink:#C9D1C4; --paper:#1C2320; --amber:#2FA36B; --sage:#5FA37C;
+      --white:#242E29;
+      --ink-soft: rgba(201,209,196,0.80); --ink-line: rgba(201,209,196,0.14);
+      --seal-tint: #253F30;
+      --sage-tint: #26392C;
+      --rose: #E0715A;
+      --rose-tint: #46281F;
+    }
+  }
+  :root[data-theme="dark"]{
+    --ink:#C9D1C4; --paper:#1C2320; --amber:#2FA36B; --sage:#5FA37C;
+    --white:#242E29;
+    --ink-soft: rgba(201,209,196,0.80); --ink-line: rgba(201,209,196,0.14);
+    --seal-tint: #253F30;
+    --sage-tint: #26392C;
+    --rose: #E0715A;
+    --rose-tint: #46281F;
+  }
+
   .treasury-page{
     padding-top: 130px; padding-bottom: 70px; min-height: 100vh;
     background: var(--paper);
+  }
+  /* Every actual usage of .treasury-page lives inside the sidebar shell's
+     .page-content (treasury.php, revenue_paid.php, revenue_process.php,
+     unpaid_students.php all include Include/sidebar.php) — which already
+     provides its own top spacing under the sticky .top-header. The 130px
+     above was written assuming only the public navbar existed and was
+     stacking on top of page-content's own padding, which is what made
+     Treasury look like it had a huge gap up top. */
+  .page-content .treasury-page{
+    padding-top: 0;
+    min-height: 0;
   }
   .treasury-head{ max-width: 1100px; margin: 0 auto 24px; padding: 0 16px; }
   .treasury-head h1{
@@ -19,45 +69,161 @@
     display: flex; gap: 6px;
   }
   .t-tab{
-    background: #fff; border: 1px solid var(--ink-line); color: var(--ink-soft);
+    background: var(--white); border: 1px solid var(--ink-line); color: var(--ink-soft);
     font-weight: 600; font-size: 0.9rem; padding: 10px 18px; border-radius: 999px;
-    cursor: pointer;
+    cursor: pointer; transition: transform 140ms var(--ease-out), background 140ms ease, color 140ms ease;
   }
-  .t-tab.active{ background: var(--ink); color: #fff; border-color: var(--ink); }
+  .t-tab.active{ background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .t-tab:active{ transform: scale(0.97); }
+  .t-tab:focus-visible, .btn-pay-row:focus-visible, .btn-record-pay:focus-visible,
+  .btn-record-fee:focus-visible, .search-box button:focus-visible{
+    outline: 2px solid var(--seal); outline-offset: 2px;
+  }
  
   .treasury-card{
-    max-width: 1100px; margin: 0 auto; background: #fff;
+    max-width: 1100px; margin: 0 auto; background: var(--white);
     border: 1px solid var(--ink-line); border-radius: 20px;
     box-shadow: 0 1px 1px rgba(31,46,40,0.03), 0 24px 48px -22px rgba(31,46,40,0.22);
     padding: 0 16px;
   }
- 
-  /* ---- queue table ---- */
-  .queue-table{ width: 100%; border-collapse: collapse; }
-  .queue-table th{
+
+  /* ---- queue table -----
+     Also covers .data-table: the Revenue-by-Course table used that class
+     but nothing in this file (or style.css/admission.css) ever actually
+     styled it — it was rendering as a bare unstyled browser table. */
+  .queue-table, .data-table{ width: 100%; border-collapse: collapse; }
+  .queue-table th, .data-table th{
     text-align: left; font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.03em; color: var(--ink-soft); padding: 16px 12px;
     border-bottom: 1px solid var(--ink-line);
   }
-  .queue-table td{
+  .queue-table td, .data-table td{
     padding: 14px 12px; border-bottom: 1px solid var(--ink-line);
     font-size: 0.92rem; color: var(--ink); vertical-align: middle;
+    transition: background 140ms ease;
   }
-  .queue-table tr:last-child td{ border-bottom: none; }
+  .queue-table tr:last-child td, .data-table tbody tr:last-child td{ border-bottom: none; }
+  .data-table tfoot td{ border-bottom: none; border-top: 2px solid var(--ink-line); }
+
+  /* Same hover+pop treatment as admin.css's .data-table — this table has
+     its own separate stylesheet (Treasury predates the shared table
+     redesign) and was missed when that rolled out sitewide. */
+  .queue-table tbody tr, .data-table tbody tr{
+    transition: transform 160ms var(--ease-out);
+    transform: scale(1);
+  }
+  .queue-table tbody tr:hover, .data-table tbody tr:hover{
+    position: relative; z-index: 5;
+    transform: scale(1.014);
+    box-shadow: 0 10px 24px -12px rgba(31,46,40,0.28);
+  }
+  .queue-table tbody tr:hover td, .data-table tbody tr:hover td{ background: var(--seal-tint); }
+  .queue-table tbody tr:hover td:first-child, .data-table tbody tr:hover td:first-child{
+    box-shadow: inset 3px 0 0 var(--seal);
+    border-top-left-radius: 8px; border-bottom-left-radius: 8px;
+  }
+  .queue-table tbody tr:hover td:last-child, .data-table tbody tr:hover td:last-child{
+    border-top-right-radius: 8px; border-bottom-right-radius: 8px;
+  }
+  .data-table tfoot tr:hover{ transform: none; box-shadow: none; }
+  .data-table tfoot tr:hover td{ background: transparent; }
+  @media (prefers-reduced-motion: reduce){
+    .queue-table tbody tr, .queue-table tbody tr:hover,
+    .data-table tbody tr, .data-table tbody tr:hover{ transition: none; transform: none; }
+  }
+
+  /* ===== DATATABLES CHROME =====
+     Ported from admin.css's equivalent block (same pill pagination, same
+     accent-on-active-page treatment) since Admission pages don't load
+     admin.css — without this, DataTables renders with bare Bootstrap
+     defaults (blue active-page, unstyled search input). */
+  .dt-toolbar{ padding: 16px 16px 0; }
+  .dt-toolbar .dataTables_filter{ display: flex; justify-content: flex-end; }
+  .dataTables_filter label{ display: flex; align-items: center; gap: 0; margin: 0; width: 100%; max-width: 280px; }
+  .dataTables_filter input{
+    flex: 1; border: 1.5px solid var(--ink-line); border-radius: 10px;
+    padding: 9px 14px; font-size: 13.5px; font-family: inherit;
+    color: var(--ink) !important; background: var(--white) !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+  .dataTables_filter input:focus{
+    outline: none; border-color: var(--seal);
+    box-shadow: 0 0 0 3px var(--seal-tint);
+  }
+  .dataTables_filter input::placeholder{ color: var(--ink-soft); opacity: 0.6; }
+
+  .dt-footer{
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px; flex-wrap: wrap; gap: 12px;
+  }
+  .dataTables_info{ font-size: 12.5px; color: var(--ink-soft); }
+
+  .dataTables_paginate .pagination{ display: flex; gap: 4px; margin: 0; list-style: none; padding: 0; }
+  .dataTables_paginate .page-item .page-link{
+    display: flex; align-items: center; justify-content: center;
+    min-width: 30px; height: 30px; padding: 0 8px;
+    border-radius: 8px; border: none;
+    font-size: 12.5px; font-weight: 600; color: var(--ink-soft);
+    background: transparent; text-decoration: none;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+    cursor: pointer;
+  }
+  .dataTables_paginate .page-item .page-link:hover{ background: var(--seal-tint); color: var(--ink); }
+  .dataTables_paginate .page-item .page-link:active{ transform: scale(0.94); }
+  .dataTables_paginate .page-item.active .page-link{ background: var(--seal); color: #fff; }
+  .dataTables_paginate .page-item.disabled .page-link{ color: var(--ink-line); cursor: default; }
+  .dataTables_paginate .page-item.disabled .page-link:hover{ background: transparent; }
+
+  table.dataTable thead th{ cursor: pointer; position: relative; }
+  table.dataTable thead th.sorting,
+  table.dataTable thead th.sorting_asc,
+  table.dataTable thead th.sorting_desc{ padding-right: 22px; }
+  table.dataTable thead th.sorting::after,
+  table.dataTable thead th.sorting_asc::after,
+  table.dataTable thead th.sorting_desc::after{
+    content: ''; position: absolute; right: 8px; top: 50%;
+    width: 7px; height: 7px;
+    border-right: 1.5px solid var(--ink-line); border-bottom: 1.5px solid var(--ink-line);
+    transform: translateY(-70%) rotate(45deg);
+    transition: border-color 0.15s ease;
+  }
+  table.dataTable thead th.sorting_asc::after{
+    transform: translateY(-30%) rotate(-135deg);
+    border-color: var(--seal);
+  }
+  table.dataTable thead th.sorting_desc::after{ border-color: var(--seal); }
+  table.dataTable thead th:hover::after{ border-color: var(--sage); }
+
+  .dt-row-in{
+    opacity: 0;
+    animation: treasuryRowIn 0.32s cubic-bezier(0.23, 1, 0.32, 1) forwards;
+    animation-delay: calc(var(--row-i, 0) * 28ms);
+  }
+  @keyframes treasuryRowIn{
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .dataTables_filter input, .dataTables_paginate .page-item .page-link{ transition: none; }
+    .dt-row-in{ animation: none; opacity: 1; }
+  }
  
   .status-pill{
     display: inline-flex; align-items: center; gap: 6px;
     font-size: 0.78rem; font-weight: 700; padding: 4px 11px; border-radius: 999px;
   }
-  .status-pill.unpaid{ background: rgba(164,123,63,0.15); color: #6F5027; }
-  .status-pill.down{ background: rgba(124,152,133,0.15); color: #4f6b56; }
+  .status-pill.unpaid{ background: rgba(4,106,56,0.15); color: var(--seal); }
+  .status-pill.down{ background: rgba(124,152,133,0.15); color: var(--sage); }
   .status-pill.full{ background: rgba(31,46,40,0.1); color: var(--ink); }
  
   .btn-pay-row{
     background: var(--ink); color: var(--paper); font-weight: 700;
     border: none; padding: 7px 16px; border-radius: 999px; font-size: 0.84rem; cursor: pointer;
+    transition: transform 140ms var(--ease-out), background 140ms ease;
   }
   .btn-pay-row:hover{ background: #2A3D35; }
+  .btn-pay-row:active{ transform: scale(0.96); }
  
   .empty-queue{ text-align: center; padding: 60px 20px; color: var(--ink-soft); }
  
@@ -71,51 +237,138 @@
   }
   .search-box input:focus{ outline: none; border-color: var(--sage); box-shadow: 0 0 0 0.2rem rgba(124,152,133,0.18); }
   .search-box button{
-    background: var(--ink); color: #fff; border: none; border-radius: 0.85rem;
+    background: var(--ink); color: var(--paper); border: none; border-radius: 0.85rem;
     padding: 12px 22px; font-weight: 600; cursor: pointer;
   }
  
   .pay-result{ padding: 0 4px 20px; }
-  .pay-student-card{
-    background: var(--paper); border: 1px solid var(--ink-line); border-radius: 16px;
-    padding: 20px; margin-bottom: 18px;
+
+  /* pay-student-card: entrance stagger plays once per render (a fresh
+     search or "Pay" click swaps in a new card), not a looping animation —
+     staff scanning this panel dozens of times a day should never see a
+     repeating effect, only a one-time reveal of new content. */
+  @keyframes pscEnter{
+    from{ opacity: 0; transform: translateY(8px); }
+    to{ opacity: 1; transform: translateY(0); }
   }
-  .pay-student-name{ font-family: Georgia, serif; font-size: 1.2rem; color: var(--ink); margin: 0 0 4px; }
-  .pay-student-meta{ color: var(--ink-soft); font-size: 0.88rem; }
- 
-  .pay-stats{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 18px 0; }
-  .pay-stat .k{ font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 3px; }
-  .pay-stat .v{ font-size: 1.3rem; font-weight: 700; color: var(--ink); }
-  .pay-stat .v.balance{ color: #6F5027; }
- 
+  .pay-student-card{
+    background: var(--white); border: 1px solid var(--ink-line); border-radius: 18px;
+    padding: 22px 22px 20px; margin-bottom: 18px; position: relative; overflow: hidden;
+    box-shadow: 0 1px 1px rgba(31,46,40,0.03), 0 20px 40px -28px rgba(31,46,40,0.28);
+  }
+  .pay-student-card::before{
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--amber), var(--sage));
+  }
+  .pay-student-card > *{ animation: pscEnter 380ms var(--ease-out) both; }
+  .pay-student-card > *:nth-child(1){ animation-delay: 0ms; }
+  .pay-student-card > *:nth-child(2){ animation-delay: 40ms; }
+  .pay-student-card > *:nth-child(3){ animation-delay: 80ms; }
+  .pay-student-card > *:nth-child(4){ animation-delay: 120ms; }
+  .pay-student-card > *:nth-child(5){ animation-delay: 160ms; }
+  .pay-student-card > *:nth-child(6){ animation-delay: 200ms; }
+
+  .psc-head{ display: flex; align-items: center; gap: 14px; }
+  .psc-avatar{
+    flex-shrink: 0; width: 44px; height: 44px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: Georgia, serif; font-weight: 700; font-size: 1rem;
+  }
+  .psc-avatar.tint-amber{ background: var(--seal-tint); color: var(--seal); }
+  .psc-avatar.tint-sage{ background: var(--sage-tint); color: #3E5A4F; }
+  .psc-avatar.tint-ink{ background: rgba(31,46,40,0.09); color: var(--ink); }
+  .psc-head-text{ min-width: 0; flex: 1; }
+  .pay-student-name{ font-family: Georgia, serif; font-size: 1.2rem; color: var(--ink); margin: 0 0 2px; }
+  .pay-student-meta{ color: var(--ink-soft); font-size: 0.86rem; }
+  .psc-flag{
+    flex-shrink: 0; background: var(--rose-tint); color: var(--rose); font-weight: 700;
+    font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 5px 10px; border-radius: 999px;
+  }
+
+  .pay-stats{ display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0 12px; }
+  .pay-stat{
+    display: flex; align-items: center; gap: 10px;
+    background: rgba(31,46,40,0.03); border: 1px solid var(--ink-line);
+    border-radius: 12px; padding: 10px 12px;
+  }
+  .pay-stat-icon{
+    flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.86rem;
+  }
+  .pay-stat-icon.tint-ink{ background: rgba(31,46,40,0.09); color: var(--ink); }
+  .pay-stat-icon.tint-sage{ background: var(--sage-tint); color: #3E5A4F; }
+  .pay-stat-icon.tint-amber{ background: var(--seal-tint); color: var(--seal); }
+  .pay-stat-icon.tint-rose{ background: var(--rose-tint); color: var(--rose); }
+  .pay-stat-text{ min-width: 0; }
+  .pay-stat .k{ font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 2px; }
+  .pay-stat .v{ font-size: 1.08rem; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .pay-stat.is-overdue{ border-color: rgba(166,71,46,0.35); background: rgba(166,71,46,0.05); }
+  .pay-stat.is-overdue .v{ color: var(--rose); }
+
+  .pay-progress{ margin-bottom: 18px; }
+  .pay-progress-track{ height: 6px; border-radius: 999px; background: var(--ink-line); overflow: hidden; }
+  .pay-progress-fill{ height: 100%; border-radius: inherit; background: var(--sage); transition: width 420ms var(--ease-in-out); }
+  .pay-progress-fill.is-partial{ background: var(--amber); }
+  .pay-progress-label{ margin-top: 6px; font-size: 0.76rem; color: var(--ink-soft); font-weight: 600; }
+
   .pay-form{ display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
   .pay-form .field{ flex: 1; min-width: 160px; }
   .pay-form label{ display: block; font-size: 0.8rem; font-weight: 700; color: var(--ink); margin-bottom: 6px; }
+  .money-input{ position: relative; }
+  .money-prefix{
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--ink-soft); font-weight: 600; font-size: 0.92rem; pointer-events: none;
+  }
   .pay-form input{
     width: 100%; border: 1.5px solid var(--ink-line); border-radius: 0.7rem;
     padding: 10px 12px; font-size: 0.92rem; color: var(--ink);
+    transition: border-color 140ms ease, box-shadow 140ms ease;
+  }
+  .money-input input{ padding-left: 26px; }
+  .pay-form input:focus{
+    outline: none; border-color: var(--sage);
+    box-shadow: 0 0 0 3px rgba(124,152,133,0.18);
+  }
+  .method-pill{
+    display: flex; align-items: center; height: 41px; padding: 0 12px;
+    border: 1.5px solid var(--ink-line); border-radius: 0.7rem;
+    background: rgba(31,46,40,0.03); color: var(--ink); font-size: 0.92rem; font-weight: 600;
   }
   .btn-record-pay{
     background: var(--ink); color: var(--paper); font-weight: 700; border: none;
     border-radius: 0.7rem; padding: 11px 22px; cursor: pointer; white-space: nowrap;
+    transition: transform 140ms var(--ease-out), background 140ms ease, box-shadow 140ms var(--ease-out);
   }
-  .btn-record-pay:hover{ background: #2A3D35; }
+  .btn-record-pay:hover{ background: #16241D; box-shadow: 0 10px 20px -12px rgba(31,46,40,0.5); transform: translateY(-1px); }
+  .btn-record-pay:active{ transform: scale(0.97) translateY(0); }
   .btn-record-pay[disabled]{ opacity: 0.6; cursor: not-allowed; }
- 
+
   .pay-history{ margin-top: 18px; }
   .pay-history h4{ font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 10px; }
   .pay-history-row{
-    display: flex; justify-content: space-between; align-items: center; padding: 10px 0;
+    display: flex; justify-content: space-between; align-items: center; padding: 10px 4px;
     border-bottom: 1px solid var(--ink-line); font-size: 0.9rem; color: var(--ink); gap: 12px;
+    border-radius: 8px; transition: background 120ms ease;
   }
+  .pay-history-row:hover{ background: rgba(31,46,40,0.03); }
   .pay-history-row:last-child{ border-bottom: none; }
-  .pay-history-row > span:last-child{ display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+  .pay-history-row > span:last-child{ display: flex; align-items: center; gap: 10px; white-space: nowrap; font-variant-numeric: tabular-nums; font-weight: 600; }
+  .pay-history-dot{
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--sage); flex-shrink: 0;
+  }
+
+  @media (max-width: 480px){
+    .pay-stats{ grid-template-columns: 1fr; }
+  }
 
   .pending-fees{ margin-top: 18px; }
   .pending-fees h4{ font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 10px; }
   .pending-fee-row{
     display: flex; justify-content: space-between; align-items: center; gap: 14px;
-    background: rgba(164,123,63,0.08); border: 1px solid rgba(164,123,63,0.3);
+    background: rgba(4,106,56,0.08); border: 1px solid rgba(4,106,56,0.3);
     border-radius: 12px; padding: 12px 16px; margin-bottom: 10px;
   }
   .pending-fee-row:last-child{ margin-bottom: 0; }
@@ -129,8 +382,10 @@
   .btn-record-fee{
     background: var(--ink); color: var(--paper); font-weight: 700; border: none;
     border-radius: 0.6rem; padding: 8px 16px; cursor: pointer; white-space: nowrap; font-size: 0.82rem;
+    transition: transform 140ms var(--ease-out), background 140ms ease;
   }
   .btn-record-fee:hover{ background: #2A3D35; }
+  .btn-record-fee:active{ transform: scale(0.96); }
   .btn-record-fee[disabled]{ opacity: 0.6; cursor: not-allowed; }
 
   @media (max-width: 560px){
@@ -139,11 +394,157 @@
   }
  
   .t-banner{ border-radius: 12px; padding: 12px 16px; font-size: 0.88rem; margin-bottom: 14px; }
-  .t-banner.error{ background: rgba(164,123,63,0.1); border: 1px solid rgba(164,123,63,0.35); color: var(--ink); }
+  .t-banner.error{ background: rgba(4,106,56,0.1); border: 1px solid rgba(4,106,56,0.35); color: var(--ink); }
   .t-banner.success{ background: rgba(124,152,133,0.12); border: 1px solid rgba(124,152,133,0.35); color: var(--ink); }
  
   @media (max-width: 700px){
     .pay-stats{ grid-template-columns: 1fr; }
     .queue-table{ font-size: 0.84rem; }
     .queue-table th:nth-child(3), .queue-table td:nth-child(3){ display: none; }
+  }
+
+  /* ============================================================
+     PAYMENT TERMINAL
+     A processing overlay for record_payment.php / record_subject_
+     fee_payment.php, built around the app's existing "seal" motif
+     (--seal / --seal-tint, the same bronze used for registrar stamps
+     elsewhere) instead of a generic spinner — the ring closes into a
+     stamped seal on success, an unmade mark on failure.
+     ============================================================ */
+
+  .pay-terminal{
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 180ms var(--ease-out);
+  }
+  .pay-terminal.is-open{ opacity: 1; pointer-events: auto; }
+
+  .pay-terminal-backdrop{
+    position: absolute; inset: 0;
+    background: rgba(27, 42, 74, 0.28);
+    backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+  }
+
+  .pay-terminal-card{
+    position: relative;
+    width: min(340px, 100%);
+    background: var(--white);
+    border: 1px solid var(--ink-line);
+    border-radius: 22px;
+    box-shadow: 0 1px 1px rgba(31,46,40,0.04), 0 32px 64px -24px rgba(27,42,74,0.45);
+    padding: 36px 28px 28px;
+    text-align: center;
+    transform: scale(0.94) translateY(6px);
+    opacity: 0;
+    transition: transform 220ms var(--ease-out), opacity 220ms var(--ease-out);
+  }
+  .pay-terminal.is-open .pay-terminal-card{ transform: scale(1) translateY(0); opacity: 1; }
+
+  .pay-terminal-ring{
+    position: relative;
+    width: 76px; height: 76px; margin: 0 auto 20px;
+    border-radius: 50%;
+    background: conic-gradient(from 0deg, var(--seal-tint) 0deg, var(--seal) 300deg, var(--seal-tint) 360deg);
+    animation: payTerminalSpin 1.1s linear infinite;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pay-terminal-ring::before{
+    content: ""; position: absolute; inset: 5px;
+    border-radius: 50%; background: var(--white);
+  }
+  @keyframes payTerminalSpin{ to{ transform: rotate(360deg); } }
+
+  .pay-terminal-glyph{
+    position: absolute; top: 50%; left: 50%; width: 40px; height: 40px;
+    opacity: 0; transform: translate(-50%, -50%) scale(0.7);
+    transition: opacity 200ms var(--ease-out), transform 260ms var(--ease-out);
+  }
+  .pay-terminal-glyph-ring{ fill: none; stroke-width: 3; }
+  .pay-terminal-glyph-mark{
+    fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 48; stroke-dashoffset: 48;
+  }
+
+  .pay-terminal-check .pay-terminal-glyph-ring{ stroke: var(--sage); }
+  .pay-terminal-check .pay-terminal-glyph-mark{ stroke: var(--sage); }
+
+  .pay-terminal-x .pay-terminal-glyph-ring{ stroke: var(--rose); }
+  .pay-terminal-x .pay-terminal-glyph-mark{ stroke: var(--rose); stroke-dasharray: 34; stroke-dashoffset: 34; }
+
+  /* success: ring stops spinning, fills sage, checkmark stamps in */
+  .pay-terminal-stage.is-success .pay-terminal-ring{
+    animation: none;
+    background: var(--sage);
+    transform: scale(1.04);
+    transition: background 200ms var(--ease-out), transform 320ms var(--ease-out);
+  }
+  .pay-terminal-stage.is-success .pay-terminal-check{
+    opacity: 1; transform: translate(-50%, -50%) scale(1);
+    transition: opacity 200ms var(--ease-out) 120ms, transform 320ms var(--ease-out) 120ms;
+  }
+  .pay-terminal-stage.is-success .pay-terminal-check .pay-terminal-glyph-mark{
+    animation: payTerminalDraw 360ms var(--ease-out) 220ms forwards;
+  }
+
+  /* failure: ring stops, tints rose, X shakes in */
+  .pay-terminal-stage.is-error .pay-terminal-ring{
+    animation: none;
+    background: var(--rose-tint);
+    transition: background 200ms var(--ease-out);
+  }
+  .pay-terminal-stage.is-error .pay-terminal-x{
+    opacity: 1; transform: translate(-50%, -50%) scale(1);
+    transition: opacity 200ms var(--ease-out) 100ms, transform 320ms var(--ease-out) 100ms;
+    animation: payTerminalShake 320ms var(--ease-in-out) 260ms;
+  }
+  .pay-terminal-stage.is-error .pay-terminal-x .pay-terminal-glyph-mark{
+    animation: payTerminalDraw 260ms var(--ease-out) 160ms forwards;
+  }
+
+  @keyframes payTerminalDraw{ to{ stroke-dashoffset: 0; } }
+  @keyframes payTerminalShake{
+    0%, 100%{ transform: translate(-50%, -50%) scale(1) translateX(0); }
+    25%{ transform: translate(-50%, -50%) scale(1) translateX(-4px); }
+    75%{ transform: translate(-50%, -50%) scale(1) translateX(4px); }
+  }
+
+  .pay-terminal-step{
+    font-size: 0.94rem; font-weight: 600; color: var(--ink); margin: 0 0 14px;
+    min-height: 1.3em;
+  }
+
+  .pay-terminal-track{
+    height: 4px; border-radius: 999px; background: var(--ink-line);
+    overflow: hidden;
+  }
+  .pay-terminal-fill{
+    height: 100%; width: 0%; border-radius: inherit;
+    background: var(--seal);
+  }
+  .pay-terminal-stage.is-success .pay-terminal-fill{ background: var(--sage); }
+  .pay-terminal-stage.is-error .pay-terminal-fill{ background: var(--rose); }
+
+  .pay-terminal-result{
+    margin-top: 16px; font-size: 0.88rem; color: var(--ink-soft);
+  }
+  .pay-terminal-result .or-number{
+    display: block; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    font-weight: 700; color: var(--ink); letter-spacing: 0.02em;
+  }
+  .pay-terminal-result .retry-btn{
+    margin-top: 14px; background: var(--ink); color: var(--paper); font-weight: 700;
+    border: none; border-radius: 0.7rem; padding: 9px 20px; font-size: 0.86rem;
+    cursor: pointer; transition: transform 140ms var(--ease-out), background 140ms ease;
+  }
+  .pay-terminal-result .retry-btn:hover{ background: #2A3D35; }
+  .pay-terminal-result .retry-btn:active{ transform: scale(0.96); }
+
+  @media (prefers-reduced-motion: reduce){
+    .pay-terminal-ring{ animation: none; }
+    .pay-terminal-card, .pay-terminal, .pay-terminal-glyph, .pay-terminal-ring{ transition-duration: 1ms !important; }
+    .pay-terminal-stage.is-error .pay-terminal-x,
+    .pay-terminal-stage.is-success .pay-terminal-check{ animation: none !important; }
+    .pay-terminal-glyph-mark{ stroke-dashoffset: 0 !important; }
   }

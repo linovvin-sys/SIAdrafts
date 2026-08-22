@@ -36,35 +36,41 @@ if (!empty($_SESSION['user_id']) && in_array($currentRole, ['registrar staff', '
     $db->close();
 }
 
+/* mdi: (Material Design Icons via Iconify) — same icon system Student's
+   own nav already uses (see Student/Include/header.php's $_tabs), swapped
+   in for the Bootstrap Icons this sidebar used before. Bootstrap Icons
+   stay in use elsewhere in the app (buttons, inline glyphs); this map is
+   scoped to the nav rail, the single most-repeated icon surface since it
+   renders on every page. */
 $iconMap = [
-    'dashboard'   => 'bi-grid-1x2-fill',
-    'users'       => 'bi-people-fill',
-    'settings'    => 'bi-gear-fill',
-    'admission'   => 'bi-person-check-fill',
-    'enrollment'  => 'bi-journal-check',
-    'enrolees'    => 'bi-mortarboard-fill',
-    'course'      => 'bi-book-half',
-    'sections'    => 'bi-people-fill',
-    'subjects'    => 'bi-journal-bookmark-fill',
-    'professors'  => 'bi-person-video3',
-    'schedule'    => 'bi-calendar3',
-    'addDrop'     => 'bi-arrow-left-right',
-    'approval'    => 'bi-check2-square',
-    'readmission' => 'bi-arrow-repeat',
-    'messages'    => 'bi-chat-dots-fill',
-    'notifications' => 'bi-bell-fill',
-    'treasury'    => 'bi-cash-coin',
-    'revenue'     => 'bi-graph-up-arrow',
-    'paid'        => 'bi-check-circle-fill',
-    'process'     => 'bi-hourglass-split',
-    'unpaid'      => 'bi-exclamation-triangle-fill',
+    'dashboard'   => 'mdi:view-grid',
+    'users'       => 'mdi:account-group',
+    'settings'    => 'mdi:cog',
+    'admission'   => 'mdi:account-check',
+    'enrollment'  => 'mdi:notebook-check',
+    'enrolees'    => 'mdi:school',
+    'course'      => 'mdi:book-open-page-variant',
+    'sections'    => 'mdi:account-group',
+    'subjects'    => 'mdi:bookmark-multiple',
+    'professors'  => 'mdi:account-tie',
+    'schedule'    => 'mdi:calendar-week',
+    'addDrop'     => 'mdi:swap-horizontal',
+    'approval'    => 'mdi:checkbox-marked-outline',
+    'readmission' => 'mdi:autorenew',
+    'messages'    => 'mdi:message-text',
+    'notifications' => 'mdi:bell',
+    'treasury'    => 'mdi:cash-multiple',
+    'revenue'     => 'mdi:chart-line',
+    'paid'        => 'mdi:check-circle',
+    'process'     => 'mdi:progress-clock',
+    'unpaid'      => 'mdi:alert-circle',
 ];
 ?>
 <!-- ===== SIDEBAR ===== -->
 <aside class="sidebar" id="appSidebar">
 
   <div class="sidebar-brand" id="sidebar-toggle" title="Toggle sidebar">
-    <div class="brand-icon"><i class="bi bi-mortarboard-fill"></i></div>
+    <div class="brand-icon"><iconify-icon icon="mdi:school"></iconify-icon></div>
     <div class="brand-name">Edu<span>School</span></div>
   </div>
 
@@ -80,16 +86,16 @@ $iconMap = [
         ?>
         <div class="nav-group<?= $groupOpen ? ' open' : '' ?>">
           <button type="button" class="nav-item nav-group-toggle" aria-expanded="<?= $groupOpen ? 'true' : 'false' ?>">
-            <span class="nav-icon"><i class="bi <?= $iconMap[$item['icon']] ?? 'bi-dot' ?>"></i></span>
+            <span class="nav-icon"><iconify-icon icon="<?= $iconMap[$item['icon']] ?? 'mdi:circle-small' ?>"></iconify-icon></span>
             <span class="nav-text"><?= htmlspecialchars($item['group'], ENT_QUOTES) ?></span>
-            <span class="nav-group-chevron"><i class="bi bi-chevron-down"></i></span>
+            <span class="nav-group-chevron"><iconify-icon icon="mdi:chevron-down"></iconify-icon></span>
           </button>
           <div class="nav-group-items">
             <?php foreach ($item['items'] as $child): ?>
               <a href="<?= htmlspecialchars($child['url'], ENT_QUOTES) ?>"
                  class="nav-item nav-subitem<?= ($activePage ?? '') === $child['page'] ? ' active' : '' ?>"
                  data-page="<?= htmlspecialchars($child['page'], ENT_QUOTES) ?>">
-                <span class="nav-icon"><i class="bi <?= $iconMap[$child['icon']] ?? 'bi-dot' ?>"></i></span>
+                <span class="nav-icon"><iconify-icon icon="<?= $iconMap[$child['icon']] ?? 'mdi:circle-small' ?>"></iconify-icon></span>
                 <span class="nav-text"><?= htmlspecialchars($child['label'], ENT_QUOTES) ?></span>
                 <?php if (($child['badge'] ?? null) === 'pending' && $pendingCount > 0): ?>
                   <span class="nav-badge"><?= $pendingCount ?></span>
@@ -104,7 +110,7 @@ $iconMap = [
         <a href="<?= htmlspecialchars($item['url'], ENT_QUOTES) ?>"
            class="nav-item<?= ($activePage ?? '') === $item['page'] ? ' active' : '' ?>"
            data-page="<?= htmlspecialchars($item['page'], ENT_QUOTES) ?>">
-          <span class="nav-icon"><i class="bi <?= $iconMap[$item['icon']] ?? 'bi-dot' ?>"></i></span>
+          <span class="nav-icon"><iconify-icon icon="<?= $iconMap[$item['icon']] ?? 'mdi:circle-small' ?>"></iconify-icon></span>
           <span class="nav-text"><?= htmlspecialchars($item['label'], ENT_QUOTES) ?></span>
           <?php if (($item['badge'] ?? null) === 'pending' && $pendingCount > 0): ?>
             <span class="nav-badge"><?= $pendingCount ?></span>
@@ -275,6 +281,26 @@ $iconMap = [
       }
     });
   });
+
+  // Dark mode toggle. The initial theme is already applied before first
+  // paint by the inline script in Include/header.php (reads the same
+  // localStorage key) — this just handles the click: flip explicitly
+  // between light/dark and persist the choice, overriding whatever the
+  // OS preference was. Needs DOMContentLoaded same as the drawer above —
+  // #themeToggle lives in .main-content, further down the page than
+  // this <script> tag.
+  document.addEventListener('DOMContentLoaded', function () {
+    var themeToggle = document.getElementById('themeToggle');
+    if (!themeToggle) return;
+    themeToggle.addEventListener('click', function () {
+      var isDark = document.documentElement.getAttribute('data-theme') === 'dark'
+        || (document.documentElement.getAttribute('data-theme') !== 'light'
+            && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      var next = isDark ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      try { localStorage.setItem('sia_theme', next); } catch (e) {}
+    });
+  });
 </script>
 
 <div class="sidebar-overlay" id="sidebarOverlay"></div>
@@ -283,20 +309,24 @@ $iconMap = [
   <header class="top-header">
     <div style="display:flex; align-items:center; gap:10px; min-width:0;">
       <button class="menu-toggle" id="menuToggle" aria-label="Open navigation menu" aria-expanded="false" aria-controls="appSidebar">
-        <i class="bi bi-list"></i>
+        <iconify-icon icon="mdi:menu"></iconify-icon>
       </button>
       <h1 class="header-title" id="page-title"><?= htmlspecialchars($pageTitle ?? '', ENT_QUOTES) ?></h1>
     </div>
     <div class="header-actions">
-      <button class="btn-notif" aria-label="Notifications"><i class="bi bi-bell"></i><?php if ($pendingCount > 0): ?><span class="notif-dot"></span><?php endif; ?></button>
+      <button class="btn-notif" id="themeToggle" aria-label="Toggle dark mode" title="Toggle dark mode">
+        <iconify-icon icon="mdi:white-balance-sunny" class="theme-icon theme-icon-sun"></iconify-icon>
+        <iconify-icon icon="mdi:moon-waning-crescent" class="theme-icon theme-icon-moon"></iconify-icon>
+      </button>
+      <button class="btn-notif" aria-label="Notifications"><iconify-icon icon="mdi:bell-outline"></iconify-icon><?php if ($pendingCount > 0): ?><span class="notif-dot"></span><?php endif; ?></button>
       <div class="avatar-wrapper" id="avatarWrapper">
         <div class="header-avatar" id="avatarBtn"><?= $initials ?></div>
         <div class="avatar-dropdown" id="avatarDropdown">
           <a href="/SIAdrafts/Frontend/View/profile.php" class="dropdown-item">
-            <i class="bi bi-person-circle"></i> My profile
+            <iconify-icon icon="mdi:account-circle-outline"></iconify-icon> My profile
           </a>
           <a href="/SIAdrafts/Backend/api/Auth/logout.php" class="dropdown-item dropdown-item--danger">
-            <i class="bi bi-box-arrow-right"></i> Log out
+            <iconify-icon icon="mdi:logout"></iconify-icon> Log out
           </a>
         </div>
       </div>

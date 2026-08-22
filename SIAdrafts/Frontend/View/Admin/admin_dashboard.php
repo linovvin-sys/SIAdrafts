@@ -157,7 +157,7 @@ include '../Include/header.php';
                 <div class="panel-body" style="padding:0;">
 
                     <div class="table-responsive">
-                    <table class="data-table">
+                    <table class="data-table" id="enrollmentSummaryTable">
 
                         <thead>
                         <tr>
@@ -226,6 +226,10 @@ include '../Include/header.php';
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+
+  if (document.getElementById('enrollmentSummaryTable')) {
+    initDataTable('#enrollmentSummaryTable', { order: [] });
+  }
 
   Chart.defaults.font.family = "'Segoe UI', Roboto, Arial, sans-serif";
   Chart.defaults.color = '#6b7280';

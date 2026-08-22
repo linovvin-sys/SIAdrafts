@@ -74,7 +74,7 @@ include '../Include/header.php';
 
             <div class="panel-body" style="padding:0;">
                 <div class="table-responsive">
-                <table class="data-table" id="pendingDocsTable">
+                <table class="data-table rd-table-stagger" id="pendingDocsTable">
                     <thead>
                         <tr>
                             <th style="width:36px;"></th>
@@ -88,9 +88,9 @@ include '../Include/header.php';
                         <?php if (empty($pending)): ?>
                             <tr><td colspan="5" style="text-align:center;">No outstanding documents right now.</td></tr>
                         <?php else: ?>
-                            <?php foreach ($pending as $aid => $student): ?>
+                            <?php $pendingRowIndex = 0; foreach ($pending as $aid => $student): ?>
                                 <?php $searchKey = strtolower($student['reference_id'] . ' ' . $student['last_name'] . ' ' . $student['first_name'] . ' ' . $student['program']); ?>
-                                <tr class="pending-doc-summary" data-toggle-student="<?= $aid ?>" data-search="<?= htmlspecialchars($searchKey) ?>" style="cursor:pointer;">
+                                <tr class="pending-doc-summary" style="--row-i: <?= min($pendingRowIndex++, 12) ?>; cursor:pointer;" data-toggle-student="<?= $aid ?>" data-search="<?= htmlspecialchars($searchKey) ?>">
                                     <td><span class="pending-doc-caret" id="caret-<?= $aid ?>">&#9656;</span></td>
                                     <td><?= htmlspecialchars($student['reference_id']) ?></td>
                                     <td><?= htmlspecialchars($student['last_name'] . ', ' . $student['first_name']) ?></td>

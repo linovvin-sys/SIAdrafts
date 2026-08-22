@@ -59,6 +59,7 @@ $sql = "
 SELECT
     s.student_no,
     CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+    c.course_code,
     c.course_name,
     sec.section_name,
     e.year_level,

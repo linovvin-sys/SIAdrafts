@@ -52,7 +52,7 @@ include '../Include/header.php';
                 $fullName = trim($applicant['first_name'] . ' ' . $applicant['middle_name'] . ' ' . $applicant['last_name']);
             ?>
 
-            <div class="panel" id="printArea">
+            <div class="panel rd-fade-in" id="printArea">
 
                 <div class="panel-header no-print">
                     <span class="panel-title">Admission Registration Form</span>
