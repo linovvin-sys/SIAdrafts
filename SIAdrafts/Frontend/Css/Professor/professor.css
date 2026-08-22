@@ -106,3 +106,28 @@
   box-shadow: 0 0 0 4px var(--accent-100);
   outline: none;
 }
+
+/* ---------- class announcements dialog (My Classes) ---------- */
+.sp-announce-list {
+  list-style: none; margin: 18px 0 0; padding-top: 16px;
+  border-top: 1px solid var(--line-200);
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 260px; overflow-y: auto;
+}
+.sp-announce-empty { color: var(--slate-300); font-size: 13px; text-align: center; padding: 12px 0; }
+.sp-announce-item {
+  padding: 10px 12px; border-radius: var(--sp-radius-sm);
+  background: var(--paper-100);
+}
+.sp-announce-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.sp-announce-item-head strong { font-size: 13.5px; color: var(--ink-950); flex: 1; }
+.sp-announce-item-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-300); }
+.sp-announce-item p { margin: 0; font-size: 13px; color: var(--slate-500); line-height: 1.5; }
+.sp-announce-delete {
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
+  border: none; background: transparent; color: var(--slate-300);
+  cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+}
+.sp-announce-delete:hover { background: var(--danger-100); color: var(--danger-600); }
+.sp-announce-delete:active { transform: scale(0.92); }

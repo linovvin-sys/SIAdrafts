@@ -9,6 +9,7 @@ require_once __DIR__ . '/../../../Backend/db.php';
 require_once __DIR__ . '/../../../Backend/requirements.php';
 require_once __DIR__ . '/../../../Backend/Student/schedule_data.php';
 require_once __DIR__ . '/../../../Backend/Student/dashboard_data.php';
+require_once __DIR__ . '/../../../Backend/Student/announcement_data.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -45,6 +46,8 @@ foreach ($scheduleList as $s) {
         $subjectTints[$s['subject_code']] = $tintClasses[count($subjectTints) % count($tintClasses)];
     }
 }
+
+$announcements = get_student_announcements($conn, $applicantId, 20);
 
 $db->close();
 
@@ -124,7 +127,31 @@ include __DIR__ . '/Include/header.php';
 
 <div class="sp-dash-grid">
   <div class="sp-dash-main">
-    <div class="sp-card-grid">
+    <div class="sp-dash-top">
+      <div class="sp-section sp-float sp-announce-hero">
+        <h2 class="sp-section-title">Announcements</h2>
+        <?php if ($announcements): ?>
+          <div class="sp-announce-hero-list">
+            <?php foreach ($announcements as $a):
+                $tint = $subjectTints[$a['subject_code']] ?? 'tint-1';
+            ?>
+              <div class="sp-announce-tile <?= $tint ?>">
+                <div class="sp-announce-tile-head">
+                  <span class="sp-announce-tile-subject"><?= htmlspecialchars($a['subject_code'], ENT_QUOTES) ?></span>
+                  <span class="sp-announce-tile-time"><?= sp_time_ago($a['created_at']) ?></span>
+                </div>
+                <p class="sp-announce-tile-title"><?= htmlspecialchars($a['title'], ENT_QUOTES) ?></p>
+                <p class="sp-announce-tile-body"><?= nl2br(htmlspecialchars($a['body'], ENT_QUOTES)) ?></p>
+                <p class="sp-announce-tile-from">— <?= htmlspecialchars($a['professor_name'], ENT_QUOTES) ?></p>
+              </div>
+            <?php endforeach; ?>
+          </div>
+        <?php else: ?>
+          <p class="sp-card-hint">No announcements from your professors yet.</p>
+        <?php endif; ?>
+      </div>
+
+      <div class="sp-card-grid">
       <a href="/SIAdrafts/Frontend/View/Student/registration.php" class="sp-card">
         <div class="sp-card-icon"><iconify-icon icon="mdi:file-document-outline" style="font-size:19px;"></iconify-icon></div>
         <p class="sp-card-label">Enrollment status</p>
@@ -157,6 +184,7 @@ include __DIR__ . '/Include/header.php';
         </div>
         <p class="sp-card-hint"><?= count($missingGroups) > 0 ? 'Action needed' : 'All submitted' ?></p>
       </a>
+      </div>
     </div>
   </div>
 
@@ -190,7 +218,7 @@ include __DIR__ . '/Include/header.php';
         </li>
         <?php if ($nextClass): ?>
         <li>
-          <a href="/SIAdrafts/Backend/api/student_schedule_ics.php" class="js-ics-download">
+          <a href="/SIAdrafts/Backend/api/Scheduling/student_schedule_ics.php" class="js-ics-download">
             <span class="sp-quickaction-icon"><iconify-icon icon="mdi:calendar-plus-outline"></iconify-icon></span>
             <span>Add schedule to calendar</span>
             <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>

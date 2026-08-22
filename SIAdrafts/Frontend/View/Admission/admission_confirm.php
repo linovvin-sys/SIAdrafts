@@ -24,6 +24,11 @@ $extraCss = [
 include '../Include/header.php';
 ?>
 
+<!-- The shared header doesn't load this (only Admission's own header does),
+     so every <iconify-icon> on this page — including the ones just added to
+     the soft-copy preview modal — rendered as nothing without it. -->
+<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+
 <div class="app-layout">
 
 <?php include '../Include/sidebar.php'; ?>
@@ -137,7 +142,8 @@ include '../Include/header.php';
                  :href="documentViewUrl(onlineRecordFor(doc))"
                  target="_blank"
                  rel="noopener"
-                 class="doc-online-badge doc-online-badge--file">
+                 class="doc-view-btn"
+                 @click.prevent="openPreview(onlineRecordFor(doc), doc, $event)">
                 <iconify-icon icon="mdi:file-eye-outline"></iconify-icon> View soft copy
               </a>
               <span v-else class="doc-online-badge doc-online-badge--later">
@@ -179,6 +185,33 @@ include '../Include/header.php';
           </button>
         </div>
       </div>
+
+      <Transition name="doc-preview-fade">
+        <div v-if="previewDoc" class="doc-preview-overlay" @click.self="closePreview">
+          <Transition name="doc-preview-pop">
+            <div class="doc-preview-panel" :style="{ '--preview-origin': previewOrigin }">
+              <div class="doc-preview-head">
+                <span class="doc-preview-title">
+                  <iconify-icon icon="mdi:file-eye-outline"></iconify-icon>
+                  {{ previewDoc.label }}
+                </span>
+                <div class="doc-preview-actions">
+                  <a class="doc-preview-btn" :href="documentViewUrl(previewDoc)" target="_blank" rel="noopener" title="Open in new tab">
+                    <iconify-icon icon="mdi:open-in-new"></iconify-icon>
+                  </a>
+                  <button type="button" class="doc-preview-btn doc-preview-btn--close" @click="closePreview" title="Close">
+                    <iconify-icon icon="mdi:close"></iconify-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="doc-preview-body">
+                <img v-if="isImageDoc(previewDoc)" :src="documentViewUrl(previewDoc)" :alt="previewDoc.label">
+                <iframe v-else :src="documentViewUrl(previewDoc)" :title="previewDoc.label"></iframe>
+              </div>
+            </div>
+          </Transition>
+        </div>
+      </Transition>
 
     </div>
 

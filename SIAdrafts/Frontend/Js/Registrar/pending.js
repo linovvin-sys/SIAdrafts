@@ -48,7 +48,7 @@ async function loadPendingCourses() {
   const empty = document.getElementById('emptyCourseState');
   showSkeleton('pendingCourseBody', 5);
   try {
-    const r = await fetch(API_BASE + 'get_pending_courses.php');
+    const r = await fetch(API_BASE + 'Curriculum/get_pending_courses.php');
     const d = await r.json();
     const list = d.pending || [];
     body.innerHTML = '';
@@ -72,9 +72,9 @@ function buildCourseRow(item) {
 
   if (!IS_READONLY) {
     tr.querySelector('[data-approve]').addEventListener('click', () =>
-      approveItem('approve_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
+      approveItem('Curriculum/approve_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
     tr.querySelector('[data-reject]').addEventListener('click', () =>
-      rejectItem('reject_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
+      rejectItem('Curriculum/reject_course.php', 'course_id', item.course_id, tr, 'emptyCourseState', 'pendingCourseBody'));
   }
 
   return tr;
@@ -87,7 +87,7 @@ async function loadPendingSections() {
   const empty = document.getElementById('emptySectionState');
   showSkeleton('pendingSectionBody', 5);
   try {
-    const r = await fetch(API_BASE + 'get_pending_sections.php');
+    const r = await fetch(API_BASE + 'Sections/get_pending_sections.php');
     const d = await r.json();
     const list = d.pending || [];
     body.innerHTML = '';
@@ -111,9 +111,9 @@ function buildSectionRow(item) {
 
   if (!IS_READONLY) {
     tr.querySelector('[data-approve]').addEventListener('click', () =>
-      approveItem('approve_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
+      approveItem('Sections/approve_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
     tr.querySelector('[data-reject]').addEventListener('click', () =>
-      rejectItem('reject_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
+      rejectItem('Sections/reject_section.php', 'section_id', item.section_id, tr, 'emptySectionState', 'pendingSectionBody'));
   }
 
   return tr;
@@ -126,7 +126,7 @@ async function loadPendingSubjects() {
   const empty = document.getElementById('emptySubjectState');
   showSkeleton('pendingSubjectBody', 6);
   try {
-    const r = await fetch(API_BASE + 'get_pending_subjects.php');
+    const r = await fetch(API_BASE + 'Curriculum/get_pending_subjects.php');
     const d = await r.json();
     const list = d.pending || [];
     body.innerHTML = '';
@@ -151,9 +151,9 @@ function buildSubjectRow(item) {
 
   if (!IS_READONLY) {
     tr.querySelector('[data-approve]').addEventListener('click', () =>
-      approveItem('approve_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
+      approveItem('Curriculum/approve_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
     tr.querySelector('[data-reject]').addEventListener('click', () =>
-      rejectItem('reject_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
+      rejectItem('Curriculum/reject_subject.php', 'subject_id', item.subject_id, tr, 'emptySubjectState', 'pendingSubjectBody'));
   }
 
   return tr;
@@ -166,7 +166,7 @@ async function loadPendingSchedules() {
   const empty = document.getElementById('emptyState');
   showSkeleton('pendingBody', 7);
   try {
-    const r = await fetch(API_BASE + 'get_pending_schedules.php');
+    const r = await fetch(API_BASE + 'Scheduling/get_pending_schedules.php');
     const d = await r.json();
     const list = d.pending || [];
     body.innerHTML = '';
@@ -192,9 +192,9 @@ function buildScheduleRow(item) {
 
   if (!IS_READONLY) {
     tr.querySelector('[data-approve]').addEventListener('click', () =>
-      approveItem('approve_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
+      approveItem('Scheduling/approve_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
     tr.querySelector('[data-reject]').addEventListener('click', () =>
-      rejectItem('reject_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
+      rejectItem('Scheduling/reject_schedule.php', 'schedule_id', item.schedule_id, tr, 'emptyState', 'pendingBody'));
   }
 
   return tr;

@@ -46,7 +46,15 @@ return [
     'treasury'  => $treasuryRoleNav,
     'admin' => [
         ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php', 'icon' => 'dashboard'],
-        ['label' => 'Manage User', 'page' => 'manage_user', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_user.php', 'icon' => 'users'],
+        [
+            'group' => 'Manage User',
+            'icon' => 'users',
+            'items' => [
+                ['label' => 'Employees', 'page' => 'manage_user', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_user.php', 'icon' => 'users'],
+                ['label' => 'Professors', 'page' => 'manage_professors', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_professors.php', 'icon' => 'professors'],
+                ['label' => 'Students', 'page' => 'manage_students', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_students.php', 'icon' => 'enrolees'],
+            ],
+        ],
         [
             'group' => 'Monitor: Admissions',
             'icon' => 'admission',

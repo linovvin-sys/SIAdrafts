@@ -98,7 +98,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const result = await postJSON('save_section.php', { section_name, capacity, course_id });
+      const result = await postJSON('Sections/save_section.php', { section_name, capacity, course_id });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add section', text: result.error });
         return;
@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       if (!confirm.isConfirmed) return;
 
-      const result = await postJSON('delete_section.php', { section_id });
+      const result = await postJSON('Sections/delete_section.php', { section_id });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not remove section', text: result.error });
         return;
@@ -147,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
       openModal(modal);
 
       try {
-        const res = await fetch(`${API}get_section_roster.php?section_id=${section_id}`);
+        const res = await fetch(`${API}Sections/get_section_roster.php?section_id=${section_id}`);
         const data = await res.json();
 
         if (data.error) {

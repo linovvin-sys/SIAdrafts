@@ -38,7 +38,7 @@ $page_scripts = [
 
             <div id="login-error" class="alert-box alert-error mb-3" hidden></div>
 
-            <form id="login-form" action="/SIAdrafts/Backend/api/login.php" method="POST" autocomplete="off" novalidate>
+            <form id="login-form" action="/SIAdrafts/Backend/api/Auth/login.php" method="POST" autocomplete="off" novalidate>
 
               <div class="mb-3">
                 <label for="login-username" class="form-label fw-bold small">Username / Email</label>

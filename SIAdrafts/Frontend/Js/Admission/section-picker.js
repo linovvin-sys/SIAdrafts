@@ -23,7 +23,7 @@ if (document.getElementById('section-app')) {
             school_year: ENROLL_META.school_year,
             course_id:   ENROLL_META.course_id,
           });
-          const r = await fetch(`/SIAdrafts/Backend/api/get_sections.php?${params}`);
+          const r = await fetch(`/SIAdrafts/Backend/api/Sections/get_sections.php?${params}`);
           const d = await r.json();
           if (d.error) {
             this.loadError = d.error;

@@ -1,0 +1,145 @@
+<?php
+session_start();
+require_once '../../db.php';
+require_once '../../rate_limit.php';
+
+header('Content-Type: application/json');
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['error' => 'Method not allowed.']);
+    exit;
+}
+
+// Cap credential-guessing attempts per IP — before even touching the DB.
+if (!rate_limit_check('login', 10, 300)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Too many login attempts. Please wait a few minutes and try again.']);
+    exit;
+}
+
+$db   = new Database();
+$conn = $db->connect();
+
+$username = trim($_POST['username'] ?? '');
+$password = $_POST['password'] ?? '';
+
+if ($username === '' || $password === '') {
+    echo json_encode(['error' => 'Username and password are required.']);
+    exit;
+}
+
+$stmt = $conn->prepare(
+    "SELECT u.user_id, u.first_name, u.last_name, u.username, u.password,
+            u.role_id, r.role_name
+     FROM users u
+     JOIN roles r ON u.role_id = r.role_id
+     WHERE (u.username = ? OR u.email = ?) AND u.status_id = 1
+     LIMIT 1"
+);
+
+if (!$stmt) {
+    http_response_code(500);
+    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    exit;
+}
+
+$stmt->bind_param('ss', $username, $username);
+$stmt->execute();
+
+$result = $stmt->get_result();
+$user   = $result->fetch_assoc();
+$stmt->close();
+
+if ($user && password_verify($password, $user['password'])) {
+    session_regenerate_id(true);
+
+    $_SESSION['user_id']   = $user['user_id'];
+    $_SESSION['username']  = $user['username'];
+    $_SESSION['role_id']   = $user['role_id'];
+    $_SESSION['role_name'] = $user['role_name'];
+    $_SESSION['full_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
+
+    $loginStmt = $conn->prepare("UPDATE users SET last_login = NOW() WHERE user_id = ?");
+    $loginStmt->bind_param('i', $user['user_id']);
+    $loginStmt->execute();
+    $loginStmt->close();
+
+    $role = strtolower(trim($user['role_name']));
+} else {
+    // Not a staff account — professors have their own credentials on the
+    // `professor` table rather than a `users` row, so check there before
+    // giving up.
+    $profStmt = $conn->prepare(
+        "SELECT p.professor_id, p.first_name, p.last_name, p.username, p.password, d.department_code
+         FROM professor p
+         JOIN department d ON d.department_id = p.department_id
+         WHERE p.username = ? AND p.status_id = 1
+         LIMIT 1"
+    );
+    $profStmt->bind_param('s', $username);
+    $profStmt->execute();
+    $professor = $profStmt->get_result()->fetch_assoc();
+    $profStmt->close();
+
+    if (!$professor || $professor['password'] === null || !password_verify($password, $professor['password'])) {
+        echo json_encode(['error' => 'Invalid username or password.']);
+        exit;
+    }
+
+    session_regenerate_id(true);
+
+    $_SESSION['professor_id']         = $professor['professor_id'];
+    $_SESSION['username']             = $professor['username'];
+    $_SESSION['role_name']            = 'Professor';
+    $_SESSION['full_name']            = trim($professor['first_name'] . ' ' . $professor['last_name']);
+    $_SESSION['professor_department'] = $professor['department_code'];
+
+    $loginStmt = $conn->prepare("UPDATE professor SET last_login = NOW() WHERE professor_id = ?");
+    $loginStmt->bind_param('i', $professor['professor_id']);
+    $loginStmt->execute();
+    $loginStmt->close();
+
+    $role = 'professor';
+}
+
+$db->close();
+
+switch ($role) {
+    case 'admin':
+        $redirect = '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php';
+        break;
+
+    case 'staff':
+        $redirect = '/SIAdrafts/Frontend/View/Admission/enrollment.php';
+        break;
+    
+    case 'treasury':
+        $redirect = '/SIAdrafts/Frontend/View/Admission/treasury.php';
+        break;
+
+    case 'admission':
+        $redirect = '/SIAdrafts/Frontend/View/Admission/admission.php';
+        break;
+        
+    case 'head registrar':
+        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
+        break;
+
+    case 'registrar staff':
+        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
+        break;
+
+    case 'professor':
+        $redirect = '/SIAdrafts/Frontend/View/Professor/professor_dashboard.php';
+        break;
+    default:
+        // Students and all other roles
+        $redirect = '/SIAdrafts/Frontend/View/login.php';
+        break;
+}
+
+echo json_encode([
+    'success'  => true,
+    'redirect' => $redirect
+]);

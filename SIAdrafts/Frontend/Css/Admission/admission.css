@@ -17,14 +17,11 @@
     display:inline-flex;
     align-items:center;
     gap:8px;
-    background: rgba(31,46,40,0.06);
-    color: var(--ink);
-    font-size:0.78rem;
-    font-weight:700;
-    letter-spacing:0.04em;
+    color: var(--amber);
+    font-size:11.5px;
+    font-weight:600;
+    letter-spacing:0.14em;
     text-transform:uppercase;
-    padding:6px 14px;
-    border-radius:999px;
     margin-bottom:14px;
   }
   .admission-eyebrow iconify-icon{ font-size:14px; color: var(--amber); }
@@ -74,12 +71,9 @@
   .admission-card{
     max-width: 900px;
     margin: 0 auto;
-    background: rgba(255,255,255,0.9);
+    background: #fff;
     border: 1px solid var(--ink-line);
-    border-radius: 24px;
-    box-shadow:
-      0 1px 1px rgba(31,46,40,0.03),
-      0 24px 48px -22px rgba(31,46,40,0.22);
+    border-radius: 3px;
     overflow: hidden;
   }
  
@@ -99,7 +93,7 @@
     flex:none;
     width: 34px;
     height: 34px;
-    border-radius: 10px;
+    border-radius: 3px;
     background: var(--ink);
     color: var(--paper);
     font-weight: 700;
@@ -107,6 +101,22 @@
     display:flex;
     align-items:center;
     justify-content:center;
+  }
+  /* Numeral-only sections (online_admission.php): the editorial theme's
+     giant italic-serif numeral treatment instead of a filled badge. Pages
+     that put icons/checkmarks in .section-num (admission_confirm.php,
+     Registrar/admission_view.php) keep the base badge above. */
+  .section-num--index{
+    width: auto;
+    height: auto;
+    background: none;
+    border-radius: 0;
+    font-family: 'Fraunces', Georgia, serif;
+    font-style: italic;
+    font-weight: 400;
+    font-size: 30px;
+    color: var(--amber);
+    line-height: 1;
   }
   .section-head h2{
     font-family: 'Fraunces', Georgia, serif;
@@ -134,7 +144,7 @@
   .form-control, .form-select{
     color: var(--ink);
     border-color: var(--ink-line);
-    border-radius: 0.7rem;
+    border-radius: 2px;
     padding-top: 0.6rem;
     padding-bottom: 0.6rem;
     font-size: 0.93rem;
@@ -149,7 +159,7 @@
   .history-row{
     background: rgba(31,46,40,0.03);
     border: 1px solid var(--ink-line);
-    border-radius: 14px;
+    border-radius: 3px;
     padding: 18px;
     margin-bottom: 14px;
     position: relative;
@@ -165,7 +175,7 @@
     letter-spacing: 0.03em;
     text-transform: uppercase;
     padding: 3px 10px;
-    border-radius: 999px;
+    border-radius: 2px;
   }
   .btn-add-row{
     background: #fff;
@@ -173,7 +183,7 @@
     color: var(--ink);
     font-weight: 600;
     font-size: 0.88rem;
-    border-radius: 0.7rem;
+    border-radius: 2px;
     padding: 10px 0;
     width: 100%;
   }
@@ -194,7 +204,7 @@
     gap: 10px;
     background: #fff;
     border: 1px solid var(--ink-line);
-    border-radius: 12px;
+    border-radius: 3px;
     padding: 12px 14px;
   }
   .doc-item input[type="checkbox"]{
@@ -234,15 +244,12 @@
     font-size:0.72rem;
     font-weight:600;
     padding:3px 9px;
-    border-radius:999px;
+    border-radius:2px;
     text-decoration:none;
     white-space:nowrap;
+    border: none;
+    font-family: inherit;
   }
-  .doc-online-badge--file{
-    background: #e4efe6;
-    color: #2f6b40;
-  }
-  .doc-online-badge--file:hover{ text-decoration: underline; }
   .doc-online-badge--later{
     background: #fdf3e2;
     color: #8a6416;
@@ -251,11 +258,146 @@
     color: var(--ink-soft);
     font-weight:500;
     font-style: italic;
+    background: none;
+  }
+
+  /* An actual button, not a passive status chip: solid border + fill so it
+     reads as clickable at a glance, with hover/press states to confirm it. */
+  .doc-view-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family: inherit;
+    font-size:0.76rem;
+    font-weight:700;
+    color: #fff;
+    background: #2f6b40;
+    border: 1px solid #2f6b40;
+    border-radius: 3px;
+    padding: 5px 11px 5px 9px;
+    white-space:nowrap;
+    cursor: pointer;
+    transition: background-color 140ms ease, border-color 140ms ease, transform 120ms ease-out, box-shadow 140ms ease;
+  }
+  .doc-view-btn i{ font-size: 0.85rem; }
+  .doc-view-btn:hover{
+    background: #285c37;
+    border-color: #285c37;
+    box-shadow: 0 2px 8px -2px rgba(47,107,64,0.45);
+  }
+  .doc-view-btn:active{ transform: scale(0.96); box-shadow: none; }
+  .doc-view-btn:focus-visible{
+    outline: 2px solid #2f6b40;
+    outline-offset: 2px;
+  }
+
+  /*  document soft-copy preview modal  */
+  .doc-preview-overlay{
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: rgba(31,46,40,0.55);
+    backdrop-filter: blur(2px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .doc-preview-fade-enter-active{ transition: opacity 200ms ease-out; }
+  .doc-preview-fade-leave-active{ transition: opacity 160ms ease; }
+  .doc-preview-fade-enter-from,
+  .doc-preview-fade-leave-to{ opacity: 0; }
+
+  .doc-preview-panel{
+    width: min(760px, 100%);
+    height: min(82vh, 900px);
+    background: var(--paper);
+    border: 1px solid var(--ink-line);
+    border-radius: 6px;
+    box-shadow: 0 24px 60px -20px rgba(31,46,40,0.45);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform-origin: var(--preview-origin, 50% 50%);
+  }
+  .doc-preview-pop-enter-active{ transition: transform 220ms cubic-bezier(0.23,1,0.32,1), opacity 220ms ease-out; }
+  .doc-preview-pop-leave-active{ transition: transform 160ms ease-in-out, opacity 160ms ease; }
+  .doc-preview-pop-enter-from,
+  .doc-preview-pop-leave-to{ opacity: 0; transform: scale(0.94); }
+
+  .doc-preview-head{
+    flex: none;
+    display:flex;
+    align-items:center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--ink-line);
+    background: #fff;
+  }
+  .doc-preview-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--ink);
+  }
+  .doc-preview-title i{ color: var(--amber); font-size: 0.95rem; }
+  .doc-preview-actions{ display:flex; align-items:center; gap: 8px; }
+  .doc-preview-btn{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    width: 34px;
+    height: 34px;
+    border-radius: 2px;
+    border: 1px solid var(--ink-line);
+    background: #fff;
+    color: var(--ink-soft);
+    font-size: 0.95rem;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 120ms ease-out, background-color 120ms ease, color 120ms ease, border-color 120ms ease;
+  }
+  .doc-preview-btn:hover{ background: var(--paper); color: var(--ink); }
+  .doc-preview-btn:active{ transform: scale(0.94); }
+  .doc-preview-btn:focus-visible{ outline: 2px solid var(--sage); outline-offset: 2px; }
+  /* Closing ends the task — give it a distinct, slightly warmer hover so it
+     never gets mistaken for "open in new tab" at a glance. */
+  .doc-preview-btn--close:hover{
+    background: #fbe9e9;
+    border-color: #e3b3b3;
+    color: #b23b3b;
+  }
+
+  .doc-preview-body{
+    flex: 1;
+    min-height: 0;
+    background: #3a3a38;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .doc-preview-body img{
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+  .doc-preview-body iframe{
+    width: 100%;
+    height: 100%;
+    border: none;
+    background: #fff;
+  }
+  @media (max-width: 600px){
+    .doc-preview-overlay{ padding: 0; }
+    .doc-preview-panel{ width: 100%; height: 100%; border-radius: 0; }
   }
 
   /*  AJAX result banner  */
   .form-banner{
-    border-radius: 14px;
+    border-radius: 3px;
     padding: 16px 18px;
     font-size: 0.9rem;
   }
@@ -293,30 +435,57 @@
     font-size: 0.84rem;
   }
   .btn-submit{
-    /* ink fill + paper text, the same treatment as the landing page's
-       .e-btn -- bronze fill with ink text measured 3.7:1, below 4.5:1 */
+    /* Same slide-fill treatment as the landing page's .e-btn: flat ink
+       border/fill, paper text sliding to ink text on hover -- no glow,
+       no soft drop-shadow. */
+    position: relative;
     background: var(--ink);
-    border-color: var(--ink);
+    border: 1px solid var(--ink);
     color: var(--paper);
-    font-weight: 700;
-    border-radius: 0.85rem;
-    padding: 12px 26px;
-    box-shadow: 0 10px 20px -8px rgba(31,46,40,0.45);
+    font-weight: 600;
+    border-radius: 2px;
+    padding: 13px 26px;
+    overflow: hidden;
+    isolation: isolate;
     display:flex; align-items:center; gap:8px;
-    transition: background .2s ease, transform .2s ease, box-shadow .2s ease;
+    transition: color .4s ease, transform .3s cubic-bezier(0.16, 1, 0.3, 1);
   }
-  .btn-submit:hover{ background:#2A3D35; border-color:#2A3D35; color:var(--paper); transform: translateY(-1px); }
-  .btn-submit:active{ transform: translateY(0) scale(0.99); }
-  @media (prefers-reduced-motion: reduce){ .btn-submit{ transition:none; } .btn-submit:hover, .btn-submit:active{ transform:none; } }
+  .btn-submit::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--paper);
+    transform: translateY(101%);
+    transition: transform .45s cubic-bezier(0.65, 0, 0.35, 1);
+    z-index: -1;
+  }
+  .btn-submit:hover::before{ transform: translateY(0); }
+  .btn-submit:hover{ color: var(--ink); transform: translateY(-2px); }
+  .btn-submit:active{ transform: translateY(0); }
+  @media (prefers-reduced-motion: reduce){ .btn-submit, .btn-submit::before{ transition:none; } .btn-submit:hover, .btn-submit:active{ transform:none; } }
   .btn-save-draft{
-    background: #fff;
-    border: 1.5px solid var(--ink-line);
+    position: relative;
+    background: transparent;
+    border: 1px solid var(--ink-line);
     color: var(--ink);
     font-weight: 600;
-    border-radius: 0.85rem;
-    padding: 12px 22px;
+    border-radius: 2px;
+    padding: 13px 22px;
+    overflow: hidden;
+    isolation: isolate;
+    transition: color .4s ease, border-color .3s ease;
   }
-  .btn-save-draft:hover{ border-color: var(--ink); background: var(--paper); }
+  .btn-save-draft::before{
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--ink);
+    transform: translateY(101%);
+    transition: transform .45s cubic-bezier(0.65, 0, 0.35, 1);
+    z-index: -1;
+  }
+  .btn-save-draft:hover::before{ transform: translateY(0); }
+  .btn-save-draft:hover{ color: var(--paper); border-color: var(--ink); }
  
   @media (max-width: 700px){
     .form-section{ padding: 24px 20px; }
@@ -330,7 +499,7 @@
     margin: 0 auto;
     background: #fff;
     border: 1px solid var(--ink-line);
-    border-radius: 18px;
+    border-radius: 3px;
     padding: 30px 32px;
     text-align: center;
   }
@@ -356,14 +525,16 @@
     margin-top: 18px;
     background: var(--ink);
     color: var(--paper);
-    border: none;
-    border-radius: 0.7rem;
+    border: 1px solid var(--ink);
+    border-radius: 2px;
     padding: 11px 24px;
     font-weight: 600;
     font-size: 0.9rem;
     cursor: pointer;
+    transition: opacity .2s ease, transform .2s ease;
   }
-  .reference-slip button:hover{ opacity: 0.88; }
+  .reference-slip button:hover{ opacity: 0.88; transform: translateY(-1px); }
+  @media (prefers-reduced-motion: reduce){ .reference-slip button{ transition:none; } .reference-slip button:hover{ transform:none; } }
 
   /*  print: only the reference slip itself should ever print, not the
       surrounding page (nav, form, banners, etc.)  */

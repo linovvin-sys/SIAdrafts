@@ -67,7 +67,7 @@ Vue.createApp({
         section_id:  ENROLL_META.section_id,
       });
       try {
-        const r = await fetch('/SIAdrafts/Backend/api/get_subjects.php?' + params);
+        const r = await fetch('/SIAdrafts/Backend/api/Curriculum/get_subjects.php?' + params);
         if (!r.ok) throw new Error('Server error ' + r.status);
         const d = await r.json();
         if (d.error) throw new Error(d.error);

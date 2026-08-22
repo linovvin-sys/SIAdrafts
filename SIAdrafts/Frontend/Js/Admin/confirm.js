@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* ===== Logout ===== */
-  document.querySelectorAll('a[href*="logout.php"]').forEach(function (link) {
+  document.querySelectorAll('a[href*="Auth/logout.php"]').forEach(function (link) {
     link.addEventListener('click', function (e) {
       e.preventDefault();
       const href = link.getAttribute('href');

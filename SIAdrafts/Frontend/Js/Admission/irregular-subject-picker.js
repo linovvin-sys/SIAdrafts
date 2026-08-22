@@ -99,7 +99,7 @@ if (document.getElementById('irregular-app')) {
             school_year: ENROLL_META.school_year,
             course_id:   ENROLL_META.course_id,
           });
-          const r = await fetch(`/SIAdrafts/Backend/api/get_available_schedules.php?${params}`);
+          const r = await fetch(`/SIAdrafts/Backend/api/Scheduling/get_available_schedules.php?${params}`);
           const d = await r.json();
           if (d.error) {
             this.loadError = d.error;

@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const result = await postJSON('save_subject.php', { course_id, subject_code, subject_name, units, category_id, year_level, semester });
+      const result = await postJSON('Curriculum/save_subject.php', { course_id, subject_code, subject_name, units, category_id, year_level, semester });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add subject', text: result.error });
         return;
@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
       previewBtn.disabled = true;
       previewBtn.textContent = 'Checking…';
       try {
-        const result = await uploadCsv('preview_curriculum_import.php');
+        const result = await uploadCsv('Curriculum/preview_curriculum_import.php');
         if (!result) return;
         if (result.error) {
           showImportStatus('error', result.error);
@@ -213,7 +213,7 @@ document.addEventListener('DOMContentLoaded', function () {
       confirmImportBtn.disabled = true;
       confirmImportBtn.textContent = 'Importing…';
       try {
-        const result = await uploadCsv('import_curriculum.php');
+        const result = await uploadCsv('Curriculum/import_curriculum.php');
         if (!result) { confirmImportBtn.disabled = false; confirmImportBtn.textContent = 'Confirm Import'; return; }
         if (result.error) {
           showImportStatus('error', result.error);

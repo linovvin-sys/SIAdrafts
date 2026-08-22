@@ -352,6 +352,106 @@ input:focus-visible,
   .sp-logout::before { transition: none; }
 }
 
+/* ---------- notification bell (fixed, top-right) ---------- */
+/* A floating element independent of the sidebar, mirroring its visual
+   language (rounded, blurred, shadow-float) -- the sidebar moved primary
+   nav to the left, so the top-right corner was otherwise empty on desktop. */
+
+.sp-notif-wrap {
+  position: fixed; top: 24px; right: 24px; z-index: 1050;
+}
+.sp-notif-bell {
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  width: 42px; height: 42px; border-radius: 50%;
+  background: rgba(247, 244, 236, 0.92);
+  backdrop-filter: blur(14px) saturate(160%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  border: 1px solid var(--line-200);
+  box-shadow: var(--shadow-float);
+  color: var(--slate-500);
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.1s ease;
+}
+.sp-notif-bell iconify-icon { font-size: 19px; transition: transform 0.2s var(--sp-ease); }
+.sp-notif-bell:hover { color: var(--accent-text); }
+.sp-notif-bell:active { transform: scale(0.94); }
+/* A brief, real reaction to genuinely new content arriving via polling --
+   not a decorative loop, it only plays once when the unread count grows. */
+.sp-notif-bell.is-ringing iconify-icon { animation: sp-bell-ring 0.5s var(--sp-ease); }
+@keyframes sp-bell-ring {
+  0%, 100% { transform: rotate(0); }
+  20% { transform: rotate(-14deg); }
+  40% { transform: rotate(11deg); }
+  60% { transform: rotate(-7deg); }
+  80% { transform: rotate(4deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-notif-bell.is-ringing iconify-icon { animation: none; }
+}
+
+.sp-notif-badge {
+  position: absolute; top: -2px; right: -2px;
+  min-width: 18px; height: 18px; padding: 0 4px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 999px;
+  background: var(--danger-600); color: #fff;
+  font-family: var(--font-mono); font-size: 10.5px; font-weight: 700;
+  border: 2px solid var(--paper-100);
+}
+/* Author `display: flex` above otherwise wins over the browser's built-in
+   `[hidden] { display: none }` at equal specificity (author styles beat
+   user-agent styles regardless of source order) -- without this, setting
+   badge.hidden = true in JS silently did nothing and the count never
+   cleared. */
+.sp-notif-badge[hidden] { display: none; }
+
+.sp-notif-panel {
+  position: absolute; top: calc(100% + 10px); right: 0;
+  width: 340px; max-width: calc(100vw - 32px);
+  max-height: 440px; overflow-y: auto;
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-lg);
+  box-shadow: var(--shadow-float);
+  padding: 18px;
+  /* Popovers scale from their trigger, not the viewport center -- this
+     opens from the bell, so top-right is the correct anchor, not center. */
+  transform-origin: top right;
+  opacity: 0; transform: scale(0.95) translateY(-6px);
+  transition: opacity 0.18s var(--sp-ease), transform 0.18s var(--sp-ease);
+  pointer-events: none;
+}
+.sp-notif-panel.is-open { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-notif-panel { transition: opacity 0.15s ease; transform: none; }
+}
+
+.sp-notif-panel-title {
+  font-family: var(--font-display); font-size: 15px; font-weight: 600;
+  color: var(--ink-950); margin: 0 0 12px;
+}
+.sp-notif-panel-list { display: flex; flex-direction: column; gap: 10px; }
+
+.sp-notif-item { padding: 12px 14px; border-radius: var(--sp-radius-sm); background: var(--paper-100); }
+.sp-notif-item.tint-1 { background: var(--accent-100); }
+.sp-notif-item.tint-2 { background: var(--info-100); }
+.sp-notif-item.tint-3 { background: var(--success-100); }
+.sp-notif-item.tint-4 { background: var(--danger-100); }
+.sp-notif-item-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 4px; }
+.sp-notif-item-subject {
+  font-family: var(--font-mono); font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.03em;
+  color: var(--ink-950); opacity: 0.7;
+}
+.sp-notif-item-time { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-950); opacity: 0.45; white-space: nowrap; }
+.sp-notif-item-title { font-size: 13px; font-weight: 600; color: var(--ink-950); margin: 0 0 3px; }
+.sp-notif-item-body { font-size: 12.5px; color: var(--ink-950); opacity: 0.75; line-height: 1.45; margin: 0; }
+
+@media (max-width: 860px) {
+  .sp-notif-wrap { top: calc(var(--sp-nav-h) + 12px); right: 16px; }
+}
+
 /* ---------- page shell ---------- */
 
 .sp-main {
@@ -729,6 +829,82 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
 .sp-legend-item { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--slate-500); }
 .sp-legend-swatch { width: 10px; height: 10px; border-radius: 3px; }
 
+/* ---------- announcements (student dashboard highlight) ---------- */
+/* A half-width card beside the stat grid, not a full-width band -- bigger
+   and more colorful than the old sidebar version, but still sharing the
+   row with other cards rather than dominating the whole page width.
+   Colored per-subject using the exact same tint assignment as the
+   schedule grid and Today card's upcoming chips, so the color is a real
+   signal (which class this is about), not decoration for its own sake. */
+
+.sp-dash-top {
+  display: grid;
+  grid-template-columns: minmax(0, 2.6fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+/* The stat-card column is now narrow enough that a rigid 2-per-row grid
+   would cramp each card -- auto-fit lets cards wrap to fewer per row (down
+   to one) instead, which is the "okay to put some cards under it" this
+   scoped to .sp-dash-top specifically since .sp-card-grid is also used
+   unscoped by the Professor dashboard, which shouldn't be affected. */
+.sp-dash-top .sp-card-grid {
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+}
+@media (max-width: 720px) {
+  .sp-dash-top { grid-template-columns: 1fr; }
+}
+
+.sp-announce-hero { margin-bottom: 0; display: flex; flex-direction: column; }
+/* Comfortably fits ~5 compact tiles before scrolling kicks in -- beyond
+   that, older announcements are still reachable, just not all visible at
+   once, instead of the old hard LIMIT 5 that silently dropped anything
+   past the 5 most recent. */
+.sp-announce-hero-list {
+  display: flex; flex-direction: column; gap: 12px;
+  max-height: 500px; overflow-y: auto;
+  margin-top: 4px; padding-right: 4px;
+}
+.sp-announce-tile {
+  padding: 18px 20px; border-radius: var(--sp-radius-lg);
+  background: var(--paper-100);
+  opacity: 0; transform: translateY(8px);
+  animation: sp-card-in 0.4s var(--sp-ease) forwards;
+}
+.sp-announce-tile:nth-child(1) { animation-delay: 0ms; }
+.sp-announce-tile:nth-child(2) { animation-delay: 60ms; }
+.sp-announce-tile:nth-child(3) { animation-delay: 120ms; }
+.sp-announce-tile:nth-child(4) { animation-delay: 180ms; }
+.sp-announce-tile:nth-child(5) { animation-delay: 240ms; }
+.sp-announce-tile.tint-1 { background: var(--accent-100); }
+.sp-announce-tile.tint-2 { background: var(--info-100); }
+.sp-announce-tile.tint-3 { background: var(--success-100); }
+.sp-announce-tile.tint-4 { background: var(--danger-100); }
+
+.sp-announce-tile-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 10px; }
+.sp-announce-tile-subject {
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  color: var(--ink-950); opacity: 0.65;
+}
+.sp-announce-tile.tint-1 .sp-announce-tile-subject { color: var(--accent-text); opacity: 1; }
+.sp-announce-tile.tint-2 .sp-announce-tile-subject { color: var(--info-600); opacity: 1; }
+.sp-announce-tile.tint-3 .sp-announce-tile-subject { color: var(--success-600); opacity: 1; }
+.sp-announce-tile.tint-4 .sp-announce-tile-subject { color: var(--danger-600); opacity: 1; }
+.sp-announce-tile-time { font-family: var(--font-mono); font-size: 11px; color: var(--ink-950); opacity: 0.45; white-space: nowrap; }
+
+.sp-announce-tile-title {
+  font-family: var(--font-display); font-size: 17px; font-weight: 500;
+  color: var(--ink-950); margin: 0 0 6px; line-height: 1.25;
+}
+.sp-announce-tile-body { font-size: 13px; color: var(--ink-950); opacity: 0.8; line-height: 1.5; margin: 0 0 8px; }
+.sp-announce-tile-from { font-size: 11.5px; color: var(--ink-950); opacity: 0.55; margin: 0; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-announce-tile { animation: none; opacity: 1; transform: none; }
+}
+
 /* ---------- recent activity ---------- */
 
 .sp-activity-list { list-style: none; margin: 0; padding: 0; }
@@ -1080,7 +1256,7 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-950);
   margin-bottom: 6px;
 }
-.sp-form-group input {
+.sp-form-group input, .sp-form-group textarea {
   width: 100%; padding: 11px 13px; border-radius: var(--sp-radius-sm);
   border: 1px solid var(--line-200); font-size: 14.5px;
   font-family: var(--font-ui); color: var(--ink-950);
@@ -1088,12 +1264,13 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   transition: border-color 0.15s ease, background 0.15s ease,
     box-shadow 0.2s var(--sp-ease), transform 0.2s var(--sp-ease);
 }
-.sp-form-group input:focus {
+.sp-form-group textarea { resize: vertical; min-height: 70px; }
+.sp-form-group input:focus, .sp-form-group textarea:focus {
   border-color: var(--accent-600); background: var(--paper-50);
   box-shadow: 0 0 0 4px var(--accent-100);
   transform: translateY(-1px);
 }
-.sp-form-group input:focus-visible {
+.sp-form-group input:focus-visible, .sp-form-group textarea:focus-visible {
   outline: 2px solid var(--accent-600); outline-offset: 2px;
 }
 

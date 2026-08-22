@@ -15,7 +15,7 @@
 
 require_once '../../../Backend/db.php';
 require_once '../../../Backend/requirements.php';
-require_once '../../../Backend/api/validation_rules.php';
+require_once '../../../Backend/api/Admission/validation_rules.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -57,7 +57,7 @@ include '../Admission/Include/header.php';
 
   <!-- TODO: confirm this matches the real route to online_admission_process.php
        (it lives under Backend/api/, this page lives under Frontend/.../Admission/Online/) -->
-  <form id="admissionForm" action="/SIAdrafts/Backend/api/online_admission_process.php" enctype="multipart/form-data" novalidate>
+  <form id="admissionForm" action="/SIAdrafts/Backend/api/Admission/online_admission_process.php" enctype="multipart/form-data" novalidate>
 
     <!-- Honeypot: real applicants never see or fill this in.
          Swap in a real CAPTCHA before this goes fully public. -->
@@ -74,7 +74,7 @@ include '../Admission/Include/header.php';
 
       <section class="form-section">
         <div class="section-head">
-          <span class="section-num">1</span>
+          <span class="section-num section-num--index">01</span>
           <div>
             <h2>Personal Information</h2>
             <p>Tell us a bit about yourself.</p>
@@ -140,7 +140,7 @@ include '../Admission/Include/header.php';
 
       <section class="form-section">
         <div class="section-head">
-          <span class="section-num">2</span>
+          <span class="section-num section-num--index">02</span>
           <div>
             <h2>Guardian Information</h2>
             <p>Whoever we should contact on your behalf.</p>
@@ -187,7 +187,7 @@ include '../Admission/Include/header.php';
 
       <section class="form-section">
         <div class="section-head">
-          <span class="section-num">3</span>
+          <span class="section-num section-num--index">03</span>
           <div>
             <h2>Program</h2>
             <p>What you'd like to take, and when you'd like to start.</p>
@@ -242,7 +242,7 @@ include '../Admission/Include/header.php';
 
       <section class="form-section">
         <div class="section-head">
-          <span class="section-num">4</span>
+          <span class="section-num section-num--index">04</span>
           <div>
             <h2>Academic History</h2>
             <p>Add at least one school you've attended.</p>
@@ -279,7 +279,7 @@ include '../Admission/Include/header.php';
 
       <section class="form-section">
         <div class="section-head">
-          <span class="section-num">5</span>
+          <span class="section-num section-num--index">05</span>
           <div>
             <h2>Requirements</h2>
             <p>Upload now if you have them ready, or mark them to bring at campus — nothing here blocks your application.</p>

@@ -63,7 +63,7 @@ function bindModalOpenClose() {
 
 async function loadSchedules() {
   try {
-    const r = await fetch(API_BASE + 'get_schedules.php?status=all');
+    const r = await fetch(API_BASE + 'Scheduling/get_schedules.php?status=all');
     rows = await r.json();
     if (!Array.isArray(rows)) rows = [];
   } catch (_) { rows = []; }
@@ -71,7 +71,7 @@ async function loadSchedules() {
 
 async function loadOptions() {
   try {
-    const r = await fetch(API_BASE + 'get_schedule_options.php');
+    const r = await fetch(API_BASE + 'Scheduling/get_schedule_options.php');
     const d = await r.json();
     options = {
       sections: d.sections || [],
@@ -398,7 +398,7 @@ async function deleteSchedules(ids) {
   const reason = confirm.value.trim();
 
   try {
-    const res = await fetch(API_BASE + 'delete_schedule.php', {
+    const res = await fetch(API_BASE + 'Scheduling/delete_schedule.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
       body: JSON.stringify({ ids, reason }),
@@ -438,7 +438,7 @@ async function submitSchedule() {
   }
 
   try {
-    const res = await fetch(API_BASE + 'save_schedule_registrar.php', {
+    const res = await fetch(API_BASE + 'Scheduling/save_schedule_registrar.php', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken() },
       body: JSON.stringify(payload),

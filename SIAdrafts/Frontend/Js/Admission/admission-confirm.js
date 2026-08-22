@@ -32,6 +32,8 @@ if (document.getElementById('confirm-app')) {
       creditedSubjectIds: [],
       authorizationNote: '',
       onlineRequirements: [],
+      previewDoc: null,
+      previewOrigin: '50% 50%',
     }),
     mounted() {
       const params = new URLSearchParams(window.location.search);
@@ -40,6 +42,10 @@ if (document.getElementById('confirm-app')) {
         this.referenceId = ref;
         this.search();
       }
+      window.addEventListener('keydown', this.onPreviewKeydown);
+    },
+    beforeUnmount() {
+      window.removeEventListener('keydown', this.onPreviewKeydown);
     },
     methods: {
       async search() {
@@ -49,13 +55,14 @@ if (document.getElementById('confirm-app')) {
         this.checkedDocs   = [];
         this.laterDocs     = [];
         this.onlineRequirements = [];
+        this.closePreview();
 
         const ref = this.referenceId.trim();
         if (!ref) return;
 
         this.searching = true;
         try {
-            const r = await fetch(`/SIAdrafts/Backend/api/get_applicant.php?reference_id=${encodeURIComponent(ref)}`);
+            const r = await fetch(`/SIAdrafts/Backend/api/Admission/get_applicant.php?reference_id=${encodeURIComponent(ref)}`);
             const d = await r.json();
             if (!r.ok || d.error) {
             this.lookupError = d.error || 'Could not find that reference ID.';
@@ -66,7 +73,7 @@ if (document.getElementById('confirm-app')) {
 
             if (this.applicant.applicant_type === 'Transferee') {
                 try {
-                    const cr = await fetch(`/SIAdrafts/Backend/api/get_creditable_subjects.php?reference_id=${encodeURIComponent(ref)}`);
+                    const cr = await fetch(`/SIAdrafts/Backend/api/Curriculum/get_creditable_subjects.php?reference_id=${encodeURIComponent(ref)}`);
                     const cd = await cr.json();
                     if (cd.error) {
                     console.warn('Could not load creditable subjects:', cd.error);
@@ -98,7 +105,27 @@ if (document.getElementById('confirm-app')) {
         return this.onlineRequirements.find(r => r.document_name === doc) || null;
       },
       documentViewUrl(record) {
-        return `/SIAdrafts/Backend/api/view_requirement_document.php?document_id=${record.document_id}`;
+        return `/SIAdrafts/Backend/api/Admission/view_requirement_document.php?document_id=${record.document_id}`;
+      },
+      isImageDoc(record) {
+        return /\.(jpe?g|png)$/i.test(record.file_path || '');
+      },
+
+      // Anchors the modal's scale-in to wherever the "View soft copy" badge
+      // sits, rather than always growing from the viewport center — it
+      // should look like the badge itself opened up.
+      openPreview(record, doc, evt) {
+        const rect = evt.currentTarget.getBoundingClientRect();
+        this.previewOrigin = `${rect.left + rect.width / 2}px ${rect.top + rect.height / 2}px`;
+        this.previewDoc = { ...record, label: doc };
+        document.body.style.overflow = 'hidden';
+      },
+      closePreview() {
+        this.previewDoc = null;
+        document.body.style.overflow = '';
+      },
+      onPreviewKeydown(evt) {
+        if (evt.key === 'Escape' && this.previewDoc) this.closePreview();
       },
 
       // Submitted and "to follow" are mutually exclusive per document.
@@ -145,7 +172,7 @@ if (document.getElementById('confirm-app')) {
           this.laterDocs.forEach(doc => body.append('docs_later[]', doc));
           this.creditedSubjectIds.forEach(sid => body.append('credited_subjects[]', sid));
 
-          const r = await fetch('/SIAdrafts/Backend/api/confirm_admission.php', {
+          const r = await fetch('/SIAdrafts/Backend/api/Admission/confirm_admission.php', {
             method: 'POST',
             body,
           });
@@ -186,7 +213,7 @@ if (document.getElementById('confirm-app')) {
           action: 'set',
           note: this.authorizationNote,
         });
-        const res = await fetch('/SIAdrafts/Backend/api/update_admission_authorization.php', { method: 'POST', body });
+        const res = await fetch('/SIAdrafts/Backend/api/Admission/update_admission_authorization.php', { method: 'POST', body });
         const data = await res.json();
         if (data.success) {
           this.applicant.authorization_note = this.authorizationNote;
@@ -202,7 +229,7 @@ if (document.getElementById('confirm-app')) {
           applicant_id: this.applicant.applicant_id,
           action: 'clear',
         });
-        const res = await fetch('/SIAdrafts/Backend/api/update_admission_authorization.php', { method: 'POST', body });
+        const res = await fetch('/SIAdrafts/Backend/api/Admission/update_admission_authorization.php', { method: 'POST', body });
         const data = await res.json();
         if (data.success) {
           this.applicant.cleared_at = new Date().toISOString();
@@ -216,7 +243,7 @@ if (document.getElementById('confirm-app')) {
           applicant_id: this.applicant.applicant_id,
           action: action,
         });
-        const res = await fetch('/SIAdrafts/Backend/api/update_duplicate_match.php', { method: 'POST', body });
+        const res = await fetch('/SIAdrafts/Backend/api/Admission/update_duplicate_match.php', { method: 'POST', body });
         const data = await res.json();
         if (data.success) {
           this.applicant.duplicate_match_status = action === 'confirm' ? 'confirmed' : 'dismissed';

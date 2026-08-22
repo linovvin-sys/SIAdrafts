@@ -59,18 +59,26 @@ function get_student_schedule(mysqli $conn, int $studentId): array
             );
             $stmt->bind_param('isi', $enrollment['section_id'], $enrollment['school_year'], $enrollment['semester']);
             $stmt->execute();
+            // A subject can meet more than once a week (lecture + lab, or two
+            // separate lecture blocks) -- collapsing to one row per subject_id
+            // silently dropped every session but the first (lowest schedule_id).
             $bySubject = [];
             foreach ($stmt->get_result()->fetch_all(MYSQLI_ASSOC) as $row) {
-                if (!isset($bySubject[$row['subject_id']])) $bySubject[$row['subject_id']] = $row;
+                $bySubject[$row['subject_id']][] = $row;
             }
             $stmt->close();
 
-            foreach ($subjects as &$sub) {
+            $expanded = [];
+            foreach ($subjects as $sub) {
                 if (empty($sub['day']) && isset($bySubject[$sub['subject_id']])) {
-                    $sub = array_merge($sub, array_intersect_key($bySubject[$sub['subject_id']], array_flip(['day', 'time_start', 'time_end', 'professor_name', 'room_name'])));
+                    foreach ($bySubject[$sub['subject_id']] as $occurrence) {
+                        $expanded[] = array_merge($sub, array_intersect_key($occurrence, array_flip(['day', 'time_start', 'time_end', 'professor_name', 'room_name'])));
+                    }
+                } else {
+                    $expanded[] = $sub;
                 }
             }
-            unset($sub);
+            $subjects = $expanded;
         }
     }
 

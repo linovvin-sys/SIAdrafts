@@ -58,7 +58,11 @@ function course_monogram(string $name): string {
   </div>
 
   <main id="top" class="e-hero">
-    <span class="e-eyebrow e-reveal" style="transition-delay:0ms">Admissions Open — SY 2026–2027</span>
+    <div class="e-folio e-reveal" style="transition-delay:0ms">
+      <span>Vol. 01 — Admissions Prospectus, SY 2026–2027</span>
+      <span class="e-folio-page">01</span>
+    </div>
+    <span class="e-eyebrow e-reveal" style="transition-delay:40ms">Admissions Open — SY 2026–2027</span>
     <h1 class="e-reveal" style="transition-delay:80ms">Begin your <em>education</em>, one form at a time.</h1>
     <p class="e-lede e-reveal" style="transition-delay:180ms">Fill out the online application in about ten minutes. We'll issue a reference number — bring it, along with your documents, when you visit us to complete enrollment.</p>
 
@@ -120,16 +124,18 @@ function course_monogram(string $name): string {
       <div class="e-heading-rule" data-rule></div>
       <p>Select a program below to begin the application with it pre-selected.</p>
     </div>
-    <div class="e-program-list">
+    <div class="e-program-index">
       <?php if (empty($courses)): ?>
         <p style="color:var(--ink-soft);">No programs currently open for enrollment.</p>
       <?php else: ?>
         <?php foreach ($courses as $i => $c): ?>
-          <div class="e-program-card e-reveal e-reveal--zoom" style="transition-delay:<?= $i * 70 ?>ms" onclick="openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
-            <div class="e-program-monogram"><?= htmlspecialchars(course_monogram($c['course_name'])) ?></div>
-            <div class="e-program-name"><?= htmlspecialchars($c['course_name']) ?></div>
-            <div class="e-program-meta"><?= (int)$c['total_units'] ?> Total Units</div>
-            <button type="button" class="e-program-apply" onclick="event.stopPropagation(); openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
+          <div class="e-index-row e-reveal e-reveal--right" style="transition-delay:<?= $i * 60 ?>ms" onclick="openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
+            <span class="e-index-num"><?= sprintf('%02d', $i + 1) ?></span>
+            <div class="e-index-body">
+              <div class="e-index-name"><?= htmlspecialchars($c['course_name']) ?></div>
+              <div class="e-index-tag"><?= htmlspecialchars(course_monogram($c['course_name'])) ?> · <?= (int)$c['total_units'] ?> Total Units</div>
+            </div>
+            <button type="button" class="e-index-apply" onclick="event.stopPropagation(); openApplyModal(<?= (int)$c['course_id'] ?>, '<?= htmlspecialchars(addslashes($c['course_name'])) ?>')">
               Apply <span class="e-arrow">→</span>
             </button>
           </div>
@@ -146,15 +152,15 @@ function course_monogram(string $name): string {
     </div>
     <!-- PLACEHOLDER: replace with real testimonials before this goes live -->
     <div class="e-quotes">
-      <blockquote class="e-quote e-reveal e-reveal--left" style="transition-delay:0ms">
+      <blockquote class="e-margin-note e-reveal e-reveal--left" style="transition-delay:0ms">
         <p>"The online form took less time than I expected, and I had my reference number right away."</p>
         <cite>— J. Mercado, BS Criminology, 1st Year</cite>
       </blockquote>
-      <blockquote class="e-quote e-reveal e-reveal--right" style="transition-delay:120ms">
+      <blockquote class="e-margin-note e-reveal e-reveal--left" style="transition-delay:100ms">
         <p>"Knowing the fee breakdown ahead of time meant no surprises when I got to Treasury."</p>
         <cite>— A. Reyes, Transferee</cite>
       </blockquote>
-      <blockquote class="e-quote e-reveal e-reveal--left" style="transition-delay:240ms">
+      <blockquote class="e-margin-note e-reveal e-reveal--left" style="transition-delay:200ms">
         <p>"Admissions staff walked me through document verification without any back-and-forth."</p>
         <cite>— K. Santos, Returning Student</cite>
       </blockquote>

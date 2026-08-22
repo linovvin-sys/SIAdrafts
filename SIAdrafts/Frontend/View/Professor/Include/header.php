@@ -62,7 +62,7 @@ $_tabs = [
         <div class="sp-nav-user-id"><?= $_professorDept ?></div>
       </div>
     </div>
-    <a class="sp-logout" href="/SIAdrafts/Backend/api/logout.php" title="Log out" aria-label="Log out">
+    <a class="sp-logout" href="/SIAdrafts/Backend/api/Auth/logout.php" title="Log out" aria-label="Log out">
       <iconify-icon icon="mdi:logout" style="font-size:16px;"></iconify-icon>
     </a>
   </div>

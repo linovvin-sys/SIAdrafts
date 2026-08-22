@@ -63,7 +63,7 @@ include '../Include/header.php';
         <span class="panel-title">Subjects</span>
         <?php if (!$isAdminViewer): ?>
         <div class="row-actions">
-          <a href="/SIAdrafts/Backend/api/curriculum_template.php" class="btn btn-outline">Download template</a>
+          <a href="/SIAdrafts/Backend/api/Curriculum/curriculum_template.php" class="btn btn-outline">Download template</a>
           <button type="button" class="btn btn-outline" data-open="importCurriculumModal">Import Curriculum (CSV)</button>
           <button type="button" class="btn btn-primary" data-open="addSubjectModal">+ Add Subject</button>
         </div>
@@ -210,7 +210,7 @@ include '../Include/header.php';
             <input type="file" id="curriculumCsvFile" class="form-input" accept=".csv,text/csv">
             <div class="text-muted" style="margin-top:6px;font-size:12px;">
               Columns: course_code, subject_code, subject_name, units, category_name, year_level, semester, prerequisite_code (optional).
-              <a href="/SIAdrafts/Backend/api/curriculum_template.php">Download a template</a>.
+              <a href="/SIAdrafts/Backend/api/Curriculum/curriculum_template.php">Download a template</a>.
             </div>
           </div>
 

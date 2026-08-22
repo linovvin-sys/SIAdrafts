@@ -23,7 +23,7 @@ if (loginForm) {
     loginErr.hidden   = true;
 
     try {
-      const r = await fetch('/SIAdrafts/Backend/api/login.php', {
+      const r = await fetch('/SIAdrafts/Backend/api/Auth/login.php', {
         method: 'POST',
         body:   new FormData(loginForm),
       });

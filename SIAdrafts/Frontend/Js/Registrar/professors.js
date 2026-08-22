@@ -77,12 +77,48 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const result = await postJSON('save_professor.php', { first_name, middle_name, last_name, department_id, email, username, password });
+      const result = await postJSON('Professors/save_professor.php', { first_name, middle_name, last_name, department_id, email, username, password });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add professor', text: result.error });
         return;
       }
       Swal.fire({ icon: 'success', title: result.message || 'Professor added', timer: 1500, showConfirmButton: false })
+        .then(() => location.reload());
+    });
+  }
+
+  // ----- Set Up / Reset Account -----
+  const accountModal = document.getElementById('accountProfessorModal');
+  document.querySelectorAll('[data-open-account]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.getElementById('accountProfessorId').value = btn.getAttribute('data-open-account');
+      document.getElementById('accountProfessorSubtitle').textContent = btn.getAttribute('data-account-name');
+      document.getElementById('accountProfessorEmail').value = '';
+      document.getElementById('accountProfessorUsername').value = '';
+      document.getElementById('accountProfessorPassword').value = '';
+      if (accountModal) openModal(accountModal);
+    });
+  });
+
+  const confirmAccountProfessor = document.getElementById('confirmAccountProfessor');
+  if (confirmAccountProfessor) {
+    confirmAccountProfessor.addEventListener('click', async () => {
+      const professor_id = document.getElementById('accountProfessorId').value;
+      const email    = document.getElementById('accountProfessorEmail').value.trim();
+      const username = document.getElementById('accountProfessorUsername').value.trim();
+      const password = document.getElementById('accountProfessorPassword').value;
+
+      if (!email || !username || !password) {
+        Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Email, username, and password are all required.' });
+        return;
+      }
+
+      const result = await postJSON('Professors/set_professor_account.php', { professor_id, email, username, password });
+      if (result.error) {
+        Swal.fire({ icon: 'error', title: 'Could not save account', text: result.error });
+        return;
+      }
+      Swal.fire({ icon: 'success', title: result.message || 'Account saved', timer: 1500, showConfirmButton: false })
         .then(() => location.reload());
     });
   }
@@ -103,7 +139,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
       if (!confirmResult.isConfirmed) return;
 
-      const result = await postJSON('update_professor_status.php', { professor_id, action });
+      const result = await postJSON('Professors/update_professor_status.php', { professor_id, action });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not update', text: result.error });
         return;

@@ -59,10 +59,23 @@ $_tabs = [
         <div class="sp-nav-user-id"><?= $_studentNo ?></div>
       </div>
     </div>
-    <a class="sp-logout" href="/SIAdrafts/Backend/api/student_logout.php" title="Log out" aria-label="Log out">
+    <a class="sp-logout" href="/SIAdrafts/Backend/api/Auth/student_logout.php" title="Log out" aria-label="Log out">
       <iconify-icon icon="mdi:logout" style="font-size:16px;"></iconify-icon>
     </a>
   </div>
 </nav>
+
+<div class="sp-notif-wrap">
+  <button type="button" class="sp-notif-bell" id="notifBell" aria-label="Notifications" aria-haspopup="true" aria-expanded="false">
+    <iconify-icon icon="mdi:bell-outline"></iconify-icon>
+    <span class="sp-notif-badge" id="notifBadge" hidden>0</span>
+  </button>
+  <div class="sp-notif-panel" id="notifPanel">
+    <p class="sp-notif-panel-title">Notifications</p>
+    <div class="sp-notif-panel-list" id="notifList">
+      <p class="sp-announce-empty">Loading…</p>
+    </div>
+  </div>
+</div>
 
 <main class="sp-main" id="sp-content">

@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       setLoading(saveEmailBtn, true, 'Save Email');
       try {
-        const result = await postJSON('update_professor_profile.php', { action: 'update_email', email });
+        const result = await postJSON('Professors/update_professor_profile.php', { action: 'update_email', email });
         if (result.error) {
           showError('emailError', 'emailErrorMsg', result.error);
           return;
@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       setLoading(changePasswordBtn, true, 'Change Password');
       try {
-        const result = await postJSON('update_professor_profile.php', { action: 'change_password', current_password, new_password });
+        const result = await postJSON('Professors/update_professor_profile.php', { action: 'change_password', current_password, new_password });
         if (result.error) {
           showError('pwError', 'pwErrorMsg', result.error);
           return;

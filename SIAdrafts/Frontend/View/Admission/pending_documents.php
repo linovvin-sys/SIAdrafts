@@ -195,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btn.disabled = true;
         btn.textContent = 'Saving…';
 
-        fetch('/SIAdrafts/Backend/api/mark_document_received.php', {
+        fetch('/SIAdrafts/Backend/api/Admission/mark_document_received.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': document.body.dataset.csrf || '' },
           body: new URLSearchParams({ document_id: documentId }),

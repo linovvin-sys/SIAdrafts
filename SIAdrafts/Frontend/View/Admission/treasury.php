@@ -135,7 +135,7 @@ function student_fullname_t(array $s): string {
       <div class="panel">
         <div class="panel-header">
           <span class="panel-title">Revenue by Course</span>
-          <a class="btn btn-outline" href="/SIAdrafts/Backend/api/export_revenue_csv.php">Export CSV</a>
+          <a class="btn btn-outline" href="/SIAdrafts/Backend/api/Treasury/export_revenue_csv.php">Export CSV</a>
         </div>
         <div class="panel-body" style="padding:0">
           <div class="table-responsive">

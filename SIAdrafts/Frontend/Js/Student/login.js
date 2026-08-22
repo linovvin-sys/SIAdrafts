@@ -36,7 +36,7 @@ form.addEventListener('submit', async (e) => {
   const body = new FormData(form);
 
   try {
-    const res = await fetch('/SIAdrafts/Backend/api/student_login.php', { method: 'POST', body });
+    const res = await fetch('/SIAdrafts/Backend/api/Auth/student_login.php', { method: 'POST', body });
     const data = await res.json();
     if (data.success) {
       window.location.href = data.redirect;

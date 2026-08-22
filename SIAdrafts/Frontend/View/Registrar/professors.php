@@ -85,6 +85,10 @@ include '../Include/header.php';
                     <td>
                       <?php if (!$isAdminViewer): ?>
                       <div class="row-actions">
+                        <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px"
+                          data-open-account="<?= (int)$row['professor_id'] ?>"
+                          data-account-name="<?= htmlspecialchars(professor_fullname($row)) ?>"
+                        ><?= $row['username'] ? 'Reset Account' : 'Set Up Account' ?></button>
                         <?php if ($row['status_name'] === 'Active'): ?>
                           <button type="button" class="btn btn-outline" style="padding:4px 10px;font-size:12px" data-toggle-professor="<?= (int)$row['professor_id'] ?>" data-toggle-action="deactivate">Deactivate</button>
                         <?php else: ?>
@@ -168,6 +172,43 @@ include '../Include/header.php';
         <div class="modal-footer">
           <button type="button" class="btn btn-outline" data-close="addProfessorModal">Cancel</button>
           <button type="button" class="btn btn-primary" id="confirmAddProfessor">Save Professor</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Set Up / Reset Professor Account Modal -->
+    <div id="accountProfessorModal" class="modal-overlay">
+      <div class="modal-box">
+        <div class="modal-header">
+          <div class="modal-header-left">
+            <div class="modal-icon">🔑</div>
+            <div>
+              <div class="modal-title">Portal Account</div>
+              <div class="modal-subtitle" id="accountProfessorSubtitle">Set up portal login</div>
+            </div>
+          </div>
+          <button type="button" class="modal-close" data-close="accountProfessorModal">✕</button>
+        </div>
+
+        <div class="modal-body">
+          <input type="hidden" id="accountProfessorId">
+          <div class="form-group">
+            <label class="form-label">Email<span class="required">*</span></label>
+            <input type="email" id="accountProfessorEmail" class="form-input" placeholder="professor@school.edu">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Username<span class="required">*</span></label>
+            <input type="text" id="accountProfessorUsername" class="form-input" placeholder="e.g. mreyes">
+          </div>
+          <div class="form-group">
+            <label class="form-label">Password<span class="required">*</span></label>
+            <input type="password" id="accountProfessorPassword" class="form-input" placeholder="Min. 8 characters" minlength="8">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline" data-close="accountProfessorModal">Cancel</button>
+          <button type="button" class="btn btn-primary" id="confirmAccountProfessor">Save Account</button>
         </div>
       </div>
     </div>

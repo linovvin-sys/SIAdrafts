@@ -22,7 +22,7 @@ Vue.createApp({
       this.error = null;
       this.saving = true;
       try {
-        const r = await fetch('/SIAdrafts/Backend/api/save_enrollment.php', {
+        const r = await fetch('/SIAdrafts/Backend/api/Enrollment/save_enrollment.php', {
           method:  'POST',
           headers: {
             'Content-Type': 'application/json',

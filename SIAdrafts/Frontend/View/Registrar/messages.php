@@ -7,7 +7,7 @@ require_once '../../../Backend/auth.php';
 require_once '../../../Backend/require_role.php';
 require_role(['Registrar Staff', 'Head Registrar', 'Admin']);
 require_once '../../../Backend/db.php';
-require_once '../../../Backend/api/can_message.php';
+require_once '../../../Backend/api/Messaging/can_message.php';
 
 $isAdminViewer = current_user_is(['Admin']);
 
