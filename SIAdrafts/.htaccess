@@ -1,0 +1,62 @@
+# Session cookie hardening. Set at the web-server level (not in PHP code)
+# because ~80 files call session_start() themselves at inconsistent points
+# in their includes — cookie params only take effect if set BEFORE
+# session_start() runs, so ini directives here (applied before any PHP
+# executes) are the only place that reliably covers every entry point.
+
+php_flag session.cookie_httponly On
+php_flag session.use_strict_mode On
+php_value session.cookie_samesite "Strict"
+
+# Idle-session backstop. This is probabilistic garbage collection, not a
+# deterministic cutoff — the real enforcement is the app-level idle-timeout
+# check in Backend/session_security.php (called from require_role.php /
+# require_student.php / require_professor.php on every protected request).
+# This just keeps stale session files from lingering on disk indefinitely.
+php_value session.gc_maxlifetime 1800
+
+# NOT setting session.cookie_secure here: this app is served over plain
+# HTTP in dev (XAMPP/localhost, no TLS configured — see the security audit,
+# "transport/security basics"). Forcing Secure would silently stop the
+# browser from ever sending the session cookie and break every login.
+# Uncomment this once the app is served over HTTPS:
+# php_flag session.cookie_secure On
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Clean URLs for Frontend/View/** pages only — these are the ones that
+# actually show up in the address bar. Backend/api/** and Backend/admin/**
+# stay untouched: nothing links to them directly, several are POST form/
+# fetch() targets, and a redirect there would risk being lossy for no
+# visible benefit (they never appear in a browser's address bar).
+#
+# No code changes needed elsewhere: every existing link/redirect still
+# points at *.php and keeps working — rule 1 just canonicalizes the
+# address bar to the clean URL after the fact.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /SIAdrafts/
+
+    # 1) A direct GET request for .../Frontend/View/something.php redirects
+    #    (301) to the extension-less URL. Matched against THE_REQUEST (the
+    #    client's original raw request line) rather than the current URI —
+    #    rule 2 below rewrites internally to *.php, which re-triggers this
+    #    whole ruleset from the top, and matching the current URI here
+    #    would then catch that internal rewrite and redirect it right back
+    #    to itself. THE_REQUEST is immune to internal rewrites, so this
+    #    only fires for what the browser actually asked for. GET-only so
+    #    POST bodies are never silently dropped by a redirect.
+    RewriteCond %{THE_REQUEST} ^GET\s+/SIAdrafts/Frontend/View/([^?\s]+)\.php[?\s]
+    RewriteRule ^ /SIAdrafts/Frontend/View/%1 [R=301,L]
+
+    # 2) Internally serve the matching .php file for the extension-less
+    #    URL, without changing what the browser shows.
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteCond %{REQUEST_FILENAME}.php -f
+    RewriteRule ^Frontend/View/(.+)$ Frontend/View/$1.php [L]
+</IfModule>

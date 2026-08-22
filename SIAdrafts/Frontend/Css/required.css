@@ -1,0 +1,7 @@
+/* Red asterisk marker appended to labels of required form fields. */
+.required-mark,
+.required {
+  color: #e03a3a;
+  margin-left: 2px;
+  font-weight: 700;
+}

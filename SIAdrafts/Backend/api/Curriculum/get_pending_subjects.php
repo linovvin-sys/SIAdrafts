@@ -11,7 +11,7 @@ if (empty($_SESSION['user_id'])) {
 }
 
 // Only the Head Registrar reviews the pending queue.
-require_role(['Head Registrar'], true);
+require_registrar_tier(REGISTRAR_TIER_HEAD, true);
 
 $db   = new Database();
 $conn = $db->connect();

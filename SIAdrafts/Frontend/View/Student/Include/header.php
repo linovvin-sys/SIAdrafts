@@ -30,6 +30,7 @@ $_tabs = [
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Student/student.css">
+<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/required.css">
 <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
 <body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">

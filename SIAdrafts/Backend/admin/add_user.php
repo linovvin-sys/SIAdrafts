@@ -10,7 +10,7 @@ if (empty($_SESSION['user_id'])) {
     exit('Unauthorized.');
 }
 
-require_role([ROLE_ADMIN], true);
+require_role([ROLE_ADMIN, ROLE_HEAD_REGISTRAR], true);
 
 // Included only after this file's own session/role checks have passed,
 // so generate_staff_id.php's own require_role() guard (kept for when it
@@ -50,6 +50,12 @@ if ($username === '')   $errors[] = 'Username is required.';
 if ($role_name === '')  $errors[] = 'Role is required.';
 if ($password === '' || strlen($password) < 8) {
     $errors[] = 'Password is required and must be at least 8 characters.';
+}
+
+// A Head Registrar may only create accounts within the staff branches
+// below them — never Admin or another Head Registrar.
+if (current_user_is([ROLE_HEAD_REGISTRAR]) && !in_array($role_name, ROLES_HEAD_REGISTRAR_MANAGEABLE, true)) {
+    $errors[] = 'You can only create Admission, Registrar Staff, Treasury, or Staff accounts.';
 }
 
 if (!empty($errors)) {

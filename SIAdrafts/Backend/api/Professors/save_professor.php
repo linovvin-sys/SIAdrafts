@@ -11,7 +11,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role(['Registrar Staff', 'Head Registrar', 'Admin'], true);
+require_min_role(role_level(ROLE_REGISTRAR_STAFF), true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

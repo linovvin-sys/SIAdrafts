@@ -10,7 +10,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role(['Registrar Staff', 'Head Registrar'], true);
+require_registrar_tier(REGISTRAR_TIER_STAFF, true);
 
 $db   = new Database();
 $conn = $db->connect();

@@ -27,6 +27,7 @@
 </dialog>
 
 <script src="/SIAdrafts/Frontend/Js/Student/shared.js"></script>
+<script src="/SIAdrafts/Frontend/Js/required-marker.js"></script>
 <?php if (!empty($pageScript)): ?>
 <script src="/SIAdrafts/Frontend/Js/Professor/<?= htmlspecialchars($pageScript, ENT_QUOTES) ?>.js"></script>
 <?php endif; ?>

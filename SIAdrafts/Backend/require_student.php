@@ -6,12 +6,21 @@
  * a student session must never be interchangeable with a staff one.
  */
 
+require_once __DIR__ . '/session_security.php';
+
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
 function require_student(bool $isApi = false): void
 {
+    // An expired session just clears $_SESSION here, so the "not logged
+    // in" branch right below catches it the same way it would an
+    // anonymous request — no separate expired-session response needed.
+    if (!empty($_SESSION['student_id'])) {
+        session_touch_or_expire();
+    }
+
     if (empty($_SESSION['student_id'])) {
         if ($isApi) {
             header('Content-Type: application/json');

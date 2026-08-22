@@ -128,6 +128,7 @@ return [
     ],
     'head registrar' => [
         ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php', 'icon' => 'dashboard'],
+        ['label' => 'Staff Accounts', 'page' => 'manage_user', 'url' => '/SIAdrafts/Frontend/View/Admin/manage_user.php', 'icon' => 'users'],
         [
             'group' => 'Admissions',
             'icon' => 'admission',

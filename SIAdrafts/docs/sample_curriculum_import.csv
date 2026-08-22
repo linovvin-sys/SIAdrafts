@@ -1,0 +1,6 @@
+course_code,subject_code,subject_name,units,category_name,year_level,semester,prerequisite_code
+BSIT,IT406,Mobile Application Development,3,IT,3,1,IT201
+BSIT,IT407,Cloud Computing Fundamentals,3,IT,3,2,IT406
+BSIT,IT408,Cybersecurity Fundamentals,3,IT,4,1,IT305
+BSIT,IT409,Machine Learning Fundamentals,3,IT,4,1,IT204
+BSIT,IT410,IT Elective 2,3,IT,4,2,IT409

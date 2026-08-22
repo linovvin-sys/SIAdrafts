@@ -11,7 +11,7 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role(['Head Registrar'], true);
+require_registrar_tier(REGISTRAR_TIER_HEAD, true);
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);

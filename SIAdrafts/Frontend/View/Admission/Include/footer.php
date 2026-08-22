@@ -5,6 +5,7 @@
   <script src="/SIAdrafts/Frontend/Js/Admission/main.js"></script>
   <script src="/SIAdrafts/Frontend/Js/Admission/login.js"></script>
    <script src="/SIAdrafts/Frontend/Js/Admission/confirm.js"></script>
+  <script src="/SIAdrafts/Frontend/Js/required-marker.js"></script>
 
   
 <?php foreach ($page_scripts as $_s): ?>
