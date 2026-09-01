@@ -29,6 +29,11 @@ $categories = $conn->query("SELECT category_id, category_name FROM subject_categ
 
 $db->close();
 
+$totalSubjects  = count($subjects);
+$totalSubjUnits = array_sum(array_column($subjects, 'units'));
+$categoryCount  = count($categories);
+$subjCoursesCovered = count(array_unique(array_filter(array_column($subjects, 'course_id'))));
+
 // Arrived via a "Manage subjects ->" link from a specific course — pre-select
 // that course in both the filter dropdown and the Add Subject modal.
 $lockedCourseId = 0;
@@ -80,6 +85,37 @@ include '../Include/header.php';
   <main class="page-content">
     <?php include '../Include/readonly_banner.php'; ?>
 
+    <div class="clay-stat-grid clay-stat-grid--compact">
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-journal-bookmark-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalSubjects ?></div>
+          <div class="stat-label">Total Subjects</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-mortarboard-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalSubjUnits ?></div>
+          <div class="stat-label">Total Units</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-tags-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $categoryCount ?></div>
+          <div class="stat-label">Categories</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-book-half"></i></div>
+        <div>
+          <div class="stat-value"><?= $subjCoursesCovered ?></div>
+          <div class="stat-label">Courses Covered</div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">Subjects</span>
@@ -92,7 +128,7 @@ include '../Include/header.php';
         <?php endif; ?>
       </div>
 
-      <div class="panel-body" style="padding:16px 24px 0;">
+      <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
         <div class="filter-bar">
           <input type="text" class="form-input" id="subjectSearch" placeholder="Search code, subject name, or course…">
           <div class="select-wrapper">

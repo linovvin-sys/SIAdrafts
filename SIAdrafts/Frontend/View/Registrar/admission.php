@@ -18,6 +18,35 @@ include '../Include/header.php';
     <main class="page-content">
         <?php include '../Include/readonly_banner.php'; ?>
 
+        <?php
+            $admTotal      = count($admissions);
+            $admFullyPaid  = count(array_filter($admissions, fn($a) => $a['status'] === 'Fully Paid'));
+            $admPending    = count(array_filter($admissions, fn($a) => $a['status'] === 'Pending'));
+        ?>
+        <div class="clay-stat-grid clay-stat-grid--compact">
+          <div class="clay-stat-card">
+            <div class="clay-icon"><i class="bi bi-person-check-fill"></i></div>
+            <div>
+              <div class="stat-value"><?= $admTotal ?></div>
+              <div class="stat-label">Total Records</div>
+            </div>
+          </div>
+          <div class="clay-stat-card">
+            <div class="seal"><i class="bi bi-check-lg"></i></div>
+            <div>
+              <div class="stat-value"><?= $admFullyPaid ?></div>
+              <div class="stat-label">Fully Paid</div>
+            </div>
+          </div>
+          <div class="clay-stat-card">
+            <div class="clay-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+              <div class="stat-value"><?= $admPending ?></div>
+              <div class="stat-label">Pending</div>
+            </div>
+          </div>
+        </div>
+
         <div class="panel">
 
             <div class="panel-header">
@@ -36,7 +65,7 @@ include '../Include/header.php';
                 krsort($admissionDateOptions);
             ?>
 
-            <div class="panel-body" style="padding:16px 24px 0;">
+            <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
                 <div class="filter-bar">
                     <div class="select-wrapper">
                         <select class="form-input form-select" id="admissionStatusFilter">

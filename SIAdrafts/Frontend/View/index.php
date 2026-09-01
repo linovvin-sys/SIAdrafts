@@ -29,7 +29,16 @@ function course_monogram(string $name): string {
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/editorial-theme.css">
+<?php
+// Cache-buster tied to the file's real last-modified time — every edit to
+// this stylesheet changes the URL automatically, so the browser is forced
+// to fetch the new version instead of serving a stale cached copy. This
+// class of "I changed the CSS but the page still looks old" bug has come
+// up repeatedly; this is the actual fix, not another reminder to hard-refresh.
+$themeCssPath = __DIR__ . '/../Css/editorial-theme.css';
+$themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
+?>
+<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/editorial-theme.css?v=<?= $themeCssVer ?>">
 </head>
 <body class="editorial-body">
 
@@ -200,7 +209,35 @@ function course_monogram(string $name): string {
           <span>Can I change my program after applying?</span>
           <span class="e-faq-mark">+</span>
         </button>
-        <div class="e-faq-body">Yes — let Admissions staff know when you come in for document verification, and they can update it before you're enlisted.</div>
+        <div class="e-faq-body">There's no self-service way to do this yet, even at the Admissions counter — it currently needs a manual correction on our end. Contact the Admissions office and they'll get it sorted.</div>
+      </div>
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:240ms">
+        <button type="button" class="e-faq-btn">
+          <span>What programs do you offer?</span>
+          <span class="e-faq-mark">+</span>
+        </button>
+        <div class="e-faq-body">See the Programs section above for the current list open for enrollment — it's kept up to date there directly.</div>
+      </div>
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:300ms">
+        <button type="button" class="e-faq-btn">
+          <span>How much is the tuition?</span>
+          <span class="e-faq-mark">+</span>
+        </button>
+        <div class="e-faq-body">Tuition varies by program and year level. Your exact fee breakdown is generated once your enrollment is confirmed — Treasury or Admissions can also walk you through it beforehand.</div>
+      </div>
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:360ms">
+        <button type="button" class="e-faq-btn">
+          <span>Can I apply in person instead of online?</span>
+          <span class="e-faq-mark">+</span>
+        </button>
+        <div class="e-faq-body">Yes — visit the Admissions counter and staff can take your application and documents in person, no online form required.</div>
+      </div>
+      <div class="e-faq-item e-reveal e-reveal--up-sm" style="transition-delay:420ms">
+        <button type="button" class="e-faq-btn">
+          <span>How do I check my application status?</span>
+          <span class="e-faq-mark">+</span>
+        </button>
+        <div class="e-faq-body">Visit or contact the Admissions office with your reference number. Your status updates to "verified" once document verification is complete.</div>
       </div>
     </div>
   </section>
@@ -226,6 +263,27 @@ function course_monogram(string $name): string {
     </div>
   </div>
 
+  <!-- FAQ chat widget -->
+  <button type="button" class="e-chat-toggle" id="chatToggle" aria-expanded="false" aria-controls="chatPanel" title="Ask a question">
+    <svg class="e-chat-chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <svg class="e-chat-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+  </button>
+
+  <div class="e-chat-panel" id="chatPanel" role="dialog" aria-label="Admissions FAQ chat">
+    <div class="e-chat-head">
+      <div class="e-chat-avatar" id="chatAvatar" aria-hidden="true">
+        <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+        <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+      </div>
+      <span class="e-chat-name">Dotty</span>
+    </div>
+    <div class="e-chat-log" id="chatLog"></div>
+    <form class="e-chat-form" id="chatForm">
+      <input type="text" class="e-chat-input" id="chatInput" placeholder="Type a question…" maxlength="500" autocomplete="off">
+      <button type="submit" class="e-chat-send" id="chatSend">Send</button>
+    </form>
+  </div>
+
   <script>
     function openApplyModal(courseId, courseName) {
       document.getElementById('applyModalTitle').textContent = 'Apply for ' + courseName + '?';
@@ -246,6 +304,203 @@ function course_monogram(string $name): string {
         btn.querySelector('.e-faq-mark').textContent = isOpen ? '−' : '+';
       });
     });
+
+    // FAQ chat widget — plain fetch to the server-side proxy, which holds
+    // the Gemini key and grounds every answer in the FAQ content below.
+    (function () {
+      var toggle = document.getElementById('chatToggle');
+      var panel  = document.getElementById('chatPanel');
+      var log    = document.getElementById('chatLog');
+      var form   = document.getElementById('chatForm');
+      var input  = document.getElementById('chatInput');
+      var send   = document.getElementById('chatSend');
+      var avatar = document.getElementById('chatAvatar');
+      var opened = false;
+      var sending = false;
+      var history = []; // {role: 'user'|'model', text: string} — errors are never added, only real turns
+
+      // Dotty reacts to what's actually happening instead of animating on a
+      // fixed loop regardless of context — eyes glance toward the input
+      // while you're typing (real signal: "I see you writing"), and a quick
+      // double-blink fires the instant a message sends, before the typing
+      // dots even appear.
+      input.addEventListener('input', function () {
+        avatar.classList.toggle('e-chat-avatar--attentive', input.value.length > 0);
+      });
+      input.addEventListener('blur', function () {
+        avatar.classList.remove('e-chat-avatar--attentive');
+      });
+      function avatarBlink(afterCb) {
+        // The burst animation (380ms, not infinite) overrides the idle loop
+        // by specificity while this class is present — remove it once it's
+        // done playing, or the idle blink would silently stop forever after
+        // the very first message. afterCb (optional) runs once it's done —
+        // used to sequence the send-blink before the thinking-drift starts,
+        // since both target the same element/property and would otherwise
+        // silently fight (equal specificity, one just wins by source order).
+        avatar.classList.remove('e-chat-avatar--blink');
+        void avatar.offsetWidth;
+        avatar.classList.add('e-chat-avatar--blink');
+        setTimeout(function () {
+          avatar.classList.remove('e-chat-avatar--blink');
+          if (afterCb) afterCb();
+        }, 400);
+      }
+
+      // A slower, more deliberate blink for when he's declining/unsure —
+      // distinct from the quick confident one above, so his face actually
+      // tracks what he's saying instead of reacting identically either way.
+      function avatarUnsure() {
+        avatar.classList.remove('e-chat-avatar--unsure');
+        void avatar.offsetWidth;
+        avatar.classList.add('e-chat-avatar--unsure');
+        setTimeout(function () { avatar.classList.remove('e-chat-avatar--unsure'); }, 700);
+      }
+      // Broad on purpose — the personality prompt varies his phrasing
+      // ("not sure", "doesn't mention", "reach out to Admissions"...), so a
+      // single exact string would miss most real declines. False positives
+      // here just mean an occasional confident answer gets the slower
+      // blink instead of the quick one — low stakes either way.
+      var DECLINE_PATTERN = /not sure|don'?t know|do not know|doesn'?t (mention|cover|say|list)|reach out|contact.{0,30}admissions/i;
+
+      // Idle micro-glances — a rare, small look to one side while the
+      // panel's just sitting open with nothing happening, so he reads as
+      // present rather than a static prop between messages. Paused
+      // whenever he's actively reacting to something real (typing,
+      // sending, thinking) so it never fights those states.
+      var idleGlanceTimer = null;
+      function scheduleIdleGlance() {
+        clearTimeout(idleGlanceTimer);
+        idleGlanceTimer = setTimeout(function () {
+          if (opened && !sending && input.value === '') {
+            var dir = Math.random() < 0.5 ? 'e-chat-avatar--glance-left' : 'e-chat-avatar--glance-right';
+            avatar.classList.add(dir);
+            setTimeout(function () { avatar.classList.remove(dir); }, 900);
+          }
+          scheduleIdleGlance();
+        }, 9000 + Math.random() * 6000);
+      }
+
+      // Same socket+eye structure as the header avatar, just smaller — one
+      // shared string so Dotty's face reads as the same character next to
+      // every reply, not just once at the top of the panel.
+      var MINI_AVATAR_HTML =
+        '<span class="e-chat-avatar-mini" aria-hidden="true">' +
+          '<span class="e-chat-socket"><span class="e-chat-eye"></span></span>' +
+          '<span class="e-chat-socket"><span class="e-chat-eye"></span></span>' +
+        '</span>';
+
+      function addMessage(text, kind) {
+        var msg = document.createElement('div');
+        msg.className = 'e-chat-msg e-chat-msg--' + kind;
+        msg.textContent = text;
+
+        // User's own messages don't get an avatar — only Dotty's replies
+        // (and the error state, since that's still "him" talking) do.
+        if (kind === 'user') {
+          msg.classList.add('e-chat-msg-in');
+          log.appendChild(msg);
+          log.scrollTop = log.scrollHeight;
+          return msg;
+        }
+
+        var row = document.createElement('div');
+        row.className = 'e-chat-row e-chat-msg-in';
+        row.innerHTML = MINI_AVATAR_HTML;
+        row.appendChild(msg);
+        log.appendChild(row);
+        log.scrollTop = log.scrollHeight;
+        return row;
+      }
+
+      function addTyping() {
+        var bubble = document.createElement('div');
+        bubble.className = 'e-chat-typing';
+        bubble.innerHTML = '<span></span><span></span><span></span>';
+
+        var row = document.createElement('div');
+        row.className = 'e-chat-row e-chat-msg-in';
+        row.innerHTML = MINI_AVATAR_HTML;
+        row.appendChild(bubble);
+        log.appendChild(row);
+        log.scrollTop = log.scrollHeight;
+        return row;
+      }
+
+      toggle.addEventListener('click', function () {
+        opened = !opened;
+        toggle.classList.toggle('open', opened);
+        toggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
+        panel.classList.toggle('open', opened);
+        if (opened) {
+          if (!log.children.length) {
+            addMessage("Hi, I'm Dotty! Ask me anything about applying or enrolling — I can help with the basics on this page.", 'bot');
+          }
+          input.focus();
+          scheduleIdleGlance();
+        } else {
+          clearTimeout(idleGlanceTimer);
+        }
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+        var message = input.value.trim();
+        if (!message || sending) return;
+
+        addMessage(message, 'user');
+        input.value = '';
+        input.classList.remove('e-chat-sent');
+        void input.offsetWidth; // restart the animation if fired again before it finished
+        input.classList.add('e-chat-sent');
+        avatar.classList.remove('e-chat-avatar--attentive');
+        sending = true;
+        avatarBlink(function () {
+          // Guard: the response may have already arrived (and cleared
+          // `sending`) before this 400ms delay elapses on a fast network —
+          // don't turn "thinking" back on after the fact if so.
+          if (sending) avatar.classList.add('e-chat-avatar--thinking');
+        });
+        send.disabled = true;
+        var typing = addTyping();
+
+        fetch('/SIAdrafts/Backend/api/Chat/ask_faq.php', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: message, history: history }),
+        })
+          .then(function (res) { return res.json(); })
+          .then(function (data) {
+            typing.remove();
+            if (data.error) {
+              // A failed turn isn't added to history — nothing for Gemini
+              // to have "said", so there's nothing to remember here.
+              addMessage(data.error, 'error');
+              avatarUnsure();
+            } else {
+              addMessage(data.reply, 'bot');
+              history.push({ role: 'user', text: message });
+              history.push({ role: 'model', text: data.reply });
+              // His face tracks what he actually said, not just that he
+              // said something — a decline gets the slower, deliberate
+              // reaction, a real answer gets the quick confident one.
+              if (DECLINE_PATTERN.test(data.reply)) avatarUnsure();
+              else avatarBlink();
+            }
+          })
+          .catch(function () {
+            typing.remove();
+            addMessage("Hmm, I lost my train of thought there. Mind trying that again?", 'error');
+            avatarUnsure();
+          })
+          .finally(function () {
+            sending = false;
+            send.disabled = false;
+            avatar.classList.remove('e-chat-avatar--thinking');
+            scheduleIdleGlance();
+          });
+      });
+    })();
 
     // Signature device: self-drawing rule beneath each section heading,
     // fires once as the heading scrolls into view. Defaults to fully

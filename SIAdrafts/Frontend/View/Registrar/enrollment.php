@@ -78,7 +78,7 @@ include '../Include/header.php';
                 }
             ?>
 
-            <div class="panel-body" style="padding:16px 24px 0;">
+            <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
                 <div class="filter-bar">
                     <div class="select-wrapper">
                         <select class="form-input form-select" id="enrollmentStatusFilter">

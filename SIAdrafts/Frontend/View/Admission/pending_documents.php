@@ -47,6 +47,15 @@ $db->close();
 
 $totalDocs = array_sum(array_map(fn($s) => count($s['documents']), $pending));
 
+$oldestDays = 0;
+foreach ($pending as $s) {
+    foreach ($s['documents'] as $d) {
+        if (empty($d['uploaded_at'])) continue;
+        $days = (int)floor((time() - strtotime($d['uploaded_at'])) / 86400);
+        if ($days > $oldestDays) $oldestDays = $days;
+    }
+}
+
 include '../Include/header.php';
 ?>
 
@@ -57,15 +66,38 @@ include '../Include/header.php';
     <main class="page-content">
         <?php include '../Include/readonly_banner.php'; ?>
 
+        <div class="clay-stat-grid clay-stat-grid--compact">
+          <div class="clay-stat-card">
+            <div class="clay-icon"><i class="bi bi-person-fill-exclamation"></i></div>
+            <div>
+              <div class="stat-value"><?= count($pending) ?></div>
+              <div class="stat-label">Applicants Owing</div>
+            </div>
+          </div>
+          <div class="clay-stat-card">
+            <div class="clay-icon"><i class="bi bi-file-earmark-text-fill"></i></div>
+            <div>
+              <div class="stat-value"><?= $totalDocs ?></div>
+              <div class="stat-label">Documents Outstanding</div>
+            </div>
+          </div>
+          <div class="clay-stat-card">
+            <div class="clay-icon"><i class="bi bi-hourglass-split"></i></div>
+            <div>
+              <div class="stat-value"><?= $oldestDays ?></div>
+              <div class="stat-label">Oldest (Days)</div>
+            </div>
+          </div>
+        </div>
+
         <div class="panel">
 
             <div class="panel-header">
                 <span class="panel-title">Pending Documents</span>
-                <span class="text-muted" style="font-size:12px;"><?= count($pending) ?> student<?= count($pending) === 1 ? '' : 's' ?> &middot; <?= $totalDocs ?> document<?= $totalDocs === 1 ? '' : 's' ?> outstanding</span>
             </div>
 
             <?php if (!empty($pending)): ?>
-            <div class="panel-body" style="padding:16px 24px 0;">
+            <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
                 <div class="filter-bar">
                     <input type="text" class="form-input" id="pendingDocsSearch" placeholder="Search reference ID, name, or program…">
                 </div>

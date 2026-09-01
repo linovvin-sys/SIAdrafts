@@ -69,14 +69,22 @@
      student.css calls --sp-ease. --transition above is intentionally weak
      for small hover tweaks (nav items, buttons); cards need the punch. */
   --rd-ease: cubic-bezier(0.23, 1, 0.32, 1);
-  /* soft layered elevation, same language as the landing page's card
-     hover (`0 16px 32px -20px rgba(31,46,40,...)`) at resting strength */
-  --shadow: 0 1px 2px rgba(31, 46, 40, 0.05), 0 8px 24px -18px rgba(31, 46, 40, 0.16);
-  --shadow-lift: 0 16px 32px -20px rgba(31, 46, 40, 0.35);
-  /* Rounder than the original 6px — matches Student's card language
-     (--sp-radius-lg: 14px) so panels/stat-cards read as the same family
-     instead of visibly tighter/older. */
-  --radius: 16px;
+  /* Ledger, not dashboard: separation between surfaces comes from a real
+     hairline border, the way a printed register or form uses a ruled
+     line — not a soft floating shadow, which is the one visual habit
+     every generic AI-generated admin dashboard shares regardless of its
+     color palette. --shadow is kept only for things that are genuinely
+     overlays (modals) and need real elevation above the page; --shadow-lift
+     is gone — nothing here should look like it lifts off the page on hover. */
+  --shadow: 0 1px 2px rgba(31, 46, 40, 0.06), 0 1px 0 rgba(31, 46, 40, 0.04);
+  --shadow-lift: 0 12px 28px -16px rgba(31, 46, 40, 0.3);
+  --shadow-overlay: 0 24px 48px -20px rgba(31, 46, 40, 0.35);
+  /* Back to a tight, structural corner — the 16px "rounder to match
+     Student's card language" choice was exactly the generic-dashboard
+     tell (see .panel/.stat-card below); a ledger's corners are square-ish,
+     not pillowy. */
+  --radius: 6px;
+  --radius-tight: 3px;
 
   /* ---- Registrar's Desk-era token names, aliased so every screen
      built in that pass (stamps, role badges, avatar tints, focus rings)
@@ -161,6 +169,15 @@
 
     --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -18px rgba(0, 0, 0, 0.55);
     --shadow-lift: 0 16px 32px -20px rgba(0, 0, 0, 0.65);
+
+    /* Clay in dark mode: surfaces read as raised by being LIGHTER than the
+       page (opposite of light mode's white-on-off-white), since there's no
+       bright light source to bounce a white highlight off of. Both values
+       reused from the existing dark palette above, not invented fresh. */
+    --clay-page: #1C2320;
+    --clay-surface: #242E29;
+    --clay-shadow-dark: rgba(0, 0, 0, 0.5);
+    --clay-shadow-light: rgba(255, 255, 255, 0.045);
     color-scheme: dark;
   }
 }
@@ -192,6 +209,11 @@
 
   --shadow: 0 1px 2px rgba(0, 0, 0, 0.35), 0 8px 24px -18px rgba(0, 0, 0, 0.55);
   --shadow-lift: 0 16px 32px -20px rgba(0, 0, 0, 0.65);
+
+  --clay-page: #1C2320;
+  --clay-surface: #242E29;
+  --clay-shadow-dark: rgba(0, 0, 0, 0.5);
+  --clay-shadow-light: rgba(255, 255, 255, 0.045);
   color-scheme: dark;
 }
 :root[data-theme="light"] {
@@ -209,7 +231,11 @@ html, body {
   height: 100%;
   font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
   font-size: 15px;
-  background: var(--cream);
+  /* Clay direction, app-wide (approved on Admin Dashboard, now rolled out
+     everywhere except Student/Professor, which have their own stylesheets
+     entirely). --clay-page is a hair off pure white, not khaki — it exists
+     only so the clay shadow pairs below have a surface to read against. */
+  background: var(--clay-page, var(--paper-50));
   color: var(--navy);
   line-height: 1.5;
 }
@@ -590,17 +616,25 @@ a {
   display: block;
   text-decoration: none;
   color: inherit;
-  border-radius: 22px;
-  padding: 22px 26px;
+  border-radius: var(--clay-radius, var(--radius));
+  padding: 20px 26px;
   margin-bottom: 24px;
-  box-shadow: var(--shadow);
-  transition: transform 0.2s var(--rd-ease), box-shadow 0.2s var(--rd-ease);
+  background: var(--clay-surface, var(--white));
+  box-shadow: 8px 8px 18px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              -6px -6px 16px var(--clay-shadow-light, rgba(255,255,255,0.85));
+  transition: transform 160ms var(--rd-ease), box-shadow 160ms var(--rd-ease);
 }
-.rd-hero:hover { transform: translateY(-4px); box-shadow: var(--shadow-lift); }
-.rd-hero:active { transform: translateY(-1px) scale(0.995); }
+.rd-hero:hover { transform: translateY(-2px); }
+.rd-hero:active {
+  transform: scale(0.99);
+  box-shadow: inset 4px 4px 8px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              inset -3px -3px 7px var(--clay-shadow-light, rgba(255,255,255,0.85));
+}
 .rd-hero--attention {
-  background: linear-gradient(135deg, var(--accent-100), var(--paper-50) 70%);
-  border: 1px solid var(--accent-100);
+  background: var(--accent-100);
+}
+@media (prefers-reduced-motion: reduce) {
+  .rd-hero { transition: none; }
 }
 .rd-hero-status { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
 .rd-hero-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-600); flex-shrink: 0; }
@@ -702,47 +736,61 @@ a {
    wrapper div with value+label) — this is a pure layout-direction
    change: row → column. */
 .stat-card {
-  background: var(--white);
-  border: 1px solid var(--line-200);
-  border-radius: 22px;
-  padding: 22px;
-  box-shadow: var(--shadow);
+  background: var(--clay-surface, var(--white));
+  border-radius: var(--clay-radius, var(--radius));
+  padding: 20px 22px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  transition: transform 0.2s var(--rd-ease), box-shadow 0.2s var(--rd-ease);
+  box-shadow: 6px 6px 14px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              -5px -5px 12px var(--clay-shadow-light, rgba(255,255,255,0.85));
+  transition: transform 160ms var(--rd-ease), box-shadow 160ms var(--rd-ease);
 }
 
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lift);
-}
 .stat-card:active {
-  transform: translateY(-2px) scale(0.98);
+  transform: scale(0.98);
+  box-shadow: inset 4px 4px 8px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              inset -3px -3px 7px var(--clay-shadow-light, rgba(255,255,255,0.85));
 }
 
 .rd-stat-card {
-  border-radius: 22px;
-  transition: transform 0.2s var(--rd-ease), box-shadow 0.2s var(--rd-ease);
-}
-.rd-stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--shadow-lift);
+  border-radius: var(--clay-radius, var(--radius));
+  background: var(--clay-surface, var(--white));
+  box-shadow: 6px 6px 14px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              -5px -5px 12px var(--clay-shadow-light, rgba(255,255,255,0.85));
+  transition: transform 160ms var(--rd-ease), box-shadow 160ms var(--rd-ease);
 }
 .rd-stat-card:active {
-  transform: translateY(-2px) scale(0.98);
+  transform: scale(0.98);
+  box-shadow: inset 4px 4px 8px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              inset -3px -3px 7px var(--clay-shadow-light, rgba(255,255,255,0.85));
+}
+@media (prefers-reduced-motion: reduce) {
+  .stat-card, .rd-stat-card { transition: none; }
 }
 
+/* One mark, not five colors. A rainbow of pastel icon chips (gold/blue/
+   green/purple/coral, one per card) was the other half of the generic-
+   dashboard tell alongside the floating shadow cards — color-coding stats
+   that have no actual semantic relationship to each other. Every variant
+   now renders the same restrained bordered tile; the class names
+   (.gold/.blue/etc.) are kept as-is so no page's markup needs touching,
+   only what they render as changes. .seal (see below) remains the one
+   deliberate exception, reserved for "signed off" figures specifically. */
 .stat-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 12px;
+  width: 40px;
+  height: 40px;
+  border-radius: var(--clay-radius-tight, var(--radius-tight));
+  background: var(--clay-surface, var(--paper-100));
+  color: var(--accent-600);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 17px;
   flex-shrink: 0;
   margin-bottom: 14px;
+  box-shadow: 4px 4px 9px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              -3px -3px 8px var(--clay-shadow-light, rgba(255,255,255,0.85));
 }
 
 .stat-icon svg {
@@ -750,11 +798,14 @@ a {
   height: 18px;
 }
 
-.stat-icon.gold   { background: var(--amber-tint); color: var(--amber-tint-text); }
-.stat-icon.blue   { background: var(--status-blue-tint); color: var(--status-blue-tint-text); }
-.stat-icon.green  { background: var(--teal-tint); color: var(--teal-tint-text); }
-.stat-icon.purple { background: rgba(27,35,64,0.1); color: var(--navy); }
-.stat-icon.coral  { background: var(--coral-tint); color: var(--coral-tint-text); }
+.stat-icon.gold,
+.stat-icon.blue,
+.stat-icon.green,
+.stat-icon.purple,
+.stat-icon.coral {
+  background: var(--clay-surface, var(--paper-100));
+  color: var(--accent-600);
+}
 
 .stat-value {
   font-family: var(--font-mono);
@@ -875,11 +926,11 @@ a {
 
 /* ===== PANELS / CARDS ===== */
 .panel {
-  background: var(--white);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  border: 1px solid rgba(0,0,0,0.04);
+  background: var(--clay-surface, var(--white));
+  border-radius: var(--clay-radius, var(--radius));
   overflow: hidden;
+  box-shadow: 8px 8px 18px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              -6px -6px 16px var(--clay-shadow-light, rgba(255,255,255,0.85));
 }
 
 /* Vertical rhythm for pages that stack several .panel sections directly
@@ -1783,6 +1834,140 @@ select option {
 .stamp.honor { --dotc: var(--gold-600); }
 @media (prefers-reduced-motion: reduce) { .stamp::before { transition: none; } }
 
+/* The seal — this system's one signature mark, standing in for the
+   rainbow of pastel icon-chips a generic dashboard would use instead.
+   A stamped double-ring circle in the single accent green, reserved for
+   moments that are genuinely official: verified, approved, confirmed.
+   Not a decoration — use it only where something has actually been
+   signed off on, the way a real registrar's stamp would be. Now raised
+   (clay treatment) to match .clay-stat-card below, instead of the flat
+   ring from the earlier ledger pass. */
+.seal {
+  width: 42px; height: 42px;
+  border-radius: 50%;
+  background: var(--clay-surface, #fff);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  color: var(--accent-600);
+  font-size: 17px;
+  margin-bottom: 12px;
+  box-shadow: 4px 4px 9px var(--clay-shadow-dark, rgba(31,46,40,0.15)),
+              -3px -3px 8px var(--clay-shadow-light, rgba(255,255,255,0.85));
+}
+.seal::before {
+  content: '';
+  position: absolute; inset: 5px;
+  border-radius: 50%;
+  border: 1.5px solid var(--accent-600);
+  opacity: 0.55;
+}
+
+/* ===================================================================
+   CLAY COMPONENTS — scoped, deliberately not a redefinition of .panel/
+   .stat-card/.rd-hero (those still serve every other page unchanged).
+   Proving ground: Admin Dashboard only, per the agreed rollout plan —
+   swap other pages onto these classes only after this one is approved.
+   Tokens mirror the FAQ chat widget's already-approved clay values
+   (editorial-theme.css --clay-*) so the whole product shares one
+   material language, not two competing ones.
+   =================================================================== */
+:root {
+  --clay-page: #F8F9F7;
+  --clay-surface: #FFFFFF;
+  --clay-shadow-dark: rgba(31, 46, 40, 0.15);
+  --clay-shadow-light: rgba(255, 255, 255, 0.85);
+  --clay-radius: 20px;
+  --clay-radius-tight: 10px;
+}
+
+/* margin cancels .page-content's own 32px padding, then this padding
+   replaces it at a larger value — net effect: more breathing room on
+   this page specifically, without changing .page-content globally. */
+.clay-page-bg { background: var(--clay-page); margin: -32px; padding: 48px; }
+
+.clay-stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 26px; margin-bottom: 40px; }
+
+/* Compact variant for table pages — the "opening moment" before a data
+   table, not a full dashboard. Smaller tiles, smaller gap, less margin
+   below since a .panel follows directly, not another section. */
+.clay-stat-grid--compact { gap: 18px; margin-bottom: 22px; }
+.clay-stat-grid--compact .clay-stat-card { padding: 14px 16px; }
+.clay-stat-grid--compact .clay-icon,
+.clay-stat-grid--compact .seal { width: 32px; height: 32px; font-size: 14px; margin-bottom: 8px; }
+.clay-stat-grid--compact .stat-value { font-size: 20px; }
+.clay-stat-grid--compact .stat-label { font-size: 11.5px; }
+
+/* Scoped inset ("pressed in") treatment for search/filter inputs — the
+   opposite shadow direction from the raised cards above, same clay
+   material read as physically recessed. Scoped to .clay-filter-bar only:
+   .form-input/.form-select are used everywhere (every modal, every form),
+   so this must never leak into contexts that aren't a page-level filter
+   bar. !important matches the specificity fight the base .form-input
+   rule already commits to. */
+.clay-filter-bar .form-input,
+.clay-filter-bar .form-select {
+  border: none !important;
+  background: var(--clay-page) !important;
+  box-shadow: inset 3px 3px 7px var(--clay-shadow-dark),
+              inset -3px -3px 7px var(--clay-shadow-light) !important;
+}
+.clay-filter-bar .form-input:focus,
+.clay-filter-bar .form-select:focus {
+  outline: 2px solid var(--accent-600);
+  outline-offset: 1px;
+}
+
+.clay-stat-card {
+  background: var(--clay-surface);
+  border-radius: var(--clay-radius);
+  padding: 22px;
+  display: flex; flex-direction: column; align-items: flex-start;
+  box-shadow: 6px 6px 14px var(--clay-shadow-dark), -5px -5px 12px var(--clay-shadow-light);
+  transition: transform 160ms var(--rd-ease), box-shadow 160ms var(--rd-ease);
+}
+.clay-stat-card:active {
+  transform: scale(0.98);
+  box-shadow: inset 4px 4px 8px var(--clay-shadow-dark), inset -3px -3px 7px var(--clay-shadow-light);
+}
+
+.clay-icon {
+  width: 40px; height: 40px;
+  border-radius: var(--clay-radius-tight);
+  background: var(--clay-surface);
+  color: var(--accent-600);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 17px;
+  margin-bottom: 14px;
+  box-shadow: 4px 4px 9px var(--clay-shadow-dark), -3px -3px 8px var(--clay-shadow-light);
+}
+
+.clay-panel {
+  background: var(--clay-surface);
+  border-radius: var(--clay-radius);
+  overflow: hidden;
+  box-shadow: 8px 8px 18px var(--clay-shadow-dark), -6px -6px 16px var(--clay-shadow-light);
+}
+.clay-panel .panel-header { border-bottom: 1px solid var(--line-200); }
+
+.clay-hero {
+  display: block;
+  border-radius: var(--clay-radius);
+  padding: 22px 26px;
+  margin-bottom: 24px;
+  background: var(--clay-surface);
+  box-shadow: 8px 8px 18px var(--clay-shadow-dark), -6px -6px 16px var(--clay-shadow-light);
+}
+
+/* Row-level elements stay flat by design — this is the ration rule
+   from the prompt: puffy shadows on every one of 50 table rows is the
+   failure mode, not the goal. Hover gets a tint only, no shadow pair. */
+.clay-flat-row:hover { background: var(--accent-100); }
+
+@media (prefers-reduced-motion: reduce) {
+  .clay-stat-card { transition: none; }
+}
+
 /* ledger rows — the shared list pattern (Dashboard activity, Admissions,
    Enrollment lookups, Treasury table, roster, Manage User, Notifications,
    Approvals) */
@@ -1920,9 +2105,9 @@ select option {
 .subject-card,
 .e-program-card { cursor: pointer; }
 
-/* panels get the resting elevation token (they had a hardcoded value
-   from before the shadow system existed) */
-.panel { box-shadow: var(--shadow); }
+/* Panels get their real clay shadow from the base .panel rule now (see
+   above) — the flat/ledger direction this comment used to describe was
+   superseded by the clay direction. */
 
 /* motion discipline: one broad gate for everything animated above */
 @media (prefers-reduced-motion: reduce) {

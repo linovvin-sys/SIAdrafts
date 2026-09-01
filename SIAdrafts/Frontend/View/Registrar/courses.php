@@ -20,6 +20,11 @@ $courses = $conn->query("
 
 $db->close();
 
+$totalCourses  = count($courses);
+$approvedCount = count(array_filter($courses, fn($c) => $c['status'] === 'Approved'));
+$totalUnits    = array_sum(array_column($courses, 'total_units'));
+$totalSubjects = array_sum(array_column($courses, 'subject_count'));
+
 $isHead        = current_user_is(['Head Registrar']);
 $isAdminViewer = current_user_is(['Admin']);
 
@@ -33,6 +38,37 @@ include '../Include/header.php';
   <main class="page-content">
     <?php include '../Include/readonly_banner.php'; ?>
 
+    <div class="clay-stat-grid clay-stat-grid--compact">
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-book-half"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalCourses ?></div>
+          <div class="stat-label">Total Courses</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="seal"><i class="bi bi-check-lg"></i></div>
+        <div>
+          <div class="stat-value"><?= $approvedCount ?></div>
+          <div class="stat-label">Approved</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-mortarboard-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalUnits ?></div>
+          <div class="stat-label">Total Units</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-journal-bookmark-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalSubjects ?></div>
+          <div class="stat-label">Subjects Mapped</div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">Courses</span>
@@ -41,7 +77,7 @@ include '../Include/header.php';
         <?php endif; ?>
       </div>
 
-      <div class="panel-body" style="padding:16px 24px 0;">
+      <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
         <div class="filter-bar">
           <input type="text" class="form-input" id="courseSearch" placeholder="Search code or course name…">
           <div class="select-wrapper">

@@ -41,7 +41,7 @@ include '../Include/header.php';
         <span class="panel-title">Student Accounts</span>
       </div>
 
-      <div class="panel-body" style="padding:16px 24px 0;">
+      <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
         <div class="filter-bar">
           <input type="text" class="form-input" id="studentAccountSearch" placeholder="Search name or student number…">
         </div>
