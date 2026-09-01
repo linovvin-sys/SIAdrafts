@@ -31,6 +31,11 @@ $departments = $conn->query("
 
 $db->close();
 
+$totalProfessors = count($professors);
+$activeCount     = count(array_filter($professors, fn($p) => $p['status_name'] === 'Active'));
+$withAccount     = count(array_filter($professors, fn($p) => !empty($p['username'])));
+$departmentCount = count($departments);
+
 function professor_fullname(array $p): string {
     $middle = !empty($p['middle_name']) ? ' ' . mb_substr($p['middle_name'], 0, 1) . '.' : '';
     return $p['last_name'] . ', ' . $p['first_name'] . $middle;
@@ -46,6 +51,37 @@ include '../Include/header.php';
   <main class="page-content">
     <?php include '../Include/readonly_banner.php'; ?>
 
+    <div class="clay-stat-grid clay-stat-grid--compact">
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-person-video3"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalProfessors ?></div>
+          <div class="stat-label">Total Professors</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="seal"><i class="bi bi-check-lg"></i></div>
+        <div>
+          <div class="stat-value"><?= $activeCount ?></div>
+          <div class="stat-label">Active</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-key-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $withAccount ?></div>
+          <div class="stat-label">Portal Accounts</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-diagram-3-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $departmentCount ?></div>
+          <div class="stat-label">Departments</div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">Professors</span>
@@ -54,7 +90,7 @@ include '../Include/header.php';
         <?php endif; ?>
       </div>
 
-      <div class="panel-body" style="padding:16px 24px 0;">
+      <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
         <div class="filter-bar">
           <input type="text" class="form-input" id="professorSearch" placeholder="Search name or department…">
           <div class="select-wrapper">

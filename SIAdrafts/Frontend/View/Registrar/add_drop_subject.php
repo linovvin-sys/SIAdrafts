@@ -88,7 +88,7 @@ include '../Include/header.php';
       <div class="panel-header">
         <span class="panel-title">Enrolled Students</span>
       </div>
-      <div class="panel-body" style="padding:16px 24px 0;">
+      <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
         <div class="filter-bar">
           <input type="text" class="form-input" id="allStudentsSearch" placeholder="Search student ID or name…">
           <div class="select-wrapper">

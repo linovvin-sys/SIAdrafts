@@ -50,7 +50,7 @@ include '../Include/header.php';
         <button type="button" class="btn btn-primary" data-open="addProfessorModal">+ Add Professor</button>
       </div>
 
-      <div class="panel-body" style="padding:16px 24px 0;">
+      <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
         <div class="filter-bar">
           <input type="text" class="form-input" id="professorSearch" placeholder="Search name or department…">
         </div>

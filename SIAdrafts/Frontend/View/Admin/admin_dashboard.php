@@ -15,14 +15,15 @@ include '../Include/header.php';
 
     <?php include '../Include/sidebar.php'; ?>
 
-    <main class="page-content">
+    <main class="page-content clay-page-bg">
 
-        <!-- Statistics -->
-        <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);">
+        <!-- Statistics — clay treatment, proving ground per the approved
+             token plan. Icons: single accent green, no rainbow chips. -->
+        <div class="clay-stat-grid" style="grid-template-columns:repeat(4,1fr);">
 
             <!-- Students -->
-            <div class="stat-card">
-                <div class="stat-icon gold"><i class="bi bi-mortarboard-fill"></i></div>
+            <div class="clay-stat-card">
+                <div class="clay-icon"><i class="bi bi-mortarboard-fill"></i></div>
                 <div>
                     <div class="stat-value"><?= $dashboard['students']; ?></div>
                     <div class="stat-label">Total Students</div>
@@ -30,17 +31,19 @@ include '../Include/header.php';
             </div>
 
             <!-- Pending Admissions -->
-            <div class="stat-card">
-                <div class="stat-icon blue"><i class="bi bi-hourglass-split"></i></div>
+            <div class="clay-stat-card">
+                <div class="clay-icon"><i class="bi bi-hourglass-split"></i></div>
                 <div>
                     <div class="stat-value"><?= $dashboard['pending']; ?></div>
                     <div class="stat-label">Pending Admissions</div>
                 </div>
             </div>
 
-            <!-- Approved Admissions -->
-            <div class="stat-card">
-                <div class="stat-icon green"><i class="bi bi-check-circle-fill"></i></div>
+            <!-- Approved Admissions — the seal: this is a genuinely "signed
+                 off" figure, unlike the other three stats, so it gets the
+                 system's one official mark instead of another icon chip. -->
+            <div class="clay-stat-card">
+                <div class="seal"><i class="bi bi-check-lg"></i></div>
                 <div>
                     <div class="stat-value"><?= $dashboard['approved']; ?></div>
                     <div class="stat-label">Approved Admissions</div>
@@ -48,8 +51,8 @@ include '../Include/header.php';
             </div>
 
             <!-- Courses -->
-            <div class="stat-card">
-                <div class="stat-icon purple"><i class="bi bi-book-half"></i></div>
+            <div class="clay-stat-card">
+                <div class="clay-icon"><i class="bi bi-book-half"></i></div>
                 <div>
                     <div class="stat-value"><?= $dashboard['courses']; ?></div>
                     <div class="stat-label">Active Courses</div>
@@ -59,10 +62,10 @@ include '../Include/header.php';
         </div>
 
         <!-- Trends -->
-        <div class="grid-2" style="margin-bottom:24px;">
+        <div class="grid-2" style="margin-bottom:32px; gap:26px;">
 
             <!-- Admissions Trend -->
-            <div class="panel">
+            <div class="clay-panel">
                 <div class="panel-header">
                     <span class="panel-title">Admissions Trend</span>
                     <span class="text-muted" style="font-size:12px;">Last 6 months</span>
@@ -75,7 +78,7 @@ include '../Include/header.php';
             </div>
 
             <!-- Admission Status Breakdown -->
-            <div class="panel">
+            <div class="clay-panel">
                 <div class="panel-header">
                     <span class="panel-title">Admission Status</span>
                 </div>
@@ -148,7 +151,7 @@ include '../Include/header.php';
             </div>
 
             <!-- Enrollment Summary -->
-            <div class="panel">
+            <div class="clay-panel">
 
                 <div class="panel-header">
                     <span class="panel-title">Enrollment Summary</span>

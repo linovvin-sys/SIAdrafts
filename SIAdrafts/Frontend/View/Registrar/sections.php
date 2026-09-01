@@ -25,6 +25,13 @@ $approvedCourses = array_values(array_filter($courses, fn($c) => $c['status'] ==
 
 $db->close();
 
+// Real counts for the stat strip, not decoration — computed from the same
+// data already loaded above, no extra query.
+$totalSections   = count($sections);
+$approvedCount   = count(array_filter($sections, fn($s) => $s['status'] === 'Approved'));
+$totalCapacity   = array_sum(array_column($sections, 'capacity'));
+$coursesCovered  = count(array_unique(array_filter(array_column($sections, 'course_id'))));
+
 $isHead        = current_user_is(['Head Registrar']);
 $isAdminViewer = current_user_is(['Admin']);
 
@@ -38,6 +45,39 @@ include '../Include/header.php';
   <main class="page-content">
     <?php include '../Include/readonly_banner.php'; ?>
 
+    <!-- Opening moment, same idea as the dashboard's stat row — real counts
+         a Registrar actually wants at a glance before scanning the table. -->
+    <div class="clay-stat-grid clay-stat-grid--compact">
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-grid-3x3-gap-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalSections ?></div>
+          <div class="stat-label">Total Sections</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="seal"><i class="bi bi-check-lg"></i></div>
+        <div>
+          <div class="stat-value"><?= $approvedCount ?></div>
+          <div class="stat-label">Approved</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-people-fill"></i></div>
+        <div>
+          <div class="stat-value"><?= $totalCapacity ?></div>
+          <div class="stat-label">Total Capacity</div>
+        </div>
+      </div>
+      <div class="clay-stat-card">
+        <div class="clay-icon"><i class="bi bi-book-half"></i></div>
+        <div>
+          <div class="stat-value"><?= $coursesCovered ?></div>
+          <div class="stat-label">Courses Covered</div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel">
       <div class="panel-header">
         <span class="panel-title">Sections</span>
@@ -46,7 +86,7 @@ include '../Include/header.php';
         <?php endif; ?>
       </div>
 
-      <div class="panel-body" style="padding:16px 24px 0;">
+      <div class="panel-body clay-filter-bar" style="padding:16px 24px 0;">
         <div class="filter-bar">
           <input type="text" class="form-input" id="sectionSearch" placeholder="Search section or course…">
           <div class="select-wrapper">
