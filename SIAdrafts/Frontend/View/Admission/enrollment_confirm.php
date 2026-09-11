@@ -472,5 +472,5 @@ const ENROLLMENT_PAYLOAD = <?= json_encode([
     'schedule_ids' => $is_irregular ? $enroll['schedule_ids'] : null,
 ]) ?>;
 </script>
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<?= cdn_script_tag(CDN_VUE) ?>
 <?php include '../Include/footer.php';?>

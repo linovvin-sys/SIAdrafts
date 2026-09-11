@@ -27,7 +27,7 @@ include '../Include/header.php';
 <!-- The shared header doesn't load this (only Admission's own header does),
      so every <iconify-icon> on this page — including the ones just added to
      the soft-copy preview modal — rendered as nothing without it. -->
-<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+<?= cdn_script_tag(CDN_ICONIFY) ?>
 
 <div class="app-layout">
 
@@ -222,8 +222,8 @@ include '../Include/header.php';
 
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<?= cdn_script_tag(CDN_VUE) ?>
+<?= cdn_script_tag(CDN_SWEETALERT2) ?>
 <?php
 $extraScripts = ['/SIAdrafts/Frontend/Js/Admission/admission-confirm.js'];
 include '../Include/footer.php';

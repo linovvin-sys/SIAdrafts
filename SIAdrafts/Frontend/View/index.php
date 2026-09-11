@@ -255,6 +255,7 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
 
   <footer class="e-footer">
     © 2026 EduSchool. This is a preview mockup — replace placeholder content before deploying.
+    &nbsp;·&nbsp;<a href="/SIAdrafts/Frontend/View/privacy_policy.php" class="e-link">Privacy Policy &amp; Terms</a>
   </footer>
 
   <div id="applyModal" class="e-modal-overlay">

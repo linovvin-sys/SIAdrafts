@@ -1,6 +1,7 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
+require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
 $_pageCsrfToken = csrf_token();
 $_logged_in  = !empty($_SESSION['user_id']);
 $_role       = $_SESSION['role_name'] ?? '';
@@ -36,8 +37,8 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
      included) look like it had a huge gap up top. -->
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css">
 <?php endif; ?>
-<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+<?= cdn_script_tag(CDN_SWEETALERT2) ?>
+<?= cdn_script_tag(CDN_ICONIFY) ?>
 </head>
 <body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 

@@ -474,5 +474,5 @@ const ENROLL_META = {
   course_id:   <?= (int)$enroll['course_id'] ?>,
 };
 </script>
-<script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+<?= cdn_script_tag(CDN_VUE) ?>
 <?php include '../Include/footer.php' ?>

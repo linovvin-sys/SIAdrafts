@@ -3,11 +3,60 @@
 # php_flag/php_value are only valid under mod_php — under FastCGI they
 # make Apache treat the whole .htaccess as invalid and 500 every request.
 # See SIAdrafts/.user.ini for the actual session.* directives.
+#
+# 2026-09-11: confirmed on this local XAMPP install that .user.ini is not
+# actually being read at all under this Apache/PHP build (apache2handler
+# SAPI) — not even a same-directory .user.ini with one directive took
+# effect; verified via ini_get() in a throwaway diagnostic script. Since
+# THIS host runs PHP as the mod_php Apache module (see LoadModule
+# php_module in httpd-xampp.conf), not FastCGI, the block below sets the
+# same settings via php_flag/php_value, guarded by <IfModule php_module>
+# so it's skipped cleanly (no 500) on a host where mod_php isn't loaded —
+# giving working protection here without touching the .user.ini path for
+# whatever the actual FastCGI/PHP-FPM production host turns out to be.
+<IfModule php_module>
+    php_flag session.cookie_httponly on
+    php_flag session.use_strict_mode on
+    php_value session.cookie_samesite "Lax"
+    php_value session.gc_maxlifetime 1800
+    php_flag display_errors off
+    php_flag log_errors on
+
+    # Turns session.cookie_secure on automatically once this is actually
+    # served over HTTPS — see Backend/env_security.php for why this can't
+    # just be a static php_value like the settings above (it needs a
+    # runtime check of the current request, not a fixed value) and why
+    # it must run this early rather than from inside config.php.
+    php_value auto_prepend_file "C:/xampp/htdocs/SIAdrafts/SIAdrafts/Backend/env_security.php"
+</IfModule>
 
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
+
+    # Backstop for the app's own XSS escaping, not a replacement for it.
+    # script-src/style-src need 'unsafe-inline' because the app has no
+    # build step: every view mixes plain <script> blocks, onclick=
+    # attributes, and inline style= into the HTML it renders, so a strict
+    # nonce/hash policy would break every page today. What this still
+    # buys us with no app changes: no script/object/frame/font/image can
+    # load from a domain outside this allowlist, no <base> tag hijack
+    # (base-uri), no data can be sent off-origin via fetch/XHR/WebSocket
+    # (connect-src), no form can submit to a foreign host (form-action),
+    # no plugin content (object-src), and framing is restricted twice
+    # over (frame-ancestors here, X-Frame-Options above). Revisit
+    # 'unsafe-inline' if inline scripts/handlers are ever moved to
+    # external files with a per-request nonce.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+
+    # mod_ssl sets the "HTTPS" server/env variable itself whenever a
+    # connection actually terminated TLS here — env=HTTPS makes this
+    # header conditional on that, so it only ever gets sent once this is
+    # really served over HTTPS, and is silently absent on today's plain
+    # HTTP localhost (sending HSTS over plain HTTP has no effect per spec
+    # anyway, but keeping it conditional avoids a false signal in dev).
+    Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 </IfModule>
 
 # Directory listing was on (MAMP's default) — any folder with no index.php

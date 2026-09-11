@@ -30,10 +30,32 @@ const CURRICULUM_CSV_HEADERS = [
  *     'has_errors' => bool,
  *   ]
  */
+// 2MB is generous for a curriculum sheet (a few hundred subject rows) while
+// still bounding worst-case fgetcsv() work per request — this endpoint has
+// no per-request rate limit, so an authenticated-but-malicious upload of a
+// huge or malformed file was otherwise a cheap way to burn a PHP worker's
+// memory/CPU repeatedly.
+const CURRICULUM_CSV_MAX_BYTES = 2 * 1024 * 1024;
+
 function parse_and_validate_curriculum_csv(mysqli $conn, string $filePath): array
 {
     $rows = [];
     $hasErrors = false;
+
+    $size = @filesize($filePath);
+    if ($size === false || $size > CURRICULUM_CSV_MAX_BYTES) {
+        return ['rows' => [], 'has_errors' => true, 'file_error' => 'File is too large (max 2MB) or could not be read.'];
+    }
+
+    // finfo over content, not the client-supplied filename/Content-Type —
+    // a text/csv file has no reliable magic bytes, so this also accepts the
+    // couple of MIME types real spreadsheet software actually produces for
+    // "Save As CSV" (plain text, or occasionally text/plain).
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime  = $finfo->file($filePath);
+    if (!in_array($mime, ['text/csv', 'text/plain', 'application/csv'], true)) {
+        return ['rows' => [], 'has_errors' => true, 'file_error' => 'That file does not look like a CSV (detected type: ' . $mime . ').'];
+    }
 
     $handle = fopen($filePath, 'r');
     if (!$handle) {

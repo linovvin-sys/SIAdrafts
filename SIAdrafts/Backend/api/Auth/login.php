@@ -3,6 +3,10 @@ session_start();
 require_once '../../db.php';
 require_once '../../rate_limit.php';
 require_once '../../roles.php';
+require_once '../../login_attempt.php';
+require_once '../../account_lockout.php';
+require_once '../../totp.php';
+require_once '../../staff_mfa.php';
 
 header('Content-Type: application/json');
 
@@ -30,6 +34,17 @@ if ($username === '' || $password === '') {
     exit;
 }
 
+// Per-account lockout, on top of rate_limit_check()'s per-IP throttle
+// above — that one alone does nothing against credential stuffing spread
+// across many source IPs at the SAME account. Checked before querying
+// the real tables so a locked-out account gets the same generic response
+// either way.
+if (account_locked_out($conn, 'staff', $username)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Too many failed attempts on this account. Please wait 15 minutes and try again.']);
+    exit;
+}
+
 $stmt = $conn->prepare(
     "SELECT u.user_id, u.first_name, u.last_name, u.username, u.password,
             u.role_id, r.role_name
@@ -53,6 +68,28 @@ $user   = $result->fetch_assoc();
 $stmt->close();
 
 if ($user && password_verify($password, $user['password'])) {
+    // MFA gate: if this account has enrolled, the password alone is only
+    // half the credential. Stash what's needed to finish the login after
+    // a correct code (verify_mfa.php) instead of granting the session's
+    // real privileges yet — no user_id/role_name is set below, so
+    // require_role() treats this request the same as an anonymous one
+    // until MFA actually passes.
+    if (staff_mfa_enabled($conn, 'staff', $user['user_id'])) {
+        session_regenerate_id(true);
+        $_SESSION['mfa_pending'] = [
+            'login_type' => 'staff',
+            'account_id' => $user['user_id'],
+            'username'   => $user['username'],
+            'role_id'    => $user['role_id'],
+            'role_name'  => $user['role_name'],
+            'full_name'  => trim($user['first_name'] . ' ' . $user['last_name']),
+            'expires_at' => time() + 300,
+        ];
+        $db->close();
+        echo json_encode(['mfa_required' => true]);
+        exit;
+    }
+
     session_regenerate_id(true);
 
     $_SESSION['user_id']    = $user['user_id'];
@@ -66,6 +103,8 @@ if ($user && password_verify($password, $user['password'])) {
     $loginStmt->bind_param('i', $user['user_id']);
     $loginStmt->execute();
     $loginStmt->close();
+
+    log_login_attempt($conn, 'staff', $user['username'], true, $user['user_id']);
 
     $role = strtolower(trim($user['role_name']));
 } else {
@@ -85,7 +124,23 @@ if ($user && password_verify($password, $user['password'])) {
     $profStmt->close();
 
     if (!$professor || $professor['password'] === null || !password_verify($password, $professor['password'])) {
+        log_login_attempt($conn, 'staff', $username, false);
         echo json_encode(['error' => 'Invalid username or password.']);
+        exit;
+    }
+
+    if (staff_mfa_enabled($conn, 'professor', $professor['professor_id'])) {
+        session_regenerate_id(true);
+        $_SESSION['mfa_pending'] = [
+            'login_type'           => 'professor',
+            'account_id'           => $professor['professor_id'],
+            'username'             => $professor['username'],
+            'full_name'            => trim($professor['first_name'] . ' ' . $professor['last_name']),
+            'professor_department' => $professor['department_code'],
+            'expires_at'           => time() + 300,
+        ];
+        $db->close();
+        echo json_encode(['mfa_required' => true]);
         exit;
     }
 
@@ -102,6 +157,8 @@ if ($user && password_verify($password, $user['password'])) {
     $loginStmt->bind_param('i', $professor['professor_id']);
     $loginStmt->execute();
     $loginStmt->close();
+
+    log_login_attempt($conn, 'professor', $professor['username'], true, $professor['professor_id']);
 
     $role = 'professor';
 }

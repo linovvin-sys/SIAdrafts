@@ -105,9 +105,12 @@ if ((int)$subjectRow['semester'] !== $semester) {
 $conn->begin_transaction();
 
 try {
-    // Conflict check: same room OR same section already booked on one of
-    // these days with overlapping time, excluding the rows we're about to
-    // replace (so editing a block doesn't collide with itself).
+    // Conflict check: same room, same section, OR same professor already
+    // booked on one of these days with overlapping time, excluding the rows
+    // we're about to replace (so editing a block doesn't collide with
+    // itself). Professor was missing from this check — a professor could
+    // previously be scheduled into two different rooms/sections at an
+    // overlapping time with nothing flagging it.
     $placeholders = implode(',', array_fill(0, count($days), '?'));
     $excludeClause = '';
     $excludeParams = [];
@@ -120,23 +123,23 @@ try {
     }
 
     $conflictSql = "
-        SELECT schedule_id, day, room_id, section_id
+        SELECT schedule_id, day, room_id, section_id, professor_id
         FROM schedule
         WHERE school_year = ? AND semester = ?
           AND day IN ($placeholders)
           AND time_start < ? AND time_end > ?
-          AND (room_id = ? OR section_id = ?)
+          AND (room_id = ? OR section_id = ? OR professor_id = ?)
           $excludeClause
     ";
     $conflictStmt = $conn->prepare($conflictSql);
     if (!$conflictStmt) {
         throw new DbError($conn->error);
     }
-    $types  = 'si' . str_repeat('s', count($days)) . 'ssii' . $excludeTypes;
+    $types  = 'si' . str_repeat('s', count($days)) . 'ssiii' . $excludeTypes;
     $params = array_merge(
         [$school_year, $semester],
         $days,
-        [$time_end, $time_start, $room_id, $section_id],
+        [$time_end, $time_start, $room_id, $section_id, $professor_id],
         $excludeParams
     );
     $conflictStmt->bind_param($types, ...$params);
@@ -145,7 +148,11 @@ try {
     $conflictStmt->close();
 
     if (!empty($conflicts)) {
-        throw new RuntimeException('This room or section is already booked on ' . $conflicts[0]['day'] . ' at an overlapping time.');
+        $conflict = $conflicts[0];
+        $reason = ((int)$conflict['professor_id'] === $professor_id && (int)$conflict['room_id'] !== $room_id && (int)$conflict['section_id'] !== $section_id)
+            ? 'This professor is already scheduled elsewhere on ' . $conflict['day'] . ' at an overlapping time.'
+            : 'This room or section is already booked on ' . $conflict['day'] . ' at an overlapping time.';
+        throw new RuntimeException($reason);
     }
 
     // Replace: delete the old rows for this block (edit case), then
