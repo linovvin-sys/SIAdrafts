@@ -54,11 +54,12 @@ $stmt->close();
 if ($user && password_verify($password, $user['password'])) {
     session_regenerate_id(true);
 
-    $_SESSION['user_id']   = $user['user_id'];
-    $_SESSION['username']  = $user['username'];
-    $_SESSION['role_id']   = $user['role_id'];
-    $_SESSION['role_name'] = $user['role_name'];
-    $_SESSION['full_name'] = trim($user['first_name'] . ' ' . $user['last_name']);
+    $_SESSION['user_id']    = $user['user_id'];
+    $_SESSION['username']   = $user['username'];
+    $_SESSION['role_id']    = $user['role_id'];
+    $_SESSION['role_name']  = $user['role_name'];
+    $_SESSION['full_name']  = trim($user['first_name'] . ' ' . $user['last_name']);
+    $_SESSION['tab_token']  = bin2hex(random_bytes(16));
 
     $loginStmt = $conn->prepare("UPDATE users SET last_login = NOW() WHERE user_id = ?");
     $loginStmt->bind_param('i', $user['user_id']);
@@ -94,6 +95,7 @@ if ($user && password_verify($password, $user['password'])) {
     $_SESSION['role_name']            = 'Professor';
     $_SESSION['full_name']            = trim($professor['first_name'] . ' ' . $professor['last_name']);
     $_SESSION['professor_department'] = $professor['department_code'];
+    $_SESSION['tab_token']            = bin2hex(random_bytes(16));
 
     $loginStmt = $conn->prepare("UPDATE professor SET last_login = NOW() WHERE professor_id = ?");
     $loginStmt->bind_param('i', $professor['professor_id']);
@@ -140,6 +142,7 @@ switch ($role) {
 }
 
 echo json_encode([
-    'success'  => true,
-    'redirect' => $redirect
+    'success'   => true,
+    'redirect'  => $redirect,
+    'tab_token' => $_SESSION['tab_token'],
 ]);

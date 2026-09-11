@@ -108,7 +108,13 @@ function student_fullname_t(array $s): string {
     <h1>Treasury</h1>
     <p>Track who still owes a balance, and record payments as they come in.</p>
   </div>
- 
+
+  <?php if (($_GET['pay'] ?? '') === 'cancelled'): ?>
+  <div class="t-banner error" style="max-width:1100px;margin:0 auto 16px;">
+    Online payment was cancelled. Nothing was charged.
+  </div>
+  <?php endif; ?>
+
   <div class="treasury-tabs">
     <button class="t-tab active" id="tabRevenue">Revenue</button>
     <button class="t-tab" id="tabQueue">Pending payments</button>

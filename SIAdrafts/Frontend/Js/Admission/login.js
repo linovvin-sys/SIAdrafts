@@ -107,11 +107,12 @@ if (loginForm) {
           method: 'POST',
           body:   new FormData(loginForm),
         }).then(function (res) { return res.json(); })
-          .then(function (d) { return { success: !!d.success, redirect: d.redirect, error: d.error }; });
+          .then(function (d) { return { success: !!d.success, redirect: d.redirect, error: d.error, tab_token: d.tab_token }; });
       }
     ).then(function (result) {
       if (loginBtn) loginBtn.disabled = false;
       if (result && result.success) {
+        try { sessionStorage.setItem('sia_tab_token', result.tab_token); } catch (e) {}
         window.setTimeout(function () { window.location.href = result.redirect; }, 450);
       }
     });

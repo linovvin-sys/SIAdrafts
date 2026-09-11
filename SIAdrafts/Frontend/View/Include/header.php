@@ -34,6 +34,23 @@ function asset_url(string $publicPath): string {
       } catch (e) {}
     })();
   </script>
+  <script>
+    // Per-tab session ownership check. The cookie session is shared by
+    // every tab in the browser, but sessionStorage never travels with a
+    // pasted/duplicated URL — only the tab that actually logged in has
+    // the matching token in its sessionStorage. Any other tab riding on
+    // the same cookie gets bounced back to login instead of silently
+    // inheriting whoever's account is currently active.
+    (function () {
+      try {
+        var serverToken = <?= json_encode($_SESSION['tab_token'] ?? null) ?>;
+        var localToken = sessionStorage.getItem('sia_tab_token');
+        if (serverToken && localToken !== serverToken) {
+          window.location.href = '/SIAdrafts/Backend/api/Auth/logout.php?reason=tab';
+        }
+      } catch (e) {}
+    })();
+  </script>
   <link rel="stylesheet" href="/SIAdrafts/bootstrap-5.3.8-dist/css/bootstrap.min.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/dataTables.bootstrap5.min.css" />

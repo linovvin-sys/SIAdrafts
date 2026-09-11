@@ -20,7 +20,7 @@ SELECT
     a.status
 FROM applicants a
 LEFT JOIN course c ON LOWER(c.course_name) = LOWER(a.program)
-ORDER BY a.created_at DESC
+ORDER BY a.created_at ASC
 ";
 
 $result = $conn->query($sql);

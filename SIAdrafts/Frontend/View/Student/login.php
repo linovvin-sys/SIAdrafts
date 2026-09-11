@@ -31,7 +31,10 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
     <div class="sp-auth-orb sp-auth-orb-2" aria-hidden="true"></div>
 
     <div class="sp-auth-visual-topbar">
-      <a class="sp-auth-brand" href="/SIAdrafts/Frontend/View/index.php">Edu<em>School</em></a>
+      <a class="sp-auth-brand" href="/SIAdrafts/Frontend/View/index.php">
+        <img class="sp-auth-brand-mark" src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="26" height="26">
+        <span>Edu<em>School</em></span>
+      </a>
       <a class="sp-auth-back" href="/SIAdrafts/Frontend/View/index.php">
         <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back to homepage
       </a>
@@ -68,7 +71,7 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
   <div class="sp-auth-form-side">
     <div class="sp-auth-card">
       <div class="sp-auth-icon sp-auth-in" style="--i:0;">
-        <iconify-icon icon="mdi:school-outline" style="font-size:19px;"></iconify-icon>
+        <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="24" height="24">
       </div>
       <h2 class="sp-auth-title sp-auth-in" style="--i:1;">Student Portal</h2>
       
@@ -104,6 +107,27 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
     </p>
   </div>
 
+</div>
+
+<div class="sp-login-terminal" id="spLoginTerminal" aria-hidden="true">
+  <div class="sp-login-terminal-backdrop" data-terminal-dismiss></div>
+  <div class="sp-login-terminal-card" role="dialog" aria-modal="true" aria-labelledby="spLoginTerminalStep">
+    <div class="sp-login-terminal-stage">
+      <div class="sp-login-terminal-ring">
+        <svg class="sp-login-terminal-glyph sp-login-terminal-check" viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="sp-login-terminal-glyph-ring" cx="26" cy="26" r="23"/>
+          <path class="sp-login-terminal-glyph-mark" d="M15 27l7.2 7.2L37.5 19"/>
+        </svg>
+        <svg class="sp-login-terminal-glyph sp-login-terminal-x" viewBox="0 0 52 52" aria-hidden="true">
+          <circle class="sp-login-terminal-glyph-ring" cx="26" cy="26" r="23"/>
+          <path class="sp-login-terminal-glyph-mark" d="M18 18l16 16M34 18L18 34"/>
+        </svg>
+      </div>
+      <p class="sp-login-terminal-step" id="spLoginTerminalStep" aria-live="polite">Checking credentials&hellip;</p>
+      <div class="sp-login-terminal-track"><div class="sp-login-terminal-fill" id="spLoginTerminalFill"></div></div>
+    </div>
+    <div class="sp-login-terminal-result" id="spLoginTerminalResult" aria-live="polite"></div>
+  </div>
 </div>
 
 <script src="/SIAdrafts/Frontend/Js/Student/login.js"></script>

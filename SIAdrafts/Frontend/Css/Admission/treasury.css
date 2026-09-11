@@ -4,7 +4,7 @@
        to carry its own stray --ink (navy #1B2A4A) and --amber (#E8A33D,
        unused) that silently diverged from every other portal — Treasury
        was quietly off-brand. Fixed here rather than left as-is. */
-    --ink:#1F2E28; --paper:#F7F4EC; --amber:#046A38; --sage:#7C9885;
+    --ink:#1F2E28; --paper:#F8F9F7; --amber:#046A38; --sage:#7C9885;
     --white:#FFFFFF;
     --ink-soft: rgba(31,46,40,0.80); --ink-line: rgba(31,46,40,0.14);
 
@@ -96,7 +96,13 @@
     text-align: left; font-size: 0.74rem; font-weight: 700; text-transform: uppercase;
     letter-spacing: 0.03em; color: var(--ink-soft); padding: 16px 12px;
     border-bottom: 1px solid var(--ink-line);
+    /* admin.css paints .data-table th with its cream --paper-100; Treasury
+       wants the header white (dark surface in dark mode), same as its cards. */
+    background: var(--white);
   }
+  /* admin.css's .surface-1 (the top stat cards) also defaults to cream
+     --paper-100 — pull it back to Treasury's own white/dark surface. */
+  .surface-1{ background: var(--white); }
   .queue-table td, .data-table td{
     padding: 14px 12px; border-bottom: 1px solid var(--ink-line);
     font-size: 0.92rem; color: var(--ink); vertical-align: middle;
@@ -344,6 +350,20 @@
   .btn-record-pay:hover{ background: #16241D; box-shadow: 0 10px 20px -12px rgba(31,46,40,0.5); transform: translateY(-1px); }
   .btn-record-pay:active{ transform: scale(0.97) translateY(0); }
   .btn-record-pay[disabled]{ opacity: 0.6; cursor: not-allowed; }
+
+  /* Online (PayMongo) — secondary to the cash button: outlined in the
+     brand green rather than a second solid block competing with it. */
+  .btn-pay-online{
+    display: inline-flex; align-items: center; gap: 7px;
+    background: transparent; color: var(--amber); font-weight: 700;
+    border: 1.5px solid var(--amber); border-radius: 0.7rem;
+    padding: 11px 20px; cursor: pointer; white-space: nowrap;
+    transition: transform 140ms var(--ease-out), background 140ms ease, color 140ms ease;
+  }
+  .btn-pay-online iconify-icon{ font-size: 1.1rem; }
+  .btn-pay-online:hover{ background: var(--amber); color: #fff; }
+  .btn-pay-online:active{ transform: scale(0.97); }
+  .btn-pay-online[disabled]{ opacity: 0.6; cursor: not-allowed; }
 
   .pay-history{ margin-top: 18px; }
   .pay-history h4{ font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; color: var(--ink-soft); margin-bottom: 10px; }

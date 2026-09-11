@@ -82,12 +82,20 @@
   top: 22px;
   left: 26px;
   z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 9px;
   font-family: var(--font-display);
   font-weight: 500;
   font-size: 17px;
   color: var(--ink);
   text-decoration: none;
   letter-spacing: -0.01em;
+}
+.badge-wordmark-mark{
+  width: 28px;
+  height: 28px;
+  display: block;
 }
 .badge-wordmark em{
   font-style: italic;
@@ -228,7 +236,14 @@
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: linear-gradient(165deg, #1F2E28 0%, #16241E 100%);
+  /* Campus photo behind a dark-green scrim so the white logo + text stay
+     legible. Drop your image at Frontend/assets/login-campus.jpg — if it's
+     missing, the gradient below just shows on its own. To go back to plain
+     green, delete the url() layer. */
+  background:
+    linear-gradient(165deg, rgba(31,46,40,0.48) 0%, rgba(22,36,30,0.62) 100%),
+    url("/SIAdrafts/Frontend/assets/login-campus.jpg") 68% center / cover no-repeat,
+    linear-gradient(165deg, #1F2E28 0%, #16241E 100%);
   border-radius: 18px 0 0 24px;
   overflow: hidden;
   isolation: isolate;
@@ -263,12 +278,12 @@
   z-index: 1;
 }
 .badge-brand-mark{
-  width: 34px;
-  height: 34px;
+  width: 46px;
+  height: 46px;
   margin-bottom: 12px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.08);
-  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.20);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -276,6 +291,11 @@
 .badge-brand-mark iconify-icon{
   color: #FAF7F0;
   font-size: 16px;
+}
+.badge-brand-mark img{
+  width: 32px;
+  height: 32px;
+  display: block;
 }
 .badge-brand-name{
   font-family: var(--font-display);

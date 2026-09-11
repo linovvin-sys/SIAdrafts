@@ -53,6 +53,7 @@ $_SESSION['student_portal_account_id'] = (int)$account['student_portal_account_i
 $_SESSION['student_no']            = $student_no;
 $_SESSION['student_full_name']     = trim($account['first_name'] . ' ' . $account['last_name']);
 $_SESSION['must_change_password']  = (bool)$account['must_change_password'];
+$_SESSION['tab_token']             = bin2hex(random_bytes(16));
 
 $loginStmt = $conn->prepare("UPDATE student_portal_account SET last_login = NOW() WHERE student_portal_account_id = ?");
 $loginStmt->bind_param('i', $account['student_portal_account_id']);
@@ -62,8 +63,9 @@ $loginStmt->close();
 $db->close();
 
 echo json_encode([
-    'success'  => true,
-    'redirect' => $account['must_change_password']
+    'success'   => true,
+    'redirect'  => $account['must_change_password']
         ? '/SIAdrafts/Frontend/View/Student/change_password.php'
         : '/SIAdrafts/Frontend/View/Student/dashboard.php',
+    'tab_token' => $_SESSION['tab_token'],
 ]);
