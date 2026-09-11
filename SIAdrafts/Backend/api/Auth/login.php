@@ -2,6 +2,7 @@
 session_start();
 require_once '../../db.php';
 require_once '../../rate_limit.php';
+require_once '../../roles.php';
 
 header('Content-Type: application/json');
 
@@ -107,39 +108,9 @@ if ($user && password_verify($password, $user['password'])) {
 
 $db->close();
 
-switch ($role) {
-    case 'admin':
-        $redirect = '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php';
-        break;
-
-    case 'staff':
-        $redirect = '/SIAdrafts/Frontend/View/Admission/enrollment.php';
-        break;
-    
-    case 'treasury':
-        $redirect = '/SIAdrafts/Frontend/View/Admission/treasury.php';
-        break;
-
-    case 'admission':
-        $redirect = '/SIAdrafts/Frontend/View/Admission/admission.php';
-        break;
-        
-    case 'head registrar':
-        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
-        break;
-
-    case 'registrar staff':
-        $redirect = '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
-        break;
-
-    case 'professor':
-        $redirect = '/SIAdrafts/Frontend/View/Professor/professor_dashboard.php';
-        break;
-    default:
-        // Students and all other roles
-        $redirect = '/SIAdrafts/Frontend/View/login.php';
-        break;
-}
+// Same mapping login.php's "already signed in" check uses (Backend/
+// roles.php) — one place, so they can't drift out of sync.
+$redirect = staff_dashboard_url($role);
 
 echo json_encode([
     'success'   => true,

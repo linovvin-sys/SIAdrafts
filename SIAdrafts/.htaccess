@@ -49,4 +49,15 @@ Options -Indexes
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME}.php -f
     RewriteRule ^Frontend/View/(.+)$ Frontend/View/$1.php [L]
+
+    # 3) Bare-folder requests (…/Admission/, …/Backend/api/Treasury/, etc.)
+    #    are rewritten internally (no external redirect, so the address bar
+    #    never changes) to a script that answers 204 No Content. Per the
+    #    HTML spec, a top-level navigation that gets a 204 is discarded —
+    #    the browser doesn't navigate away at all, whatever page was
+    #    already open just stays open. Stronger than the old 403 (which
+    #    still confirmed "a real folder exists here"): this shows nothing,
+    #    says nothing, and the URL you typed never even takes effect.
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ /SIAdrafts/Backend/no_index.php [L]
 </IfModule>

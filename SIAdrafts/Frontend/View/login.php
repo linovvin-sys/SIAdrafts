@@ -1,7 +1,8 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!empty($_SESSION['user_id'])) {
-    header('Location: dashboard.php');
+    require_once __DIR__ . '/../../../Backend/roles.php';
+    header('Location: ' . staff_dashboard_url($_SESSION['role_name'] ?? ''));
     exit;
 }
 ?>

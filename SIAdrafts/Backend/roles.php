@@ -77,3 +77,33 @@ const ROLES_HEAD_REGISTRAR_MANAGEABLE = [
     ROLE_TREASURY,
     ROLE_STAFF,
 ];
+
+/**
+ * Where a staff/admin/professor account lands after logging in — the one
+ * place this mapping lives, used both by the actual login endpoint
+ * (Backend/api/Auth/login.php) and by login.php's "already signed in,
+ * bounce onward" check, so the two can't quietly drift out of sync the
+ * way they did before (login.php used to hardcode a relative
+ * 'dashboard.php' that never pointed anywhere real). Case-insensitive,
+ * same convention as require_role()/current_user_is().
+ */
+function staff_dashboard_url(string $roleName): string
+{
+    switch (strtolower(trim($roleName))) {
+        case 'admin':
+            return '/SIAdrafts/Frontend/View/Admin/admin_dashboard.php';
+        case 'staff':
+            return '/SIAdrafts/Frontend/View/Admission/enrollment.php';
+        case 'treasury':
+            return '/SIAdrafts/Frontend/View/Admission/treasury.php';
+        case 'admission':
+            return '/SIAdrafts/Frontend/View/Admission/admission.php';
+        case 'head registrar':
+        case 'registrar staff':
+            return '/SIAdrafts/Frontend/View/Registrar/registrar_dashboard.php';
+        case 'professor':
+            return '/SIAdrafts/Frontend/View/Professor/professor_dashboard.php';
+        default:
+            return '/SIAdrafts/Frontend/View/login.php';
+    }
+}
