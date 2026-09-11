@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../../../Backend/config.php'; // sets the app's real timezone (Asia/Manila) before the date('G') greeting below
+require_once __DIR__ . '/../../../Backend/cdn_assets.php';
 
 if (!empty($_SESSION['student_id'])) {
     header('Location: /SIAdrafts/Frontend/View/Student/dashboard.php');
@@ -20,7 +21,7 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Student/student.css">
-<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+<?= cdn_script_tag(CDN_ICONIFY) ?>
 </head>
 <body class="student-body">
 
@@ -104,6 +105,9 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
 
     <p class="sp-auth-side-note sp-auth-in" style="--i:6;">
       Not enrolled yet? <a href="/SIAdrafts/Frontend/View/Admission/online_admission.php">Start your application →</a>
+    </p>
+    <p class="sp-auth-side-note" style="font-size:12px; opacity:.75;">
+      <a href="/SIAdrafts/Frontend/View/privacy_policy.php">Privacy Policy &amp; Terms</a>
     </p>
   </div>
 

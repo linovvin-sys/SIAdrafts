@@ -1,10 +1,11 @@
 <?php
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!empty($_SESSION['user_id'])) {
-    require_once __DIR__ . '/../../../Backend/roles.php';
+    require_once __DIR__ . '/../../Backend/roles.php';
     header('Location: ' . staff_dashboard_url($_SESSION['role_name'] ?? ''));
     exit;
 }
+require_once __DIR__ . '/../../Backend/cdn_assets.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +17,7 @@ if (!empty($_SESSION['user_id'])) {
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/staff-login.css">
-<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+<?= cdn_script_tag(CDN_ICONIFY) ?>
 </head>
 <body class="badge-body">
 
@@ -85,6 +86,9 @@ if (!empty($_SESSION['user_id'])) {
 
         <p class="badge-footnote">
           Are you a student? <a href="/SIAdrafts/Frontend/View/Student/login.php">Go to the Student Portal &rarr;</a>
+        </p>
+        <p class="badge-footnote" style="font-size:12px; opacity:.75;">
+          <a href="/SIAdrafts/Frontend/View/privacy_policy.php">Privacy Policy &amp; Terms</a>
         </p>
       </div>
     </div>

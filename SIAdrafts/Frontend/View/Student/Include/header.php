@@ -6,6 +6,7 @@
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
+require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
 $_pageCsrfToken = csrf_token();
 $_studentName = htmlspecialchars($_SESSION['student_full_name'] ?? '', ENT_QUOTES);
 $_studentNo   = htmlspecialchars($_SESSION['student_no'] ?? '', ENT_QUOTES);
@@ -44,7 +45,7 @@ $_tabs = [
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Student/student.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/required.css">
-<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+<?= cdn_script_tag(CDN_ICONIFY) ?>
 </head>
 <body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 <a class="sp-skip-link" href="#sp-content">Skip to content</a>

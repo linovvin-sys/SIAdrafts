@@ -8,6 +8,7 @@
  */
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
+require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
 $_pageCsrfToken = csrf_token();
 $_professorName = htmlspecialchars($_SESSION['full_name'] ?? '', ENT_QUOTES);
 $_professorDept = htmlspecialchars($_SESSION['professor_department'] ?? '', ENT_QUOTES);
@@ -47,7 +48,7 @@ $_tabs = [
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Student/student.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Professor/professor.css">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/required.css">
-<script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+<?= cdn_script_tag(CDN_ICONIFY) ?>
 </head>
 <body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 <a class="sp-skip-link" href="#sp-content">Skip to content</a>

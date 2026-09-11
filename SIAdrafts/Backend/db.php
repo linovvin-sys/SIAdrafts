@@ -40,7 +40,8 @@ class Database
         );
 
         if ($this->conn->connect_error) {
-            die("Database Connection Failed: " . $this->conn->connect_error);
+            error_log('Database connection failed: ' . $this->conn->connect_error);
+            die('Database connection failed. Please try again later.');
         }
 
         $this->conn->set_charset("utf8mb4");

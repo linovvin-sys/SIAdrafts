@@ -2,6 +2,8 @@
 session_start();
 require_once '../../db.php';
 require_once '../../rate_limit.php';
+require_once '../../login_attempt.php';
+require_once '../../account_lockout.php';
 
 header('Content-Type: application/json');
 
@@ -28,6 +30,15 @@ if ($student_no === '' || $password === '') {
     exit;
 }
 
+// Same per-account lockout as the staff login (see Backend/account_lockout.php)
+// — catches credential stuffing spread across many source IPs at one
+// student account, which the per-IP throttle above can't.
+if (account_locked_out($conn, 'student', $student_no)) {
+    http_response_code(429);
+    echo json_encode(['error' => 'Too many failed attempts on this account. Please wait 15 minutes and try again.']);
+    exit;
+}
+
 $stmt = $conn->prepare(
     "SELECT spa.student_portal_account_id, spa.applicant_id, spa.password_hash, spa.must_change_password,
             a.first_name, a.last_name
@@ -42,6 +53,7 @@ $account = $stmt->get_result()->fetch_assoc();
 $stmt->close();
 
 if (!$account || !password_verify($password, $account['password_hash'])) {
+    log_login_attempt($conn, 'student', $student_no, false);
     echo json_encode(['error' => 'Invalid student number or password.']);
     exit;
 }
@@ -59,6 +71,8 @@ $loginStmt = $conn->prepare("UPDATE student_portal_account SET last_login = NOW(
 $loginStmt->bind_param('i', $account['student_portal_account_id']);
 $loginStmt->execute();
 $loginStmt->close();
+
+log_login_attempt($conn, 'student', $student_no, true, (int)$account['student_portal_account_id']);
 
 $db->close();
 

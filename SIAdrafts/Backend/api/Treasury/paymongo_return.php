@@ -53,50 +53,110 @@ if (!preg_match('/^[a-f0-9]{32}$/', $ref)) {
         $state = 'failed';
         $message = 'This payment did not go through.';
     } else {
-        // pending or paid-but-not-recorded: ask PayMongo what actually happened.
-        try {
-            $session = paymongo_api('GET', '/checkout_sessions/' . rawurlencode($co['checkout_session_id']));
-            $verdict = paymongo_checkout_verdict($session);
-        } catch (PayMongoError $e) {
-            error_log('paymongo_return retrieve: ' . $e->getMessage());
-            $verdict = 'pending';
+        // pending or paid-but-not-recorded. This page can be hit twice
+        // concurrently (refresh, back/forward, double redirect) — a MySQL
+        // named lock (not a transaction: record_treasury_payment() opens its
+        // own transaction on this same $conn below, and a nested
+        // begin_transaction() would implicitly commit — and release — a
+        // transaction-based lock right when we need it held) serializes
+        // concurrent visits for this specific ref. The loser waits up to 10s,
+        // then re-reads status having already moved to 'recorded'/'failed'.
+        $lockName = 'paymongo_return_' . $ref;
+        $lockStmt = $conn->prepare('SELECT GET_LOCK(?, 10) AS got');
+        $lockStmt->bind_param('s', $lockName);
+        $lockStmt->execute();
+        $gotLock = (int)$lockStmt->get_result()->fetch_assoc()['got'];
+        $lockStmt->close();
+
+        if (!$gotLock) {
+            $message = 'This payment is still being processed by another request. Please refresh in a moment.';
+            $state = 'pending';
+            $co = null;
+        } else {
+            $reread = $conn->prepare(
+                "SELECT id, checkout_session_id, payment_id, amount, status, transaction_id
+                 FROM paymongo_checkout WHERE id = ?"
+            );
+            $reread->bind_param('i', $co['id']);
+            $reread->execute();
+            $co = $reread->get_result()->fetch_assoc();
+            $reread->close();
         }
 
-        if ($verdict === 'failed') {
-            $conn->query("UPDATE paymongo_checkout SET status = 'failed' WHERE id = " . (int)$co['id']);
+        if ($co === null) {
+            // Handled above — lock not acquired.
+        } elseif ($co['status'] === 'recorded') {
+            $state = 'success';
+            $paymentId = (int)$co['payment_id'];
+            $orNumber = $co['transaction_id'] ? sprintf('OR-%06d', (int)$co['transaction_id']) : null;
+            $message = 'This payment was already recorded.';
+        } elseif ($co['status'] === 'failed') {
             $state = 'failed';
-            $message = 'The payment was cancelled or expired. Nothing was charged.';
-        } elseif ($verdict === 'paid') {
-            $result = record_treasury_payment(
-                $conn,
-                (int)$co['payment_id'],
-                (float)$co['amount'],
-                null,                          // no counter staff — online
-                'PayMongo (GCash / online)'
-            );
-
-            if ($result['success']) {
-                $upd = $conn->prepare("UPDATE paymongo_checkout SET status = 'recorded', transaction_id = ? WHERE id = ?");
-                $upd->bind_param('ii', $result['transaction_id'], $co['id']);
-                $upd->execute();
-                $upd->close();
-
-                $state = 'success';
-                $paymentId = (int)$co['payment_id'];
-                $orNumber = $result['or_number'];
-                $message = 'Payment received and recorded.';
-            } else {
-                // PayMongo took the money but the ledger rejected it (balance
-                // changed, etc.). Flag for manual reconciliation — in test
-                // mode there's nothing to refund.
-                $conn->query("UPDATE paymongo_checkout SET status = 'paid' WHERE id = " . (int)$co['id']);
-                error_log('paymongo_return: paid but not recorded, ref ' . $ref . ' — ' . $result['error']);
-                $state = 'error';
-                $message = 'PayMongo confirmed the payment, but it could not be posted (' . $result['error'] . '). Treasury needs to reconcile this manually.';
-            }
+            $message = 'This payment did not go through.';
         } else {
-            $state = 'pending';
-            $message = 'This payment is still processing. Refresh this page in a moment, or check the queue shortly.';
+            try {
+                $session = paymongo_api('GET', '/checkout_sessions/' . rawurlencode($co['checkout_session_id']));
+                $verdict = paymongo_checkout_verdict($session);
+            } catch (PayMongoError $e) {
+                error_log('paymongo_return retrieve: ' . $e->getMessage());
+                $verdict = 'pending';
+            }
+
+            if ($verdict === 'failed') {
+                $conn->query("UPDATE paymongo_checkout SET status = 'failed' WHERE id = " . (int)$co['id']);
+                $state = 'failed';
+                $message = 'The payment was cancelled or expired. Nothing was charged.';
+            } elseif ($verdict === 'paid') {
+                $result = record_treasury_payment(
+                    $conn,
+                    (int)$co['payment_id'],
+                    (float)$co['amount'],
+                    null,                          // no counter staff — online
+                    'PayMongo (GCash / online)'
+                );
+
+                if ($result['success']) {
+                    $upd = $conn->prepare("UPDATE paymongo_checkout SET status = 'recorded', transaction_id = ? WHERE id = ?");
+                    $upd->bind_param('ii', $result['transaction_id'], $co['id']);
+                    $upd->execute();
+                    $upd->close();
+
+                    $state = 'success';
+                    $paymentId = (int)$co['payment_id'];
+                    $orNumber = $result['or_number'];
+                    $message = 'Payment received and recorded.';
+                } elseif ($result['error'] === 'This payment is already fully paid.') {
+                    // Not a real failure — something else (a counter payment,
+                    // or a concurrent visit to this same page) already
+                    // settled this payment's balance to zero. PayMongo did
+                    // confirm the charge, so this is the same payment being
+                    // reported twice, not money that went uncredited.
+                    $upd = $conn->prepare("UPDATE paymongo_checkout SET status = 'recorded' WHERE id = ?");
+                    $upd->bind_param('i', $co['id']);
+                    $upd->execute();
+                    $upd->close();
+
+                    $state = 'success';
+                    $paymentId = (int)$co['payment_id'];
+                    $message = 'Payment received and recorded.';
+                } else {
+                    // PayMongo took the money but the ledger genuinely
+                    // rejected it for another reason (e.g. amount exceeds
+                    // balance). Flag for manual reconciliation — in test
+                    // mode there's nothing to refund.
+                    $conn->query("UPDATE paymongo_checkout SET status = 'paid' WHERE id = " . (int)$co['id']);
+                    error_log('paymongo_return: paid but not recorded, ref ' . $ref . ' — ' . $result['error']);
+                    $state = 'error';
+                    $message = 'PayMongo confirmed the payment, but it could not be posted (' . $result['error'] . '). Treasury needs to reconcile this manually.';
+                }
+            } else {
+                $state = 'pending';
+                $message = 'This payment is still processing. Refresh this page in a moment, or check the queue shortly.';
+            }
+        }
+
+        if ($gotLock) {
+            $conn->query("SELECT RELEASE_LOCK('" . $conn->real_escape_string($lockName) . "')");
         }
     }
 }
