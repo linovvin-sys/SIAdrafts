@@ -21,7 +21,10 @@ if (!empty($_SESSION['user_id'])) {
 
   <div class="badge-texture" aria-hidden="true"></div>
 
-  <a class="badge-wordmark" href="/SIAdrafts/Frontend/View/index.php">Edu<em>School</em></a>
+  <a class="badge-wordmark" href="/SIAdrafts/Frontend/View/index.php">
+    <img class="badge-wordmark-mark" src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="28" height="28">
+    <span>Edu<em>School</em></span>
+  </a>
 
   <a class="badge-home-btn" href="/SIAdrafts/Frontend/View/index.php">
     <iconify-icon icon="mdi:arrow-left"></iconify-icon>
@@ -38,7 +41,7 @@ if (!empty($_SESSION['user_id'])) {
           <span class="badge-brand-orb"></span>
         </div>
         <div class="badge-brand-mark">
-          <iconify-icon icon="mdi:school"></iconify-icon>
+          <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="42" height="42">
         </div>
         <p class="badge-brand-name">Edu<em>School</em></p>
         <p class="badge-brand-tagline">Registrar, Admission, and Faculty tools — all in one place.</p>

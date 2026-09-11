@@ -5,16 +5,14 @@ require_once '../../db.php';
 require_once '../../roles.php';
 require_once '../../require_role.php';
 require_once '../../csrf.php';
+require_once '../../Treasury/record_payment_core.php';
 
 $db   = new Database();
 $conn = $db->connect();
 
 if (empty($_SESSION['user_id'])) {
     http_response_code(401);
-    echo json_encode([
-        'success' => false,
-        'errors' => ['Unauthorized.']
-    ]);
+    echo json_encode(['success' => false, 'errors' => ['Unauthorized.']]);
     exit;
 }
 
@@ -27,224 +25,38 @@ $payment_id = $_POST['payment_id'] ?? '';
 $amount     = $_POST['amount'] ?? '';
 
 $errors = [];
-
 if (!ctype_digit((string)$payment_id)) {
     $errors[] = 'Invalid payment record.';
 }
-
 if (!is_numeric($amount) || (float)$amount <= 0) {
     $errors[] = 'Enter a valid amount greater than 0.';
 }
-
 if (!empty($errors)) {
-    echo json_encode([
-        'success' => false,
-        'errors' => $errors
-    ]);
+    echo json_encode(['success' => false, 'errors' => $errors]);
     exit;
 }
 
-$payment_id  = (int)$payment_id;
-$amount      = round((float)$amount, 2);
-$received_by = (int)$_SESSION['user_id'];
+// All the balance maths, status transitions, OR numbering and unpaid-flag
+// resolution live in the shared core so the online (PayMongo) path posts
+// payments exactly the same way.
+$result = record_treasury_payment(
+    $conn,
+    (int)$payment_id,
+    round((float)$amount, 2),
+    (int)$_SESSION['user_id'],
+    'Cash (counter)'
+);
 
-define('MIN_DOWNPAYMENT', 3000.00);
-
-$conn->begin_transaction();
-
-try {
-
-    // Lock payment row
-    $stmt = $conn->prepare("
-        SELECT payment_id, enrollment_id, amount_due, downpayment, balance
-        FROM payment
-        WHERE payment_id = ?
-        FOR UPDATE
-    ");
-
-    if (!$stmt) {
-        throw new DbError($conn->error);
-    }
-
-    $stmt->bind_param("i", $payment_id);
-    $stmt->execute();
-    $payment = $stmt->get_result()->fetch_assoc();
-    $stmt->close();
-
-    if (!$payment) {
-        throw new Exception("Payment record not found.");
-    }
-
-    $currentBalance = (float)$payment['balance'];
-    $isFirstPayment = ((float)$payment['downpayment'] <= 0);
-
-    if ($currentBalance <= 0) {
-        throw new Exception("This payment is already fully paid.");
-    }
-
-    if ($amount > $currentBalance) {
-        throw new Exception(
-            "Amount exceeds the remaining balance of ₱" .
-            number_format($currentBalance, 2)
-        );
-    }
-
-    if (
-        $isFirstPayment &&
-        $amount < MIN_DOWNPAYMENT &&
-        $amount < $currentBalance
-    ) {
-        throw new Exception(
-            "The minimum down payment is ₱" .
-            number_format(MIN_DOWNPAYMENT, 2)
-        );
-    }
-
-    // Save payment transaction
-    $stmt = $conn->prepare("
-        INSERT INTO payment_transactions
-        (payment_id, amount, paid_at, received_by)
-        VALUES (?, ?, NOW(), ?)
-    ");
-
-    if (!$stmt) {
-        throw new DbError($conn->error);
-    }
-
-    $stmt->bind_param(
-        "idi",
-        $payment_id,
-        $amount,
-        $received_by
-    );
-
-    $stmt->execute();
-    $stmt->close();
-
-    // OR/receipt number is just the transaction's own auto-increment ID,
-    // zero-padded — no separate sequence or manual entry needed.
-    $orNumber = sprintf('OR-%06d', $conn->insert_id);
-
-    // Compute totals
-    $newDownpayment = (float)$payment['downpayment'] + $amount;
-    $newBalance     = (float)$payment['amount_due'] - $newDownpayment;
-
-    // Payment status
-    $paymentStatus = ($newBalance <= 0)
-        ? "Fully Paid"
-        : "Down Payment Paid";
-
-    // Applicant status
-    $applicantStatus = ($newBalance <= 0)
-        ? "Fully Paid"
-        : "Downpayment Paid";
-
-    // Update payment table
-    $stmt = $conn->prepare("
-        UPDATE payment
-        SET
-            downpayment = ?,
-            payment_status = ?,
-            paid_at = NOW(),
-            received_by = ?
-        WHERE payment_id = ?
-    ");
-
-    if (!$stmt) {
-        throw new DbError($conn->error);
-    }
-
-    $stmt->bind_param(
-        "dsii",
-        $newDownpayment,
-        $paymentStatus,
-        $received_by,
-        $payment_id
-    );
-
-    $stmt->execute();
-    $stmt->close();
-
-    // Update applicant status
-    $stmt = $conn->prepare("
-        UPDATE applicants a
-        INNER JOIN enrollment e
-            ON e.student_id = a.applicant_id
-        INNER JOIN payment p
-            ON e.enrollment_id = p.enrollment_id
-        SET a.status = ?
-        WHERE p.payment_id = ?
-    ");
-
-    if (!$stmt) {
-        throw new DbError($conn->error);
-    }
-
-    $stmt->bind_param(
-        "si",
-        $applicantStatus,
-        $payment_id
-    );
-
-    $stmt->execute();
-    $stmt->close();
-
-    // Update enrollment status
-    $stmt = $conn->prepare("
-        UPDATE enrollment e
-        INNER JOIN payment p
-            ON p.enrollment_id = e.enrollment_id
-        SET e.status = 'Enrolled'
-        WHERE p.payment_id = ?
-    ");
-
-    if (!$stmt) {
-        throw new DbError($conn->error);
-    }
-
-    $stmt->bind_param("i", $payment_id);
-    $stmt->execute();
-    $stmt->close();
-
-    // If this enrollment had already been flagged as unpaid (missed its
-    // due date with nothing paid), a payment coming in now resolves that —
-    // mark it rather than deleting, so there's still a record it was late.
-    $stmt = $conn->prepare("UPDATE unpaid_students SET status = 'Resolved' WHERE payment_id = ? AND status = 'Pending'");
-    if (!$stmt) {
-        throw new DbError($conn->error);
-    }
-    $stmt->bind_param("i", $payment_id);
-    $stmt->execute();
-    $stmt->close();
-
-    $conn->commit();
-
+if ($result['success']) {
     echo json_encode([
-        "success" => true,
-        "payment_status" => $paymentStatus,
-        "applicant_status" => $applicantStatus,
-        "balance" => $newBalance,
-        "or_number" => $orNumber
+        'success'          => true,
+        'payment_status'   => $result['payment_status'],
+        'applicant_status' => $result['applicant_status'],
+        'balance'          => $result['balance'],
+        'or_number'        => $result['or_number'],
     ]);
-
-} catch (DbError $e) {
-
-    $conn->rollback();
-    error_log($e->getMessage());
-
-    echo json_encode([
-        "success" => false,
-        "errors" => ["A database error occurred. Please try again."]
-    ]);
-
-} catch (Exception $e) {
-
-    $conn->rollback();
-
-    echo json_encode([
-        "success" => false,
-        "errors" => [$e->getMessage()]
-    ]);
+} else {
+    echo json_encode(['success' => false, 'errors' => [$result['error']]]);
 }
 
 $conn->close();

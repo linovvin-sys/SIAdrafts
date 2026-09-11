@@ -51,7 +51,10 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
 
   <div class="e-nav-wrap">
     <nav class="e-navbar">
-      <a class="e-brand" href="#top">Edu<em>School</em></a>
+      <a class="e-brand" href="#top">
+        <img class="e-brand-mark" src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="30" height="30">
+        <span>Edu<em>School</em></span>
+      </a>
 
       <ul class="e-nav-links">
         <li><a href="#steps">How it works</a></li>
@@ -65,6 +68,8 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
       </div>
     </nav>
   </div>
+
+  <div class="e-hero-photo" aria-hidden="true"></div>
 
   <main id="top" class="e-hero">
     <div class="e-folio e-reveal" style="transition-delay:0ms">
@@ -265,9 +270,14 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
 
   <!-- FAQ chat widget -->
   <button type="button" class="e-chat-toggle" id="chatToggle" aria-expanded="false" aria-controls="chatPanel" title="Ask a question">
-    <svg class="e-chat-chat-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+    <span class="e-chat-toggle-face" aria-hidden="true">
+      <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+      <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+    </span>
     <svg class="e-chat-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
   </button>
+
+  <div class="e-chat-scrim" id="chatScrim" aria-hidden="true"></div>
 
   <div class="e-chat-panel" id="chatPanel" role="dialog" aria-label="Admissions FAQ chat">
     <div class="e-chat-head">
@@ -315,6 +325,7 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
       var input  = document.getElementById('chatInput');
       var send   = document.getElementById('chatSend');
       var avatar = document.getElementById('chatAvatar');
+      var scrim  = document.getElementById('chatScrim');
       var opened = false;
       var sending = false;
       var history = []; // {role: 'user'|'model', text: string} — errors are never added, only real turns
@@ -432,6 +443,7 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
         toggle.classList.toggle('open', opened);
         toggle.setAttribute('aria-expanded', opened ? 'true' : 'false');
         panel.classList.toggle('open', opened);
+        scrim.classList.toggle('open', opened);
         if (opened) {
           if (!log.children.length) {
             addMessage("Hi, I'm Dotty! Ask me anything about applying or enrolling — I can help with the basics on this page.", 'bot');
@@ -441,6 +453,11 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
         } else {
           clearTimeout(idleGlanceTimer);
         }
+      });
+
+      // Tapping the dimmed blue backdrop closes the chat, same as any modal.
+      scrim.addEventListener('click', function () {
+        if (opened) toggle.click();
       });
 
       form.addEventListener('submit', function (e) {

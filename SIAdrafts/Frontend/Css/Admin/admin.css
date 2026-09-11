@@ -180,6 +180,17 @@
     --clay-shadow-light: rgba(255, 255, 255, 0.045);
     color-scheme: dark;
   }
+  /* .btn-primary's background is var(--navy), which resolves to --ink-950
+     — a light sage-grey text tone in dark mode, not a fill color. Left
+     as-is, every primary button in dark mode read as flat light grey
+     instead of the accent green. */
+  :root:not([data-theme="light"]) .btn-primary {
+    background: var(--accent-600);
+    color: #fff;
+  }
+  :root:not([data-theme="light"]) .btn-primary:hover {
+    background: var(--accent-text);
+  }
 }
 :root[data-theme="dark"] {
   --ink-950: #C9D1C4;
@@ -215,6 +226,13 @@
   --clay-shadow-dark: rgba(0, 0, 0, 0.5);
   --clay-shadow-light: rgba(255, 255, 255, 0.045);
   color-scheme: dark;
+}
+:root[data-theme="dark"] .btn-primary {
+  background: var(--accent-600);
+  color: #fff;
+}
+:root[data-theme="dark"] .btn-primary:hover {
+  background: var(--accent-text);
 }
 :root[data-theme="light"] {
   color-scheme: light;

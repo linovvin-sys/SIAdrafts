@@ -29,25 +29,107 @@ function setLoading(loading) {
   submitLabel.textContent = loading ? 'Signing in…' : 'Log in';
 }
 
-form.addEventListener('submit', async (e) => {
+function escapeHtml(str) {
+  return String(str).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+// ===== Sign-in terminal =====
+// Ported from the staff login (Frontend/Js/Admission/login.js): sequences
+// the perceived steps around the real network call and reflects the actual
+// result — it never fabricates success.
+const STEP_MS = 460;
+
+function runLoginTerminal(steps, run) {
+  const terminal = document.getElementById('spLoginTerminal');
+  const stage    = terminal.querySelector('.sp-login-terminal-stage');
+  const stepEl   = document.getElementById('spLoginTerminalStep');
+  const fillEl   = document.getElementById('spLoginTerminalFill');
+  const resultEl = document.getElementById('spLoginTerminalResult');
+
+  stage.classList.remove('is-success', 'is-error');
+  resultEl.innerHTML = '';
+  fillEl.style.transition = 'none';
+  fillEl.style.width = '0%';
+  stepEl.textContent = steps[0];
+  terminal.classList.add('is-open');
+  terminal.setAttribute('aria-hidden', 'false');
+
+  requestAnimationFrame(function () {
+    fillEl.style.transition = 'width ' + (steps.length * STEP_MS) + 'ms cubic-bezier(0.65, 0, 0.35, 1)';
+    fillEl.style.width = '92%';
+  });
+
+  let i = 0;
+  const stepTimer = setInterval(function () {
+    i++;
+    if (i < steps.length) stepEl.textContent = steps[i];
+  }, STEP_MS);
+
+  const minWait = new Promise(function (resolve) { setTimeout(resolve, steps.length * STEP_MS); });
+
+  return Promise.all([
+    run().catch(function () { return { success: false, error: 'Something went wrong. Please try again.' }; }),
+    minWait,
+  ]).then(function (results) {
+    const result = results[0];
+    clearInterval(stepTimer);
+    fillEl.style.transition = 'width 200ms ease-out';
+    fillEl.style.width = '100%';
+
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        if (result && result.success) {
+          stepEl.textContent = 'Welcome back';
+          stage.classList.add('is-success');
+        } else {
+          stepEl.textContent = "Couldn't sign you in";
+          stage.classList.add('is-error');
+          resultEl.innerHTML = '<span>' + escapeHtml((result && result.error) || 'Unable to log in.') + '</span>' +
+            '<button type="button" class="retry-btn" data-terminal-dismiss>Try again</button>';
+        }
+        resolve(result);
+      }, 220);
+    });
+  });
+}
+
+function closeLoginTerminal() {
+  const terminal = document.getElementById('spLoginTerminal');
+  terminal.classList.remove('is-open');
+  terminal.setAttribute('aria-hidden', 'true');
+}
+
+const spTerminalEl = document.getElementById('spLoginTerminal');
+if (spTerminalEl) {
+  spTerminalEl.addEventListener('click', function (e) {
+    if (e.target.closest('[data-terminal-dismiss]')) closeLoginTerminal();
+  });
+}
+
+form.addEventListener('submit', function (e) {
   e.preventDefault();
   setLoading(true);
 
-  const body = new FormData(form);
-
-  try {
-    const res = await fetch('/SIAdrafts/Backend/api/Auth/student_login.php', { method: 'POST', body });
-    const data = await res.json();
-    if (data.success) {
-      window.location.href = data.redirect;
-      return;
+  runLoginTerminal(
+    ['Checking credentials…', 'Signing you in…'],
+    function () {
+      return fetch('/SIAdrafts/Backend/api/Auth/student_login.php', {
+        method: 'POST',
+        body: new FormData(form),
+      }).then(function (res) { return res.json(); })
+        .then(function (d) { return { success: !!d.success, redirect: d.redirect, tab_token: d.tab_token, error: d.error }; });
     }
-    showError(data.error || 'Unable to log in.');
-  } catch (err) {
-    showError('Something went wrong. Please try again.');
-  } finally {
+  ).then(function (result) {
     setLoading(false);
-  }
+    if (result && result.success) {
+      try { sessionStorage.setItem('sia_tab_token', result.tab_token); } catch (err) {}
+      window.setTimeout(function () { window.location.href = result.redirect; }, 500);
+    } else {
+      showError((result && result.error) || 'Unable to log in.');
+    }
+  });
 });
 
 // A genuinely live element (real ticking clock), not decorative fakery --

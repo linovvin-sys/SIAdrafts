@@ -269,6 +269,10 @@ function renderPayCard(data) {
           <button class="btn-record-pay" id="recordPayBtn" data-payment-id="${p.payment_id}">
             Record payment
           </button>
+          <button class="btn-pay-online" id="payOnlineBtn" type="button" data-payment-id="${p.payment_id}">
+            <iconify-icon icon="mdi:cellphone-check" aria-hidden="true"></iconify-icon>
+            Pay online (GCash)
+          </button>
         </div>
       `) : `<div class="t-banner success">Fully paid. No balance remaining.</div>`}
 
@@ -377,6 +381,71 @@ function renderPayCard(data) {
         confirmText: 'Yes, record payment',
       }).then(function (ok) {
         if (ok) doRecord();
+      });
+    });
+  }
+
+  // Pay online: hands off to PayMongo's hosted checkout (GCash test flow on
+  // localhost). Same amount input + down-payment rule as the cash path; the
+  // ledger post happens back in paymongo_return.php once PayMongo confirms.
+  const payOnlineBtn = document.getElementById('payOnlineBtn');
+  if (payOnlineBtn) {
+    payOnlineBtn.addEventListener('click', function () {
+      const amount = document.getElementById('payAmountInput').value;
+      const paymentId = payOnlineBtn.dataset.paymentId;
+      const banner = document.getElementById('payFormBanner');
+      const amt = parseFloat(amount);
+      const isFirstPayment = totalPaid <= 0;
+      const MIN_DOWNPAYMENT = 3000;
+
+      if (!amount || isNaN(amt) || amt <= 0) {
+        banner.innerHTML = '<div class="t-banner error">Enter a valid amount.</div>';
+        return;
+      }
+      if (amt < 100) {
+        banner.innerHTML = '<div class="t-banner error">Online payments must be at least ' + fmtMoney(100) + '.</div>';
+        return;
+      }
+      if (isFirstPayment && amt < MIN_DOWNPAYMENT && amt < balance) {
+        banner.innerHTML = '<div class="t-banner error">The minimum down payment is ' + fmtMoney(MIN_DOWNPAYMENT) + '.</div>';
+        return;
+      }
+
+      const confirmFn = window.confirmAction || function (opts) {
+        return Promise.resolve(window.confirm(opts.title || 'Are you sure?'));
+      };
+      confirmFn({
+        title: 'Pay this online via GCash?',
+        html: '<div style="text-align:left;font-size:14px;line-height:1.7;">' +
+          '<div><strong>Student:</strong> ' + escapeHtml(s.full_name) + '</div>' +
+          '<div><strong>Amount:</strong> ' + fmtMoney(amt) + '</div>' +
+          '<div style="margin-top:6px;color:var(--ink-soft);">You\'ll be taken to PayMongo to complete payment.</div>' +
+          '</div>',
+        icon: 'question',
+        confirmText: 'Continue to PayMongo',
+      }).then(function (ok) {
+        if (!ok) return;
+        payOnlineBtn.disabled = true;
+        banner.innerHTML = '<div class="t-banner success">Opening secure checkout…</div>';
+        const body = new URLSearchParams({
+          payment_id: paymentId,
+          amount: amount,
+          csrf_token: document.body.dataset.csrf || '',
+        });
+        fetch('/SIAdrafts/Backend/api/Treasury/paymongo_create_checkout.php', { method: 'POST', body: body })
+          .then(function (res) { return res.json(); })
+          .then(function (result) {
+            if (result && result.success && result.checkout_url) {
+              window.location.href = result.checkout_url;
+            } else {
+              payOnlineBtn.disabled = false;
+              banner.innerHTML = '<div class="t-banner error">' + escapeHtml((result && result.error) || 'Could not start online payment.') + '</div>';
+            }
+          })
+          .catch(function () {
+            payOnlineBtn.disabled = false;
+            banner.innerHTML = '<div class="t-banner error">Could not reach the server. Please try again.</div>';
+          });
       });
     });
   }

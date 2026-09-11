@@ -1005,11 +1005,35 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
 .sp-auth-visual {
   position: relative;
   overflow: hidden;
-  background: var(--ink-950);
+  /* Campus photo behind a light green-ink scrim so the white copy stays
+     legible. Drop the image at Frontend/assets/login-campus.jpg (shared
+     with the staff login); if it's missing, the flat --ink-950 fill below
+     just shows on its own. Lower the two rgba alphas to reveal more photo,
+     raise them if text gets hard to read. */
+  background:
+    linear-gradient(160deg, rgba(31,46,40,0.66) 0%, rgba(18,30,25,0.86) 100%),
+    url("/SIAdrafts/Frontend/assets/login-campus.jpg") 60% center / cover no-repeat,
+    var(--ink-950);
   color: var(--paper-50);
   padding: 40px;
   display: flex; flex-direction: column; justify-content: space-between;
 }
+/* Keeps the white copy readable over whatever's in the photo without
+   needing an even heavier scrim: brighten the dimmed text tones the
+   panel used when it was a flat dark fill, and drop a soft shadow
+   under everything. */
+.sp-auth-visual :is(p, h1, h2, span, a, li) { text-shadow: 0 1px 10px rgba(0, 0, 0, 0.5); }
+.sp-auth-visual .sp-auth-clock-date { color: rgba(255, 255, 255, 0.82); }
+.sp-auth-visual .sp-auth-clock-time { color: #66D89B; }
+.sp-auth-visual .sp-auth-visual-sub { color: rgba(255, 255, 255, 0.9); }
+.sp-auth-visual .sp-auth-visual-foot { color: rgba(255, 255, 255, 0.75); }
+.sp-auth-visual .sp-auth-features span { color: rgba(255, 255, 255, 0.92); }
+.sp-auth-visual .sp-auth-features iconify-icon { color: #66D89B; }
+.sp-auth-visual .sp-auth-dayprogress-fill { background: #66D89B; }
+.sp-auth-visual .sp-auth-dayprogress { background: rgba(255, 255, 255, 0.24); }
+.sp-auth-visual .sp-auth-back { color: rgba(255, 255, 255, 0.9); }
+.sp-auth-visual .sp-auth-brand { color: #fff; }
+.sp-auth-visual .sp-auth-brand em { color: #66D89B; }
 /* A faint noise field so the flat dark fill reads as a material with
    texture, not a solid CSS color -- cheap (one inline SVG, no image
    request) and works in both themes since it's just luminance grain. */
@@ -1021,8 +1045,16 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
 }
 .sp-auth-brand {
   position: relative; z-index: 1;
+  display: inline-flex; align-items: center; gap: 9px;
   font-family: var(--font-display); font-size: 19px; font-weight: 500;
   color: var(--paper-50); text-decoration: none;
+}
+/* Sits on the photo/green visual panel — the green crest reads best on a
+   small white tile rather than as a flat silhouette. */
+.sp-auth-brand-mark {
+  width: 30px; height: 30px; display: block;
+  padding: 4px; box-sizing: border-box;
+  background: #fff; border-radius: 8px;
 }
 .sp-auth-brand em {
   color: var(--accent-600); font-style: italic;
@@ -1214,10 +1246,12 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
 }
 .sp-auth-sub { color: var(--slate-500); font-size: 13.5px; margin: 0 0 24px; }
 .sp-auth-icon {
-  width: 38px; height: 38px; border-radius: 10px;
+  width: 40px; height: 40px; border-radius: 10px;
   display: flex; align-items: center; justify-content: center;
-  background: var(--accent-100); color: var(--accent-text);
+  background: var(--paper-50); border: 1px solid var(--line-200);
+  color: var(--accent-text);
 }
+.sp-auth-icon img { width: 24px; height: 24px; display: block; }
 
 /* Staggered settle-in for the form itself -- this screen only appears
    once per session for a returning user, so a little first-impression
@@ -1504,4 +1538,138 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   .sp-print-letterhead h2 { font-family: var(--font-display); font-size: 20px; margin: 0 0 4px; }
   .sp-print-letterhead p { margin: 0; font-size: 12px; color: #444; }
   a { color: inherit !important; text-decoration: none !important; }
+}
+
+/* ============================================================
+   SIGN-IN TERMINAL
+   Ported from the staff login's .badge-terminal-* (Frontend/Css/
+   staff-login.css) so both portals share the same "ring stamps into
+   a result glyph" sign-in language — student green/paper palette.
+   ============================================================ */
+.sp-login-terminal{
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 180ms var(--sp-ease);
+}
+.sp-login-terminal.is-open{ opacity: 1; pointer-events: auto; }
+
+.sp-login-terminal-backdrop{
+  position: absolute; inset: 0;
+  background: rgba(31, 46, 40, 0.32);
+  backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px);
+}
+
+.sp-login-terminal-card{
+  position: relative;
+  width: min(320px, 100%);
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-xl, 22px);
+  box-shadow: 0 1px 1px rgba(31,46,40,0.04), 0 32px 64px -24px rgba(31,46,40,0.45);
+  padding: 34px 26px 26px;
+  text-align: center;
+  transform: scale(0.94) translateY(6px);
+  opacity: 0;
+  transition: transform 220ms var(--sp-ease), opacity 220ms var(--sp-ease);
+}
+.sp-login-terminal.is-open .sp-login-terminal-card{ transform: scale(1) translateY(0); opacity: 1; }
+
+.sp-login-terminal-ring{
+  position: relative;
+  width: 72px; height: 72px; margin: 0 auto 18px;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, var(--accent-100) 0deg, var(--accent-600) 300deg, var(--accent-100) 360deg);
+  animation: spLoginTerminalSpin 1.1s linear infinite;
+  display: flex; align-items: center; justify-content: center;
+}
+.sp-login-terminal-ring::before{
+  content: ""; position: absolute; inset: 5px;
+  border-radius: 50%; background: var(--paper-50);
+}
+@keyframes spLoginTerminalSpin{ to{ transform: rotate(360deg); } }
+
+.sp-login-terminal-glyph{
+  position: absolute; top: 50%; left: 50%; width: 38px; height: 38px;
+  opacity: 0; transform: translate(-50%, -50%) scale(0.7);
+  transition: opacity 200ms var(--sp-ease), transform 260ms var(--sp-ease);
+}
+.sp-login-terminal-glyph-ring{ fill: none; stroke-width: 3; }
+.sp-login-terminal-glyph-mark{
+  fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round;
+  stroke-dasharray: 48; stroke-dashoffset: 48;
+}
+.sp-login-terminal-check .sp-login-terminal-glyph-ring{ stroke: var(--accent-600); }
+.sp-login-terminal-check .sp-login-terminal-glyph-mark{ stroke: var(--accent-600); }
+.sp-login-terminal-x .sp-login-terminal-glyph-ring{ stroke: var(--danger-600); }
+.sp-login-terminal-x .sp-login-terminal-glyph-mark{ stroke: var(--danger-600); stroke-dasharray: 34; stroke-dashoffset: 34; }
+
+.sp-login-terminal-stage.is-success .sp-login-terminal-ring{
+  animation: none;
+  background: var(--accent-600);
+  transform: scale(1.04);
+  transition: background 200ms var(--sp-ease), transform 320ms var(--sp-ease);
+}
+.sp-login-terminal-stage.is-success .sp-login-terminal-check{
+  opacity: 1; transform: translate(-50%, -50%) scale(1);
+  transition: opacity 200ms var(--sp-ease) 120ms, transform 320ms var(--sp-ease) 120ms;
+}
+.sp-login-terminal-stage.is-success .sp-login-terminal-check .sp-login-terminal-glyph-mark{
+  animation: spLoginTerminalDraw 360ms var(--sp-ease) 220ms forwards;
+}
+.sp-login-terminal-stage.is-error .sp-login-terminal-ring{
+  animation: none;
+  background: var(--danger-100);
+  transition: background 200ms var(--sp-ease);
+}
+.sp-login-terminal-stage.is-error .sp-login-terminal-x{
+  opacity: 1; transform: translate(-50%, -50%) scale(1);
+  transition: opacity 200ms var(--sp-ease) 100ms, transform 320ms var(--sp-ease) 100ms;
+  animation: spLoginTerminalShake 320ms cubic-bezier(0.65, 0, 0.35, 1) 260ms;
+}
+.sp-login-terminal-stage.is-error .sp-login-terminal-x .sp-login-terminal-glyph-mark{
+  animation: spLoginTerminalDraw 260ms var(--sp-ease) 160ms forwards;
+}
+@keyframes spLoginTerminalDraw{ to{ stroke-dashoffset: 0; } }
+@keyframes spLoginTerminalShake{
+  0%, 100%{ transform: translate(-50%, -50%) scale(1) translateX(0); }
+  25%{ transform: translate(-50%, -50%) scale(1) translateX(-4px); }
+  75%{ transform: translate(-50%, -50%) scale(1) translateX(4px); }
+}
+
+.sp-login-terminal-step{
+  font-size: 14.5px; font-weight: 600; color: var(--ink-950); margin: 0 0 14px;
+  min-height: 1.3em;
+}
+.sp-login-terminal-track{
+  height: 4px; border-radius: 999px; background: var(--line-200);
+  overflow: hidden;
+}
+.sp-login-terminal-fill{
+  height: 100%; width: 0%; border-radius: inherit;
+  background: var(--accent-600);
+}
+.sp-login-terminal-stage.is-error .sp-login-terminal-fill{ background: var(--danger-600); }
+
+.sp-login-terminal-result{
+  margin-top: 16px; font-size: 13px; color: var(--slate-500);
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  line-height: 1.5;
+}
+.sp-login-terminal-result:empty{ display: none; }
+.sp-login-terminal-result .retry-btn{
+  margin-top: 0; background: var(--ink-950); color: #fff; font-weight: 700;
+  border: none; border-radius: 10px; padding: 9px 20px; font-size: 13px;
+  cursor: pointer; transition: transform 140ms var(--sp-ease), background 140ms ease;
+}
+.sp-login-terminal-result .retry-btn:hover{ background: var(--accent-600); }
+.sp-login-terminal-result .retry-btn:active{ transform: scale(0.96); }
+
+@media (prefers-reduced-motion: reduce){
+  .sp-login-terminal-ring{ animation: none; }
+  .sp-login-terminal-card, .sp-login-terminal, .sp-login-terminal-glyph, .sp-login-terminal-ring{ transition-duration: 1ms !important; }
+  .sp-login-terminal-stage.is-error .sp-login-terminal-x,
+  .sp-login-terminal-stage.is-success .sp-login-terminal-check{ animation: none !important; }
+  .sp-login-terminal-glyph-mark{ stroke-dashoffset: 0 !important; }
 }

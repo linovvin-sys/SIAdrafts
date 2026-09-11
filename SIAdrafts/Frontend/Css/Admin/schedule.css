@@ -47,7 +47,7 @@
    underline gives it back a clear edge without reintroducing a solid
    fill that has to be re-solved per theme. */
 .sched-table thead tr {
-  background: var(--paper-100);
+  background: var(--clay-surface, var(--paper-100));
   border-bottom: 2px solid var(--accent-600);
 }
 .sched-table thead th {
@@ -162,7 +162,7 @@
 .subject-row td {
   padding: 13px 16px;
   border-bottom: 1px solid var(--line-200);
-  background: var(--paper-100);
+  background: var(--clay-surface, var(--paper-100));
   color: var(--navy);
   vertical-align: middle;
 }

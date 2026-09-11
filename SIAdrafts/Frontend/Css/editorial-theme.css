@@ -92,11 +92,16 @@ body.editorial-body{
 }
 
 .e-brand{
-  display: flex; align-items: baseline; gap: 6px;
+  display: flex; align-items: center; gap: 10px;
   text-decoration: none; color: var(--ink);
   font-family: var(--font-display);
   font-size: 20px;
   font-weight: 500;
+}
+.e-brand > span{ display: inline-flex; align-items: baseline; gap: 6px; }
+.e-brand-mark{
+  width: 30px; height: 30px;
+  display: block; flex-shrink: 0;
 }
 .e-brand em{
   color: var(--accent);
@@ -241,6 +246,34 @@ body.editorial-body{
   max-width: 1100px;
   margin: 0 auto;
   padding: 100px 28px 90px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Hero photo — pinned to the top-right of the document, so it scrolls away
+   with the hero and never reaches the sections below. Masked to fade out
+   toward the left, keeping the headline column clean. Drop the image at
+   Frontend/assets/hero.jpg; with no file this block is simply invisible. */
+.e-hero-photo{
+  position: absolute;
+  top: 0; right: 0;
+  width: min(56%, 820px);
+  height: min(108vh, 860px);
+  z-index: 0;
+  pointer-events: none;
+  background: url("/SIAdrafts/Frontend/assets/hero.jpg") center right / cover no-repeat;
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.12) 32%, #000 80%);
+          mask-image: linear-gradient(to right, transparent 0%, rgba(0,0,0,0.12) 32%, #000 80%);
+}
+/* Soften the bottom edge into the page colour so it doesn't cut a hard
+   line above the first section. */
+.e-hero-photo::after{
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(to bottom, transparent 58%, var(--paper) 100%);
+}
+@media (max-width: 860px){
+  .e-hero-photo{ display: none; }
 }
 
 .e-folio{
@@ -545,10 +578,40 @@ body.editorial-body{
     inset 4px 4px 8px rgba(0, 0, 0, 0.3),
     inset -3px -3px 6px rgba(255, 255, 255, 0.15);
 }
-.e-chat-toggle svg{ width: 24px; height: 24px; }
-.e-chat-toggle .e-chat-close-icon{ display: none; }
-.e-chat-toggle.open .e-chat-chat-icon{ display: none; }
-.e-chat-toggle.open .e-chat-close-icon{ display: block; }
+/* Closed state shows Dotty's face, not a generic message bubble — the
+   round green button reads as his head, so it only needs the eyes.
+   Reuses .e-chat-socket/.e-chat-eye (eyes keep their idle blink) with
+   positions re-scoped to this container. Face and X are stacked in the
+   same spot and cross-rotate into each other on open/close — no
+   display swap, so the spin is actually animatable. Centered with
+   negative margins so `transform` is free to carry only the rotation. */
+.e-chat-toggle-face,
+.e-chat-toggle .e-chat-close-icon{
+  position: absolute; left: 50%; top: 50%;
+  transition: opacity 180ms ease-out,
+              transform 340ms cubic-bezier(0.5, 0, 0.15, 1.25);
+}
+.e-chat-toggle-face{
+  width: 42px; height: 22px; margin: -11px 0 0 -21px;
+  opacity: 1; transform: rotate(0deg);
+}
+.e-chat-toggle .e-chat-close-icon{
+  display: block; width: 24px; height: 24px; margin: -12px 0 0 -12px;
+  opacity: 0; transform: rotate(-135deg);
+}
+.e-chat-toggle.open .e-chat-toggle-face{ opacity: 0; transform: rotate(135deg); }
+.e-chat-toggle.open .e-chat-close-icon{ opacity: 1; transform: rotate(0deg); }
+
+.e-chat-toggle-face .e-chat-socket{ top: 3px; }
+.e-chat-toggle-face .e-chat-socket:first-child{ left: 4px; }
+.e-chat-toggle-face .e-chat-socket:last-child{ left: 24px; }
+
+@media (prefers-reduced-motion: reduce){
+  .e-chat-toggle-face,
+  .e-chat-toggle .e-chat-close-icon{ transition: opacity 120ms ease; transform: none; }
+  .e-chat-toggle.open .e-chat-toggle-face{ transform: none; }
+  .e-chat-toggle.open .e-chat-close-icon{ transform: none; }
+}
 
 .e-chat-panel{
   position: fixed; right: 24px; bottom: 96px; z-index: 1500;
@@ -558,11 +621,34 @@ body.editorial-body{
     14px 14px 30px var(--clay-shadow-dark),
     -10px -10px 24px var(--clay-shadow-light);
   display: flex; flex-direction: column; overflow: hidden;
-  opacity: 0; transform: translateY(16px) scale(0.96); pointer-events: none;
-  transition: opacity 200ms ease-out, transform 200ms ease-out;
+  /* No fade, no scale — the panel snaps in on a stepped slide-up so the
+     entrance reads as a hard cut rather than a smooth glide. visibility
+     (not opacity) toggles it, delayed on close until the slide finishes. */
+  opacity: 1; transform: translateY(30px); visibility: hidden; pointer-events: none;
+  transition: transform 150ms steps(3, end), visibility 0s linear 150ms;
 }
-.e-chat-panel.open{ opacity: 1; transform: none; pointer-events: auto; }
-@media (prefers-reduced-motion: reduce){ .e-chat-panel{ transition: opacity 120ms ease; } }
+.e-chat-panel.open{
+  transform: translateY(0); visibility: visible; pointer-events: auto;
+  transition: transform 150ms steps(3, end), visibility 0s;
+}
+@media (prefers-reduced-motion: reduce){
+  .e-chat-panel{ transition: transform 0s, visibility 0s linear 0s; }
+}
+
+/* When Dotty is open, the rest of the landing page recedes behind a dark
+   green-ink wash (same family as --ink / --accent, not an off-palette
+   blue) so the conversation is the only thing in focus. Sits below the
+   panel and the toggle (both z-index 1500), above everything else. */
+.e-chat-scrim{
+  position: fixed; inset: 0; z-index: 1400;
+  background: radial-gradient(120% 120% at 82% 88%, rgba(4, 74, 40, 0.42), rgba(15, 28, 24, 0.66));
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+  opacity: 0; pointer-events: none;
+  transition: opacity 220ms ease-out;
+}
+.e-chat-scrim.open{ opacity: 1; pointer-events: auto; }
+@media (prefers-reduced-motion: reduce){ .e-chat-scrim{ transition: opacity 120ms ease; } }
 
 .e-chat-head{
   flex: none; padding: 20px 20px 14px;

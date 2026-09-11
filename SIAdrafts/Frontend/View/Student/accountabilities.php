@@ -42,9 +42,16 @@ foreach ($missingGroups as $group) {
 
 $balance = $payment ? (float)$payment['balance'] : 0;
 
+// The due-date chip only applies to students who haven't paid anything yet
+// (downpayment == 0) — those are the only ones actually at risk of losing
+// their enrollment, per unpaid_transfer.php's transfer_overdue_unpaid() (it
+// only flags payment rows with downpayment = 0). Once any downpayment is
+// made, that risk no longer exists, so the chip is hidden entirely rather
+// than reworded — there's no enforced deadline on the remaining balance.
 $dueLabel = null;
 $dueOverdue = false;
-if ($balance > 0 && $payment && !empty($payment['due_date'])) {
+$hasDownpayment = $payment && (float)$payment['downpayment'] > 0;
+if (!$hasDownpayment && $balance > 0 && $payment && !empty($payment['due_date'])) {
     $daysUntil = (int)ceil((strtotime($payment['due_date']) - strtotime(date('Y-m-d'))) / 86400);
     if ($daysUntil < 0) { $dueLabel = 'Overdue by ' . abs($daysUntil) . ' day' . (abs($daysUntil) === 1 ? '' : 's'); $dueOverdue = true; }
     elseif ($daysUntil === 0) { $dueLabel = 'Due today'; }
@@ -90,7 +97,7 @@ include __DIR__ . '/Include/header.php';
           <p class="sp-field-label">Total assessment</p>
           <p class="sp-field-value" style="font-family:var(--font-mono);">&#8369;<?= number_format((float)$payment['amount_due'], 2) ?></p>
         </div>
-        <?php if (!empty($payment['due_date'])): ?>
+        <?php if (!$hasDownpayment && !empty($payment['due_date'])): ?>
         <div class="sp-field">
           <p class="sp-field-label">Due date</p>
           <p class="sp-field-value"><?= date('F j, Y', strtotime($payment['due_date'])) ?></p>
