@@ -829,6 +829,20 @@ body.editorial-body{
   max-width: 82%; padding: 11px 14px; font-size: 13.5px; line-height: 1.5;
   border-radius: 18px;
 }
+/* Structured reply body — real <p>/<ul><li> built from the model's
+   "- item" convention (see the addMessage/renderMessageBody script below),
+   not raw text with newlines — an actual bullet marker and per-item
+   spacing instead of a dash sitting in a run-on line. */
+.e-chat-line{ margin: 0; }
+.e-chat-line + .e-chat-line,
+.e-chat-line + .e-chat-list,
+.e-chat-list + .e-chat-line{ margin-top: 8px; }
+.e-chat-list{
+  margin: 0; padding-left: 18px;
+  display: flex; flex-direction: column; gap: 5px;
+}
+.e-chat-list li{ padding-left: 2px; }
+.e-chat-list li::marker{ color: var(--clay-accent, #0B7A42); }
 .e-chat-msg--bot{
   align-self: flex-start; background: #fff; color: var(--ink);
   border-bottom-left-radius: 6px;

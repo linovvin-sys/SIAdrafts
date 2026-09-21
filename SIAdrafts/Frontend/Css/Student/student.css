@@ -502,6 +502,7 @@ input:focus-visible,
 
 .sp-today {
   position: relative;
+  isolation: isolate;
   background: var(--paper-50);
   border: 1px solid var(--line-200);
   border-radius: var(--sp-radius-xl);
@@ -512,6 +513,48 @@ input:focus-visible,
   transform: translateY(10px);
   animation: sp-card-in 0.5s var(--sp-ease) forwards;
   transition: background 0.3s ease;
+  overflow: hidden;
+}
+.sp-today-body { position: relative; z-index: 1; }
+
+/* The campus photo as the card's own background, not a thumbnail beside
+   the text -- a dark scrim underneath keeps the schedule text readable
+   regardless of what's in the photo, same technique as the login pages'
+   background photo. Decorative (empty alt), so it never competes with
+   the actual schedule data as content. */
+.sp-today-photo {
+  position: absolute; inset: 0; z-index: 0;
+}
+.sp-today-photo img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  display: block;
+}
+.sp-today-photo::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, rgba(31,46,40,0.86) 0%, rgba(31,46,40,0.72) 45%, rgba(31,46,40,0.5) 100%);
+}
+.sp-today.is-live .sp-today-photo::after {
+  background: linear-gradient(115deg, rgba(20,54,38,0.88) 0%, rgba(20,54,38,0.74) 45%, rgba(20,54,38,0.52) 100%);
+}
+
+/* Text sat on --ink-950/--slate-500, tuned for the plain paper background
+   this card used to have -- over a photo+scrim those read too dim. */
+.sp-today-body .sp-today-status-label { color: rgba(255,255,255,0.75); }
+.sp-today-body .sp-today-dot { background: rgba(255,255,255,0.45); }
+.sp-today.is-live .sp-today-body .sp-today-dot { background: #6BDBA0; }
+.sp-today-body .sp-today-subject { color: #fff; }
+.sp-today-body .sp-today-meta { color: rgba(255,255,255,0.8); }
+.sp-today-body .sp-today-countdown { background: rgba(255,255,255,0.16); color: #fff; }
+.sp-today-body .sp-today-upcoming li { background: rgba(255,255,255,0.14); color: #fff; }
+.sp-today-body .sp-today-upcoming li.tint-1,
+.sp-today-body .sp-today-upcoming li.tint-2,
+.sp-today-body .sp-today-upcoming li.tint-3,
+.sp-today-body .sp-today-upcoming li.tint-4 { background: rgba(255,255,255,0.16); color: #fff; }
+.sp-today-body :is(.sp-today-status-label, .sp-today-subject, .sp-today-meta) {
+  text-shadow: 0 1px 6px rgba(0,0,0,0.35);
 }
 /* A soft tint wash instead of the old accent-colored left border -- the
    floating shadow + radius already signal "this card matters", so the
@@ -978,9 +1021,34 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   transform: translate(var(--mx, 0px), var(--my, 0px));
   transition: transform 0.15s var(--sp-ease-glide), box-shadow 0.15s ease;
 }
-.sp-btn-primary { background: var(--ink-950); color: var(--paper-50); }
-.sp-btn-primary:hover { box-shadow: var(--shadow-lift); }
+.sp-btn-primary {
+  position: relative;
+  overflow: hidden;
+  background: var(--ink-950); color: var(--paper-50);
+}
+/* A light sweep across the button, not just a shadow bump -- the ::after
+   band sits off to the left at rest with transitions turned off, so
+   leaving the button snaps it back instantly (no reverse-animation
+   flicker) and it's ready to replay clean on the next hover. */
+.sp-btn-primary::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(115deg, transparent 30%, rgba(255, 255, 255, 0.4) 50%, transparent 70%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+.sp-btn-primary:hover {
+  box-shadow: var(--shadow-lift);
+  transform: translate(var(--mx, 0px), calc(var(--my, 0px) - 2px));
+}
+.sp-btn-primary:hover::after {
+  transform: translateX(120%);
+  transition: transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
 .sp-btn-primary:active { transform: translate(var(--mx, 0px), var(--my, 0px)) scale(0.97); }
+@media (prefers-reduced-motion: reduce) {
+  .sp-btn-primary:hover::after { transition: none; }
+}
 .sp-btn-secondary {
   background: var(--paper-50); color: var(--ink-950);
   border: 1px solid var(--line-200);
@@ -1078,6 +1146,7 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
    nothing to a first-time visitor, and nothing at all on touch devices,
    which don't have hover to begin with. */
 .sp-auth-back {
+  position: absolute; top: 24px; right: 24px; z-index: 2;
   display: flex; align-items: center; gap: 6px;
   font-size: 12.5px; font-weight: 600;
   color: rgba(255, 255, 255, 0.65);
@@ -1093,6 +1162,23 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
 }
 .sp-auth-back:hover iconify-icon { transform: translateX(-2px); }
 .sp-auth-back:active { transform: scale(0.96); }
+
+/* Right side is the light --paper-100 panel, not the dark photo one this
+   link's default colors were tuned for -- flip to dark ink on a faint
+   ink-tinted chip instead of white-on-translucent. */
+.sp-auth-back--light {
+  color: var(--ink-800);
+  border-color: var(--line-200);
+}
+.sp-auth-back--light:hover {
+  color: var(--ink-950);
+  border-color: var(--slate-300);
+  background: var(--paper-50);
+}
+@media (max-width: 560px) {
+  .sp-auth-back { top: 16px; right: 16px; padding: 5px 10px; font-size: 11.5px; }
+  .sp-auth-back span { display: none; }
+}
 
 .sp-auth-visual-body { position: relative; z-index: 1; }
 .sp-auth-clock-date {
@@ -1208,12 +1294,14 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
 }
 
 .sp-auth-form-side {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  display: flex; flex-direction: column; align-items: flex-start; justify-content: center;
+  padding: 24px 56px;
   background: var(--paper-100);
 }
 .sp-auth-side-note {
-  margin: 18px 0 0;
+  margin: 22px 0 0;
   font-size: 13px; color: var(--slate-500);
 }
 .sp-auth-side-note a {
@@ -1221,37 +1309,52 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   transition: color 0.15s ease;
 }
 .sp-auth-side-note a:hover { color: var(--accent-600); }
+
+/* No boxed card -- the form sits straight on the panel instead of
+   floating inside a bordered/shadowed container in the middle of an
+   otherwise-empty field. Left-aligned (not centered) so the eyebrow +
+   headline read as this panel's own content, not a dialog dropped on
+   top of it; the watermark crest below is what fills the rest of the
+   space intentionally, instead of that space just being leftover. */
 .sp-auth-card {
-  width: 100%; max-width: 380px;
-  background: var(--paper-50);
-  border: 1px solid var(--line-200);
-  border-radius: var(--sp-radius-lg);
-  padding: 32px;
-  box-shadow: var(--shadow-lift);
-  /* Materialize rather than just fade -- per emil-design-eng, blurring an
-     entrance blends the "not there yet" and "arrived" states into one
-     continuous transformation instead of two objects swapping. */
-  opacity: 0; transform: scale(0.97) translateY(6px); filter: blur(6px);
+  position: relative; z-index: 1;
+  width: 100%; max-width: 400px;
+  opacity: 0; transform: translateY(6px);
   animation: sp-card-materialize 0.5s var(--sp-ease) forwards;
 }
 @keyframes sp-card-materialize {
-  to { opacity: 1; transform: scale(1) translateY(0); filter: blur(0); }
+  to { opacity: 1; transform: translateY(0); }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sp-auth-card { animation: none; opacity: 1; transform: none; filter: none; }
+  .sp-auth-card { animation: none; opacity: 1; transform: none; }
+}
+
+/* Small tracked label standing in for the old icon chip -- names the
+   screen without a decorative glyph that wasn't doing much work at 40px. */
+.sp-auth-eyebrow {
+  font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+  color: var(--accent-text); margin: 0 0 10px;
 }
 .sp-auth-title {
-  font-family: var(--font-display); font-size: 22px; font-weight: 500;
-  margin: 0 0 6px;
+  font-family: var(--font-display); font-size: clamp(1.9rem, 3vw, 2.3rem);
+  font-weight: 500; letter-spacing: -0.01em; line-height: 1.12;
+  margin: 0 0 10px;
 }
-.sp-auth-sub { color: var(--slate-500); font-size: 13.5px; margin: 0 0 24px; }
-.sp-auth-icon {
-  width: 40px; height: 40px; border-radius: 10px;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--paper-50); border: 1px solid var(--line-200);
-  color: var(--accent-text);
+.sp-auth-sub { color: var(--slate-500); font-size: 14px; line-height: 1.5; margin: 0 0 28px; max-width: 38ch; }
+
+/* Oversized, near-invisible crest anchored to the corner -- texture and
+   scale for the panel's remaining space without competing with the form
+   or turning into a second logo anyone reads as content. */
+.sp-auth-watermark {
+  position: absolute; z-index: 0; pointer-events: none;
+  right: -60px; bottom: -60px;
+  width: 420px; height: 420px;
+  opacity: 0.05;
 }
-.sp-auth-icon img { width: 24px; height: 24px; display: block; }
+.sp-auth-watermark img { width: 100%; height: 100%; display: block; }
+@media (max-width: 560px) {
+  .sp-auth-watermark { width: 260px; height: 260px; right: -50px; bottom: -50px; }
+}
 
 /* Staggered settle-in for the form itself -- this screen only appears
    once per session for a returning user, so a little first-impression
@@ -1283,6 +1386,7 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   .sp-auth-visual-title { font-size: 1.7rem; }
   .sp-auth-visual-sub { display: none; }
   .sp-auth-features { display: none; }
+  .sp-auth-form-side { padding: 24px 28px; }
 }
 
 .sp-form-group { margin-bottom: 16px; }

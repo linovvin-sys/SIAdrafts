@@ -5,6 +5,7 @@ require_once '../../roles.php';
 require_once '../../require_role.php';
 require_once '../../prereq.php';
 require_once '../../csrf.php';
+require_once '../../mailer.php';
 
 header('Content-Type: application/json');
 
@@ -410,6 +411,12 @@ try {
 
     $student_name = trim($applicant['first_name'] . ' ' . $applicant['last_name']);
 
+    // Set only for a first-time enrollee (see the portal-account insert
+    // below) — carries the one-time plaintext temp password out of that
+    // block so it can be emailed/shown after commit. Never stored anywhere
+    // except this request's memory; the DB only ever holds the hash.
+    $newPortalCredentials = null;
+
     // Re-enrolling students keep the student number they already have.
     // First-time enrollees get a fresh one — this is the one and only
     // place in the system where an official student ID is minted.
@@ -484,6 +491,11 @@ try {
             throw new RuntimeException('Database error (portal account): ' . $conn->error);
         }
         $insPortal->close();
+
+        $newPortalCredentials = [
+            'student_no'    => $student_no,
+            'temp_password' => $tempPassword,
+        ];
     }
 
     // Insert enrollment. Status starts as "Pending Payment" — the payment
@@ -593,10 +605,58 @@ try {
     $conn->commit();
     unset($_SESSION['enroll']);
 
+    // Student portal credentials were minted above but never surfaced
+    // anywhere before this — the only record of the temp password was its
+    // hash in the DB, so nobody (not the student, not the registrar) had
+    // any real way to know it. Email it now the same way the admission
+    // confirmation slip already does, and echo it back to the registrar
+    // screen too — enrollment happens in person, so staff can also just
+    // read it out to the student on the spot, which doesn't depend on the
+    // email actually landing (spam filters, a mistyped address, etc.).
+    $portalEmailSent = false;
+    if ($newPortalCredentials && !empty($applicant['email'])) {
+        $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+        $credsHtml = '
+        <div style="margin:0;padding:24px;background:#F7F4EC;font-family:Helvetica,Arial,sans-serif;color:#1F2E28;">
+          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
+            <tr><td style="padding-bottom:18px;text-align:center;">
+              <div style="font-family:Georgia,serif;font-size:22px;font-weight:600;">Edu<span style="color:#A47B3F;">School</span></div>
+              <div style="font-size:12px;color:rgba(31,46,40,0.8);letter-spacing:1px;text-transform:uppercase;margin-top:4px;">Student Portal Access</div>
+            </td></tr>
+            <tr><td style="background:#FFFFFF;border:1px solid rgba(31,46,40,0.14);border-radius:14px;padding:28px 30px;">
+              <p style="margin:0 0 16px;font-size:15px;">Hi ' . $e($applicant['first_name']) . ', welcome to EduSchool! Your student portal account is ready:</p>
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-top:1px solid rgba(31,46,40,0.14);">
+                <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);border-bottom:1px solid rgba(31,46,40,0.08);">Student No.</td><td style="padding:10px 0;text-align:right;font-weight:bold;border-bottom:1px solid rgba(31,46,40,0.08);">' . $e($newPortalCredentials['student_no']) . '</td></tr>
+                <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);">Temporary Password</td><td style="padding:10px 0;text-align:right;font-weight:bold;font-family:Courier,monospace;">' . $e($newPortalCredentials['temp_password']) . '</td></tr>
+              </table>
+              <p style="margin:22px 0 0;font-size:13px;color:rgba(31,46,40,0.8);line-height:1.6;">
+                Sign in at the Student Portal with the credentials above — you\'ll be asked to set your own password right away, and this temporary one stops working once you do.
+              </p>
+            </td></tr>
+            <tr><td style="padding-top:16px;text-align:center;font-size:11px;color:rgba(31,46,40,0.6);">
+              This is an automated message from the EduSchool registrar\'s office — replies are not monitored.
+            </td></tr>
+          </table>
+        </div>';
+        $portalEmailSent = send_email(
+            $applicant['email'],
+            'Your EduSchool Student Portal Account — ' . $newPortalCredentials['student_no'],
+            $credsHtml
+        );
+    }
+
     echo json_encode([
-        'success'       => true,
-        'enrollment_id' => $enrollment_id,
-        'student_no'    => $student_no,
+        'success'          => true,
+        'enrollment_id'    => $enrollment_id,
+        'student_no'       => $student_no,
+        // Temp password deliberately left out of this response — it's
+        // confidential and the only two places it should ever end up are
+        // the hash in the DB and the email just sent above. The registrar
+        // screen only needs to know whether that email actually went out.
+        'portal_account'   => $newPortalCredentials ? [
+            'student_no' => $newPortalCredentials['student_no'],
+            'email_sent' => $portalEmailSent,
+        ] : null,
         'payment'       => [
             'payment_id' => $payment_id,
             'amount_due' => $amount_due,

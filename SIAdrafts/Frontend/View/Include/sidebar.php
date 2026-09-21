@@ -50,6 +50,7 @@ $iconMap = [
     'enrollment'  => 'mdi:notebook-check',
     'enrolees'    => 'mdi:school',
     'course'      => 'mdi:book-open-page-variant',
+    'documents'   => 'mdi:folder-multiple-outline',
     'sections'    => 'mdi:account-group',
     'subjects'    => 'mdi:bookmark-multiple',
     'professors'  => 'mdi:account-tie',

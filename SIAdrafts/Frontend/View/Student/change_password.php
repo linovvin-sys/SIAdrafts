@@ -46,10 +46,11 @@ $_forced = !empty($_SESSION['must_change_password']);
   </div>
 
   <div class="sp-auth-form-side">
+    <div class="sp-auth-watermark" aria-hidden="true">
+      <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="">
+    </div>
     <div class="sp-auth-card">
-      <div class="sp-auth-icon sp-auth-in" style="--i:0; margin-bottom:18px;">
-        <iconify-icon icon="mdi:lock-reset" style="font-size:19px;"></iconify-icon>
-      </div>
+      <p class="sp-auth-eyebrow sp-auth-in" style="--i:0;">Account Security</p>
       <h2 class="sp-auth-title sp-auth-in" style="--i:1;">Set a new password</h2>
       <p class="sp-auth-sub sp-auth-in" style="--i:2;">
         <?= $_forced

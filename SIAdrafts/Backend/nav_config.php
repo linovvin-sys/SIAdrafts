@@ -18,6 +18,7 @@ $admissionRoleNav = [
     ['label' => 'Dashboard', 'page' => 'dashboard', 'url' => '/SIAdrafts/Frontend/View/Admission/dashboard.php', 'icon' => 'dashboard'],
     ['label' => 'Admission', 'page' => 'admission', 'url' => '/SIAdrafts/Frontend/View/Admission/admission.php', 'icon' => 'admission'],
     ['label' => 'Pending Documents', 'page' => 'pending_documents', 'url' => '/SIAdrafts/Frontend/View/Admission/pending_documents.php', 'icon' => 'approval'],
+    ['label' => 'Document Records', 'page' => 'document_records', 'url' => '/SIAdrafts/Frontend/View/Admission/document_records.php', 'icon' => 'documents'],
     ['label' => 'Total Enrolees', 'page' => 'total_enrolees', 'url' => '/SIAdrafts/Frontend/View/Admission/total_enrolees.php', 'icon' => 'enrolees'],
 ];
 
@@ -61,6 +62,7 @@ return [
             'items' => [
                 ['label' => 'Admission Queue', 'page' => 'admission', 'url' => '/SIAdrafts/Frontend/View/Admission/admission.php', 'icon' => 'admission'],
                 ['label' => 'Pending Documents', 'page' => 'pending_documents', 'url' => '/SIAdrafts/Frontend/View/Admission/pending_documents.php', 'icon' => 'approval'],
+                ['label' => 'Document Records', 'page' => 'document_records', 'url' => '/SIAdrafts/Frontend/View/Admission/document_records.php', 'icon' => 'documents'],
                 ['label' => 'Ready to Enroll', 'page' => 'enrollment', 'url' => '/SIAdrafts/Frontend/View/Admission/enrollment.php', 'icon' => 'enrollment'],
                 ['label' => 'Total Enrolees', 'page' => 'total_enrolees', 'url' => '/SIAdrafts/Frontend/View/Admission/total_enrolees.php', 'icon' => 'enrolees'],
             ],
