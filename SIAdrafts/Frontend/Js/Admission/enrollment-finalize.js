@@ -47,9 +47,20 @@ Vue.createApp({
           this.saved  = true;
           this.saving = false;
           if (window.confirmAction) {
+            // First-time enrollee: their portal account was just created
+            // and emailed to them. The temp password itself is confidential
+            // — it never reaches this screen at all (see save_enrollment.php),
+            // so there's nothing to accidentally show here. Just confirm
+            // whether the email actually went out.
+            let portalNote = '';
+            if (d.portal_account) {
+              portalNote = d.portal_account.email_sent
+                ? ' A temporary student portal account has been emailed to the student.'
+                : ' Could not email the student portal account — have an Admin resend/reset it.';
+            }
             await window.confirmAction({
               title: 'Enrollment saved',
-              text: 'Student number: ' + d.student_no + '. Print the registration form now for the student to bring to Treasury.',
+              text: 'Student number: ' + d.student_no + '. Print the registration form now for the student to bring to Treasury.' + portalNote,
               icon: 'success',
               confirmText: 'Continue',
               showCancelButton: false,

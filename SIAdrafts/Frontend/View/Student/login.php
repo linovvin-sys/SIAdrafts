@@ -36,9 +36,6 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
         <img class="sp-auth-brand-mark" src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="26" height="26">
         <span>Edu<em>School</em></span>
       </a>
-      <a class="sp-auth-back" href="/SIAdrafts/Frontend/View/index.php">
-        <iconify-icon icon="mdi:arrow-left"></iconify-icon> Back to homepage
-      </a>
     </div>
 
     <div class="sp-auth-visual-body">
@@ -70,12 +67,16 @@ $greeting = $hour < 12 ? 'Good morning.' : ($hour < 18 ? 'Good afternoon.' : 'Go
   </div>
 
   <div class="sp-auth-form-side">
+    <a class="sp-auth-back sp-auth-back--light" href="/SIAdrafts/Frontend/View/index.php">
+      <iconify-icon icon="mdi:arrow-left"></iconify-icon> <span>Back to homepage</span>
+    </a>
+    <div class="sp-auth-watermark" aria-hidden="true">
+      <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="">
+    </div>
     <div class="sp-auth-card">
-      <div class="sp-auth-icon sp-auth-in" style="--i:0;">
-        <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="24" height="24">
-      </div>
-      <h2 class="sp-auth-title sp-auth-in" style="--i:1;">Student Portal</h2>
-      
+      <p class="sp-auth-eyebrow sp-auth-in" style="--i:0;">Student Portal Access</p>
+      <h2 class="sp-auth-title sp-auth-in" style="--i:1;">Sign in to continue</h2>
+
 
       <div class="sp-form-error" id="loginError" role="alert" aria-live="assertive">
         <p class="sp-form-error-msg" id="loginErrorMsg"></p>

@@ -12,6 +12,9 @@
 // each date calculation individually.
 date_default_timezone_set('Asia/Manila');
 
+require_once __DIR__ . '/env_security.php';
+apply_https_cookie_security();
+
 require_once __DIR__ . '/../vendor/autoload.php';
 
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');

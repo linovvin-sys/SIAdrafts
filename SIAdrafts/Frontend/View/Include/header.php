@@ -63,6 +63,7 @@ function asset_url(string $publicPath): string {
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Admin/modal.css'), ENT_QUOTES) ?>" />
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Registrar/registrar.css'), ENT_QUOTES) ?>" />
   <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/required.css'), ENT_QUOTES) ?>" />
+  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Admin/dotty-staff.css'), ENT_QUOTES) ?>" />
   <?php foreach ($extraCss as $href): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars(asset_url($href), ENT_QUOTES) ?>" />
   <?php endforeach; ?>
@@ -71,3 +72,33 @@ function asset_url(string $publicPath): string {
   <?= cdn_script_tag(CDN_ICONIFY) ?>
 </head>
 <body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>" data-readonly="<?= (($_SESSION['role_name'] ?? '') === 'Admin') ? '1' : '0' ?>">
+
+<?php if (!empty($_SESSION['user_id'])): ?>
+<!-- Internal Dotty — role-scoped chat, see Backend/StaffChat/snapshot.php.
+     Same mascot/markup/IDs as the public FAQ widget (Frontend/View/index.php)
+     so Frontend/Js/Admin/dotty-staff.js can be a near-direct port of its script. -->
+<div class="e-chat-scrim" id="chatScrim" aria-hidden="true"></div>
+
+<button type="button" class="e-chat-toggle" id="chatToggle" aria-expanded="false" aria-controls="chatPanel" title="Ask Dotty">
+  <span class="e-chat-toggle-face" aria-hidden="true">
+    <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+    <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+  </span>
+  <svg class="e-chat-close-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+</button>
+
+<div class="e-chat-panel" id="chatPanel" role="dialog" aria-label="Internal Dotty chat">
+  <div class="e-chat-head">
+    <div class="e-chat-avatar" id="chatAvatar" aria-hidden="true">
+      <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+      <span class="e-chat-socket"><span class="e-chat-eye"></span></span>
+    </div>
+    <span class="e-chat-name">Dotty</span>
+  </div>
+  <div class="e-chat-log" id="chatLog"></div>
+  <form class="e-chat-form" id="chatForm">
+    <input type="text" class="e-chat-input" id="chatInput" placeholder="Ask about your figures…" maxlength="500" autocomplete="off">
+    <button type="submit" class="e-chat-send" id="chatSend">Send</button>
+  </form>
+</div>
+<?php endif; ?>

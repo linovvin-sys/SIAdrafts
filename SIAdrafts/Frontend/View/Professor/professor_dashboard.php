@@ -74,6 +74,7 @@ include __DIR__ . '/Include/header.php';
 </p>
 
 <div class="sp-today <?= $nextClass ? ($nextClass['is_live'] ? 'is-live' : '') : 'is-empty' ?>">
+  <div class="sp-today-body">
   <?php if ($nextClass): ?>
     <div class="sp-today-status">
       <span class="sp-today-dot"></span>
@@ -104,6 +105,10 @@ include __DIR__ . '/Include/header.php';
     </div>
     <p class="sp-today-meta">Your teaching schedule will appear here once the Registrar's Office assigns your classes.</p>
   <?php endif; ?>
+  </div>
+  <div class="sp-today-photo">
+    <img src="/SIAdrafts/Frontend/assets/campus-today.jpg" alt="" loading="lazy">
+  </div>
 </div>
 
 <div class="sp-dash-grid">

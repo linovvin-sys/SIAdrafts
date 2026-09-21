@@ -402,10 +402,48 @@ $themeCssVer  = file_exists($themeCssPath) ? filemtime($themeCssPath) : time();
           '<span class="e-chat-socket"><span class="e-chat-eye"></span></span>' +
         '</span>';
 
+      function escapeChatHtml(str) {
+        return String(str).replace(/[&<>"']/g, function (c) {
+          return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+        });
+      }
+
+      // A "- item" line convention (see ask_faq.php's prompt) turned into
+      // real <p>/<ul><li> structure instead of relying on raw newlines —
+      // every line still goes through escapeChatHtml before becoming HTML,
+      // same safety textContent had.
+      function renderMessageBody(el, text) {
+        var lines = String(text).split('\n').map(function (l) { return l.trim(); }).filter(function (l) { return l !== ''; });
+        var html = '';
+        var i = 0;
+        while (i < lines.length) {
+          if (/^-\s+/.test(lines[i])) {
+            var items = [];
+            while (i < lines.length && /^-\s+/.test(lines[i])) {
+              items.push(lines[i].replace(/^-\s+/, ''));
+              i++;
+            }
+            html += '<ul class="e-chat-list">' + items.map(function (t) { return '<li>' + escapeChatHtml(t) + '</li>'; }).join('') + '</ul>';
+          } else {
+            var para = [];
+            while (i < lines.length && !/^-\s+/.test(lines[i])) {
+              para.push(lines[i]);
+              i++;
+            }
+            html += '<p class="e-chat-line">' + escapeChatHtml(para.join(' ')) + '</p>';
+          }
+        }
+        el.innerHTML = html || escapeChatHtml(text);
+      }
+
       function addMessage(text, kind) {
         var msg = document.createElement('div');
         msg.className = 'e-chat-msg e-chat-msg--' + kind;
-        msg.textContent = text;
+        if (kind === 'user') {
+          msg.textContent = text;
+        } else {
+          renderMessageBody(msg, text);
+        }
 
         // User's own messages don't get an avatar — only Dotty's replies
         // (and the error state, since that's still "him" talking) do.
