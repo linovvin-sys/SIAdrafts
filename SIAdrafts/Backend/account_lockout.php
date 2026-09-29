@@ -14,24 +14,23 @@ function account_locked_out(
     int $maxFailures = 5,
     int $windowSeconds = 900
 ): bool {
-    $stmt = $conn->prepare(
-        "SELECT COUNT(*) AS failures
-         FROM login_attempt
-         WHERE login_type = ?
-           AND identifier = ?
-           AND success = 0
-           AND created_at > (NOW() - INTERVAL ? SECOND)"
-    );
-
-    if (!$stmt) {
-        error_log('account_locked_out: prepare failed: ' . $conn->error);
+    try {
+        $stmt = $conn->prepare(
+            "SELECT COUNT(*) AS failures
+             FROM login_attempt
+             WHERE login_type = ?
+               AND identifier = ?
+               AND success = 0
+               AND created_at > (NOW() - INTERVAL ? SECOND)"
+        );
+        $stmt->bind_param('ssi', $loginType, $identifier, $windowSeconds);
+        $stmt->execute();
+        $failures = (int)($stmt->get_result()->fetch_assoc()['failures'] ?? 0);
+        $stmt->close();
+    } catch (mysqli_sql_exception $e) {
+        error_log('account_locked_out: ' . $e->getMessage());
         return false; // fail open rather than lock out real users on a DB hiccup
     }
-
-    $stmt->bind_param('ssi', $loginType, $identifier, $windowSeconds);
-    $stmt->execute();
-    $failures = (int)($stmt->get_result()->fetch_assoc()['failures'] ?? 0);
-    $stmt->close();
 
     return $failures >= $maxFailures;
 }

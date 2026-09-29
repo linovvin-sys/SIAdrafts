@@ -49,26 +49,34 @@ try {
         throw new RuntimeException('This schedule is no longer pending (it may have already been reviewed).');
     }
 
+    // Re-checks professor_id alongside room/section -- without it, approving
+    // a schedule here could double-book a professor into two overlapping
+    // classes with nothing flagging it (see save_schedule.php's own conflict
+    // check, which already covers this for the Head Registrar's direct-save
+    // path).
     $conflictStmt = $conn->prepare(
-        "SELECT schedule_id FROM schedule
+        "SELECT room_id, section_id, professor_id FROM schedule
          WHERE school_year = ? AND semester = ? AND day = ?
            AND time_start < ? AND time_end > ?
            AND status = 'Approved'
-           AND (room_id = ? OR section_id = ?)
+           AND (room_id = ? OR section_id = ? OR professor_id = ?)
            AND schedule_id != ?"
     );
     $conflictStmt->bind_param(
-        'sisssiii',
+        'sisssiiii',
         $sched['school_year'], $sched['semester'], $sched['day'],
         $sched['time_end'], $sched['time_start'],
-        $sched['room_id'], $sched['section_id'], $schedule_id
+        $sched['room_id'], $sched['section_id'], $sched['professor_id'], $schedule_id
     );
     $conflictStmt->execute();
     $conflict = $conflictStmt->get_result()->fetch_assoc();
     $conflictStmt->close();
 
     if ($conflict) {
-        throw new RuntimeException('Cannot approve — this room or section is now booked on ' . $sched['day'] . ' at an overlapping time.');
+        $reason = ((int)$conflict['professor_id'] === (int)$sched['professor_id'] && (int)$conflict['room_id'] !== (int)$sched['room_id'] && (int)$conflict['section_id'] !== (int)$sched['section_id'])
+            ? 'Cannot approve — this professor is now booked elsewhere on ' . $sched['day'] . ' at an overlapping time.'
+            : 'Cannot approve — this room or section is now booked on ' . $sched['day'] . ' at an overlapping time.';
+        throw new RuntimeException($reason);
     }
 
     $update = $conn->prepare(
@@ -83,12 +91,13 @@ try {
     $conn->commit();
     echo json_encode(['success' => true, 'message' => 'Schedule approved.']);
 
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    error_log('approve_schedule.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 } catch (RuntimeException $e) {
     $conn->rollback();
     echo json_encode(['error' => $e->getMessage()]);
-} catch (mysqli_sql_exception $e) {
-    $conn->rollback();
-    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 }
 
 $db->close();

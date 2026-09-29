@@ -130,5 +130,6 @@ try {
     $conn->rollback();
     $db->close();
     http_response_code(500);
-    echo json_encode(['error' => 'Import failed, nothing was saved: ' . $e->getMessage()]);
+    error_log('import_curriculum.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'Import failed, nothing was saved. Please try again.']);
 }

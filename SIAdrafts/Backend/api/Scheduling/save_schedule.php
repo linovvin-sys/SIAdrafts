@@ -207,12 +207,13 @@ try {
     $conn->rollback();
     error_log($e->getMessage());
     echo json_encode(['error' => 'A database error occurred. Please try again.']);
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    error_log('save_schedule.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 } catch (RuntimeException $e) {
     $conn->rollback();
     echo json_encode(['error' => $e->getMessage()]);
-} catch (mysqli_sql_exception $e) {
-    $conn->rollback();
-    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 }
 
 $db->close();

@@ -58,36 +58,38 @@ $attachment_name = $attachment['name'] ?? null;
 $attachment_type = $attachment['type'] ?? null;
 $attachment_size = $attachment['size'] ?? null;
 
-$stmt = $conn->prepare(
-    "INSERT INTO messages (sender_id, recipient_id, body, attachment_path, attachment_name, attachment_type, attachment_size)
-     VALUES (?, ?, ?, ?, ?, ?, ?)"
-);
-$stmt->bind_param(
-    'iissssi',
-    $sender_id,
-    $recipient_id,
-    $body,
-    $attachment_path,
-    $attachment_name,
-    $attachment_type,
-    $attachment_size
-);
+try {
+    $stmt = $conn->prepare(
+        "INSERT INTO messages (sender_id, recipient_id, body, attachment_path, attachment_name, attachment_type, attachment_size)
+         VALUES (?, ?, ?, ?, ?, ?, ?)"
+    );
+    $stmt->bind_param(
+        'iissssi',
+        $sender_id,
+        $recipient_id,
+        $body,
+        $attachment_path,
+        $attachment_name,
+        $attachment_type,
+        $attachment_size
+    );
+    $stmt->execute();
 
-if (!$stmt->execute()) {
+    $message_id = $stmt->insert_id;
+    $stmt->close();
+    $conn->close();
+
+    echo json_encode([
+        'success'         => true,
+        'message_id'      => $message_id,
+        'sent_at'         => date('Y-m-d H:i:s'),
+        'attachment_name' => $attachment_name,
+        'attachment_type' => $attachment_type,
+        'attachment_size' => $attachment_size,
+    ]);
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Database error: ' . $stmt->error]);
+    error_log('send_message.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-$message_id = $stmt->insert_id;
-$stmt->close();
-$conn->close();
-
-echo json_encode([
-    'success'         => true,
-    'message_id'      => $message_id,
-    'sent_at'         => date('Y-m-d H:i:s'),
-    'attachment_name' => $attachment_name,
-    'attachment_type' => $attachment_type,
-    'attachment_size' => $attachment_size,
-]);

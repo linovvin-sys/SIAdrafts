@@ -78,7 +78,7 @@ if ($isStaff) {
                COALESCE(s.student_no, a.reference_id) AS display_id,
                c.course_code, sec.section_name
         FROM enrollment e
-        JOIN applicants a  ON a.applicant_id = e.student_id
+        JOIN applicants a  ON a.applicant_id = e.applicant_id
         LEFT JOIN student s ON s.applicant_id = a.applicant_id
         LEFT JOIN section sec ON sec.section_id = e.section_id
         LEFT JOIN course c ON c.course_id = a.course_id

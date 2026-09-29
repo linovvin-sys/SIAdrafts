@@ -36,21 +36,22 @@ if (!$document_id) {
 // uploaded_at is refreshed to NOW() so it reflects when the document was
 // actually received, not when the deferred placeholder row was first
 // created back at walk-in confirmation.
-$stmt = $conn->prepare("
-    UPDATE applicant_documents
-    SET status = 'submitted', verified_by = ?, uploaded_at = NOW()
-    WHERE document_id = ? AND status = 'will_submit_later'
-");
-$stmt->bind_param('ii', $_SESSION['user_id'], $document_id);
-
-if (!$stmt->execute()) {
+try {
+    $stmt = $conn->prepare("
+        UPDATE applicant_documents
+        SET status = 'submitted', verified_by = ?, uploaded_at = NOW()
+        WHERE document_id = ? AND status = 'will_submit_later'
+    ");
+    $stmt->bind_param('ii', $_SESSION['user_id'], $document_id);
+    $stmt->execute();
+    $affected = $stmt->affected_rows;
     $stmt->close();
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+} catch (mysqli_sql_exception $e) {
+    error_log('mark_document_received.php: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-$affected = $stmt->affected_rows;
-$stmt->close();
 $db->close();
 
 if ($affected === 0) {

@@ -58,7 +58,7 @@ $stmt = $conn->prepare("
            a.first_name, a.last_name, COALESCE(s.student_no, a.reference_id) AS display_id
     FROM payment p
     JOIN enrollment e  ON e.enrollment_id = p.enrollment_id
-    JOIN applicants a  ON a.applicant_id = e.student_id
+    JOIN applicants a  ON a.applicant_id = e.applicant_id
     LEFT JOIN student s ON s.applicant_id = a.applicant_id
     WHERE p.payment_id = ?
 ");
@@ -128,13 +128,24 @@ if ($sessionId === '' || $checkoutUrl === '') {
     exit;
 }
 
-$ins = $conn->prepare("
-    INSERT INTO paymongo_checkout (local_ref, checkout_session_id, payment_id, amount, status)
-    VALUES (?, ?, ?, ?, 'pending')
-");
-$ins->bind_param('ssid', $localRef, $sessionId, $payment_id, $amount);
-$ins->execute();
-$ins->close();
+try {
+    $ins = $conn->prepare("
+        INSERT INTO paymongo_checkout (local_ref, checkout_session_id, payment_id, amount, status)
+        VALUES (?, ?, ?, ?, 'pending')
+    ");
+    $ins->bind_param('ssid', $localRef, $sessionId, $payment_id, $amount);
+    $ins->execute();
+    $ins->close();
+} catch (mysqli_sql_exception $e) {
+    // A live PayMongo checkout session now exists with no tracking row to
+    // reconcile it -- paymongo_return.php needs this row to tie a completed
+    // payment back to $payment_id. Log loudly so the session_id is
+    // recoverable from the error log rather than silently lost.
+    error_log('paymongo_create_checkout: failed to insert tracking row for session ' . $sessionId . ': ' . $e->getMessage());
+    $conn->close();
+    echo json_encode(['success' => false, 'error' => 'Could not start the online payment. Please try again.']);
+    exit;
+}
 
 $conn->close();
 

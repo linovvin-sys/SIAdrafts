@@ -49,33 +49,40 @@ if (!$staffRow || empty($staffRow['staff_id'])) {
 }
 $requested_by = $staffRow['staff_id'];
 
-$esStmt = $conn->prepare(
-    "SELECT es.enrollment_id, es.status, sub.units
-     FROM enrollment_subject es
-     JOIN subject sub ON sub.subject_id = es.subject_id
-     WHERE es.enrollment_subject_id = ?
-     LIMIT 1"
-);
-$esStmt->bind_param('i', $enrollment_subject_id);
-$esStmt->execute();
-$es = $esStmt->get_result()->fetch_assoc();
-$esStmt->close();
-
-if (!$es) {
-    echo json_encode(['error' => 'Subject enrollment record not found.']);
-    exit;
-}
-if ($es['status'] === 'Dropped' || $es['status'] === 'Pending Drop') {
-    echo json_encode(['error' => 'This subject is already dropped or pending drop.']);
-    exit;
-}
-
-$units  = (float)$es['units'];
-$amount = round($units * ADDROP_FEE_PER_UNIT, 2);
-
 $conn->begin_transaction();
 
 try {
+    // Locked and re-checked inside the transaction -- this used to run
+    // unlocked before begin_transaction(), so two near-simultaneous drop
+    // requests for the same row (double-click, duplicate tab) could both
+    // read a not-yet-dropped status, both pass the guard below, and both
+    // insert their own 'Drop' fee row, double-billing the student.
+    $esStmt = $conn->prepare(
+        "SELECT es.enrollment_id, es.status, sub.units
+         FROM enrollment_subject es
+         JOIN subject sub ON sub.subject_id = es.subject_id
+         WHERE es.enrollment_subject_id = ?
+         LIMIT 1 FOR UPDATE"
+    );
+    $esStmt->bind_param('i', $enrollment_subject_id);
+    $esStmt->execute();
+    $es = $esStmt->get_result()->fetch_assoc();
+    $esStmt->close();
+
+    if (!$es) {
+        $conn->rollback();
+        echo json_encode(['error' => 'Subject enrollment record not found.']);
+        exit;
+    }
+    if ($es['status'] === 'Dropped' || $es['status'] === 'Pending Drop') {
+        $conn->rollback();
+        echo json_encode(['error' => 'This subject is already dropped or pending drop.']);
+        exit;
+    }
+
+    $units  = (float)$es['units'];
+    $amount = round($units * ADDROP_FEE_PER_UNIT, 2);
+
     if ($es['status'] === 'Pending Payment') {
         // This subject was added but its add fee was never actually paid —
         // "dropping" it now is really just cancelling that add. Charging a
@@ -86,17 +93,11 @@ try {
             "UPDATE subject_change_fee SET status = 'Cancelled'
              WHERE enrollment_subject_id = ? AND action = 'Add' AND status = 'Pending'"
         );
-        if (!$cancelAddStmt) {
-            throw new Exception($conn->error);
-        }
         $cancelAddStmt->bind_param('i', $enrollment_subject_id);
         $cancelAddStmt->execute();
         $cancelAddStmt->close();
 
         $delStmt = $conn->prepare("DELETE FROM enrollment_subject WHERE enrollment_subject_id = ?");
-        if (!$delStmt) {
-            throw new Exception($conn->error);
-        }
         $delStmt->bind_param('i', $enrollment_subject_id);
         $delStmt->execute();
         if ($delStmt->affected_rows === 0) {
@@ -117,9 +118,6 @@ try {
         $stmt = $conn->prepare(
             "UPDATE enrollment_subject SET status = 'Pending Drop' WHERE enrollment_subject_id = ?"
         );
-        if (!$stmt) {
-            throw new Exception($conn->error);
-        }
         $stmt->bind_param('i', $enrollment_subject_id);
         $stmt->execute();
         if ($stmt->affected_rows === 0) {
@@ -132,9 +130,6 @@ try {
                 (enrollment_subject_id, enrollment_id, action, units, amount, requested_by)
              VALUES (?, ?, 'Drop', ?, ?, ?)"
         );
-        if (!$feeStmt) {
-            throw new Exception($conn->error);
-        }
         $feeStmt->bind_param('iidds', $enrollment_subject_id, $es['enrollment_id'], $units, $amount, $requested_by);
         $feeStmt->execute();
         $feeStmt->close();
@@ -149,6 +144,7 @@ try {
     }
 } catch (Exception $e) {
     $conn->rollback();
+    error_log('drop_subject_registrar.php: ' . $e->getMessage());
     echo json_encode(['error' => 'Could not drop subject. Please try again.']);
 }
 

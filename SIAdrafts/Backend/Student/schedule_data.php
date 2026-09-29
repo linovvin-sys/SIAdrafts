@@ -11,7 +11,7 @@ function get_student_schedule(mysqli $conn, int $studentId): array
     $stmt = $conn->prepare(
         "SELECT enrollment_id, section_id, school_year, semester
          FROM enrollment
-         WHERE student_id = ?
+         WHERE applicant_id = ?
          ORDER BY created_at DESC
          LIMIT 1"
     );

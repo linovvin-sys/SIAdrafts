@@ -18,7 +18,7 @@ function transfer_overdue_unpaid(mysqli $conn): void
                p.amount_due, p.downpayment, p.balance, p.due_date
         FROM payment p
         JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-        JOIN student s    ON s.applicant_id  = e.student_id
+        JOIN student s    ON s.applicant_id  = e.applicant_id
         WHERE p.downpayment = 0
           AND p.balance > 0
           AND p.due_date < CURDATE()

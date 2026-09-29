@@ -31,7 +31,7 @@ if ($payment_id > 0) {
                 COALESCE(s.student_no, a.reference_id) AS display_id
          FROM payment p
          JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-         JOIN applicants a ON a.applicant_id = e.student_id
+         JOIN applicants a ON a.applicant_id = e.applicant_id
          LEFT JOIN student s ON s.applicant_id = a.applicant_id
          WHERE p.payment_id = ?
          LIMIT 1"
@@ -135,7 +135,7 @@ if ($payment_id > 0) {
                 e.enrollment_id, e.school_year, e.semester
          FROM payment p
          JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-         WHERE e.student_id = ?
+         WHERE e.applicant_id = ?
          ORDER BY e.created_at DESC
          LIMIT 1"
     );

@@ -69,16 +69,18 @@ $dupStmt->close();
 
 $hashed = password_hash($password, PASSWORD_DEFAULT);
 
-$stmt = $conn->prepare("UPDATE professor SET username = ?, email = ?, password = ? WHERE professor_id = ?");
-$stmt->bind_param('sssi', $username, $email, $hashed, $professor_id);
+try {
+    $stmt = $conn->prepare("UPDATE professor SET username = ?, email = ?, password = ? WHERE professor_id = ?");
+    $stmt->bind_param('sssi', $username, $email, $hashed, $professor_id);
+    $stmt->execute();
 
-if (!$stmt->execute()) {
+    $stmt->close();
+    $db->close();
+
+    echo json_encode(['success' => true, 'message' => 'Portal account saved.']);
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $stmt->error]);
+    error_log('set_professor_account.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-$stmt->close();
-$db->close();
-
-echo json_encode(['success' => true, 'message' => 'Portal account saved.']);

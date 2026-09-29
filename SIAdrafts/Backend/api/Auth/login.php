@@ -4,6 +4,7 @@ require_once '../../db.php';
 require_once '../../rate_limit.php';
 require_once '../../roles.php';
 require_once '../../login_attempt.php';
+require_once '../../login_session.php';
 require_once '../../account_lockout.php';
 require_once '../../totp.php';
 require_once '../../staff_mfa.php';
@@ -45,6 +46,8 @@ if (account_locked_out($conn, 'staff', $username)) {
     exit;
 }
 
+try {
+
 $stmt = $conn->prepare(
     "SELECT u.user_id, u.first_name, u.last_name, u.username, u.password,
             u.role_id, r.role_name
@@ -53,13 +56,6 @@ $stmt = $conn->prepare(
      WHERE (u.username = ? OR u.email = ?) AND u.status_id = 1
      LIMIT 1"
 );
-
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
-    exit;
-}
-
 $stmt->bind_param('ss', $username, $username);
 $stmt->execute();
 
@@ -90,21 +86,13 @@ if ($user && password_verify($password, $user['password'])) {
         exit;
     }
 
-    session_regenerate_id(true);
-
-    $_SESSION['user_id']    = $user['user_id'];
-    $_SESSION['username']   = $user['username'];
-    $_SESSION['role_id']    = $user['role_id'];
-    $_SESSION['role_name']  = $user['role_name'];
-    $_SESSION['full_name']  = trim($user['first_name'] . ' ' . $user['last_name']);
-    $_SESSION['tab_token']  = bin2hex(random_bytes(16));
-
-    $loginStmt = $conn->prepare("UPDATE users SET last_login = NOW() WHERE user_id = ?");
-    $loginStmt->bind_param('i', $user['user_id']);
-    $loginStmt->execute();
-    $loginStmt->close();
-
-    log_login_attempt($conn, 'staff', $user['username'], true, $user['user_id']);
+    issue_login_session($conn, [
+        'user_id'   => $user['user_id'],
+        'username'  => $user['username'],
+        'role_id'   => $user['role_id'],
+        'role_name' => $user['role_name'],
+        'full_name' => trim($user['first_name'] . ' ' . $user['last_name']),
+    ], 'users', 'user_id', $user['user_id'], 'staff', $user['username']);
 
     $role = strtolower(trim($user['role_name']));
 } else {
@@ -144,21 +132,13 @@ if ($user && password_verify($password, $user['password'])) {
         exit;
     }
 
-    session_regenerate_id(true);
-
-    $_SESSION['professor_id']         = $professor['professor_id'];
-    $_SESSION['username']             = $professor['username'];
-    $_SESSION['role_name']            = 'Professor';
-    $_SESSION['full_name']            = trim($professor['first_name'] . ' ' . $professor['last_name']);
-    $_SESSION['professor_department'] = $professor['department_code'];
-    $_SESSION['tab_token']            = bin2hex(random_bytes(16));
-
-    $loginStmt = $conn->prepare("UPDATE professor SET last_login = NOW() WHERE professor_id = ?");
-    $loginStmt->bind_param('i', $professor['professor_id']);
-    $loginStmt->execute();
-    $loginStmt->close();
-
-    log_login_attempt($conn, 'professor', $professor['username'], true, $professor['professor_id']);
+    issue_login_session($conn, [
+        'professor_id'         => $professor['professor_id'],
+        'username'             => $professor['username'],
+        'role_name'            => 'Professor',
+        'full_name'            => trim($professor['first_name'] . ' ' . $professor['last_name']),
+        'professor_department' => $professor['department_code'],
+    ], 'professor', 'professor_id', $professor['professor_id'], 'professor', $professor['username']);
 
     $role = 'professor';
 }
@@ -174,3 +154,9 @@ echo json_encode([
     'redirect'  => $redirect,
     'tab_token' => $_SESSION['tab_token'],
 ]);
+
+} catch (mysqli_sql_exception $e) {
+    error_log('login.php: ' . $e->getMessage());
+    http_response_code(500);
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
+}

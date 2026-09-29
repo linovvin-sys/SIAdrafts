@@ -13,7 +13,7 @@ function get_dashboard_data(mysqli $conn, int $applicantId): array
          FROM enrollment e
          LEFT JOIN section sec ON sec.section_id = e.section_id
          LEFT JOIN course c    ON c.course_id    = sec.course_id
-         WHERE e.student_id = ?
+         WHERE e.applicant_id = ?
          ORDER BY e.created_at DESC
          LIMIT 1"
     );
@@ -59,7 +59,7 @@ function get_dashboard_data(mysqli $conn, int $applicantId): array
     $activity = [];
     $stmt = $conn->prepare(
         "SELECT CONCAT('Enrolled — A.Y. ', e.school_year, ', Semester ', e.semester) AS label, 'mdi:school-outline' AS icon, 'enrollment' AS type, e.created_at AS ts
-         FROM enrollment e WHERE e.student_id = ?"
+         FROM enrollment e WHERE e.applicant_id = ?"
     );
     $stmt->bind_param('i', $applicantId);
     $stmt->execute();
@@ -69,7 +69,7 @@ function get_dashboard_data(mysqli $conn, int $applicantId): array
     $stmt = $conn->prepare(
         "SELECT CONCAT('Payment received — \u{20B1}', FORMAT(p.downpayment, 2)) AS label, 'mdi:cash-check' AS icon, 'payment' AS type, p.paid_at AS ts
          FROM payment p JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-         WHERE e.student_id = ? AND p.paid_at IS NOT NULL"
+         WHERE e.applicant_id = ? AND p.paid_at IS NOT NULL"
     );
     $stmt->bind_param('i', $applicantId);
     $stmt->execute();

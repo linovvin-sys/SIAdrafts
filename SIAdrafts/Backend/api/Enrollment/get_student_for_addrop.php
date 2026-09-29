@@ -64,7 +64,7 @@ $stmt = $conn->prepare(
      FROM enrollment e
      LEFT JOIN section sec ON sec.section_id = e.section_id
      LEFT JOIN course  c   ON c.course_id = sec.course_id
-     WHERE e.student_id = ?
+     WHERE e.applicant_id = ?
      ORDER BY e.school_year DESC, e.semester DESC, e.enrollment_id DESC
      LIMIT 1"
 );

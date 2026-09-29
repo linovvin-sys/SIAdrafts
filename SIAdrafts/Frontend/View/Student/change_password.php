@@ -16,7 +16,7 @@ $_forced = !empty($_SESSION['must_change_password']);
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Student/student.css">
-<?= cdn_script_tag(CDN_ICONIFY) ?>
+<?= cdn_script_tag(CDN_ICONIFY, true) ?>
 </head>
 <body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 

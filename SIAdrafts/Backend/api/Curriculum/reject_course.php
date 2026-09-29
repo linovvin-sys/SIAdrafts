@@ -35,26 +35,28 @@ if (!$course_id) {
     exit;
 }
 
-$stmt = $conn->prepare(
-    "UPDATE course
-     SET status = 'Rejected', reviewed_by = ?, review_note = ?
-     WHERE course_id = ? AND status = 'Pending'"
-);
-$stmt->bind_param('isi', $reviewer_id, $reason, $course_id);
+try {
+    $stmt = $conn->prepare(
+        "UPDATE course
+         SET status = 'Rejected', reviewed_by = ?, review_note = ?
+         WHERE course_id = ? AND status = 'Pending'"
+    );
+    $stmt->bind_param('isi', $reviewer_id, $reason, $course_id);
+    $stmt->execute();
 
-if (!$stmt->execute()) {
+    $affected = $stmt->affected_rows;
     $stmt->close();
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    $db->close();
+
+    if ($affected === 0) {
+        echo json_encode(['error' => 'This course is no longer pending.']);
+        exit;
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Course rejected.']);
+} catch (mysqli_sql_exception $e) {
+    http_response_code(500);
+    error_log('reject_course.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-$affected = $stmt->affected_rows;
-$stmt->close();
-$db->close();
-
-if ($affected === 0) {
-    echo json_encode(['error' => 'This course is no longer pending.']);
-    exit;
-}
-
-echo json_encode(['success' => true, 'message' => 'Course rejected.']);

@@ -35,24 +35,44 @@ if (!$professor_id || !in_array($action, ['activate', 'deactivate'], true)) {
     exit;
 }
 
-$status_id = $action === 'activate' ? 1 : 2;
+$status_name = $action === 'activate' ? 'Active' : 'Inactive';
 
-$stmt = $conn->prepare("UPDATE professor SET status_id = ? WHERE professor_id = ?");
-$stmt->bind_param('ii', $status_id, $professor_id);
+try {
+    // Looked up by name rather than a hardcoded id -- add_user.php/edit_user.php
+    // already do this for the same `statuses` table; this endpoint assumed
+    // id 1 = Active / 2 = Inactive, which silently sets the wrong status if
+    // those ids are ever reordered or reseeded, with no error to notice it by.
+    $statusStmt = $conn->prepare("SELECT status_id FROM statuses WHERE status_name = ? LIMIT 1");
+    $statusStmt->bind_param('s', $status_name);
+    $statusStmt->execute();
+    $statusRow = $statusStmt->get_result()->fetch_assoc();
+    $statusStmt->close();
 
-if (!$stmt->execute()) {
+    if (!$statusRow) {
+        http_response_code(500);
+        error_log('update_professor_status.php: missing statuses row for "' . $status_name . '"');
+        echo json_encode(['error' => 'A database error occurred. Please try again.']);
+        exit;
+    }
+    $status_id = $statusRow['status_id'];
+
+    $stmt = $conn->prepare("UPDATE professor SET status_id = ? WHERE professor_id = ?");
+    $stmt->bind_param('ii', $status_id, $professor_id);
+    $stmt->execute();
+
+    $affected = $stmt->affected_rows;
+    $stmt->close();
+    $db->close();
+
+    if ($affected === 0) {
+        echo json_encode(['error' => 'Professor not found.']);
+        exit;
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Status updated.']);
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    error_log('update_professor_status.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-$affected = $stmt->affected_rows;
-$stmt->close();
-$db->close();
-
-if ($affected === 0) {
-    echo json_encode(['error' => 'Professor not found.']);
-    exit;
-}
-
-echo json_encode(['success' => true, 'message' => 'Status updated.']);

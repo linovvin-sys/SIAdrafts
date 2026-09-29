@@ -45,13 +45,20 @@ INNER JOIN roles r
 INNER JOIN statuses s
     ON u.status_id = s.status_id
 " . ($isHeadRegistrar
-    ? "WHERE r.role_name IN ('" . implode("','", array_map(fn($r) => $conn->real_escape_string($r), ROLES_HEAD_REGISTRAR_MANAGEABLE)) . "')"
+    ? "WHERE r.role_name IN (" . implode(',', array_fill(0, count(ROLES_HEAD_REGISTRAR_MANAGEABLE), '?')) . ")"
     : ""
 ) . "
 ORDER BY u.first_name, u.last_name
 ";
 
-$result = $conn->query($sql);
+if ($isHeadRegistrar) {
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param(str_repeat('s', count(ROLES_HEAD_REGISTRAR_MANAGEABLE)), ...ROLES_HEAD_REGISTRAR_MANAGEABLE);
+    $stmt->execute();
+    $result = $stmt->get_result();
+} else {
+    $result = $conn->query($sql);
+}
 
 if ($result) {
     while ($row = $result->fetch_assoc()) {

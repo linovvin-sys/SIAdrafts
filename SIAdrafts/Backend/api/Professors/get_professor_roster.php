@@ -25,18 +25,17 @@ $conn = $db->connect();
 // schedule_id actually belongs to them, so one professor can't page
 // through another's rosters by guessing schedule_id values.
 //
-// enrollment.student_id is a misnomer — it's actually a FK to
-// applicants.applicant_id (see fk_enroll_applicant), and `student` rows
-// are linked back to that same applicant via student.applicant_id, not
-// student.student_id. Joining on student_id = student_id would silently
-// match the wrong person whenever both tables happen to share that
+// `student` rows link back to the enrolled applicant via
+// student.applicant_id, joined against enrollment.applicant_id below —
+// never a bare student_id = student_id, which would silently match the
+// wrong person if both tables happened to share that
 // numeric id for unrelated people.
 $stmt = $conn->prepare("
     SELECT DISTINCT st.student_no, st.first_name, st.middle_name, st.last_name, st.email, st.contact_number
     FROM schedule s
     JOIN enrollment_subject es ON es.subject_id = s.subject_id AND es.status = 'Enrolled'
     JOIN enrollment e ON e.enrollment_id = es.enrollment_id AND e.school_year = s.school_year AND e.semester = s.semester
-    JOIN student st ON st.applicant_id = e.student_id
+    JOIN student st ON st.applicant_id = e.applicant_id
     WHERE s.schedule_id = ? AND s.professor_id = ?
       AND (e.section_id = s.section_id OR es.schedule_id = s.schedule_id)
       AND e.status = 'Enrolled'

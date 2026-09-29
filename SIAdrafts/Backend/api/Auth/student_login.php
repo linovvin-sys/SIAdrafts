@@ -3,6 +3,7 @@ session_start();
 require_once '../../db.php';
 require_once '../../rate_limit.php';
 require_once '../../login_attempt.php';
+require_once '../../login_session.php';
 require_once '../../account_lockout.php';
 
 header('Content-Type: application/json');
@@ -58,21 +59,13 @@ if (!$account || !password_verify($password, $account['password_hash'])) {
     exit;
 }
 
-session_regenerate_id(true);
-
-$_SESSION['student_id']            = (int)$account['applicant_id'];
-$_SESSION['student_portal_account_id'] = (int)$account['student_portal_account_id'];
-$_SESSION['student_no']            = $student_no;
-$_SESSION['student_full_name']     = trim($account['first_name'] . ' ' . $account['last_name']);
-$_SESSION['must_change_password']  = (bool)$account['must_change_password'];
-$_SESSION['tab_token']             = bin2hex(random_bytes(16));
-
-$loginStmt = $conn->prepare("UPDATE student_portal_account SET last_login = NOW() WHERE student_portal_account_id = ?");
-$loginStmt->bind_param('i', $account['student_portal_account_id']);
-$loginStmt->execute();
-$loginStmt->close();
-
-log_login_attempt($conn, 'student', $student_no, true, (int)$account['student_portal_account_id']);
+issue_login_session($conn, [
+    'student_id'                => (int)$account['applicant_id'],
+    'student_portal_account_id' => (int)$account['student_portal_account_id'],
+    'student_no'                => $student_no,
+    'student_full_name'         => trim($account['first_name'] . ' ' . $account['last_name']),
+    'must_change_password'      => (bool)$account['must_change_password'],
+], 'student_portal_account', 'student_portal_account_id', (int)$account['student_portal_account_id'], 'student', $student_no);
 
 $db->close();
 

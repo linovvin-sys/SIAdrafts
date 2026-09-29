@@ -24,7 +24,7 @@ function get_student_announcements(mysqli $conn, int $applicantId, int $limit = 
          JOIN announcement a ON a.schedule_id = sch.schedule_id
          JOIN subject sub    ON sub.subject_id = sch.subject_id
          JOIN professor p    ON p.professor_id = a.professor_id
-         WHERE e.student_id = ?
+         WHERE e.applicant_id = ? AND e.status = 'Enrolled'
          ORDER BY a.created_at DESC, a.announcement_id DESC
          LIMIT ?"
     );

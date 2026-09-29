@@ -4,6 +4,7 @@ require_once '../../db.php';
 require_once '../../rate_limit.php';
 require_once '../../roles.php';
 require_once '../../login_attempt.php';
+require_once '../../login_session.php';
 require_once '../../totp.php';
 
 header('Content-Type: application/json');
@@ -94,39 +95,27 @@ finish_pending_login($conn, $db, $pending);
 // also passed instead of right after the password.
 function finish_pending_login(mysqli $conn, Database $db, array $pending): void
 {
-    session_regenerate_id(true);
-
     if ($pending['login_type'] === 'staff') {
-        $_SESSION['user_id']   = $pending['account_id'];
-        $_SESSION['username']  = $pending['username'];
-        $_SESSION['role_id']   = $pending['role_id'];
-        $_SESSION['role_name'] = $pending['role_name'];
-        $_SESSION['full_name'] = $pending['full_name'];
-
-        $upd = $conn->prepare("UPDATE users SET last_login = NOW() WHERE user_id = ?");
-        $upd->bind_param('i', $pending['account_id']);
-        $upd->execute();
-        $upd->close();
+        issue_login_session($conn, [
+            'user_id'   => $pending['account_id'],
+            'username'  => $pending['username'],
+            'role_id'   => $pending['role_id'],
+            'role_name' => $pending['role_name'],
+            'full_name' => $pending['full_name'],
+        ], 'users', 'user_id', $pending['account_id'], 'staff', $pending['username']);
 
         $role = strtolower(trim($pending['role_name']));
     } else {
-        $_SESSION['professor_id']         = $pending['account_id'];
-        $_SESSION['username']             = $pending['username'];
-        $_SESSION['role_name']            = 'Professor';
-        $_SESSION['full_name']            = $pending['full_name'];
-        $_SESSION['professor_department'] = $pending['professor_department'];
-
-        $upd = $conn->prepare("UPDATE professor SET last_login = NOW() WHERE professor_id = ?");
-        $upd->bind_param('i', $pending['account_id']);
-        $upd->execute();
-        $upd->close();
+        issue_login_session($conn, [
+            'professor_id'         => $pending['account_id'],
+            'username'             => $pending['username'],
+            'role_name'            => 'Professor',
+            'full_name'            => $pending['full_name'],
+            'professor_department' => $pending['professor_department'],
+        ], 'professor', 'professor_id', $pending['account_id'], 'professor', $pending['username']);
 
         $role = 'professor';
     }
-
-    $_SESSION['tab_token'] = bin2hex(random_bytes(16));
-
-    log_login_attempt($conn, $pending['login_type'], $pending['username'], true, $pending['account_id']);
 
     $db->close();
 

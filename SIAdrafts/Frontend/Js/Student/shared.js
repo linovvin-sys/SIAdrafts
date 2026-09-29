@@ -1,8 +1,36 @@
-// Shared across every student page (loaded via Include/footer.php) so any
-// page can call spToast(...)/spConfirm(...) from a click handler without
-// its own copy. Only ever invoked from event listeners, which run after
-// this parses, so load order relative to page-specific scripts doesn't
-// matter.
+// Shared across every student AND professor page (loaded via both portals'
+// Include/footer.php) so any page can call spToast(...)/spConfirm(...)/
+// escHtml(...) from a click handler without its own copy. Only ever
+// invoked from event listeners, which run after this parses, so load
+// order relative to page-specific scripts doesn't matter.
+window.escHtml = function (s) {
+  return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+};
+
+// Persists which class is selected in the Professor portal's per-class
+// tool pages (Announcements/Assignments/Materials/Grades, each its own
+// page since the classes.php split -- see Include/class_picker.php).
+// Without this, switching between tools for the same class means
+// re-picking it from the dropdown on every single page.
+window.spRestoreClassSelection = function (selectEl) {
+  if (!selectEl) return false;
+  try {
+    var last = localStorage.getItem('sp_professor_last_schedule_id');
+    if (last && selectEl.querySelector('option[value="' + last + '"]')) {
+      selectEl.value = last;
+      return true;
+    }
+  } catch (e) {}
+  return false;
+};
+
+window.spRememberClassSelection = function (selectEl) {
+  if (!selectEl) return;
+  try {
+    if (selectEl.value) localStorage.setItem('sp_professor_last_schedule_id', selectEl.value);
+  } catch (e) {}
+};
+
 window.spToast = function (message, icon) {
   var host = document.getElementById('spToastHost');
   if (!host) return;
@@ -115,10 +143,6 @@ document.addEventListener('click', function (e) {
     var days = Math.floor(diff / 86400);
     if (days < 7) return days + 'd ago';
     return new Date(then).toLocaleDateString([], { month: 'short', day: 'numeric' });
-  }
-
-  function escHtml(s) {
-    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   function render() {

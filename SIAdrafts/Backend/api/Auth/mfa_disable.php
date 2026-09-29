@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../../db.php';
-require_once '../../session_security.php';
+require_once '../../mfa_login_context.php';
 require_once '../../rate_limit.php';
 require_once '../../csrf.php';
 
@@ -18,23 +18,11 @@ csrf_verify();
 // $table/$idCol are one of these two fixed, hardcoded literals chosen by
 // which session is active — never derived from client input — before
 // being interpolated into the SQL below.
-if (!empty($_SESSION['user_id']) && !empty($_SESSION['role_name'])) {
-    session_touch_or_expire();
-    $loginType = 'staff';
-    $accountId = (int)$_SESSION['user_id'];
-    $table = 'users';
-    $idCol = 'user_id';
-} elseif (!empty($_SESSION['professor_id'])) {
-    session_touch_or_expire();
-    $loginType = 'professor';
-    $accountId = (int)$_SESSION['professor_id'];
-    $table = 'professor';
-    $idCol = 'professor_id';
-} else {
-    http_response_code(401);
-    echo json_encode(['error' => 'Please log in.']);
-    exit;
-}
+$ctx       = resolve_mfa_login_context();
+$loginType = $ctx['loginType'];
+$accountId = $ctx['accountId'];
+$table     = $ctx['table'];
+$idCol     = $ctx['idCol'];
 
 if (!rate_limit_check('mfa_disable', 10, 300)) {
     http_response_code(429);

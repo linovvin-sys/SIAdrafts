@@ -26,7 +26,7 @@ $procStmt = $conn->prepare(
             COALESCE(s.student_no, a.reference_id) AS display_id, a.first_name, a.last_name
      FROM payment p
      JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-     JOIN applicants a ON a.applicant_id = e.student_id
+     JOIN applicants a ON a.applicant_id = e.applicant_id
      LEFT JOIN student s ON s.applicant_id = a.applicant_id
      WHERE p.balance > 0
        AND NOT EXISTS (SELECT 1 FROM unpaid_students u WHERE u.payment_id = p.payment_id)

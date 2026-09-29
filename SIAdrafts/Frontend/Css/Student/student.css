@@ -1,40 +1,13 @@
-/* ===== Student Portal — extends admin.css's token system (same ink/paper/
-   accent/semantic scale, same Fraunces+Inter+Plex Mono stack, same 0.15s
+/* ===== Student Portal — extends the shared token system in
+   Frontend/Css/tokens.css (imported below): same ink/paper/accent/
+   semantic scale, same Fraunces+Inter+Plex Mono stack, same 0.15s
    ease/radius language) instead of introducing a new palette. Density is
    intentionally lower than the staff dashboards: students have four
    destinations, not forty, so the layout stays closer to "art gallery"
    than "cockpit". ===== */
+@import url("../tokens.css");
 
 :root {
-  /* Same values as admin.css's :root (not imported directly, to avoid
-     pulling in unrelated staff-dashboard rules) — keep these numerically
-     identical if the base palette ever changes. */
-  --ink-950: #1F2E28;
-  --ink-800: #2A3D35;
-  --ink-600: #3E5A4F;
-
-  --paper-50: #FFFFFF;
-  --paper-100: #F7F4EC;
-  --line-200: rgba(31, 46, 40, 0.14);
-
-  --accent-600: #046A38; /* DLSU green (Pantone 342C) — was bronze */
-  --accent-text: #035A30;
-  --accent-100: #E2EFE8;
-
-  --danger-600: #A6472E;
-  --danger-100: #F5E1DA;
-  --success-600: #345540;
-  --success-100: #E1EBE3;
-  --info-600: #35526E;
-  --info-100: #E2E8EF;
-
-  --slate-500: rgba(31, 46, 40, 0.80);
-  --slate-300: rgba(31, 46, 40, 0.42);
-
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-ui: 'Inter', -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-
   --shadow: 0 1px 2px rgba(31, 46, 40, 0.05), 0 8px 24px -18px rgba(31, 46, 40, 0.16);
   --shadow-lift: 0 16px 32px -20px rgba(31, 46, 40, 0.35);
   /* A softer, wider-spread shadow reserved for the dashboard's "floating
@@ -1394,7 +1367,7 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   display: block; font-size: 12.5px; font-weight: 600; color: var(--ink-950);
   margin-bottom: 6px;
 }
-.sp-form-group input, .sp-form-group textarea {
+.sp-form-group input, .sp-form-group textarea, .sp-form-group select {
   width: 100%; padding: 11px 13px; border-radius: var(--sp-radius-sm);
   border: 1px solid var(--line-200); font-size: 14.5px;
   font-family: var(--font-ui); color: var(--ink-950);
@@ -1403,12 +1376,12 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
     box-shadow 0.2s var(--sp-ease), transform 0.2s var(--sp-ease);
 }
 .sp-form-group textarea { resize: vertical; min-height: 70px; }
-.sp-form-group input:focus, .sp-form-group textarea:focus {
+.sp-form-group input:focus, .sp-form-group textarea:focus, .sp-form-group select:focus {
   border-color: var(--accent-600); background: var(--paper-50);
   box-shadow: 0 0 0 4px var(--accent-100);
   transform: translateY(-1px);
 }
-.sp-form-group input:focus-visible, .sp-form-group textarea:focus-visible {
+.sp-form-group input:focus-visible, .sp-form-group textarea:focus-visible, .sp-form-group select:focus-visible {
   outline: 2px solid var(--accent-600); outline-offset: 2px;
 }
 
@@ -1424,6 +1397,27 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
 }
 .sp-input-toggle:hover { background: var(--accent-100); color: var(--accent-text); }
 .sp-input-toggle:active { transform: translateY(-50%) scale(0.92); }
+
+/* ---------- term picker (Professor Schedule page originally, now also Student Grades) ---------- */
+.sp-select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding: 9px 34px 9px 14px;
+  border-radius: var(--sp-radius-sm);
+  border: 1px solid var(--line-200);
+  background: var(--paper-50);
+  color: var(--ink-950);
+  font-family: var(--font-ui);
+  font-size: 13.5px;
+  font-weight: 500;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%233E5A4F' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.sp-select:hover { border-color: var(--accent-600); }
+.sp-select:focus-visible { outline: 2px solid var(--accent-600); outline-offset: 2px; }
 
 .sp-form-error {
   background: var(--danger-100); color: var(--danger-600);
@@ -1777,3 +1771,103 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   .sp-login-terminal-stage.is-success .sp-login-terminal-check{ animation: none !important; }
   .sp-login-terminal-glyph-mark{ stroke-dashoffset: 0 !important; }
 }
+
+/* ===== Class messenger (Professor/Student Messages pages) — a simple
+   two-pane contact-list + chat layout, shared by both portals since this
+   file loads on both (see Professor/Include/header.php). Deliberately its
+   own minimal styling rather than reusing Admin's .messenger-layout, which
+   lives in admin.css and isn't loaded here. ===== */
+.sp-msg-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 18px;
+  height: calc(100vh - 220px);
+  min-height: 420px;
+}
+@media (max-width: 780px) {
+  .sp-msg-layout { grid-template-columns: 1fr; height: auto; }
+}
+.sp-msg-contacts {
+  overflow-y: auto;
+  display: flex; flex-direction: column; gap: 6px;
+}
+.sp-msg-contact {
+  display: flex; align-items: center; gap: 10px;
+  width: 100%; text-align: left; border: 1px solid transparent; background: none;
+  border-radius: var(--sp-radius-sm, 10px); padding: 10px 12px; cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.sp-msg-contact:hover { background: var(--paper-100); }
+.sp-msg-contact.is-active { background: var(--accent-100); border-color: var(--accent-600); }
+.sp-msg-contact-avatar {
+  width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ink-950); color: var(--paper-50);
+  font-family: var(--font-mono); font-size: 12.5px; font-weight: 600;
+}
+.sp-msg-contact-text { flex: 1; min-width: 0; }
+.sp-msg-contact-name { font-size: 13.5px; font-weight: 600; color: var(--ink-950); }
+.sp-msg-contact-sub { font-size: 11.5px; color: var(--slate-300); font-family: var(--font-mono); }
+.sp-msg-contact-unread {
+  min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px;
+  background: var(--danger-600, #a6472e); color: #fff;
+  font-size: 10.5px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.sp-msg-contact-unread.is-hidden { display: none; }
+.sp-msg-empty-contacts { color: var(--slate-300); font-size: 13.5px; text-align: center; padding: 20px 8px; }
+
+.sp-msg-chat {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--line-200); border-radius: var(--sp-radius-lg);
+  background: var(--paper-50); overflow: hidden;
+}
+.sp-msg-chat-header {
+  padding: 14px 18px; border-bottom: 1px solid var(--line-200);
+  font-size: 14px; font-weight: 600; color: var(--ink-950);
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.sp-msg-chat-body { flex: 1; overflow-y: auto; padding: 16px 18px; }
+.sp-msg-chat-empty { color: var(--slate-300); font-size: 13.5px; text-align: center; margin-top: 40px; }
+.sp-msg-bubble-row { display: flex; flex-direction: column; margin-bottom: 12px; max-width: 72%; }
+.sp-msg-bubble-row.mine { margin-left: auto; align-items: flex-end; }
+.sp-msg-bubble-row.theirs { margin-right: auto; align-items: flex-start; }
+.sp-msg-bubble {
+  padding: 9px 13px; border-radius: 14px; font-size: 13.5px; line-height: 1.5;
+  white-space: pre-wrap; word-break: break-word;
+}
+.sp-msg-bubble-row.mine .sp-msg-bubble { background: var(--ink-950); color: var(--paper-50); border-bottom-right-radius: 4px; }
+.sp-msg-bubble-row.theirs .sp-msg-bubble { background: var(--paper-100); color: var(--ink-950); border-bottom-left-radius: 4px; }
+.sp-msg-bubble-time { font-size: 10.5px; color: var(--slate-300); margin-top: 3px; font-family: var(--font-mono); }
+.sp-msg-error { color: var(--danger-600, #a6472e); font-size: 12.5px; text-align: center; margin: 10px 0; }
+
+.sp-msg-input-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 14px; border-top: 1px solid var(--line-200); flex-shrink: 0;
+}
+.sp-msg-input-row input[type="text"] {
+  flex: 1; border: 1px solid var(--line-200); border-radius: 999px;
+  padding: 9px 16px; font-size: 13.5px; font-family: var(--font-ui); background: var(--paper-50);
+}
+.sp-msg-input-row input[type="text"]:disabled { opacity: 0.6; }
+.sp-msg-attach-btn {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-200);
+  background: var(--paper-50); cursor: pointer; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; font-size: 15px;
+}
+.sp-msg-attach-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sp-msg-send-btn {
+  border: none; border-radius: 999px; padding: 9px 18px; font-size: 13px; font-weight: 600;
+  background: var(--ink-950); color: var(--paper-50); cursor: pointer; flex-shrink: 0;
+}
+.sp-msg-send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.sp-msg-attachment-preview {
+  display: flex; align-items: center; gap: 8px; padding: 0 14px 8px;
+  font-size: 12px; color: var(--slate-300);
+}
+.sp-msg-attachment-preview.is-hidden { display: none; }
+.sp-msg-attachment-remove {
+  border: none; background: none; cursor: pointer; color: var(--danger-600, #a6472e); font-size: 14px;
+}
+.sp-msg-attachment-file, .sp-msg-attachment-image-link { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+.sp-msg-attachment-image { max-width: 200px; max-height: 160px; border-radius: 10px; display: block; }

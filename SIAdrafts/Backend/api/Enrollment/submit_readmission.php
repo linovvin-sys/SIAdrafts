@@ -76,12 +76,10 @@ $applicant_id  = (int)$student['applicant_id'];
 // Block students who currently have an active enrollment (Enrolled, or
 // Pending Payment on their current term) — readmission is only for
 // students who have previously stopped out (LOA, dropped, etc.)
-// NOTE: enrollment.student_id is misleadingly named — its FK actually
-// references applicants.applicant_id, not student.student_id.
 $statusStmt = $conn->prepare(
     "SELECT e.status
      FROM enrollment e
-     WHERE e.student_id = ?
+     WHERE e.applicant_id = ?
      ORDER BY e.school_year DESC, e.semester DESC, e.created_at DESC
      LIMIT 1"
 );
@@ -121,7 +119,8 @@ $ins->bind_param('issiiis', $student_id, $reason, $school_year, $semester, $is_s
 
 if (!$ins->execute()) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'error' => 'Database error: ' . $ins->error]);
+    error_log('submit_readmission.php: ' . $ins->error);
+    echo json_encode(['success' => false, 'error' => 'A database error occurred. Please try again.']);
     exit;
 }
 

@@ -22,7 +22,7 @@ $paidStmt = $conn->prepare(
             COALESCE(s.student_no, a.reference_id) AS display_id, a.first_name, a.last_name
      FROM payment p
      JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-     JOIN applicants a ON a.applicant_id = e.student_id
+     JOIN applicants a ON a.applicant_id = e.applicant_id
      LEFT JOIN student s ON s.applicant_id = a.applicant_id
      WHERE p.balance = 0
      ORDER BY p.paid_at DESC"

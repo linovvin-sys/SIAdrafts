@@ -82,31 +82,28 @@ $username_or_null    = $wantsAccount ? $username : null;
 $email_or_null       = $wantsAccount ? $email : null;
 $password_or_null    = $wantsAccount ? password_hash($password, PASSWORD_DEFAULT) : null;
 
-$stmt = $conn->prepare("
-    INSERT INTO professor (first_name, middle_name, last_name, department_id, status_id, username, password, email)
-    VALUES (?, ?, ?, ?, 1, ?, ?, ?)
-");
-if (!$stmt) {
+try {
+    $stmt = $conn->prepare("
+        INSERT INTO professor (first_name, middle_name, last_name, department_id, status_id, username, password, email)
+        VALUES (?, ?, ?, ?, 1, ?, ?, ?)
+    ");
+    $stmt->bind_param(
+        'sssisss',
+        $first_name, $middle_name_or_null, $last_name, $department_id, $username_or_null, $password_or_null, $email_or_null
+    );
+    $stmt->execute();
+
+    echo json_encode([
+        'success'      => true,
+        'professor_id' => $conn->insert_id,
+        'message'      => $wantsAccount ? 'Professor added with portal access.' : 'Professor added.',
+    ]);
+
+    $stmt->close();
+    $db->close();
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    error_log('save_professor.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-$stmt->bind_param(
-    'sssisss',
-    $first_name, $middle_name_or_null, $last_name, $department_id, $username_or_null, $password_or_null, $email_or_null
-);
-
-if (!$stmt->execute()) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $stmt->error]);
-    exit;
-}
-
-echo json_encode([
-    'success'      => true,
-    'professor_id' => $conn->insert_id,
-    'message'      => $wantsAccount ? 'Professor added with portal access.' : 'Professor added.',
-]);
-
-$stmt->close();
-$db->close();

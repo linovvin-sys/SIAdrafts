@@ -48,16 +48,11 @@ $isHeadRegistrar = current_user_is(['Head Registrar']);
 $status           = $isHeadRegistrar ? 'Approved' : 'Pending';
 $requested_by     = (int)$_SESSION['user_id'];
 
-$stmt = $conn->prepare("INSERT INTO course (course_code, course_name, total_units, status, requested_by) VALUES (?, ?, ?, ?, ?)");
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
-    exit;
-}
-$stmt->bind_param('ssisi', $code, $name, $units, $status, $requested_by);
-
 try {
+    $stmt = $conn->prepare("INSERT INTO course (course_code, course_name, total_units, status, requested_by) VALUES (?, ?, ?, ?, ?)");
+    $stmt->bind_param('ssisi', $code, $name, $units, $status, $requested_by);
     $stmt->execute();
+    $stmt->close();
     echo json_encode([
         'success'   => true,
         'course_id' => $conn->insert_id,
@@ -70,9 +65,9 @@ try {
     if ($e->getCode() === 1062) {
         echo json_encode(['error' => "Course code \"$code\" already exists."]);
     } else {
+        error_log('save_course.php: ' . $e->getMessage());
         echo json_encode(['error' => 'Could not save course. Please try again.']);
     }
 }
 
-$stmt->close();
 $db->close();

@@ -1,0 +1,54 @@
+/* ===== Shared design tokens — single source of truth for the palette
+   every portal builds on (parchment/ink-green/bronze editorial theme,
+   extended with the semantic states a working app needs that the
+   marketing page doesn't: danger, success, info).
+
+   Previously this exact block was copy-pasted between Admin/admin.css
+   and Student/student.css, with a comment in student.css asking future
+   edits to "keep these numerically identical if the base palette ever
+   changes" — a maintenance burden this file removes by being the one
+   place that actually needs to change. Professor/professor.css never
+   duplicated it; it already relies on student.css's tokens by load
+   order (both are linked on every Professor page).
+
+   Each stylesheet may still declare its own additional tokens (shapes,
+   spacing, shadows, dark-mode overrides, legacy variable remaps) on top
+   of this shared palette — this file carries the colors and fonts every
+   portal has in common, nothing that's specific to one of them. ===== */
+:root {
+  /* ink (dark surfaces / text) */
+  --ink-950: #1F2E28;
+  --ink-800: #2A3D35;
+  --ink-600: #3E5A4F;
+
+  /* paper (light surfaces) */
+  --paper-50: #FFFFFF;
+  --paper-100: #F7F4EC;
+  --line-200: rgba(31, 46, 40, 0.14);
+
+  /* the one accent — DLSU's official green (Pantone 342C, #046A38).
+     Reserved for borders, hover states, active-nav marker, badges-on-tint
+     — never as a large solid fill under white text. */
+  --accent-600: #046A38;
+  --accent-text: #035A30;
+  --accent-100: #E2EFE8;
+
+  /* semantic states, kept muted/warm to stay in the same family rather
+     than importing cool SaaS blue/red */
+  --danger-600: #A6472E;
+  --danger-100: #F5E1DA;
+  --success-600: #345540;
+  --success-100: #E1EBE3;
+  --info-600: #35526E;
+  --info-100: #E2E8EF;
+
+  /* text */
+  --slate-500: rgba(31, 46, 40, 0.80); /* AAA: 7.0:1 on parchment, 7.5:1 on white */
+  --slate-300: rgba(31, 46, 40, 0.42);
+
+  /* type — Fraunces for headings/titles only, Inter for UI body text, a
+     mono face for IDs/balances/dates/timestamps */
+  --font-display: 'Fraunces', Georgia, serif;
+  --font-ui: 'Inter', -apple-system, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+}

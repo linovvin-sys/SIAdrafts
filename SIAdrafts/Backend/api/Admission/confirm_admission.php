@@ -158,7 +158,8 @@ $upd->bind_param('si', $verifying_staff_id, $applicant_id);
 if (!$upd->execute()) {
     $conn->rollback();
     http_response_code(500);
-    echo json_encode(['success' => false, 'errors' => ['Database error (verification): ' . $upd->error]]);
+    error_log('confirm_admission.php (verification): ' . $upd->error);
+    echo json_encode(['success' => false, 'errors' => ['A database error occurred. Please try again.']]);
     exit;
 }
 $upd->close();
@@ -224,7 +225,8 @@ if (!empty($credited_subject_ids)) {
         if (!$creditStmt->execute()) {
             $conn->rollback();
             http_response_code(500);
-            echo json_encode(['success' => false, 'errors' => ['Database error (subject credits): ' . $creditStmt->error]]);
+            error_log('confirm_admission.php (subject credits): ' . $creditStmt->error);
+            echo json_encode(['success' => false, 'errors' => ['A database error occurred. Please try again.']]);
             exit;
         }
     }

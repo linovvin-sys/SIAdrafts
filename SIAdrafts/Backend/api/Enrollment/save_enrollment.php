@@ -6,6 +6,7 @@ require_once '../../require_role.php';
 require_once '../../prereq.php';
 require_once '../../csrf.php';
 require_once '../../mailer.php';
+require_once '../../temp_password.php';
 
 header('Content-Type: application/json');
 
@@ -125,7 +126,7 @@ function generate_student_no(mysqli $conn): string {
 // validation. Fetched here, not trusted from the client payload.
 $courseStmt = $conn->prepare("SELECT course_id, admission_status FROM applicants WHERE applicant_id = ? LIMIT 1");
 if (!$courseStmt) {
-    throw new RuntimeException('Database error: ' . $conn->error);
+    throw new DbError('Database error: ' . $conn->error);
 }
 $courseStmt->bind_param('i', $student_id);
 $courseStmt->execute();
@@ -169,7 +170,7 @@ try {
              LIMIT 1"
         );
         if (!$slotStmt) {
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
 
         $validatedSlots = [];
@@ -228,7 +229,7 @@ try {
             AND sub.year_level = ? AND sub.semester = ?"
         );
         if (!$secCheck) {
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
         $secCheck->bind_param('iisiii', $section_id, $course_id, $school_year, $semester, $year_level, $semester);
         $secCheck->execute();
@@ -245,14 +246,14 @@ try {
         $capStmt = $conn->prepare(
             "SELECT sec.capacity,
                     (SELECT COUNT(*) FROM enrollment e
-                     JOIN student st ON st.applicant_id = e.student_id
+                     JOIN student st ON st.applicant_id = e.applicant_id
                      WHERE e.section_id = sec.section_id
                        AND e.school_year = ? AND e.semester = ?
                        AND st.applicant_id != ?) AS taken
              FROM section sec WHERE sec.section_id = ?"
         );
         if (!$capStmt) {
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
         $capStmt->bind_param('siii', $school_year, $semester, $student_id, $section_id);
         $capStmt->execute();
@@ -285,11 +286,11 @@ try {
     // Duplicate guard
     $dup = $conn->prepare(
         "SELECT enrollment_id FROM enrollment
-         WHERE student_id = ? AND school_year = ? AND semester = ?
+         WHERE applicant_id = ? AND school_year = ? AND semester = ?
          LIMIT 1"
     );
     if (!$dup) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $dup->bind_param('isi', $student_id, $school_year, $semester);
     $dup->execute();
@@ -309,7 +310,7 @@ try {
          LIMIT 1"
     );
     if (!$feeStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $feeStmt->bind_param('is', $year_level, $school_year);
     $feeStmt->execute();
@@ -328,7 +329,7 @@ try {
         WHERE fee_schedule_id = ? ORDER BY sort_order"
     );
     if (!$itemsStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $itemsStmt->bind_param('i', $feeSchedule['fee_schedule_id']);
     $itemsStmt->execute();
@@ -350,7 +351,7 @@ try {
         "SELECT COALESCE(SUM(units), 0) FROM subject WHERE subject_id IN ($unitsPh)"
     );
     if (!$unitsStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $unitsStmt->bind_param($unitsTypes, ...$subject_ids);
     $unitsStmt->execute();
@@ -385,7 +386,7 @@ try {
         "SELECT student_id, student_no FROM student WHERE applicant_id = ? LIMIT 1"
     );
     if (!$studentCheck) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $studentCheck->bind_param('i', $student_id);
     $studentCheck->execute();
@@ -398,7 +399,7 @@ try {
          FROM applicants WHERE applicant_id = ? LIMIT 1"
     );
     if (!$applicantStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $applicantStmt->bind_param('i', $student_id);
     $applicantStmt->execute();
@@ -433,7 +434,7 @@ try {
              WHERE student_id = ?"
         );
         if (!$upd) {
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
         $upd->bind_param(
             'ssssssssssiii',
@@ -444,7 +445,7 @@ try {
         );
         if (!$upd->execute()) {
             $upd->close();
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
         $upd->close();
     } else {
@@ -455,7 +456,7 @@ try {
              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)"
         );
         if (!$insStudent) {
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
         $insStudent->bind_param(
             'ssssssssssiii',
@@ -466,19 +467,16 @@ try {
         );
         if (!$insStudent->execute()) {
             $insStudent->close();
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
         $insStudent->close();
 
         // First-time enrollee — mint their student portal credentials now,
-        // alongside the student_no minted above. Temp password is the
-        // student's lowercased last name + the last 5 digits of their
-        // student number (e.g. "delacruz00042"); forced to change it on
-        // first login. Never overwritten on re-enrollment (see the $upd
-        // branch above), since only first-time enrollees reach this insert.
-        $lastNameKey = strtolower(preg_replace('/[^A-Za-z]/', '', $applicant['last_name']));
-        $studentNoDigits = preg_replace('/[^0-9]/', '', $student_no);
-        $tempPassword = $lastNameKey . substr($studentNoDigits, -5);
+        // alongside the student_no minted above. Random temp password
+        // (see temp_password.php), forced to change it on first login.
+        // Never overwritten on re-enrollment (see the $upd branch above),
+        // since only first-time enrollees reach this insert.
+        $tempPassword = generate_temp_password();
         $tempPasswordHash = password_hash($tempPassword, PASSWORD_DEFAULT);
 
         $insPortal = $conn->prepare(
@@ -488,7 +486,7 @@ try {
         $insPortal->bind_param('iss', $student_id, $student_no, $tempPasswordHash);
         if (!$insPortal->execute()) {
             $insPortal->close();
-            throw new RuntimeException('Database error (portal account): ' . $conn->error);
+            throw new DbError('Database error (portal account): ' . $conn->error);
         }
         $insPortal->close();
 
@@ -504,16 +502,16 @@ try {
     // "Enrolled" once treasury records the payment. section_id is NULL
     // for irregular enrollments — their schedule lives per-subject instead.
     $ins = $conn->prepare(
-        "INSERT INTO enrollment (student_id, school_year, semester, year_level, section_id, status, type_id)
+        "INSERT INTO enrollment (applicant_id, school_year, semester, year_level, section_id, status, type_id)
          VALUES (?, ?, ?, ?, ?, 'Pending Payment', ?)"
     );
     if (!$ins) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $ins->bind_param('isiiii', $student_id, $school_year, $semester, $year_level, $section_id, $type_id);
     if (!$ins->execute()) {
         $ins->close();
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $enrollment_id = (int)$conn->insert_id;
     $ins->close();
@@ -525,7 +523,7 @@ try {
         "INSERT INTO enrollment_subject (enrollment_id, subject_id, schedule_id, status) VALUES (?, ?, ?, 'Enrolled')"
     );
     if (!$sub_stmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
 
     $scheduleBySubject = [];
@@ -540,7 +538,7 @@ try {
         $sub_stmt->bind_param('iii', $enrollment_id, $sid, $schedule_id);
         if (!$sub_stmt->execute()) {
             $sub_stmt->close();
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
     }
     $sub_stmt->close();
@@ -554,13 +552,13 @@ try {
              VALUES (?, ?, NULL, 'Credited')"
         );
         if (!$credit_sub_stmt) {
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
         foreach ($credited_subject_ids as $sid) {
             $credit_sub_stmt->bind_param('ii', $enrollment_id, $sid);
             if (!$credit_sub_stmt->execute()) {
                 $credit_sub_stmt->close();
-                throw new RuntimeException('Database error: ' . $conn->error);
+                throw new DbError('Database error: ' . $conn->error);
             }
         }
         $credit_sub_stmt->close();
@@ -575,12 +573,12 @@ try {
          VALUES (?, ?, 0, ?, 'Unpaid')"
     );
     if (!$payStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $payStmt->bind_param('ids', $enrollment_id, $amount_due, $due_date);
     if (!$payStmt->execute()) {
         $payStmt->close();
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $payment_id = (int)$conn->insert_id;
     $payStmt->close();
@@ -591,13 +589,13 @@ try {
         "INSERT INTO payment_breakdown (payment_id, label, amount, sort_order) VALUES (?, ?, ?, ?)"
     );
     if (!$bdStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     foreach ($feeItems as $item) {
         $bdStmt->bind_param('isdi', $payment_id, $item['label'], $item['amount'], $item['sort_order']);
         if (!$bdStmt->execute()) {
             $bdStmt->close();
-            throw new RuntimeException('Database error: ' . $conn->error);
+            throw new DbError('Database error: ' . $conn->error);
         }
     }
     $bdStmt->close();
@@ -665,18 +663,21 @@ try {
         ],
     ]);
 
-} catch (RuntimeException $e) {
+} catch (DbError $e) {
     $conn->rollback();
-    $msg = $conn->errno === 1062
-        ? 'Student is already enrolled for this term.'
-        : $e->getMessage();
-    echo json_encode(['error' => $msg]);
+    error_log($e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 } catch (mysqli_sql_exception $e) {
     $conn->rollback();
-    $msg = $e->getCode() === 1062
-        ? 'Student is already enrolled for this term.'
-        : 'A database error occurred. Please try again.';
-    echo json_encode(['error' => $msg]);
+    if ($e->getCode() === 1062) {
+        echo json_encode(['error' => 'Student is already enrolled for this term.']);
+    } else {
+        error_log('save_enrollment.php: ' . $e->getMessage());
+        echo json_encode(['error' => 'A database error occurred. Please try again.']);
+    }
+} catch (RuntimeException $e) {
+    $conn->rollback();
+    echo json_encode(['error' => $e->getMessage()]);
 }
 
 $db->close();

@@ -44,8 +44,17 @@ const CDN_LEGACY_ALIASES = [
     'https://cdn.jsdelivr.net/npm/chart.js@4'                    => CDN_CHARTJS,
 ];
 
-/** Renders a <script> tag, adding integrity+crossorigin automatically for any known CDN URL. */
-function cdn_script_tag(string $url): string
+/**
+ * Renders a <script> tag, adding integrity+crossorigin automatically for
+ * any known CDN URL. $defer is safe for scripts that only register a
+ * global/custom-element for later use (SweetAlert2, Chart.js, the
+ * iconify-icon custom element) -- it lets the browser keep parsing the
+ * page instead of blocking on the CDN fetch, since nothing here needs to
+ * run before the rest of <head>. Left false by default for jQuery/DataTables/
+ * Vue, some of which are followed by inline script blocks elsewhere in a
+ * page that assume they've already executed.
+ */
+function cdn_script_tag(string $url, bool $defer = false): string
 {
     $url = CDN_LEGACY_ALIASES[$url] ?? $url;
     $integrity = CDN_INTEGRITY[$url] ?? null;
@@ -53,6 +62,9 @@ function cdn_script_tag(string $url): string
     $html = '<script src="' . htmlspecialchars($url, ENT_QUOTES) . '"';
     if ($integrity) {
         $html .= ' integrity="' . htmlspecialchars($integrity, ENT_QUOTES) . '" crossorigin="anonymous"';
+    }
+    if ($defer) {
+        $html .= ' defer';
     }
     return $html . '></script>';
 }

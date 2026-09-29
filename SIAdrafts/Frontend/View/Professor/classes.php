@@ -13,20 +13,7 @@ $conn = $db->connect();
 
 $professorId = (int)$_SESSION['professor_id'];
 
-$stmt = $conn->prepare("
-    SELECT s.schedule_id, s.section_id, s.day, s.time_start, s.time_end, s.school_year, s.semester,
-           sub.subject_code, sub.subject_name, sec.section_name, r.room_name
-    FROM schedule s
-    JOIN subject sub ON sub.subject_id = s.subject_id
-    JOIN section sec ON sec.section_id = s.section_id
-    JOIN room r       ON r.room_id = s.room_id
-    WHERE s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved'
-    ORDER BY sec.section_name, sub.subject_code
-");
-$stmt->bind_param('i', $professorId);
-$stmt->execute();
-$classes = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
+$classes = get_professor_active_classes($conn, $professorId);
 
 // Grouped by section+term (not just section_id) so "Master List" stays
 // scoped to one term -- a section taught across multiple terms shouldn't
@@ -54,7 +41,7 @@ include __DIR__ . '/Include/header.php';
 ?>
 
 <h1 class="sp-greeting">My Classes</h1>
-<p class="sp-subline">Every class offering assigned to you, grouped by section.</p>
+<p class="sp-subline">Every class offering assigned to you, grouped by section. Announcements, assignments, materials, and grades each have their own page in the sidebar.</p>
 
 <?php if (!empty($pendingClasses)): ?>
   <div class="sp-section sp-print-hide">
@@ -118,12 +105,9 @@ include __DIR__ . '/Include/header.php';
                 <td class="sp-class-subject"><?= htmlspecialchars($c['subject_code'], ENT_QUOTES) ?><div style="color:var(--slate-300); font-size:12.5px;"><?= htmlspecialchars($c['subject_name'], ENT_QUOTES) ?></div></td>
                 <td class="sp-num"><?= htmlspecialchars($c['day'], ENT_QUOTES) ?>, <?= date('g:ia', strtotime($c['time_start'])) ?>–<?= date('g:ia', strtotime($c['time_end'])) ?></td>
                 <td><?= htmlspecialchars($c['room_name'], ENT_QUOTES) ?></td>
-                <td class="sp-print-hide" style="display:flex; gap:6px;">
+                <td class="sp-print-hide">
                   <button type="button" class="sp-table-action" data-view-roster="<?= (int)$c['schedule_id'] ?>">
-                    <iconify-icon icon="mdi:eye-outline"></iconify-icon> View
-                  </button>
-                  <button type="button" class="sp-table-action" data-announce="<?= (int)$c['schedule_id'] ?>">
-                    <iconify-icon icon="mdi:bullhorn-outline"></iconify-icon> Announce
+                    <iconify-icon icon="mdi:eye-outline"></iconify-icon> View roster
                   </button>
                 </td>
               </tr>
@@ -152,37 +136,6 @@ include __DIR__ . '/Include/header.php';
   <div class="sp-dialog-actions">
     <button type="button" class="sp-btn sp-btn-secondary" id="exportRosterCsv">Export CSV</button>
     <button type="button" class="sp-btn sp-btn-primary" id="closeRosterDialog">Close</button>
-  </div>
-</dialog>
-
-<!-- Announcement dialog -->
-<dialog class="sp-dialog sp-dialog-lg" id="announceDialog">
-  <div class="sp-dialog-body">
-    <p class="sp-dialog-title">Class Announcements</p>
-    <p class="sp-dialog-message" id="announceSubtitle"></p>
-
-    <form id="announceForm">
-      <div class="sp-form-group">
-        <label for="announceTitleInput">Title</label>
-        <input type="text" id="announceTitleInput" maxlength="150" required>
-      </div>
-      <div class="sp-form-group">
-        <label for="announceBodyInput">Message</label>
-        <textarea id="announceBodyInput" rows="3" required></textarea>
-      </div>
-      <div class="sp-form-error" id="announceFormError" role="alert" aria-live="assertive">
-        <p class="sp-form-error-msg" id="announceFormErrorMsg"></p>
-      </div>
-      <button type="submit" class="sp-btn sp-btn-primary" id="announcePostBtn">
-        <span class="sp-btn-spinner" hidden></span>
-        <span class="sp-btn-label">Post announcement</span>
-      </button>
-    </form>
-
-    <ul class="sp-announce-list" id="announceList"></ul>
-  </div>
-  <div class="sp-dialog-actions">
-    <button type="button" class="sp-btn sp-btn-secondary" id="closeAnnounceDialog">Close</button>
   </div>
 </dialog>
 

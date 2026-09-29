@@ -51,16 +51,11 @@ $isHeadRegistrar = current_user_is(['Head Registrar']);
 $status          = $isHeadRegistrar ? 'Approved' : 'Pending';
 $requested_by    = (int)$_SESSION['user_id'];
 
-$stmt = $conn->prepare("INSERT INTO subject (subject_code, subject_name, units, course_id, category_id, year_level, semester, status, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
-    exit;
-}
-$stmt->bind_param('ssdiiiisi', $code, $name, $units, $course_id, $category_id, $year_level, $semester, $status, $requested_by);
-
 try {
+    $stmt = $conn->prepare("INSERT INTO subject (subject_code, subject_name, units, course_id, category_id, year_level, semester, status, requested_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('ssdiiiisi', $code, $name, $units, $course_id, $category_id, $year_level, $semester, $status, $requested_by);
     $stmt->execute();
+    $stmt->close();
     echo json_encode([
         'success'    => true,
         'subject_id' => $conn->insert_id,
@@ -73,9 +68,9 @@ try {
     if ($e->getCode() === 1062) {
         echo json_encode(['error' => "Subject code \"$code\" already exists."]);
     } else {
+        error_log('save_subject.php: ' . $e->getMessage());
         echo json_encode(['error' => 'Could not save subject. Please try again.']);
     }
 }
 
-$stmt->close();
 $db->close();

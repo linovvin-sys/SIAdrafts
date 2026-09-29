@@ -40,15 +40,14 @@ foreach ($scheduleList as $s) {
     }
 }
 
-// Distinct students across this term's approved offerings — same
-// applicant_id join fix used everywhere else (enrollment.student_id is
-// really applicants.applicant_id, not student.student_id).
+// Distinct students across this term's approved offerings, joined via
+// each enrollment's applicant_id.
 $headcountStmt = $conn->prepare("
     SELECT COUNT(DISTINCT st.student_id) AS cnt
     FROM schedule s
     JOIN enrollment e ON e.section_id = s.section_id AND e.school_year = s.school_year AND e.semester = s.semester
     JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.subject_id = s.subject_id AND es.status = 'Enrolled'
-    JOIN student st ON st.applicant_id = e.student_id
+    JOIN student st ON st.applicant_id = e.applicant_id
     WHERE s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved'
       AND s.school_year = ? AND s.semester = ?
 ");
@@ -181,6 +180,20 @@ include __DIR__ . '/Include/header.php';
           <a href="/SIAdrafts/Frontend/View/Professor/classes.php">
             <span class="sp-quickaction-icon"><iconify-icon icon="mdi:account-group-outline"></iconify-icon></span>
             <span>My classes &amp; rosters</span>
+            <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
+          </a>
+        </li>
+        <li>
+          <a href="/SIAdrafts/Frontend/View/Professor/grades.php">
+            <span class="sp-quickaction-icon"><iconify-icon icon="mdi:school-outline"></iconify-icon></span>
+            <span>Encode grades</span>
+            <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
+          </a>
+        </li>
+        <li>
+          <a href="/SIAdrafts/Frontend/View/Professor/assignments.php">
+            <span class="sp-quickaction-icon"><iconify-icon icon="mdi:file-document-edit-outline"></iconify-icon></span>
+            <span>Post an assignment</span>
             <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
           </a>
         </li>

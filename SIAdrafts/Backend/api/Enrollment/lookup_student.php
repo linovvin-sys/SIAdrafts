@@ -40,11 +40,9 @@ if (!$student) {
     exit;
 }
 
-// enrollment.student_id is misleadingly named — it actually references
-// applicants.applicant_id, not student.student_id.
 $statusStmt = $conn->prepare(
     "SELECT status FROM enrollment
-     WHERE student_id = ?
+     WHERE applicant_id = ?
      ORDER BY school_year DESC, semester DESC, created_at DESC
      LIMIT 1"
 );

@@ -17,16 +17,15 @@ $db   = new Database();
 $conn = $db->connect();
 
 // Deduplicates students who take more than one subject with this professor
-// in the same section/term. Same student.applicant_id join fix as
-// get_professor_roster.php — enrollment.student_id is really applicant_id.
-// The professor_id filter always comes from the session, never the
+// in the same section/term. Same student.applicant_id join as
+// get_professor_roster.php. The professor_id filter always comes from the session, never the
 // querystring, so a professor can't page through another's section roster.
 $stmt = $conn->prepare("
     SELECT DISTINCT st.student_no, st.first_name, st.middle_name, st.last_name, st.email, st.contact_number
     FROM schedule s
     JOIN enrollment e ON e.section_id = s.section_id AND e.school_year = s.school_year AND e.semester = s.semester
     JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.subject_id = s.subject_id AND es.status = 'Enrolled'
-    JOIN student st ON st.applicant_id = e.student_id
+    JOIN student st ON st.applicant_id = e.applicant_id
     WHERE s.section_id = ? AND s.professor_id = ? AND s.school_year = ? AND s.semester = ?
       AND s.is_active = 1 AND s.status = 'Approved'
       AND e.status = 'Enrolled'

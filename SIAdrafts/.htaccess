@@ -48,7 +48,21 @@
     # over (frame-ancestors here, X-Frame-Options above). Revisit
     # 'unsafe-inline' if inline scripts/handlers are ever moved to
     # external files with a per-request nonce.
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    #
+    # connect-src needs Iconify's icon-data API domains: the
+    # <iconify-icon> web component loads its own JS fine under script-src,
+    # but then fetches each icon's actual SVG data at runtime from
+    # api.iconify.design (falling back to api.simplesvg.com/api.unisvg.com
+    # if that's unreachable) — without these, that fetch is silently
+    # blocked and every icon on the page renders as nothing.
+    # font-src needs cdn.jsdelivr.net too, not just fonts.gstatic.com --
+    # Bootstrap Icons' CSS (loaded from jsdelivr under style-src) declares
+    # its actual glyphs via @font-face pointing at a .woff2 also served
+    # from jsdelivr; without it here, that font file request is silently
+    # blocked and every "bi bi-*" icon renders as an empty box (the mdi/
+    # iconify icons are unaffected -- those fetch SVG data over connect-src
+    # via api.iconify.design, not a font file).
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
     # mod_ssl sets the "HTTPS" server/env variable itself whenever a
     # connection actually terminated TLS here — env=HTTPS makes this

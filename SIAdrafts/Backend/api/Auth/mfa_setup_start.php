@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../../db.php';
-require_once '../../session_security.php';
+require_once '../../mfa_login_context.php';
 require_once '../../totp.php';
 require_once '../../csrf.php';
 
@@ -15,25 +15,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 csrf_verify();
 
-// MFA setup is identical for a staff account or a professor account, but
-// they're still two separate id spaces (see staff_mfa's migration) — this
-// resolves which one is actually signed in rather than merging the two
-// otherwise-isolated auth systems into one check.
-if (!empty($_SESSION['user_id']) && !empty($_SESSION['role_name'])) {
-    session_touch_or_expire();
-    $loginType = 'staff';
-    $accountId = (int)$_SESSION['user_id'];
-    $label     = $_SESSION['username'] ?? 'staff';
-} elseif (!empty($_SESSION['professor_id'])) {
-    session_touch_or_expire();
-    $loginType = 'professor';
-    $accountId = (int)$_SESSION['professor_id'];
-    $label     = $_SESSION['username'] ?? 'professor';
-} else {
-    http_response_code(401);
-    echo json_encode(['error' => 'Please log in.']);
-    exit;
-}
+$ctx       = resolve_mfa_login_context();
+$loginType = $ctx['loginType'];
+$accountId = $ctx['accountId'];
+$label     = $ctx['label'];
 
 $db   = new Database();
 $conn = $db->connect();

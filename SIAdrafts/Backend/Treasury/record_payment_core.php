@@ -56,9 +56,6 @@ function record_treasury_payment(
             WHERE payment_id = ?
             FOR UPDATE
         ");
-        if (!$stmt) {
-            throw new DbError($conn->error);
-        }
         $stmt->bind_param("i", $payment_id);
         $stmt->execute();
         $payment = $stmt->get_result()->fetch_assoc();
@@ -91,18 +88,12 @@ function record_treasury_payment(
                 INSERT INTO payment_transactions (payment_id, amount, paid_at, received_by, remarks)
                 VALUES (?, ?, NOW(), NULL, ?)
             ");
-            if (!$stmt) {
-                throw new DbError($conn->error);
-            }
             $stmt->bind_param("ids", $payment_id, $amount, $remarks);
         } else {
             $stmt = $conn->prepare("
                 INSERT INTO payment_transactions (payment_id, amount, paid_at, received_by, remarks)
                 VALUES (?, ?, NOW(), ?, ?)
             ");
-            if (!$stmt) {
-                throw new DbError($conn->error);
-            }
             $stmt->bind_param("idis", $payment_id, $amount, $received_by, $remarks);
         }
         $stmt->execute();
@@ -126,9 +117,6 @@ function record_treasury_payment(
                 SET downpayment = ?, payment_status = ?, paid_at = NOW()
                 WHERE payment_id = ?
             ");
-            if (!$stmt) {
-                throw new DbError($conn->error);
-            }
             $stmt->bind_param("dsi", $newDownpayment, $paymentStatus, $payment_id);
         } else {
             $stmt = $conn->prepare("
@@ -136,9 +124,6 @@ function record_treasury_payment(
                 SET downpayment = ?, payment_status = ?, paid_at = NOW(), received_by = ?
                 WHERE payment_id = ?
             ");
-            if (!$stmt) {
-                throw new DbError($conn->error);
-            }
             $stmt->bind_param("dsii", $newDownpayment, $paymentStatus, $received_by, $payment_id);
         }
         $stmt->execute();
@@ -147,14 +132,11 @@ function record_treasury_payment(
         // --- applicant status ---
         $stmt = $conn->prepare("
             UPDATE applicants a
-            INNER JOIN enrollment e ON e.student_id = a.applicant_id
+            INNER JOIN enrollment e ON e.applicant_id = a.applicant_id
             INNER JOIN payment p    ON e.enrollment_id = p.enrollment_id
             SET a.status = ?
             WHERE p.payment_id = ?
         ");
-        if (!$stmt) {
-            throw new DbError($conn->error);
-        }
         $stmt->bind_param("si", $applicantStatus, $payment_id);
         $stmt->execute();
         $stmt->close();
@@ -166,9 +148,6 @@ function record_treasury_payment(
             SET e.status = 'Enrolled'
             WHERE p.payment_id = ?
         ");
-        if (!$stmt) {
-            throw new DbError($conn->error);
-        }
         $stmt->bind_param("i", $payment_id);
         $stmt->execute();
         $stmt->close();
@@ -178,9 +157,6 @@ function record_treasury_payment(
             UPDATE unpaid_students SET status = 'Resolved'
             WHERE payment_id = ? AND status = 'Pending'
         ");
-        if (!$stmt) {
-            throw new DbError($conn->error);
-        }
         $stmt->bind_param("i", $payment_id);
         $stmt->execute();
         $stmt->close();
@@ -196,7 +172,7 @@ function record_treasury_payment(
             'transaction_id'   => $transactionId,
         ];
 
-    } catch (DbError $e) {
+    } catch (mysqli_sql_exception $e) {
         $conn->rollback();
         error_log('record_treasury_payment DB error: ' . $e->getMessage());
         return ['success' => false, 'error' => 'A database error occurred. Please try again.'];

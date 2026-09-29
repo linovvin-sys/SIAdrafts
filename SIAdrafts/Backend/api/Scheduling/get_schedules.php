@@ -68,18 +68,20 @@ $sql .= "
              FIELD(sch.day, 'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday')
 ";
 
-$stmt = $conn->prepare($sql);
-if (!$stmt) {
+try {
+    $stmt = $conn->prepare($sql);
+    if ($types) {
+        $stmt->bind_param($types, ...$params);
+    }
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    $db->close();
+
+    echo json_encode($rows);
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    error_log('get_schedules.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-if ($types) {
-    $stmt->bind_param($types, ...$params);
-}
-$stmt->execute();
-$rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
-$db->close();
-
-echo json_encode($rows);

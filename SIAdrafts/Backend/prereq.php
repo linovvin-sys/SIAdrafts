@@ -21,7 +21,7 @@ function subject_prereq_met(mysqli $conn, int $applicant_id, int $subject_id): b
         "SELECT 1
          FROM enrollment_subject es
          JOIN enrollment e ON e.enrollment_id = es.enrollment_id
-         WHERE e.student_id = ? AND es.subject_id = ? AND es.status IN ('Enrolled', 'Credited')
+         WHERE e.applicant_id = ? AND es.subject_id = ? AND es.status IN ('Enrolled', 'Credited')
          LIMIT 1"
     );
     $stmt->bind_param('ii', $applicant_id, $prereq_id);

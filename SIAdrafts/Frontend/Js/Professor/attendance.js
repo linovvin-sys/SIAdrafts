@@ -1,0 +1,119 @@
+document.addEventListener('DOMContentLoaded', function () {
+  const API = '/SIAdrafts/Backend/api/Attendance/';
+  const csrfToken = document.body.dataset.csrf;
+
+  const classSelect  = document.getElementById('attendanceClassSelect');
+  const emptyState   = document.getElementById('attendanceEmptyState');
+  const panel        = document.getElementById('attendancePanel');
+  const dateInput    = document.getElementById('attendanceDateInput');
+  const rosterBody   = document.getElementById('attendanceRosterBody');
+  const saveBtn      = document.getElementById('saveAttendanceBtn');
+  const markAllBtn   = document.getElementById('markAllPresentBtn');
+  const errBox       = document.getElementById('attendanceFormError');
+  const errMsg       = document.getElementById('attendanceFormErrorMsg');
+  let currentScheduleId = null;
+
+  if (!classSelect) return;
+
+  const STATUSES = ['Present', 'Absent', 'Late', 'Excused'];
+
+  function todayLocal() {
+    const d = new Date();
+    const off = d.getTimezoneOffset();
+    return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+  }
+  dateInput.value = todayLocal();
+
+  function showError(message) {
+    errBox.classList.remove('is-visible');
+    void errBox.offsetWidth;
+    errMsg.textContent = message;
+    errBox.classList.add('is-visible');
+  }
+
+  function renderRoster(roster) {
+    if (!roster || roster.length === 0) {
+      rosterBody.innerHTML = '<tr><td colspan="2">No enrolled students for this class.</td></tr>';
+      return;
+    }
+    rosterBody.innerHTML = roster.map((r) => {
+      const name = escHtml(r.first_name + ' ' + r.last_name);
+      const options = STATUSES.map(s =>
+        '<option value="' + s + '"' + (r.status === s ? ' selected' : (!r.status && s === 'Present' ? ' selected' : '')) + '>' + s + '</option>'
+      ).join('');
+      return '<tr data-applicant-id="' + r.applicant_id + '">' +
+        '<td>' + name + '</td>' +
+        '<td><select class="sp-table-input" data-status-select>' + options + '</select></td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  function loadAttendance() {
+    if (!currentScheduleId || !dateInput.value) return;
+    fetch(API + 'get_attendance.php?schedule_id=' + encodeURIComponent(currentScheduleId) + '&session_date=' + encodeURIComponent(dateInput.value))
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { showError(d.error); return; }
+        renderRoster(d.roster);
+      })
+      .catch(() => showError('Could not load attendance.'));
+  }
+
+  classSelect.addEventListener('change', () => {
+    window.spRememberClassSelection?.(classSelect);
+    currentScheduleId = classSelect.value || null;
+    if (!currentScheduleId) {
+      panel.hidden = true;
+      emptyState.hidden = false;
+      return;
+    }
+    panel.hidden = false;
+    emptyState.hidden = true;
+    errBox.classList.remove('is-visible');
+    loadAttendance();
+  });
+
+  dateInput.addEventListener('change', loadAttendance);
+
+  markAllBtn.addEventListener('click', () => {
+    rosterBody.querySelectorAll('[data-status-select]').forEach(sel => { sel.value = 'Present'; });
+  });
+
+  saveBtn.addEventListener('click', () => {
+    if (!currentScheduleId || !dateInput.value) return;
+
+    const statuses = {};
+    rosterBody.querySelectorAll('tr[data-applicant-id]').forEach(tr => {
+      const id = tr.dataset.applicantId;
+      const sel = tr.querySelector('[data-status-select]');
+      if (sel) statuses[id] = sel.value;
+    });
+    if (Object.keys(statuses).length === 0) return;
+
+    saveBtn.disabled = true;
+    saveBtn.querySelector('.sp-btn-spinner').hidden = false;
+
+    const body = new FormData();
+    body.append('schedule_id', currentScheduleId);
+    body.append('session_date', dateInput.value);
+    body.append('statuses', JSON.stringify(statuses));
+    body.append('csrf_token', csrfToken);
+
+    fetch(API + 'save_attendance.php', { method: 'POST', body })
+      .then(r => r.json())
+      .then(d => {
+        if (d.error) { showError(d.error); return; }
+        renderRoster(d.roster);
+        if (window.spToast) window.spToast('Attendance saved.', 'mdi:clipboard-check-outline');
+      })
+      .catch(() => showError('Could not save attendance. Please try again.'))
+      .finally(() => {
+        saveBtn.disabled = false;
+        saveBtn.querySelector('.sp-btn-spinner').hidden = true;
+      });
+  });
+
+  if (window.spRestoreClassSelection?.(classSelect)) {
+    classSelect.dispatchEvent(new Event('change'));
+  }
+});

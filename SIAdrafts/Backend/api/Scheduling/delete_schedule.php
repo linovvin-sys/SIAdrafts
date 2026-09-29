@@ -60,6 +60,41 @@ $snapStmt->close();
 
 $deleted_by = (int)$_SESSION['user_id'];
 
+// Pre-check every real FK back to `schedule` so the error the registrar
+// sees actually names what's blocking the delete. Previously this only
+// relied on catching the FK-violation error code and always blamed
+// enrolled students -- if the real blocker was an announcement, assignment,
+// or class material instead (no students enrolled yet), the message was
+// simply wrong and gave no way to act on the actual cause.
+$depStmt = $conn->prepare(
+    "SELECT
+        (SELECT COUNT(*) FROM enrollment_subject WHERE schedule_id IN ($placeholders)) AS enrollment_cnt,
+        (SELECT COUNT(*) FROM announcement       WHERE schedule_id IN ($placeholders)) AS announcement_cnt,
+        (SELECT COUNT(*) FROM assignment         WHERE schedule_id IN ($placeholders)) AS assignment_cnt,
+        (SELECT COUNT(*) FROM class_material     WHERE schedule_id IN ($placeholders)) AS material_cnt"
+);
+$depStmt->bind_param(str_repeat('i', count($ids) * 4), ...array_merge($ids, $ids, $ids, $ids));
+$depStmt->execute();
+$deps = $depStmt->get_result()->fetch_assoc();
+$depStmt->close();
+
+if (($deps['enrollment_cnt'] ?? 0) > 0) {
+    echo json_encode(['error' => 'Cannot delete — students are already enrolled under this schedule. Drop or transfer them first.']);
+    exit;
+}
+if (($deps['announcement_cnt'] ?? 0) > 0) {
+    echo json_encode(['error' => 'Cannot delete — this class still has announcements posted. Remove them first.']);
+    exit;
+}
+if (($deps['assignment_cnt'] ?? 0) > 0) {
+    echo json_encode(['error' => 'Cannot delete — this class still has assignments posted. Remove them first.']);
+    exit;
+}
+if (($deps['material_cnt'] ?? 0) > 0) {
+    echo json_encode(['error' => 'Cannot delete — this class still has course materials posted. Remove them first.']);
+    exit;
+}
+
 $conn->begin_transaction();
 
 // mysqli defaults to throwing on error (PHP 8.1+), so both the log insert
@@ -93,11 +128,14 @@ try {
     echo json_encode(['success' => true, 'deleted' => $deleted]);
 } catch (mysqli_sql_exception $e) {
     $conn->rollback();
-    // FK constraint (1451) — students are already enrolled under this schedule.
+    // FK constraint (1451) -- the pre-check above should already have
+    // caught this; this only fires on a race (something got attached to
+    // the schedule between the check and this delete).
     if ($e->getCode() === 1451) {
-        echo json_encode(['error' => 'Cannot delete — students are already enrolled under this schedule. Drop or transfer them first.']);
+        echo json_encode(['error' => 'Cannot delete — something was just attached to this schedule (an enrollment, announcement, assignment, or material). Please refresh and try again.']);
     } else {
         http_response_code(500);
-        echo json_encode(['error' => 'Database error: ' . $e->getMessage()]);
+        error_log('delete_schedule.php: ' . $e->getMessage());
+        echo json_encode(['error' => 'A database error occurred. Please try again.']);
     }
 }

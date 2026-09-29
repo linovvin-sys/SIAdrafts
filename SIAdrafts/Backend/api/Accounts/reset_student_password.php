@@ -4,6 +4,7 @@ require_once '../../db.php';
 require_once '../../roles.php';
 require_once '../../require_role.php';
 require_once '../../csrf.php';
+require_once '../../temp_password.php';
 header('Content-Type: application/json');
 
 if (empty($_SESSION['user_id'])) {
@@ -35,14 +36,9 @@ if (!$student_portal_account_id) {
     exit;
 }
 
-// Same deterministic temp-password formula used at first enrollment
-// (see save_enrollment.php): lowercased last name + last 5 digits of the
-// student number. Keeps the recovery formula consistent for front-desk
-// staff regardless of whether it's the original mint or a later reset.
 $stmt = $conn->prepare("
-    SELECT spa.student_portal_account_id, spa.student_no, a.last_name
+    SELECT spa.student_portal_account_id
     FROM student_portal_account spa
-    JOIN applicants a ON a.applicant_id = spa.applicant_id
     WHERE spa.student_portal_account_id = ?
     LIMIT 1
 ");
@@ -57,9 +53,9 @@ if (!$account) {
     exit;
 }
 
-$lastNameKey = strtolower(preg_replace('/[^A-Za-z]/', '', $account['last_name']));
-$studentNoDigits = preg_replace('/[^0-9]/', '', $account['student_no']);
-$tempPassword = $lastNameKey . substr($studentNoDigits, -5);
+// Random temp password (see temp_password.php) -- shown once in this
+// response for the Admin to relay to the student.
+$tempPassword = generate_temp_password();
 $tempPasswordHash = password_hash($tempPassword, PASSWORD_DEFAULT);
 
 $upd = $conn->prepare("
@@ -72,7 +68,8 @@ $upd->bind_param('si', $tempPasswordHash, $student_portal_account_id);
 if (!$upd->execute()) {
     $upd->close();
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    error_log('reset_student_password.php: ' . $conn->error);
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
 $upd->close();

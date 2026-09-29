@@ -70,7 +70,8 @@ $subStmt = $conn->prepare(
 );
 if (!$subStmt) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    error_log('get_sections.php: ' . $conn->error);
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
 

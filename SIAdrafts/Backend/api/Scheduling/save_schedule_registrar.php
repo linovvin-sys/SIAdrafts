@@ -113,27 +113,31 @@ $conn->begin_transaction();
 
 try {
     // Conflict check only against already-approved schedules — a still-pending
-    // request from someone else shouldn't block a new submission.
+    // request from someone else shouldn't block a new submission. Checks
+    // professor_id alongside room/section -- save_schedule.php (the Head
+    // Registrar's direct-save path) already added this after a professor
+    // could otherwise be double-booked into two overlapping classes; this
+    // sibling submit-for-approval path had the same gap.
     $conflictStmt = $conn->prepare(
-        "SELECT schedule_id FROM schedule
+        "SELECT room_id, section_id, professor_id FROM schedule
          WHERE school_year = ? AND semester = ? AND day = ?
            AND time_start < ? AND time_end > ?
            AND status = 'Approved'
-           AND (room_id = ? OR section_id = ?)"
+           AND (room_id = ? OR section_id = ? OR professor_id = ?)"
     );
-    if (!$conflictStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
-    }
     $conflictStmt->bind_param(
-        'sisssii',
-        $school_year, $semester, $day, $time_end, $time_start, $room_id, $section_id
+        'sisssiii',
+        $school_year, $semester, $day, $time_end, $time_start, $room_id, $section_id, $professor_id
     );
     $conflictStmt->execute();
     $conflict = $conflictStmt->get_result()->fetch_assoc();
     $conflictStmt->close();
 
     if ($conflict) {
-        throw new RuntimeException('This room or section is already booked on ' . $day . ' at an overlapping time.');
+        $reason = ((int)$conflict['professor_id'] === $professor_id && (int)$conflict['room_id'] !== $room_id && (int)$conflict['section_id'] !== $section_id)
+            ? 'This professor is already scheduled elsewhere on ' . $day . ' at an overlapping time.'
+            : 'This room or section is already booked on ' . $day . ' at an overlapping time.';
+        throw new RuntimeException($reason);
     }
 
     $insStmt = $conn->prepare(
@@ -143,7 +147,7 @@ try {
          VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
     );
     if (!$insStmt) {
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $insStmt->bind_param(
         'iiiissssiisi',
@@ -152,7 +156,7 @@ try {
     );
     if (!$insStmt->execute()) {
         $insStmt->close();
-        throw new RuntimeException('Database error: ' . $conn->error);
+        throw new DbError('Database error: ' . $conn->error);
     }
     $newId = (int)$conn->insert_id;
     $insStmt->close();
@@ -168,12 +172,17 @@ try {
             : 'Schedule created and approved.',
     ]);
 
+} catch (DbError $e) {
+    $conn->rollback();
+    error_log($e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    error_log('save_schedule_registrar.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 } catch (RuntimeException $e) {
     $conn->rollback();
     echo json_encode(['error' => $e->getMessage()]);
-} catch (mysqli_sql_exception $e) {
-    $conn->rollback();
-    echo json_encode(['error' => 'A database error occurred. Please try again.']);
 }
 
 $db->close();

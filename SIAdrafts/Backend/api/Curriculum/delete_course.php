@@ -34,34 +34,57 @@ if (!$course_id) {
     exit;
 }
 
-// Guard: don't allow deleting a course that still has sections tied to it.
-$check = $conn->prepare("SELECT COUNT(*) AS cnt FROM section WHERE course_id = ?");
-$check->bind_param('i', $course_id);
-$check->execute();
-$cnt = $check->get_result()->fetch_assoc()['cnt'] ?? 0;
-$check->close();
+try {
+    // Guard: don't allow deleting a course that still has sections or
+    // subjects it directly owns -- either would be orphaned by the delete.
+    // `subject_course` is different: it's a pure many-to-many "this subject
+    // is ALSO offered under this course" cross-listing table (populated by
+    // the curriculum CSV import, typically for shared Gen-Ed subjects like
+    // UTS/NSTP/PATHFIT that legitimately belong to every program). There's
+    // no UI to manage those rows directly, and the subject itself survives
+    // fine under its other course(s) -- so a course's own cross-listing
+    // rows are cleaned up automatically below rather than blocking the
+    // whole delete on something the user has no way to resolve.
+    $check = $conn->prepare("
+        SELECT
+            (SELECT COUNT(*) FROM section WHERE course_id = ?) AS section_cnt,
+            (SELECT COUNT(*) FROM subject WHERE course_id = ?) AS subject_cnt
+    ");
+    $check->bind_param('ii', $course_id, $course_id);
+    $check->execute();
+    $counts = $check->get_result()->fetch_assoc();
+    $check->close();
 
-if ($cnt > 0) {
-    echo json_encode(['error' => 'Cannot remove this course while it still has sections. Remove the sections first.']);
-    exit;
-}
+    if (($counts['section_cnt'] ?? 0) > 0) {
+        echo json_encode(['error' => 'Cannot remove this course while it still has sections. Remove the sections first.']);
+        exit;
+    }
+    if (($counts['subject_cnt'] ?? 0) > 0) {
+        echo json_encode(['error' => 'Cannot remove this course while it still has subjects assigned to it. Reassign or remove those subjects first.']);
+        exit;
+    }
 
-$stmt = $conn->prepare("DELETE FROM course WHERE course_id = ?");
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
-    exit;
-}
-$stmt->bind_param('i', $course_id);
+    $conn->begin_transaction();
 
-if (!$stmt->execute()) {
+    $crossListStmt = $conn->prepare("DELETE FROM subject_course WHERE course_id = ?");
+    $crossListStmt->bind_param('i', $course_id);
+    $crossListStmt->execute();
+    $crossListStmt->close();
+
+    $stmt = $conn->prepare("DELETE FROM course WHERE course_id = ?");
+    $stmt->bind_param('i', $course_id);
+    $stmt->execute();
+
+    $deleted = $stmt->affected_rows;
     $stmt->close();
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    $conn->commit();
+    $db->close();
+
+    echo json_encode(['success' => true, 'deleted' => $deleted]);
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    http_response_code(500);
+    error_log('delete_course.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-$deleted = $stmt->affected_rows;
-$stmt->close();
-$db->close();
-
-echo json_encode(['success' => true, 'deleted' => $deleted]);

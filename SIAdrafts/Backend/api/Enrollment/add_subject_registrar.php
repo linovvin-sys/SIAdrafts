@@ -53,7 +53,7 @@ if (!$staffRow || empty($staffRow['staff_id'])) {
 $requested_by = $staffRow['staff_id'];
 
 // Make sure the enrollment actually exists.
-$check = $conn->prepare("SELECT enrollment_id, student_id, school_year, semester FROM enrollment WHERE enrollment_id = ? LIMIT 1");
+$check = $conn->prepare("SELECT enrollment_id, applicant_id, school_year, semester FROM enrollment WHERE enrollment_id = ? LIMIT 1");
 $check->bind_param('i', $enrollment_id);
 $check->execute();
 $enrollmentRow = $check->get_result()->fetch_assoc();
@@ -77,7 +77,7 @@ if (!$subjectRow) {
     exit;
 }
 
-if (!subject_prereq_met($conn, (int)$enrollmentRow['student_id'], $subject_id)) {
+if (!subject_prereq_met($conn, (int)$enrollmentRow['applicant_id'], $subject_id)) {
     $prereqLabel = subject_prereq_label($conn, $subject_id);
     echo json_encode(['error' => 'Prerequisite not yet completed' . ($prereqLabel ? ": $prereqLabel" : '.') . '.']);
     exit;
@@ -86,19 +86,27 @@ if (!subject_prereq_met($conn, (int)$enrollmentRow['student_id'], $subject_id)) 
 $units  = (float)$subjectRow['units'];
 $amount = round($units * ADDROP_FEE_PER_UNIT, 2);
 
-// Guard against re-adding a subject the student is already active in.
+// Guard against re-adding a subject the student is already active in, and
+// separately look for a leftover Dropped row for this exact pair -- the
+// unique key on (enrollment_id, subject_id) has no status qualifier, so a
+// student who dropped Math101 earlier this term can never re-add it via a
+// plain INSERT (it throws a duplicate-key error every time). Reusing that
+// row instead of inserting a new one keeps the constraint intact.
 $dupe = $conn->prepare(
-    "SELECT enrollment_subject_id FROM enrollment_subject
-     WHERE enrollment_id = ? AND subject_id = ? AND status != 'Dropped'
+    "SELECT enrollment_subject_id, status FROM enrollment_subject
+     WHERE enrollment_id = ? AND subject_id = ?
      LIMIT 1"
 );
 $dupe->bind_param('ii', $enrollment_id, $subject_id);
 $dupe->execute();
-if ($dupe->get_result()->fetch_assoc()) {
+$existing = $dupe->get_result()->fetch_assoc();
+$dupe->close();
+
+if ($existing && $existing['status'] !== 'Dropped') {
     echo json_encode(['error' => 'Student is already enrolled in this subject.']);
     exit;
 }
-$dupe->close();
+$reuseRowId = $existing ? (int)$existing['enrollment_subject_id'] : null;
 
 // If a schedule_id was supplied (irregular add), never trust it blind —
 // confirm it exists, actually offers this subject, and belongs to this
@@ -130,26 +138,33 @@ $conn->begin_transaction();
 try {
     // Subject stays "Pending Payment" — it only becomes Enrolled once
     // Treasury records the add fee (see record_subject_fee_payment.php).
-    $stmt = $conn->prepare(
-        "INSERT INTO enrollment_subject (enrollment_id, subject_id, schedule_id, status)
-         VALUES (?, ?, ?, 'Pending Payment')"
-    );
-    if (!$stmt) {
-        throw new Exception($conn->error);
+    if ($reuseRowId !== null) {
+        // A Dropped row already occupies this (enrollment_id, subject_id) pair
+        // -- reset it in place instead of inserting a new one, which would
+        // hit the unique key.
+        $stmt = $conn->prepare(
+            "UPDATE enrollment_subject SET schedule_id = ?, status = 'Pending Payment' WHERE enrollment_subject_id = ?"
+        );
+        $stmt->bind_param('ii', $schedule_id, $reuseRowId);
+        $stmt->execute();
+        $stmt->close();
+        $enrollment_subject_id = $reuseRowId;
+    } else {
+        $stmt = $conn->prepare(
+            "INSERT INTO enrollment_subject (enrollment_id, subject_id, schedule_id, status)
+             VALUES (?, ?, ?, 'Pending Payment')"
+        );
+        $stmt->bind_param('iii', $enrollment_id, $subject_id, $schedule_id);
+        $stmt->execute();
+        $enrollment_subject_id = $conn->insert_id;
+        $stmt->close();
     }
-    $stmt->bind_param('iii', $enrollment_id, $subject_id, $schedule_id);
-    $stmt->execute();
-    $enrollment_subject_id = $conn->insert_id;
-    $stmt->close();
 
     $feeStmt = $conn->prepare(
         "INSERT INTO subject_change_fee
             (enrollment_subject_id, enrollment_id, action, units, amount, requested_by)
          VALUES (?, ?, 'Add', ?, ?, ?)"
     );
-    if (!$feeStmt) {
-        throw new Exception($conn->error);
-    }
     $feeStmt->bind_param('iidds', $enrollment_subject_id, $enrollment_id, $units, $amount, $requested_by);
     $feeStmt->execute();
     $feeStmt->close();
@@ -164,6 +179,7 @@ try {
     ]);
 } catch (Exception $e) {
     $conn->rollback();
+    error_log('add_subject_registrar.php: ' . $e->getMessage());
     echo json_encode(['error' => 'Could not add subject. Please try again.']);
 }
 

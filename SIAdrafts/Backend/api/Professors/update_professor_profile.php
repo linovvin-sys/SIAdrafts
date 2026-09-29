@@ -38,17 +38,20 @@ if ($action === 'update_email') {
     }
     $dupStmt->close();
 
-    $stmt = $conn->prepare("UPDATE professor SET email = ? WHERE professor_id = ?");
-    $stmt->bind_param('si', $email, $_SESSION['professor_id']);
-    if (!$stmt->execute()) {
+    try {
+        $stmt = $conn->prepare("UPDATE professor SET email = ? WHERE professor_id = ?");
+        $stmt->bind_param('si', $email, $_SESSION['professor_id']);
+        $stmt->execute();
+        $stmt->close();
+        $db->close();
+        echo json_encode(['success' => true, 'message' => 'Email updated.']);
+        exit;
+    } catch (mysqli_sql_exception $e) {
         http_response_code(500);
+        error_log('update_professor_profile.php: ' . $e->getMessage());
         echo json_encode(['error' => 'Could not update email.']);
         exit;
     }
-    $stmt->close();
-    $db->close();
-    echo json_encode(['success' => true, 'message' => 'Email updated.']);
-    exit;
 }
 
 if ($action === 'change_password') {
@@ -76,17 +79,20 @@ if ($action === 'change_password') {
     }
 
     $hashed = password_hash($new_password, PASSWORD_DEFAULT);
-    $updStmt = $conn->prepare("UPDATE professor SET password = ? WHERE professor_id = ?");
-    $updStmt->bind_param('si', $hashed, $_SESSION['professor_id']);
-    if (!$updStmt->execute()) {
+    try {
+        $updStmt = $conn->prepare("UPDATE professor SET password = ? WHERE professor_id = ?");
+        $updStmt->bind_param('si', $hashed, $_SESSION['professor_id']);
+        $updStmt->execute();
+        $updStmt->close();
+        $db->close();
+        echo json_encode(['success' => true, 'message' => 'Password updated.']);
+        exit;
+    } catch (mysqli_sql_exception $e) {
         http_response_code(500);
+        error_log('update_professor_profile.php: ' . $e->getMessage());
         echo json_encode(['error' => 'Could not update password.']);
         exit;
     }
-    $updStmt->close();
-    $db->close();
-    echo json_encode(['success' => true, 'message' => 'Password updated.']);
-    exit;
 }
 
 echo json_encode(['error' => 'Unknown action.']);

@@ -33,7 +33,7 @@ $stmt->close();
 
 $stmt = $conn->prepare(
     "SELECT enrollment_id, school_year, semester, year_level, status, created_at
-     FROM enrollment WHERE student_id = ? ORDER BY created_at DESC"
+     FROM enrollment WHERE applicant_id = ? ORDER BY created_at DESC"
 );
 $stmt->bind_param('i', $studentId);
 $stmt->execute();
@@ -44,7 +44,7 @@ $stmt = $conn->prepare(
     "SELECT p.payment_id, p.amount_due, p.downpayment, p.balance, p.payment_status, p.due_date, p.paid_at
      FROM payment p
      JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-     WHERE e.student_id = ?
+     WHERE e.applicant_id = ?
      ORDER BY p.created_at DESC"
 );
 $stmt->bind_param('i', $studentId);

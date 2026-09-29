@@ -27,48 +27,49 @@ if (!$year_level || !$semester || !$school_year) {
     exit;
 }
 
-$stmt = $conn->prepare(
-    "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
-            sub.prereq_id, sc.category_name,
-            sch.day, sch.time_start, sch.time_end,
-            CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
-            r.room_name
-     FROM subject sub
-     JOIN subject_category sc ON sub.category_id = sc.category_id
-     LEFT JOIN schedule sch ON sch.subject_id = sub.subject_id
-         AND sch.school_year = ?
-         AND sch.semester    = ?
-         AND sch.section_id  = ?
-     LEFT JOIN professor p ON sch.professor_id = p.professor_id
-     LEFT JOIN room r       ON sch.room_id = r.room_id
-     WHERE sub.year_level = ? AND sub.semester = ? AND sub.status = 'Approved'
-     ORDER BY sc.category_name, sub.subject_code"
-);
+try {
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_id, sub.subject_code, sub.subject_name, sub.units,
+                sub.prereq_id, sc.category_name,
+                sch.day, sch.time_start, sch.time_end,
+                CONCAT(p.first_name, ' ', p.last_name) AS professor_name,
+                r.room_name
+         FROM subject sub
+         JOIN subject_category sc ON sub.category_id = sc.category_id
+         LEFT JOIN schedule sch ON sch.subject_id = sub.subject_id
+             AND sch.school_year = ?
+             AND sch.semester    = ?
+             AND sch.section_id  = ?
+         LEFT JOIN professor p ON sch.professor_id = p.professor_id
+         LEFT JOIN room r       ON sch.room_id = r.room_id
+         WHERE sub.year_level = ? AND sub.semester = ? AND sub.status = 'Approved'
+         ORDER BY sc.category_name, sub.subject_code"
+    );
 
-if (!$stmt) {
+    // Placeholder order matches the query exactly:
+    // school_year(s), semester(i), section_id(i), year_level(i), semester(i) again
+    $stmt->bind_param('siiii', $school_year, $semester, $section_id, $year_level, $semester);
+    $stmt->execute();
+
+    $result = $stmt->get_result();
+    $subjects = $result->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+
+    $categories = [];
+    foreach ($subjects as $sub) {
+        $cat = $sub['category_name'];
+        if (!isset($categories[$cat])) {
+            $categories[$cat] = ['category_name' => $cat, 'subjects' => []];
+        }
+        $categories[$cat]['subjects'][] = $sub;
+    }
+
+    $conn->close();
+
+    echo json_encode(['categories' => array_values($categories)]);
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    error_log('get_subjects.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-// Placeholder order matches the query exactly:
-// school_year(s), semester(i), section_id(i), year_level(i), semester(i) again
-$stmt->bind_param('siiii', $school_year, $semester, $section_id, $year_level, $semester);
-$stmt->execute();
-
-$result = $stmt->get_result();
-$subjects = $result->fetch_all(MYSQLI_ASSOC);
-$stmt->close();
-
-$categories = [];
-foreach ($subjects as $sub) {
-    $cat = $sub['category_name'];
-    if (!isset($categories[$cat])) {
-        $categories[$cat] = ['category_name' => $cat, 'subjects' => []];
-    }
-    $categories[$cat]['subjects'][] = $sub;
-}
-
-$conn->close();
-
-echo json_encode(['categories' => array_values($categories)]);

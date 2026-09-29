@@ -37,8 +37,8 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
      included) look like it had a huge gap up top. -->
 <link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Admin/admin.css">
 <?php endif; ?>
-<?= cdn_script_tag(CDN_SWEETALERT2) ?>
-<?= cdn_script_tag(CDN_ICONIFY) ?>
+<?= cdn_script_tag(CDN_SWEETALERT2, true) ?>
+<?= cdn_script_tag(CDN_ICONIFY, true) ?>
 </head>
 <body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 

@@ -37,7 +37,7 @@ if ($student) {
     $stmt = $conn->prepare("
         SELECT e.enrollment_id, e.school_year, e.semester, e.year_level, e.status, e.created_at
         FROM enrollment e
-        WHERE e.student_id = ?
+        WHERE e.applicant_id = ?
         ORDER BY e.created_at DESC
         LIMIT 1
     ");
@@ -50,7 +50,7 @@ if ($student) {
     // merged chronologically -- real records, not placeholders.
     $stmt = $conn->prepare("
         SELECT CONCAT('Enrolled — A.Y. ', e.school_year, ', ', e.year_level, CASE e.year_level WHEN 1 THEN 'st' WHEN 2 THEN 'nd' WHEN 3 THEN 'rd' ELSE 'th' END, ' Year') AS label, e.created_at AS ts
-        FROM enrollment e WHERE e.student_id = ?
+        FROM enrollment e WHERE e.applicant_id = ?
     ");
     $stmt->bind_param('i', $student['applicant_id']);
     $stmt->execute();
@@ -62,7 +62,7 @@ if ($student) {
         SELECT CONCAT('Payment received — ₱', FORMAT(p.downpayment, 2)) AS label, p.paid_at AS ts
         FROM payment p
         JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-        WHERE e.student_id = ? AND p.paid_at IS NOT NULL
+        WHERE e.applicant_id = ? AND p.paid_at IS NOT NULL
     ");
     $stmt->bind_param('i', $student['applicant_id']);
     $stmt->execute();

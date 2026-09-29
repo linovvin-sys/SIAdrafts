@@ -31,7 +31,7 @@ $res = $conn->query("
            p.paid_at AS ts, 'payment' AS kind
     FROM payment p
     JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-    JOIN applicants a ON a.applicant_id = e.student_id
+    JOIN applicants a ON a.applicant_id = e.applicant_id
     WHERE p.paid_at IS NOT NULL
     ORDER BY p.paid_at DESC
     LIMIT 25

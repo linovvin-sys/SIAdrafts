@@ -6,26 +6,37 @@
    .sp-today, .sp-schedule, .sp-dialog, .sp-pill, etc.) is NOT duplicated
    here. */
 
-/* ---------- term picker (Schedule page — Student has no dropdown at all) ---------- */
-.sp-select {
-  appearance: none;
-  -webkit-appearance: none;
-  padding: 9px 34px 9px 14px;
+/* .sp-select moved to Frontend/Css/Student/student.css — the Student
+   portal's Grades page now has its own term-picker dropdown too, so the
+   component is no longer Professor-only. */
+
+/* ---------- inline table input (Grades dialog — editable cells inside .sp-table) ---------- */
+.sp-table-input {
+  width: 100%;
+  padding: 7px 10px;
   border-radius: var(--sp-radius-sm);
   border: 1px solid var(--line-200);
-  background: var(--paper-50);
-  color: var(--ink-950);
-  font-family: var(--font-ui);
   font-size: 13.5px;
-  font-weight: 500;
-  cursor: pointer;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%233E5A4F' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  transition: border-color 0.15s ease, background 0.15s ease;
+  font-family: var(--font-ui);
+  color: var(--ink-950);
+  background: var(--paper-100);
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.2s var(--sp-ease);
 }
-.sp-select:hover { border-color: var(--accent-600); }
-.sp-select:focus-visible { outline: 2px solid var(--accent-600); outline-offset: 2px; }
+.sp-table-input:focus {
+  border-color: var(--accent-600);
+  background: var(--paper-50);
+  box-shadow: 0 0 0 3px var(--accent-100);
+}
+.sp-table-input:focus-visible { outline: 2px solid var(--accent-600); outline-offset: 1px; }
+
+/* ---------- inline success message (Grades dialog — mirrors .sp-form-error's shape/spacing, success tokens instead) ---------- */
+.sp-form-success {
+  background: var(--success-100); color: var(--success-600);
+  padding: 10px 13px; border-radius: var(--sp-radius-sm);
+  font-size: 13px; margin-bottom: 16px; display: none;
+}
+.sp-form-success.is-visible { display: block; }
+.sp-form-success-msg { margin: 0; font-weight: 600; }
 
 /* ---------- row action button (My Classes — Student's tables are 100% read-only) ---------- */
 /* Modeled on .sp-input-toggle's minimal hover-tint icon-button treatment,
@@ -123,11 +134,35 @@
 .sp-announce-item-head strong { font-size: 13.5px; color: var(--ink-950); flex: 1; }
 .sp-announce-item-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-300); }
 .sp-announce-item p { margin: 0; font-size: 13px; color: var(--slate-500); line-height: 1.5; }
+.sp-announce-edit,
 .sp-announce-delete {
   display: flex; align-items: center; justify-content: center;
   width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
   border: none; background: transparent; color: var(--slate-300);
   cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
 }
+.sp-announce-edit:hover { background: var(--accent-100); color: var(--accent-600); }
+.sp-announce-edit:active { transform: scale(0.92); }
 .sp-announce-delete:hover { background: var(--danger-100); color: var(--danger-600); }
 .sp-announce-delete:active { transform: scale(0.92); }
+
+/* ===== Groups page + student "My Group" card ===== */
+.sp-group-card {
+  background: var(--paper-100); border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-sm); padding: 14px 16px;
+}
+.sp-group-card-title {
+  font-family: var(--font-display); font-size: 15px; font-weight: 500;
+  margin: 0 0 10px; color: var(--ink-950);
+}
+.sp-group-member-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.sp-group-member {
+  display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-500);
+}
+.sp-group-member-avatar {
+  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--ink-950); color: var(--paper-50);
+  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
+}
+.sp-group-member-empty { color: var(--slate-300); font-size: 12.5px; font-style: italic; }

@@ -136,8 +136,8 @@ $stmt->close();
 // An Admin editing their own account can't demote or deactivate themselves —
 // that's how an Admin locks themselves out with no one left to undo it.
 $isSelf = ((int)$user_id === (int)($_SESSION['user_id'] ?? 0));
-if ($isSelf && $role_name !== 'Admin') {
-    die("You cannot change your own role away from Admin.");
+if ($isSelf && $role_name !== $targetCurrent['role_name']) {
+    die("You cannot change your own role.");
 }
 if ($isSelf && $status_name !== 'Active') {
     die("You cannot deactivate your own account.");
@@ -237,7 +237,12 @@ if ($stmt->execute()) {
     header("Location: ../../Frontend/View/Admin/manage_user.php?success=User updated successfully");
     exit();
 } else {
-    die("Error: " . $stmt->error);
+    // Never echo $stmt->error to the client -- it can reveal table/column
+    // names and query structure. Log it server-side and show a generic
+    // message instead (same pattern as the JSON API endpoints' DbError
+    // catch, adapted for this script's die()/redirect style).
+    error_log('edit_user.php: ' . $stmt->error);
+    die("Something went wrong while saving. Please try again.");
 }
 
 $stmt->close();

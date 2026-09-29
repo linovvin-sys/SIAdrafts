@@ -86,17 +86,17 @@ try {
          VALUES (?, ?, 0, ?, 'Unpaid')"
     );
     $stmt->bind_param('ids', $enrollment_id, $amount_due, $due_date);
-
-    if (!$stmt->execute()) {
-        $stmt->close();
-        throw new RuntimeException('Database error: ' . $conn->error);
-    }
+    $stmt->execute();
 
     $payment_id = (int)$conn->insert_id;
     $stmt->close();
     $conn->commit();
 
     echo json_encode(['success' => true, 'payment_id' => $payment_id]);
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    error_log('setup_payment.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'error' => 'A database error occurred. Please try again.']);
 } catch (RuntimeException $e) {
     $conn->rollback();
     echo json_encode(['success' => false, 'error' => $e->getMessage()]);

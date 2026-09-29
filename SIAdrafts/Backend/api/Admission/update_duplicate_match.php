@@ -38,16 +38,18 @@ $newStatus = $action === 'confirm' ? 'confirmed' : 'dismissed';
 $db   = new Database();
 $conn = $db->connect();
 
-$stmt = $conn->prepare("
-    UPDATE applicants
-    SET duplicate_match_status = ?
-    WHERE applicant_id = ? AND duplicate_match_status = 'pending_review'
-");
-$stmt->bind_param('si', $newStatus, $applicant_id);
-
-if (!$stmt->execute()) {
+try {
+    $stmt = $conn->prepare("
+        UPDATE applicants
+        SET duplicate_match_status = ?
+        WHERE applicant_id = ? AND duplicate_match_status = 'pending_review'
+    ");
+    $stmt->bind_param('si', $newStatus, $applicant_id);
+    $stmt->execute();
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'errors' => ['Database error: ' . $stmt->error]]);
+    error_log('update_duplicate_match.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'errors' => ['A database error occurred. Please try again.']]);
     exit;
 }
 

@@ -34,42 +34,49 @@ if (!$section_id) {
     exit;
 }
 
-// Guard: don't allow deleting a section that still has enrolled students or schedules.
-$check = $conn->prepare(
-    "SELECT
-        (SELECT COUNT(*) FROM student  WHERE section_id = ?) AS student_cnt,
-        (SELECT COUNT(*) FROM schedule WHERE section_id = ?) AS schedule_cnt"
-);
-$check->bind_param('ii', $section_id, $section_id);
-$check->execute();
-$row = $check->get_result()->fetch_assoc();
-$check->close();
+try {
+    // Guard: don't allow deleting a section that still has enrolled students,
+    // schedules, or enrollment records tied to it. `enrollment.section_id`
+    // has its own FK to `section` alongside `student`/`schedule` -- missing
+    // it here previously let a section with enrollment rows (but no rows
+    // in student/schedule) reach the DELETE below and fail with a raw
+    // foreign-key error instead of a clear reason.
+    $check = $conn->prepare(
+        "SELECT
+            (SELECT COUNT(*) FROM student    WHERE section_id = ?) AS student_cnt,
+            (SELECT COUNT(*) FROM schedule   WHERE section_id = ?) AS schedule_cnt,
+            (SELECT COUNT(*) FROM enrollment WHERE section_id = ?) AS enrollment_cnt"
+    );
+    $check->bind_param('iii', $section_id, $section_id, $section_id);
+    $check->execute();
+    $row = $check->get_result()->fetch_assoc();
+    $check->close();
 
-if (($row['student_cnt'] ?? 0) > 0) {
-    echo json_encode(['error' => 'Cannot remove this section — students are still enrolled in it.']);
-    exit;
-}
-if (($row['schedule_cnt'] ?? 0) > 0) {
-    echo json_encode(['error' => 'Cannot remove this section — it still has class schedules. Remove those first.']);
-    exit;
-}
+    if (($row['student_cnt'] ?? 0) > 0) {
+        echo json_encode(['error' => 'Cannot remove this section — students are still enrolled in it.']);
+        exit;
+    }
+    if (($row['schedule_cnt'] ?? 0) > 0) {
+        echo json_encode(['error' => 'Cannot remove this section — it still has class schedules. Remove those first.']);
+        exit;
+    }
+    if (($row['enrollment_cnt'] ?? 0) > 0) {
+        echo json_encode(['error' => 'Cannot remove this section — it still has enrollment records tied to it.']);
+        exit;
+    }
 
-$stmt = $conn->prepare("DELETE FROM section WHERE section_id = ?");
-if (!$stmt) {
-    http_response_code(500);
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
-    exit;
-}
-$stmt->bind_param('i', $section_id);
+    $stmt = $conn->prepare("DELETE FROM section WHERE section_id = ?");
+    $stmt->bind_param('i', $section_id);
+    $stmt->execute();
 
-if (!$stmt->execute()) {
+    $deleted = $stmt->affected_rows;
     $stmt->close();
-    echo json_encode(['error' => 'Database error: ' . $conn->error]);
+    $db->close();
+
+    echo json_encode(['success' => true, 'deleted' => $deleted]);
+} catch (mysqli_sql_exception $e) {
+    http_response_code(500);
+    error_log('delete_section.php: ' . $e->getMessage());
+    echo json_encode(['error' => 'A database error occurred. Please try again.']);
     exit;
 }
-
-$deleted = $stmt->affected_rows;
-$stmt->close();
-$db->close();
-
-echo json_encode(['success' => true, 'deleted' => $deleted]);

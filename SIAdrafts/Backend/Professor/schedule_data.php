@@ -25,6 +25,31 @@ function get_professor_schedule(mysqli $conn, int $professorId, string $schoolYe
     return $rows;
 }
 
+/**
+ * Every active, approved class offering assigned to a professor across all
+ * terms, one row per schedule_id -- the roster used by Classes, Grades,
+ * Assignments, Materials, and Announcements to build their "pick a class"
+ * selector, so the join lives in exactly one place.
+ */
+function get_professor_active_classes(mysqli $conn, int $professorId): array
+{
+    $stmt = $conn->prepare("
+        SELECT s.schedule_id, s.section_id, s.day, s.time_start, s.time_end, s.school_year, s.semester,
+               sub.subject_code, sub.subject_name, sec.section_name, r.room_name
+        FROM schedule s
+        JOIN subject sub ON sub.subject_id = s.subject_id
+        JOIN section sec ON sec.section_id = s.section_id
+        JOIN room r       ON r.room_id = s.room_id
+        WHERE s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved'
+        ORDER BY sec.section_name, sub.subject_code
+    ");
+    $stmt->bind_param('i', $professorId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
 function get_professor_terms(mysqli $conn, int $professorId): array
 {
     $stmt = $conn->prepare("

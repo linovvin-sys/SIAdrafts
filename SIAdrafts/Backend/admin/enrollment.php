@@ -70,10 +70,10 @@ SELECT
 FROM enrollment e
 
 INNER JOIN student s
-    ON s.applicant_id = e.student_id
+    ON s.applicant_id = e.applicant_id
 
 INNER JOIN applicants a
-    ON a.applicant_id = e.student_id
+    ON a.applicant_id = e.applicant_id
 
 LEFT JOIN section sec
     ON sec.section_id = s.section_id

@@ -7,10 +7,15 @@ SIAdrafts/vendor/
 SIAdrafts/.env
 SIAdrafts/Backend/uploads/requirements/*
 !SIAdrafts/Backend/uploads/requirements/.gitkeep
+SIAdrafts/Backend/uploads/submissions/*
+!SIAdrafts/Backend/uploads/submissions/.gitkeep
+SIAdrafts/Backend/uploads/materials/*
+!SIAdrafts/Backend/uploads/materials/.gitkeep
 SIAdrafts/storage/rate_limit/*
 !SIAdrafts/storage/rate_limit/.gitkeep
 SIAdrafts/storage/backups/*
 !SIAdrafts/storage/backups/.gitkeep
+SIAdrafts/Frontend/Css/.cache/
 .superpowers/
 SIAdrafts/composer.phar
 /enrollment_db_sia_final.sql

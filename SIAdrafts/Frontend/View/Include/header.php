@@ -3,18 +3,9 @@ if (session_status() === PHP_SESSION_NONE) session_start();
 $extraCss = $extraCss ?? [];
 require_once __DIR__ . '/../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../Backend/cdn_assets.php';
+require_once __DIR__ . '/../../../Backend/css_bundle_config.php';
+require_once __DIR__ . '/../../../Backend/asset_url.php';
 $_pageCsrfToken = csrf_token();
-
-// Cache-busting: appends the file's last-modified time as a query string,
-// so the browser fetches a fresh copy the moment a local CSS/JS file
-// changes, instead of silently serving a stale cached one indefinitely
-// (these files have no version string at all otherwise, and a normal
-// reload doesn't reliably invalidate a cached stylesheet).
-function asset_url(string $publicPath): string {
-    $fsPath = __DIR__ . '/../../../' . ltrim(str_replace('/SIAdrafts/', '', $publicPath), '/');
-    $mtime = @filemtime($fsPath);
-    return $publicPath . ($mtime ? '?v=' . $mtime : '');
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -58,18 +49,16 @@ function asset_url(string $publicPath): string {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Admin/admin.css'), ENT_QUOTES) ?>" />
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Admin/schedule.css'), ENT_QUOTES) ?>" />
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Admin/modal.css'), ENT_QUOTES) ?>" />
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Registrar/registrar.css'), ENT_QUOTES) ?>" />
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/required.css'), ENT_QUOTES) ?>" />
-  <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Admin/dotty-staff.css'), ENT_QUOTES) ?>" />
+  <!-- admin.css + schedule.css + modal.css + registrar.css + required.css +
+       dotty-staff.css + tokens.css, bundled into one response instead of 6
+       separate round-trips per page load (see Backend/css_bundle.php). -->
+  <link rel="stylesheet" href="<?= htmlspecialchars(css_bundle_url('admin'), ENT_QUOTES) ?>" />
   <?php foreach ($extraCss as $href): ?>
     <link rel="stylesheet" href="<?= htmlspecialchars(asset_url($href), ENT_QUOTES) ?>" />
   <?php endforeach; ?>
-  <?= cdn_script_tag(CDN_SWEETALERT2) ?>
-  <?= cdn_script_tag(CDN_CHARTJS) ?>
-  <?= cdn_script_tag(CDN_ICONIFY) ?>
+  <?= cdn_script_tag(CDN_SWEETALERT2, true) ?>
+  <?= cdn_script_tag(CDN_CHARTJS, true) ?>
+  <?= cdn_script_tag(CDN_ICONIFY, true) ?>
 </head>
 <body data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>" data-readonly="<?= (($_SESSION['role_name'] ?? '') === 'Admin') ? '1' : '0' ?>">
 

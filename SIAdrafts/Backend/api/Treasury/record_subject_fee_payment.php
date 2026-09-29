@@ -39,9 +39,6 @@ try {
          WHERE fee_id = ?
          FOR UPDATE"
     );
-    if (!$stmt) {
-        throw new Exception($conn->error);
-    }
     $stmt->bind_param('i', $fee_id);
     $stmt->execute();
     $fee = $stmt->get_result()->fetch_assoc();
@@ -61,9 +58,6 @@ try {
          SET status = 'Paid', paid_at = NOW(), received_by = ?
          WHERE fee_id = ?"
     );
-    if (!$updFee) {
-        throw new Exception($conn->error);
-    }
     $updFee->bind_param('ii', $received_by, $fee_id);
     $updFee->execute();
     $updFee->close();
@@ -71,9 +65,6 @@ try {
     $updSubject = $conn->prepare(
         "UPDATE enrollment_subject SET status = ? WHERE enrollment_subject_id = ?"
     );
-    if (!$updSubject) {
-        throw new Exception($conn->error);
-    }
     $updSubject->bind_param('si', $newSubjectStatus, $fee['enrollment_subject_id']);
     $updSubject->execute();
     $updSubject->close();
@@ -89,6 +80,10 @@ try {
         'subject_status'  => $newSubjectStatus,
         'or_number'       => $orNumber,
     ]);
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    error_log('record_subject_fee_payment.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'errors' => ['A database error occurred. Please try again.']]);
 } catch (Exception $e) {
     $conn->rollback();
     echo json_encode(['success' => false, 'errors' => [$e->getMessage()]]);

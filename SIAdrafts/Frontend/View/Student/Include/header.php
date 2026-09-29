@@ -7,6 +7,7 @@
 if (session_status() === PHP_SESSION_NONE) session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
+require_once __DIR__ . '/../../../../Backend/asset_url.php';
 $_pageCsrfToken = csrf_token();
 $_studentName = htmlspecialchars($_SESSION['student_full_name'] ?? '', ENT_QUOTES);
 $_studentNo   = htmlspecialchars($_SESSION['student_no'] ?? '', ENT_QUOTES);
@@ -18,6 +19,12 @@ $_tabs = [
     ['page' => 'dashboard',       'label' => 'Home',            'icon' => 'mdi:home-variant',        'url' => '/SIAdrafts/Frontend/View/Student/dashboard.php'],
     ['page' => 'registration',    'label' => 'Registration',    'icon' => 'mdi:file-document-outline','url' => '/SIAdrafts/Frontend/View/Student/registration.php'],
     ['page' => 'schedule',        'label' => 'Schedule',        'icon' => 'mdi:calendar-week',       'url' => '/SIAdrafts/Frontend/View/Student/schedule.php'],
+    ['page' => 'assignments',     'label' => 'Assignments',     'icon' => 'mdi:file-document-edit-outline', 'url' => '/SIAdrafts/Frontend/View/Student/assignments.php'],
+    ['page' => 'materials',       'label' => 'Materials',       'icon' => 'mdi:folder-multiple-outline', 'url' => '/SIAdrafts/Frontend/View/Student/materials.php'],
+    ['page' => 'grades',          'label' => 'Grades',          'icon' => 'mdi:school-outline',      'url' => '/SIAdrafts/Frontend/View/Student/grades.php'],
+    ['page' => 'attendance',      'label' => 'Attendance',      'icon' => 'mdi:clipboard-check-outline','url' => '/SIAdrafts/Frontend/View/Student/attendance.php'],
+    ['page' => 'groups',          'label' => 'Groups',          'icon' => 'mdi:account-group-outline','url' => '/SIAdrafts/Frontend/View/Student/groups.php'],
+    ['page' => 'messages',        'label' => 'Messages',        'icon' => 'mdi:message-outline',     'url' => '/SIAdrafts/Frontend/View/Student/messages.php'],
     ['page' => 'accountabilities','label' => 'Accountabilities','icon' => 'mdi:cash-multiple',       'url' => '/SIAdrafts/Frontend/View/Student/accountabilities.php'],
 ];
 ?>
@@ -43,9 +50,9 @@ $_tabs = [
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/Student/student.css">
-<link rel="stylesheet" href="/SIAdrafts/Frontend/Css/required.css">
-<?= cdn_script_tag(CDN_ICONIFY) ?>
+<link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/Student/student.css'), ENT_QUOTES) ?>">
+<link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/required.css'), ENT_QUOTES) ?>">
+<?= cdn_script_tag(CDN_ICONIFY, true) ?>
 </head>
 <body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 <a class="sp-skip-link" href="#sp-content">Skip to content</a>

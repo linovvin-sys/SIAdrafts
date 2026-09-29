@@ -28,7 +28,7 @@ $unpaidStmt = $conn->prepare(
      FROM unpaid_students u
      JOIN payment p     ON p.payment_id = u.payment_id
      JOIN enrollment e  ON e.enrollment_id = u.enrollment_id
-     JOIN applicants a  ON a.applicant_id = e.student_id
+     JOIN applicants a  ON a.applicant_id = e.applicant_id
      LEFT JOIN student s ON s.applicant_id = a.applicant_id
      WHERE u.status = 'Pending'
      ORDER BY u.due_date ASC"

@@ -295,85 +295,98 @@ if (!empty($errors)) {
 //  naturally serialize requests the way the staff form does)
 $applicant_id  = null;
 $reference_id  = null;
-$attempts_left = 5;
 
-while ($attempts_left-- > 0) {
-    $reference_id = generate_reference_id($conn);
+// The applicants/history/documents inserts below used to each autocommit
+// individually -- if the history or documents loop failed partway, the
+// applicants row (and any history rows already inserted) stayed permanently
+// committed while the applicant just saw "please try again," leaving a
+// duplicate/orphaned applicant record behind on resubmission. One
+// transaction across all three now makes the whole intake atomic. A
+// duplicate-key failure on the reference_id retry loop doesn't abort an
+// InnoDB transaction (unlike some other engines), so wrapping the retry
+// loop too is safe.
+$conn->begin_transaction();
 
-    $stmt = $conn->prepare("
-        INSERT INTO applicants
-            (reference_id, last_name, first_name, middle_name, birth_date, sex, nationality, civil_status,
-            contact_number, email, home_address,
-            guardian_name, guardian_relationship, guardian_contact,
-            guardian_id_type, guardian_id_number, id_verified_by, admission_status,
-            program, course_id, year_level, school_year, semester, applicant_type,
-            possible_duplicate_student_id, duplicate_match_status, created_at)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',?,?,?,?,?,?,?,?, NOW())
-    ");
+try {
+    $attempts_left = 5;
 
-    if (!$stmt) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'errors' => ['Database error: ' . $conn->error]]);
-        exit;
-    }
+    while ($attempts_left-- > 0) {
+        $reference_id = generate_reference_id($conn);
 
-    $stmt->bind_param(
-        'sssssssssssssssssissisis',
-        $reference_id,
-        $fields['last_name'], $fields['first_name'], $fields['middle_name'],
-        $fields['birth_date'], $fields['sex'], $fields['nationality'], $fields['civil_status'],
-        $fields['contact_number'], $fields['email'], $fields['home_address'],
-        $fields['guardian_name'], $fields['guardian_relationship'], $fields['guardian_contact'],
-        $fields['guardian_id_type'], $fields['guardian_id_number'],
-        $fields['program'], $fields['course_id'], $fields['year_level'], $fields['school_year'], $fields['semester'],
-        $fields['applicant_type'], $possible_duplicate_student_id, $duplicate_match_status
-    );
+        $stmt = $conn->prepare("
+            INSERT INTO applicants
+                (reference_id, last_name, first_name, middle_name, birth_date, sex, nationality, civil_status,
+                contact_number, email, home_address,
+                guardian_name, guardian_relationship, guardian_contact,
+                guardian_id_type, guardian_id_number, id_verified_by, admission_status,
+                program, course_id, year_level, school_year, semester, applicant_type,
+                possible_duplicate_student_id, duplicate_match_status, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',?,?,?,?,?,?,?,?, NOW())
+        ");
+        $stmt->bind_param(
+            'sssssssssssssssssissisis',
+            $reference_id,
+            $fields['last_name'], $fields['first_name'], $fields['middle_name'],
+            $fields['birth_date'], $fields['sex'], $fields['nationality'], $fields['civil_status'],
+            $fields['contact_number'], $fields['email'], $fields['home_address'],
+            $fields['guardian_name'], $fields['guardian_relationship'], $fields['guardian_contact'],
+            $fields['guardian_id_type'], $fields['guardian_id_number'],
+            $fields['program'], $fields['course_id'], $fields['year_level'], $fields['school_year'], $fields['semester'],
+            $fields['applicant_type'], $possible_duplicate_student_id, $duplicate_match_status
+        );
 
-    if ($stmt->execute()) {
-        $applicant_id = $stmt->insert_id;
-        $stmt->close();
-        break;
-    }
-
-    $duplicate = ($conn->errno === 1062);
-    $stmt->close();
-
-    if (!$duplicate || $attempts_left === 0) {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'errors' => ['Database error (applicants insert): ' . $conn->error]]);
-        exit;
-    }
-    // else: reference_id collided, loop and generate the next one
-}
-
-$histStmt = $conn->prepare("
-    INSERT INTO applicant_school_history
-        (applicant_id, school_name, school_address, school_year, school_strand, school_gpa)
-    VALUES (?,?,?,?,?,?)
-");
-foreach ($history as $row) {
-    $histStmt->bind_param(
-        'isssss',
-        $applicant_id, $row['school'], $row['address'], $row['year'], $row['strand'], $row['gpa']
-    );
-    $histStmt->execute();
-}
-$histStmt->close();
-
-if (!empty($requirementRows)) {
-    $reqStmt = $conn->prepare("
-        INSERT INTO applicant_documents (applicant_id, document_name, file_path, status, source)
-        VALUES (?, ?, ?, ?, 'applicant')
-    ");
-    foreach ($requirementRows as $row) {
-        $label = '';
-        foreach (REQUIREMENT_DEFINITIONS as $def) {
-            if ($def['key'] === $row['key']) { $label = $def['label']; break; }
+        try {
+            $stmt->execute();
+            $applicant_id = $stmt->insert_id;
+            $stmt->close();
+            break;
+        } catch (mysqli_sql_exception $e) {
+            $stmt->close();
+            $duplicate = ($e->getCode() === 1062);
+            if (!$duplicate || $attempts_left === 0) {
+                throw $e;
+            }
+            // else: reference_id collided, loop and generate the next one
         }
-        $reqStmt->bind_param('isss', $applicant_id, $label, $row['file_path'], $row['status']);
-        $reqStmt->execute();
     }
-    $reqStmt->close();
+
+    $histStmt = $conn->prepare("
+        INSERT INTO applicant_school_history
+            (applicant_id, school_name, school_address, school_year, school_strand, school_gpa)
+        VALUES (?,?,?,?,?,?)
+    ");
+    foreach ($history as $row) {
+        $histStmt->bind_param(
+            'isssss',
+            $applicant_id, $row['school'], $row['address'], $row['year'], $row['strand'], $row['gpa']
+        );
+        $histStmt->execute();
+    }
+    $histStmt->close();
+
+    if (!empty($requirementRows)) {
+        $reqStmt = $conn->prepare("
+            INSERT INTO applicant_documents (applicant_id, document_name, file_path, status, source)
+            VALUES (?, ?, ?, ?, 'applicant')
+        ");
+        foreach ($requirementRows as $row) {
+            $label = '';
+            foreach (REQUIREMENT_DEFINITIONS as $def) {
+                if ($def['key'] === $row['key']) { $label = $def['label']; break; }
+            }
+            $reqStmt->bind_param('isss', $applicant_id, $label, $row['file_path'], $row['status']);
+            $reqStmt->execute();
+        }
+        $reqStmt->close();
+    }
+
+    $conn->commit();
+} catch (mysqli_sql_exception $e) {
+    $conn->rollback();
+    http_response_code(500);
+    error_log('online_admission_process.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'errors' => ['A database error occurred. Please try again.']]);
+    exit;
 }
 
 $conn->close();

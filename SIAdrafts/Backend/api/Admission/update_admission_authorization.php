@@ -42,27 +42,51 @@ if ($action === 'set') {
         echo json_encode(['success' => false, 'errors' => ['Authorization note cannot be empty.']]);
         exit;
     }
-    $stmt = $conn->prepare("
-        UPDATE applicants
-        SET authorization_note = ?, authorized_by = ?, authorized_at = NOW(), cleared_by = NULL, cleared_at = NULL
-        WHERE applicant_id = ?
-    ");
-    $stmt->bind_param('sii', $note, $_SESSION['user_id'], $applicant_id);
-} else {
-    $stmt = $conn->prepare("
-        UPDATE applicants
-        SET cleared_by = ?, cleared_at = NOW()
-        WHERE applicant_id = ?
-    ");
-    $stmt->bind_param('ii', $_SESSION['user_id'], $applicant_id);
 }
 
-if (!$stmt->execute()) {
+try {
+    if ($action === 'set') {
+        $stmt = $conn->prepare("
+            UPDATE applicants
+            SET authorization_note = ?, authorized_by = ?, authorized_at = NOW(), cleared_by = NULL, cleared_at = NULL
+            WHERE applicant_id = ?
+        ");
+        $stmt->bind_param('sii', $note, $_SESSION['user_id'], $applicant_id);
+    } else {
+        $stmt = $conn->prepare("
+            UPDATE applicants
+            SET cleared_by = ?, cleared_at = NOW()
+            WHERE applicant_id = ?
+        ");
+        $stmt->bind_param('ii', $_SESSION['user_id'], $applicant_id);
+    }
+    $stmt->execute();
+    $affected = $stmt->affected_rows;
+    $stmt->close();
+} catch (mysqli_sql_exception $e) {
     http_response_code(500);
-    echo json_encode(['success' => false, 'errors' => ['Database error: ' . $stmt->error]]);
+    error_log('update_admission_authorization.php: ' . $e->getMessage());
+    echo json_encode(['success' => false, 'errors' => ['A database error occurred. Please try again.']]);
     exit;
 }
-$stmt->close();
+// Neither branch previously checked whether the row actually existed --
+// authorizing/clearing a nonexistent applicant_id silently returned
+// success. A no-op UPDATE (e.g. clearing when nothing was authorized) also
+// reports 0 affected rows, so this only rejects a genuinely missing
+// applicant, not a harmless repeat action.
+if ($affected === 0) {
+    $checkStmt = $conn->prepare("SELECT 1 FROM applicants WHERE applicant_id = ?");
+    $checkStmt->bind_param('i', $applicant_id);
+    $checkStmt->execute();
+    $exists = (bool)$checkStmt->get_result()->fetch_row();
+    $checkStmt->close();
+    if (!$exists) {
+        $db->close();
+        http_response_code(404);
+        echo json_encode(['success' => false, 'errors' => ['Applicant not found.']]);
+        exit;
+    }
+}
 $db->close();
 
 echo json_encode(['success' => true]);

@@ -33,7 +33,7 @@ $queueStmt = $conn->prepare(
             COALESCE(s.student_no, a.reference_id) AS display_id, a.first_name, a.last_name
      FROM payment p
      JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-     JOIN applicants a ON a.applicant_id = e.student_id
+     JOIN applicants a ON a.applicant_id = e.applicant_id
      LEFT JOIN student s ON s.applicant_id = a.applicant_id
      WHERE p.payment_status != 'Fully Paid'
      ORDER BY p.due_date ASC"
@@ -51,7 +51,7 @@ $feeQueueStmt = $conn->prepare(
      JOIN enrollment_subject es ON es.enrollment_subject_id = scf.enrollment_subject_id
      JOIN subject sub           ON sub.subject_id = es.subject_id
      JOIN enrollment e          ON e.enrollment_id = scf.enrollment_id
-     JOIN applicants a          ON a.applicant_id = e.student_id
+     JOIN applicants a          ON a.applicant_id = e.applicant_id
      LEFT JOIN student s        ON s.applicant_id = a.applicant_id
      WHERE scf.status = 'Pending'
      ORDER BY scf.created_at ASC"
@@ -72,7 +72,7 @@ $setupStmt = $conn->prepare(
     "SELECT e.enrollment_id, e.school_year, e.semester, e.created_at,
             COALESCE(s.student_no, a.reference_id) AS display_id, a.first_name, a.last_name
      FROM enrollment e
-     JOIN applicants a ON a.applicant_id = e.student_id
+     JOIN applicants a ON a.applicant_id = e.applicant_id
      LEFT JOIN student s ON s.applicant_id = a.applicant_id
      LEFT JOIN payment p ON p.enrollment_id = e.enrollment_id
      WHERE p.payment_id IS NULL

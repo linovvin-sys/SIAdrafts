@@ -23,7 +23,7 @@ function get_registration_data(mysqli $conn, int $applicantId): array
          FROM enrollment e
          LEFT JOIN section sec ON sec.section_id = e.section_id
          LEFT JOIN course c    ON c.course_id    = sec.course_id
-         WHERE e.student_id = ?
+         WHERE e.applicant_id = ?
          ORDER BY e.created_at DESC
          LIMIT 1"
     );

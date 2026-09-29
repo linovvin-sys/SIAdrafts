@@ -73,15 +73,11 @@ function treasury_snapshot_block(mysqli $conn): string
 
     // Same "who", this time for fully_paid_count above — most recently
     // settled first, capped at 10 for the same prompt-size reason.
-    // enrollment.student_id is actually applicants.applicant_id (an odd but
-    // established naming in this schema — see Backend/unpaid_transfer.php,
-    // which resolves the same way) — student.applicant_id is the real link
-    // to the student table, not student.student_id.
     $fullyPaid = $conn->query("
         SELECT s.student_name, s.student_no, p.amount_due, p.paid_at
         FROM payment p
         JOIN enrollment e ON e.enrollment_id = p.enrollment_id
-        JOIN student s ON s.applicant_id = e.student_id
+        JOIN student s ON s.applicant_id = e.applicant_id
         WHERE p.payment_status = 'Fully Paid'
         ORDER BY p.paid_at DESC
         LIMIT 10

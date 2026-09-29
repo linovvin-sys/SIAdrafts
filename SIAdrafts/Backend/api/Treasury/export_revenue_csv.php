@@ -58,7 +58,7 @@ if ($result) {
             number_format($feePerStudent, 2),
             number_format($row['total_expected'], 2),
             number_format($row['collected'], 2),
-            number_format($row['balance'], 2),
+            number_format((float)$row['balance'], 2),
         ]);
     }
 }

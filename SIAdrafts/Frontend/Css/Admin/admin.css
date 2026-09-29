@@ -1,54 +1,10 @@
-/* ===== CSS VARIABLES — follows the editorial theme from index.php
-   (parchment/ink-green/bronze), extended with the semantic states a
-   working staff app needs that the marketing page doesn't (danger,
-   success, info) ===== */
+/* ===== CSS VARIABLES — the shared ink/paper/accent/semantic/font
+   palette now lives in Frontend/Css/tokens.css (imported below), so it
+   stays numerically identical across every portal without needing a
+   copy-pasted block per file. This :root only adds admin-specific
+   extras on top of that shared palette. ===== */
+@import url("../tokens.css");
 :root {
-  /* ink (dark surfaces / text) — same --ink as editorial-theme.css */
-  --ink-950: #1F2E28;
-  --ink-800: #2A3D35;
-  --ink-600: #3E5A4F;
-
-  /* paper (light surfaces) — same --paper/--surface as editorial-theme.css */
-  --paper-50: #FFFFFF;
-  --paper-100: #F7F4EC;
-  --line-200: rgba(31, 46, 40, 0.14);
-
-  /* the one accent — DLSU's official green (Pantone 342C, #046A38),
-     replacing the bronze this system used before. Reserved for borders,
-     hover states, active-nav marker, badges-on-tint -- never as a large
-     solid fill under white text (index.php never does this either: its
-     .e-btn is ink-filled, not accent-filled).
-     Contrast check: #046A38 on white is ~6.7:1 (WCAG AA needs 4.5:1 for
-     text), so unlike the old bronze (3.5:1, needed a separately darkened
-     --accent-text) the base green is already safe as text on its own —
-     --accent-text is a touch darker only for visual hierarchy, not
-     because contrast requires it. */
-  --accent-600: #046A38;
-  --accent-text: #035A30;
-  --accent-100: #E2EFE8;
-
-  /* semantic states (not present on the marketing page -- necessary
-     additions for a working admin app, kept muted/warm to stay in the
-     same family rather than importing cool SaaS blue/red) */
-  --danger-600: #A6472E;
-  --danger-100: #F5E1DA;
-  --success-600: #345540;
-  --success-100: #E1EBE3;
-  --info-600: #35526E;
-  --info-100: #E2E8EF;
-
-  /* text */
-  --slate-500: rgba(31, 46, 40, 0.80); /* AAA: 7.0:1 on parchment, 7.5:1 on white */
-  --slate-300: rgba(31, 46, 40, 0.42);
-
-  /* type -- Fraunces for headings/titles only (index.php's own pattern:
-     never inside dense tables/body copy), Inter for UI body text, a mono
-     face kept for IDs/balances/dates/timestamps (a data-legibility need
-     the marketing page doesn't have, but doesn't conflict with it either) */
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-ui: 'Inter', -apple-system, sans-serif;
-  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
-
   /* ---- legacy variable names, remapped so every page that hasn't been
      individually rebuilt yet still inherits the new palette through this
      existing indirection ---- */
