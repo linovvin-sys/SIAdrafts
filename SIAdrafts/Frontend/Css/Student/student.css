@@ -406,7 +406,12 @@ input:focus-visible,
 }
 .sp-notif-panel-list { display: flex; flex-direction: column; gap: 10px; }
 
-.sp-notif-item { padding: 12px 14px; border-radius: var(--sp-radius-sm); background: var(--paper-100); }
+.sp-notif-item {
+  display: block; padding: 12px 14px; border-radius: var(--sp-radius-sm);
+  background: var(--paper-100); text-decoration: none; color: inherit;
+  transition: filter 0.15s ease;
+}
+.sp-notif-item:hover { filter: brightness(0.97); }
 .sp-notif-item.tint-1 { background: var(--accent-100); }
 .sp-notif-item.tint-2 { background: var(--info-100); }
 .sp-notif-item.tint-3 { background: var(--success-100); }
@@ -694,6 +699,13 @@ input:focus-visible,
   border-radius: var(--sp-radius-lg);
   padding: 28px;
   margin-bottom: 20px;
+  box-shadow: var(--shadow);
+  opacity: 0; transform: translateY(8px);
+  animation: sp-card-in 0.4s var(--sp-ease) forwards;
+  animation-delay: calc(var(--row-i, 0) * 60ms);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-section { animation: none; opacity: 1; transform: none; }
 }
 /* Dashboard-only variant matching the Today/stat-card floating language --
    scoped to a modifier class instead of changing .sp-section itself, since
@@ -748,6 +760,139 @@ input:focus-visible,
 @media (prefers-reduced-motion: reduce) {
   .sp-table-stagger tbody tr { animation: none; opacity: 1; transform: none; }
 }
+
+table.sp-table tbody tr { transition: background 0.15s ease; }
+table.sp-table tbody tr:hover { background: var(--paper-100); }
+
+/* ============================================================
+   FEATURE-PAGE COMPONENTS shared by both portals: Assignments,
+   Materials, Grades, Attendance, Groups.
+   Canonical home is here (not professor.css) because these classes
+   are used by BOTH portals, and student.css loads first on both --
+   professor.css used to be the only place .sp-announce-item and
+   .sp-group-card were styled at all, which meant the Student
+   portal's own markup using those same classes (Student/groups.php)
+   rendered completely unstyled since Student pages never load
+   professor.css. Upgraded here (real shadow, hover lift, entrance
+   stagger, per-item accent) instead of just relocated as-is.
+   ============================================================ */
+
+.sp-announce-list {
+  list-style: none; margin: 18px 0 0; padding: 0;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.sp-announce-empty { color: var(--slate-300); font-size: 13px; text-align: center; padding: 20px 0; }
+
+.sp-announce-item {
+  position: relative;
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-radius: var(--sp-radius-lg);
+  padding: 14px 16px 14px 20px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+  opacity: 0; transform: translateY(8px);
+  animation: sp-card-in 0.4s var(--sp-ease) forwards;
+  animation-delay: calc(var(--row-i, 0) * 40ms);
+  transition: transform 0.2s var(--sp-ease), box-shadow 0.2s var(--sp-ease);
+}
+.sp-announce-item::before {
+  content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px;
+  background: var(--accent-600);
+}
+.sp-announce-item.is-urgent::before { background: var(--danger-600); }
+.sp-announce-item.is-soon::before { background: var(--warning-600); }
+.sp-announce-item.type-link::before { background: var(--info-600); }
+.sp-announce-item.type-text::before { background: var(--slate-300); }
+@media (hover: hover) and (pointer: fine) {
+  .sp-announce-item:hover { transform: translateY(-2px); box-shadow: var(--shadow-float); }
+}
+
+.sp-announce-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+.sp-announce-item-head strong { font-family: var(--font-display); font-size: 14.5px; font-weight: 500; color: var(--ink-950); flex: 1; }
+.sp-announce-item-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-300); white-space: nowrap; }
+.sp-announce-item p { margin: 0; font-size: 13px; color: var(--slate-500); line-height: 1.5; }
+
+.sp-announce-edit, .sp-announce-delete {
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+  border: none; background: transparent; color: var(--slate-300);
+  cursor: pointer; transition: background 0.15s ease, color 0.15s ease, transform 0.12s var(--sp-ease);
+}
+.sp-announce-edit:hover { background: var(--accent-100); color: var(--accent-600); }
+.sp-announce-delete:hover { background: var(--danger-100); color: var(--danger-600); }
+.sp-announce-edit:active, .sp-announce-delete:active { transform: scale(0.88); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sp-announce-item { animation: none; opacity: 1; transform: none; transition: none; }
+}
+
+/* ---- group cards ---- */
+.sp-group-card {
+  position: relative;
+  background: var(--paper-50);
+  border: 1px solid var(--line-200);
+  border-top: 3px solid var(--accent-600);
+  border-radius: var(--sp-radius-lg);
+  padding: 16px 18px;
+  box-shadow: var(--shadow);
+  opacity: 0; transform: translateY(8px);
+  animation: sp-card-in 0.4s var(--sp-ease) forwards;
+  animation-delay: calc(var(--row-i, 0) * 50ms);
+  transition: transform 0.2s var(--sp-ease), box-shadow 0.2s var(--sp-ease);
+}
+/* Cycles a small palette by position so a grid of otherwise-identical
+   group cards doesn't read as one card repeated -- pure CSS, no per-card
+   class needed from the JS/PHP that renders them. */
+.sp-group-card:nth-of-type(4n+2) { border-top-color: var(--info-600); }
+.sp-group-card:nth-of-type(4n+3) { border-top-color: var(--warning-600); }
+.sp-group-card:nth-of-type(4n+4) { border-top-color: var(--danger-600); }
+@media (hover: hover) and (pointer: fine) {
+  .sp-group-card:hover { transform: translateY(-3px); box-shadow: var(--shadow-float); }
+}
+.sp-group-card-title {
+  font-family: var(--font-display); font-size: 15px; font-weight: 500;
+  margin: 0 0 10px; color: var(--ink-950);
+}
+.sp-group-member-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.sp-group-member { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-500); }
+.sp-group-member-avatar {
+  width: 24px; height: 24px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--accent-100); color: var(--accent-text);
+  font-family: var(--font-mono); font-size: 10px; font-weight: 700;
+}
+.sp-group-member-empty { color: var(--slate-300); font-size: 12.5px; font-style: italic; }
+@media (prefers-reduced-motion: reduce) {
+  .sp-group-card { animation: none; opacity: 1; transform: none; transition: none; }
+}
+
+/* ---- attendance: tactile segmented status control, replacing a plain <select> ---- */
+.sp-status-pills { display: inline-flex; gap: 4px; padding: 3px; background: var(--paper-100); border-radius: 999px; }
+.sp-status-pill {
+  border: none; background: transparent; cursor: pointer;
+  padding: 5px 12px; border-radius: 999px;
+  font-size: 12px; font-weight: 600; color: var(--slate-500);
+  transition: background 0.15s ease, color 0.15s ease, transform 0.12s var(--sp-ease);
+}
+.sp-status-pill:active { transform: scale(0.94); }
+.sp-status-pill[aria-pressed="true"] { background: var(--ink-950); color: var(--paper-50); }
+.sp-status-pill[data-status="Present"][aria-pressed="true"] { background: var(--success-600); }
+.sp-status-pill[data-status="Absent"][aria-pressed="true"] { background: var(--danger-600); }
+.sp-status-pill[data-status="Late"][aria-pressed="true"] { background: var(--warning-600); }
+.sp-status-pill[data-status="Excused"][aria-pressed="true"] { background: var(--info-600); }
+
+/* ---- grades: grade input + live pass/fail hint ---- */
+input.sp-grade-input {
+  width: 64px !important; text-align: center;
+  font-family: var(--font-mono); font-weight: 600;
+}
+.sp-remarks-hint {
+  display: inline-flex; align-items: center; margin-left: 8px;
+  padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700;
+}
+.sp-remarks-hint.is-pass { background: var(--success-100); color: var(--success-600); }
+.sp-remarks-hint.is-fail { background: var(--danger-100); color: var(--danger-600); }
 
 .sp-pill {
   display: inline-flex; align-items: center; gap: 6px;
@@ -1870,4 +2015,83 @@ table.sp-table td.sp-num { font-family: var(--font-mono); }
   border: none; background: none; cursor: pointer; color: var(--danger-600, #a6472e); font-size: 14px;
 }
 .sp-msg-attachment-file, .sp-msg-attachment-image-link { display: inline-flex; align-items: center; gap: 6px; color: inherit; text-decoration: none; }
+
+/* ============================================================
+   QUIZ ATTEMPT SCREEN -- genuinely new components (timer, strike
+   indicator, progress stepper, locked-tab notice, choice list). Lives
+   here per this codebase's "shared canonical components live in
+   student.css" convention, even though today only the Student portal's
+   take_quiz.php uses them -- Quizzes has no Professor-side attempt
+   screen to duplicate against.
+   ============================================================ */
+
+/* .sp-main's default margin-left reserves space for the fixed sidebar
+   (.sp-nav position:fixed doesn't take flow space, so .sp-main manually
+   offsets around it) -- quiz-attempt-mode hides that sidebar entirely
+   (see Student/Include/header.php's $hideNav), so without this override
+   the quiz content was still shifted ~280px right into dead space instead
+   of sitting centered on the page. */
+.quiz-attempt-mode .sp-main {
+  margin-left: auto; margin-right: auto; max-width: 760px; padding: 40px 24px;
+}
+
+.sp-quiz-attempt-shell { max-width: 720px; margin: 0 auto; }
+
+.sp-quiz-attempt-topbar {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.sp-quiz-progress-stepper { font-size: 13px; color: var(--slate-500); font-weight: 600; }
+
+.sp-quiz-timer {
+  font-family: var(--font-mono); font-size: 20px; font-weight: 700;
+  color: var(--ink-950); padding: 4px 14px; border-radius: 999px;
+  background: var(--paper-100);
+}
+.sp-quiz-timer.is-warning {
+  color: var(--danger-600); background: var(--danger-100);
+  animation: sp-quiz-timer-pulse 1s ease-in-out infinite;
+}
+@keyframes sp-quiz-timer-pulse {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.55; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sp-quiz-timer.is-warning { animation: none; }
+}
+
+.sp-quiz-strike-indicator { display: inline-flex; gap: 5px; }
+.sp-quiz-strike-dot {
+  width: 9px; height: 9px; border-radius: 50%;
+  background: var(--line-200); transition: background 0.2s ease, transform 0.2s var(--sp-ease);
+}
+.sp-quiz-strike-dot.is-filled { background: var(--danger-600); transform: scale(1.15); }
+
+.sp-quiz-choice-list { display: flex; flex-direction: column; gap: 10px; }
+.sp-quiz-choice {
+  display: flex; align-items: center; gap: 12px;
+  padding: 13px 16px; border-radius: var(--sp-radius-sm);
+  border: 1px solid var(--line-200); cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease, transform 0.12s var(--sp-ease);
+}
+.sp-quiz-choice:hover { background: var(--paper-100); }
+.sp-quiz-choice:active { transform: scale(0.99); }
+.sp-quiz-choice input[type="radio"] { accent-color: var(--accent-600); width: 17px; height: 17px; flex-shrink: 0; }
+.sp-quiz-choice:has(input:checked) { border-color: var(--accent-600); background: var(--accent-100); }
+
+.sp-quiz-save-indicator {
+  margin: 14px 0 0; font-size: 12px; color: var(--success-600); font-weight: 600;
+  opacity: 0; animation: sp-card-in 0.2s var(--sp-ease) forwards;
+}
+
+.sp-quiz-attempt-nav {
+  display: flex; justify-content: space-between; gap: 12px;
+  max-width: 640px; margin: 20px auto 0;
+}
+
+.sp-quiz-locked-notice {
+  text-align: center; padding: 64px 24px; color: var(--slate-500);
+  max-width: 420px; margin: 40px auto;
+}
+.sp-quiz-locked-notice iconify-icon { font-size: 36px; color: var(--slate-300); margin-bottom: 12px; }
+.sp-quiz-locked-notice .sp-btn { margin-top: 16px; }
 .sp-msg-attachment-image { max-width: 200px; max-height: 160px; border-radius: 10px; display: block; }

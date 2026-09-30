@@ -46,17 +46,37 @@ document.addEventListener('DOMContentLoaded', function () {
       gradesBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No students enrolled yet.</td></tr>';
       return;
     }
-    gradesBody.innerHTML = students.map(s => {
+    gradesBody.innerHTML = students.map((s, i) => {
       const name = [s.last_name, s.first_name].filter(Boolean).join(', ') +
         (s.middle_name ? ' ' + s.middle_name.charAt(0) + '.' : '');
-      return '<tr data-enrollment-subject-id="' + s.enrollment_subject_id + '">' +
+      return '<tr data-enrollment-subject-id="' + s.enrollment_subject_id + '" style="--row-i:' + i + '">' +
         '<td class="sp-num">' + escHtml(s.student_no) + '</td>' +
         '<td>' + escHtml(name) + '</td>' +
-        '<td><input type="text" class="sp-table-input" data-grade-input maxlength="10" style="width:80px;" value="' + escHtml(s.grade_value || '') + '"></td>' +
+        '<td><input type="text" class="sp-table-input sp-grade-input" data-grade-input maxlength="10" value="' + escHtml(s.grade_value || '') + '"><span class="sp-remarks-hint" data-pass-hint hidden></span></td>' +
         '<td><input type="text" class="sp-table-input" data-remarks-input maxlength="255" value="' + escHtml(s.remarks || '') + '"></td>' +
         '</tr>';
     }).join('');
+    gradesBody.querySelectorAll('[data-grade-input]').forEach(updatePassHint);
   }
+
+  // 75 is the standard CHED/DepEd passing cutoff on a 100-point scale --
+  // no pass/fail convention existed anywhere in this codebase before, so
+  // this hint is purely a visual aid for the professor and never touches
+  // what actually gets saved (save_grades.php stores grade_value as-is).
+  function updatePassHint(input) {
+    const hint = input.nextElementSibling;
+    if (!hint || !hint.hasAttribute('data-pass-hint')) return;
+    const val = parseFloat(input.value);
+    if (isNaN(val)) { hint.hidden = true; return; }
+    hint.hidden = false;
+    hint.textContent = val >= 75 ? 'Pass' : 'Fail';
+    hint.classList.toggle('is-pass', val >= 75);
+    hint.classList.toggle('is-fail', val < 75);
+  }
+
+  gradesBody.addEventListener('input', (e) => {
+    if (e.target.matches('[data-grade-input]')) updatePassHint(e.target);
+  });
 
   async function loadGrades(scheduleId, period) {
     gradesBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading…</td></tr>';

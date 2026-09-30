@@ -141,15 +141,25 @@ document.addEventListener('DOMContentLoaded', function () {
     return 'Due ' + d.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
   }
 
+  function dueUrgencyClass(dueDate) {
+    if (!dueDate) return '';
+    var due = new Date(dueDate + 'T00:00:00');
+    var days = Math.ceil((due - new Date()) / 86400000);
+    if (days < 0) return '';
+    if (days <= 1) return 'is-urgent';
+    if (days <= 3) return 'is-soon';
+    return '';
+  }
+
   function renderAssignments(items) {
     lastAssignments = items || [];
     if (!items || items.length === 0) {
       assignmentList.innerHTML = '<li class="sp-announce-empty">No assignments posted for this class yet.</li>';
       return;
     }
-    assignmentList.innerHTML = items.map((a) => {
+    assignmentList.innerHTML = items.map((a, i) => {
       var meta = formatDue(a.due_date) + (a.max_score ? ' · ' + a.max_score + ' pts' : '') + (a.category_name ? ' · ' + a.category_name : '') + ' · ' + a.submission_count + ' submitted';
-      return '<li class="sp-announce-item" data-assignment-id="' + a.assignment_id + '">' +
+      return '<li class="sp-announce-item ' + dueUrgencyClass(a.due_date) + '" style="--row-i:' + i + '" data-assignment-id="' + a.assignment_id + '">' +
         '<div class="sp-announce-item-head">' +
           '<strong>' + escHtml(a.title) + '</strong>' +
           '<span class="sp-announce-item-date">' + escHtml(meta) + '</span>' +

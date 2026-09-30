@@ -35,8 +35,8 @@ include __DIR__ . '/Include/header.php';
 <?php else: ?>
 
 <div class="sp-section" style="display:grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap:16px;">
-  <?php foreach ($classes as $c): ?>
-    <div class="sp-group-card">
+  <?php foreach ($classes as $i => $c): ?>
+    <div class="sp-group-card" style="--row-i:<?= $i ?>">
       <p class="sp-group-card-title"><?= htmlspecialchars($c['subject_code'], ENT_QUOTES) ?> — <?= htmlspecialchars($c['subject_name'], ENT_QUOTES) ?></p>
       <?php if (!$c['group']): ?>
         <p class="sp-group-member-empty">No group yet for this class.</p>

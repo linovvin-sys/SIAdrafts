@@ -36,17 +36,25 @@ document.addEventListener('DOMContentLoaded', function () {
       rosterBody.innerHTML = '<tr><td colspan="2">No enrolled students for this class.</td></tr>';
       return;
     }
-    rosterBody.innerHTML = roster.map((r) => {
+    rosterBody.innerHTML = roster.map((r, i) => {
       const name = escHtml(r.first_name + ' ' + r.last_name);
-      const options = STATUSES.map(s =>
-        '<option value="' + s + '"' + (r.status === s ? ' selected' : (!r.status && s === 'Present' ? ' selected' : '')) + '>' + s + '</option>'
+      const current = r.status || 'Present';
+      const pills = STATUSES.map(s =>
+        '<button type="button" class="sp-status-pill" data-status="' + s + '" aria-pressed="' + (current === s ? 'true' : 'false') + '">' + s + '</button>'
       ).join('');
-      return '<tr data-applicant-id="' + r.applicant_id + '">' +
+      return '<tr data-applicant-id="' + r.applicant_id + '" style="--row-i:' + i + '">' +
         '<td>' + name + '</td>' +
-        '<td><select class="sp-table-input" data-status-select>' + options + '</select></td>' +
+        '<td><div class="sp-status-pills" data-status-group>' + pills + '</div></td>' +
       '</tr>';
     }).join('');
   }
+
+  rosterBody.addEventListener('click', (e) => {
+    const btn = e.target.closest('.sp-status-pill');
+    if (!btn) return;
+    btn.parentElement.querySelectorAll('.sp-status-pill').forEach(p => p.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+  });
 
   function loadAttendance() {
     if (!currentScheduleId || !dateInput.value) return;
@@ -76,7 +84,9 @@ document.addEventListener('DOMContentLoaded', function () {
   dateInput.addEventListener('change', loadAttendance);
 
   markAllBtn.addEventListener('click', () => {
-    rosterBody.querySelectorAll('[data-status-select]').forEach(sel => { sel.value = 'Present'; });
+    rosterBody.querySelectorAll('[data-status-group]').forEach(group => {
+      group.querySelectorAll('.sp-status-pill').forEach(p => p.setAttribute('aria-pressed', p.dataset.status === 'Present' ? 'true' : 'false'));
+    });
   });
 
   saveBtn.addEventListener('click', () => {
@@ -85,8 +95,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const statuses = {};
     rosterBody.querySelectorAll('tr[data-applicant-id]').forEach(tr => {
       const id = tr.dataset.applicantId;
-      const sel = tr.querySelector('[data-status-select]');
-      if (sel) statuses[id] = sel.value;
+      const pressed = tr.querySelector('.sp-status-pill[aria-pressed="true"]');
+      if (pressed) statuses[id] = pressed.dataset.status;
     });
     if (Object.keys(statuses).length === 0) return;
 

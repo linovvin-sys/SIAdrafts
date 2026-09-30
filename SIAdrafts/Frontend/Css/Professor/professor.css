@@ -119,50 +119,14 @@
 }
 
 /* ---------- class announcements dialog (My Classes) ---------- */
-.sp-announce-list {
-  list-style: none; margin: 18px 0 0; padding-top: 16px;
-  border-top: 1px solid var(--line-200);
-  display: flex; flex-direction: column; gap: 12px;
+/* .sp-announce-list/.sp-announce-item and .sp-group-card moved to
+   Frontend/Css/Student/student.css (upgraded there — real shadow, hover
+   lift, entrance stagger, accent bar) since Student/groups.php uses the
+   same classes and never loaded professor.css, so it had no styling for
+   them at all. Kept dialog-specific spacing (scroll cap, top border,
+   tighter padding) as an override since this list also lives inside
+   .sp-dialog here. */
+.sp-dialog .sp-announce-list {
+  padding-top: 16px; border-top: 1px solid var(--line-200);
   max-height: 260px; overflow-y: auto;
 }
-.sp-announce-empty { color: var(--slate-300); font-size: 13px; text-align: center; padding: 12px 0; }
-.sp-announce-item {
-  padding: 10px 12px; border-radius: var(--sp-radius-sm);
-  background: var(--paper-100);
-}
-.sp-announce-item-head { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-.sp-announce-item-head strong { font-size: 13.5px; color: var(--ink-950); flex: 1; }
-.sp-announce-item-date { font-family: var(--font-mono); font-size: 11px; color: var(--slate-300); }
-.sp-announce-item p { margin: 0; font-size: 13px; color: var(--slate-500); line-height: 1.5; }
-.sp-announce-edit,
-.sp-announce-delete {
-  display: flex; align-items: center; justify-content: center;
-  width: 26px; height: 26px; border-radius: 50%; flex-shrink: 0;
-  border: none; background: transparent; color: var(--slate-300);
-  cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
-}
-.sp-announce-edit:hover { background: var(--accent-100); color: var(--accent-600); }
-.sp-announce-edit:active { transform: scale(0.92); }
-.sp-announce-delete:hover { background: var(--danger-100); color: var(--danger-600); }
-.sp-announce-delete:active { transform: scale(0.92); }
-
-/* ===== Groups page + student "My Group" card ===== */
-.sp-group-card {
-  background: var(--paper-100); border: 1px solid var(--line-200);
-  border-radius: var(--sp-radius-sm); padding: 14px 16px;
-}
-.sp-group-card-title {
-  font-family: var(--font-display); font-size: 15px; font-weight: 500;
-  margin: 0 0 10px; color: var(--ink-950);
-}
-.sp-group-member-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-.sp-group-member {
-  display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--slate-500);
-}
-.sp-group-member-avatar {
-  width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: var(--ink-950); color: var(--paper-50);
-  font-family: var(--font-mono); font-size: 10px; font-weight: 600;
-}
-.sp-group-member-empty { color: var(--slate-300); font-size: 12.5px; font-style: italic; }

@@ -28,14 +28,14 @@ document.addEventListener('DOMContentLoaded', function () {
       groupsGrid.innerHTML = '<p style="color:var(--slate-300); grid-column:1/-1;">No groups yet — pick a number of groups and click Randomize.</p>';
       return;
     }
-    groupsGrid.innerHTML = groups.map((g) => {
+    groupsGrid.innerHTML = groups.map((g, i) => {
       const members = g.members.length
         ? g.members.map((m) => {
             const initials = m.name.split(' ').filter(Boolean).slice(0, 2).map(p => p[0]).join('').toUpperCase();
             return '<li class="sp-group-member"><span class="sp-group-member-avatar">' + escHtml(initials) + '</span>' + escHtml(m.name) + '</li>';
           }).join('')
         : '<li class="sp-group-member-empty">No members</li>';
-      return '<div class="sp-group-card">' +
+      return '<div class="sp-group-card" style="--row-i:' + i + '">' +
         '<p class="sp-group-card-title">' + escHtml(g.group_name) + '</p>' +
         '<ul class="sp-group-member-list">' + members + '</ul>' +
       '</div>';

@@ -50,7 +50,7 @@ include __DIR__ . '/Include/header.php';
       <p class="sp-form-error-msg" id="attendanceFormErrorMsg"></p>
     </div>
 
-    <table class="sp-table" style="margin-top:16px;">
+    <table class="sp-table sp-table-stagger" style="margin-top:16px;">
       <thead><tr><th>Student</th><th>Status</th></tr></thead>
       <tbody id="attendanceRosterBody"></tbody>
     </table>

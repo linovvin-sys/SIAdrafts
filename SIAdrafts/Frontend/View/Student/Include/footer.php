@@ -1,5 +1,6 @@
 </main>
 
+<?php if (empty($hideNav)): ?>
 <footer class="sp-footer">
   <p>Edu<em>School</em> Student Portal · Need help? Contact the Registrar's Office.</p>
 </footer>
@@ -12,6 +13,7 @@
     </a>
   <?php endforeach; ?>
 </nav>
+<?php endif; ?>
 
 <div class="sp-toast-host" id="spToastHost" aria-live="polite"></div>
 

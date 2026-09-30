@@ -57,7 +57,7 @@ include __DIR__ . '/Include/header.php';
     <div class="sp-form-success" id="gradesFormSuccess" role="status" aria-live="polite">
       <p class="sp-form-success-msg" id="gradesFormSuccessMsg"></p>
     </div>
-    <table class="sp-table" id="gradesTable">
+    <table class="sp-table sp-table-stagger" id="gradesTable">
       <thead>
         <tr><th>Student No.</th><th>Full Name</th><th>Grade</th><th>Remarks</th></tr>
       </thead>

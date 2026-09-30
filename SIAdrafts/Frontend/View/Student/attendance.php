@@ -28,14 +28,20 @@ include __DIR__ . '/Include/header.php';
 <?php else: ?>
 
 <div class="sp-section">
-  <table class="sp-table">
+  <table class="sp-table sp-table-stagger">
     <thead><tr><th>Class</th><th>Sessions recorded</th><th>Attendance %</th></tr></thead>
     <tbody>
-      <?php foreach ($classes as $c): ?>
-        <tr>
+      <?php foreach ($classes as $i => $c): ?>
+        <tr style="--row-i:<?= $i ?>">
           <td><?= htmlspecialchars($c['subject_code'], ENT_QUOTES) ?> — <?= htmlspecialchars($c['subject_name'], ENT_QUOTES) ?></td>
           <td class="sp-num"><?= (int)$c['total_sessions'] ?></td>
-          <td class="sp-num"><?= $c['percent'] === null ? '—' : (int)$c['percent'] . '%' ?></td>
+          <td>
+            <?php if ($c['percent'] === null): ?>
+              —
+            <?php else: ?>
+              <span class="sp-pill <?= $c['percent'] >= 90 ? 'enrolled' : ($c['percent'] >= 75 ? 'pending' : 'attention') ?>"><?= (int)$c['percent'] ?>%</span>
+            <?php endif; ?>
+          </td>
         </tr>
       <?php endforeach; ?>
     </tbody>

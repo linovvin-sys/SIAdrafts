@@ -20,6 +20,7 @@ $_tabs = [
     ['page' => 'registration',    'label' => 'Registration',    'icon' => 'mdi:file-document-outline','url' => '/SIAdrafts/Frontend/View/Student/registration.php'],
     ['page' => 'schedule',        'label' => 'Schedule',        'icon' => 'mdi:calendar-week',       'url' => '/SIAdrafts/Frontend/View/Student/schedule.php'],
     ['page' => 'assignments',     'label' => 'Assignments',     'icon' => 'mdi:file-document-edit-outline', 'url' => '/SIAdrafts/Frontend/View/Student/assignments.php'],
+    ['page' => 'quizzes',         'label' => 'Quizzes',         'icon' => 'mdi:clipboard-text-clock-outline', 'url' => '/SIAdrafts/Frontend/View/Student/quizzes.php'],
     ['page' => 'materials',       'label' => 'Materials',       'icon' => 'mdi:folder-multiple-outline', 'url' => '/SIAdrafts/Frontend/View/Student/materials.php'],
     ['page' => 'grades',          'label' => 'Grades',          'icon' => 'mdi:school-outline',      'url' => '/SIAdrafts/Frontend/View/Student/grades.php'],
     ['page' => 'attendance',      'label' => 'Attendance',      'icon' => 'mdi:clipboard-check-outline','url' => '/SIAdrafts/Frontend/View/Student/attendance.php'],
@@ -54,9 +55,10 @@ $_tabs = [
 <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/required.css'), ENT_QUOTES) ?>">
 <?= cdn_script_tag(CDN_ICONIFY, true) ?>
 </head>
-<body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
+<body class="student-body<?= !empty($hideNav) ? ' quiz-attempt-mode' : '' ?>" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
 <a class="sp-skip-link" href="#sp-content">Skip to content</a>
 
+<?php if (empty($hideNav)): ?>
 <nav class="sp-nav" aria-label="Student portal">
   <a class="sp-brand" href="/SIAdrafts/Frontend/View/Student/dashboard.php">
     Edu<em>School</em>
@@ -99,5 +101,6 @@ $_tabs = [
     </div>
   </div>
 </div>
+<?php endif; ?>
 
 <main class="sp-main" id="sp-content">

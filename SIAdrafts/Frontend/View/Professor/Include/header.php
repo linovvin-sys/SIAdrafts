@@ -23,6 +23,7 @@ $_tabs = [
     ['page' => 'classes',        'label' => 'Classes',       'icon' => 'mdi:google-classroom',       'url' => '/SIAdrafts/Frontend/View/Professor/classes.php'],
     ['page' => 'announcements',  'label' => 'Announcements', 'icon' => 'mdi:bullhorn-outline',       'url' => '/SIAdrafts/Frontend/View/Professor/announcements.php'],
     ['page' => 'assignments',    'label' => 'Assignments',   'icon' => 'mdi:file-document-edit-outline', 'url' => '/SIAdrafts/Frontend/View/Professor/assignments.php'],
+    ['page' => 'quizzes',        'label' => 'Quizzes',       'icon' => 'mdi:clipboard-text-clock-outline', 'url' => '/SIAdrafts/Frontend/View/Professor/quizzes.php'],
     ['page' => 'materials',      'label' => 'Materials',     'icon' => 'mdi:folder-multiple-outline', 'url' => '/SIAdrafts/Frontend/View/Professor/materials.php'],
     ['page' => 'grades',         'label' => 'Grades',        'icon' => 'mdi:school-outline',         'url' => '/SIAdrafts/Frontend/View/Professor/grades.php'],
     ['page' => 'attendance',     'label' => 'Attendance',    'icon' => 'mdi:clipboard-check-outline','url' => '/SIAdrafts/Frontend/View/Professor/attendance.php'],

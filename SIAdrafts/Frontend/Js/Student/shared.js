@@ -110,14 +110,17 @@ document.addEventListener('click', function (e) {
 });
 
 // ----- Notification bell (fixed, top-right) -----
-// "Dynamic" here means two things: it polls for genuinely new announcements
+// "Dynamic" here means two things: it polls for genuinely new items
 // without a page reload, and the unread badge is real state, not a fake
 // always-on dot. There's no server-side per-student read-tracking table
 // (a broader announcements feature earlier in this project deliberately
-// skipped that) -- unread is tracked client-side via localStorage against
-// the highest announcement_id already seen, which is enough to answer
-// "is there anything I haven't opened this panel to see yet" without a
-// schema change.
+// skipped that) -- unread is tracked client-side via localStorage.
+//
+// The feed merges four sources (announcement/quiz/assignment/material),
+// each with its own id space -- an assignment_id and a quiz_id aren't
+// comparable, so "seen" is tracked as a per-type highest-id map rather
+// than one global max id (which is all the previous announcements-only
+// version needed).
 (function () {
   var bell  = document.getElementById('notifBell');
   var badge = document.getElementById('notifBadge');
@@ -130,8 +133,21 @@ document.addEventListener('click', function (e) {
   var items = [];
   var lastKnownUnread = 0;
 
-  function lastSeenId() {
-    return parseInt(localStorage.getItem(STORAGE_KEY) || '0', 10);
+  var TYPE_LABEL = { announcement: 'Announcement', quiz: 'Quiz', assignment: 'Assignment', material: 'Material' };
+
+  function lastSeenMap() {
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return {};
+    try {
+      var parsed = JSON.parse(raw);
+      // Migrates the old schema (a bare number, meaning "highest
+      // announcement_id seen") into the new per-type map so existing
+      // users don't see every past announcement as newly unread.
+      if (typeof parsed === 'number') return { announcement: parsed };
+      return parsed && typeof parsed === 'object' ? parsed : {};
+    } catch (e) {
+      return {};
+    }
   }
 
   function timeAgo(mysqlDatetime) {
@@ -151,20 +167,20 @@ document.addEventListener('click', function (e) {
       return;
     }
     list.innerHTML = items.map(function (n) {
-      return '<div class="sp-notif-item ' + n.tint + '">' +
+      return '<a class="sp-notif-item ' + n.tint + '" href="' + n.link + '">' +
         '<div class="sp-notif-item-head">' +
-          '<span class="sp-notif-item-subject">' + escHtml(n.subject_code) + '</span>' +
+          '<span class="sp-notif-item-subject">' + escHtml(n.subject_code) + ' · ' + (TYPE_LABEL[n.type] || n.type) + '</span>' +
           '<span class="sp-notif-item-time">' + timeAgo(n.created_at) + '</span>' +
         '</div>' +
         '<p class="sp-notif-item-title">' + escHtml(n.title) + '</p>' +
         '<p class="sp-notif-item-body">' + escHtml(n.body).replace(/\n/g, '<br>') + '</p>' +
-      '</div>';
+      '</a>';
     }).join('');
   }
 
   function updateBadge() {
-    var seen = lastSeenId();
-    var unread = items.filter(function (n) { return n.announcement_id > seen; }).length;
+    var seen = lastSeenMap();
+    var unread = items.filter(function (n) { return n.item_id > (seen[n.type] || 0); }).length;
     if (unread > 0) {
       badge.textContent = unread > 9 ? '9+' : String(unread);
       badge.hidden = false;
@@ -194,12 +210,14 @@ document.addEventListener('click', function (e) {
     panel.classList.add('is-open');
     bell.setAttribute('aria-expanded', 'true');
     if (items.length > 0) {
-      // The true max, not items[0] -- announcements posted in the same
-      // second sort as ties, so the first item in the list isn't
-      // guaranteed to be the highest id even with a DB-side tiebreaker
-      // added; computing the max here is correct regardless of order.
-      var maxId = items.reduce(function (max, n) { return Math.max(max, n.announcement_id); }, 0);
-      localStorage.setItem(STORAGE_KEY, String(maxId));
+      // The true max per type, not items[0] -- items posted in the same
+      // second sort as ties, so the first item of a given type in the
+      // list isn't guaranteed to be that type's highest id.
+      var seen = lastSeenMap();
+      items.forEach(function (n) {
+        seen[n.type] = Math.max(seen[n.type] || 0, n.item_id);
+      });
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(seen));
       updateBadge();
     }
   }

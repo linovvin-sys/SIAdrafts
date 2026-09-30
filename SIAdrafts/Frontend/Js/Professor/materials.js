@@ -85,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
     const today = new Date().toISOString().slice(0, 10);
-    materialList.innerHTML = items.map((m) => {
+    materialList.innerHTML = items.map((m, i) => {
       var contentHtml = '';
       if (m.type === 'file') {
         contentHtml = '<a href="' + API + 'Materials/download_material.php?material_id=' + m.material_id + '" target="_blank" rel="noopener">' + escHtml(m.file_name) + '</a>';
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var meta = m.visible_from && m.visible_from > today
         ? 'Hidden from students until ' + m.visible_from
         : new Date(m.created_at.replace(' ', 'T')).toLocaleDateString([], { month: 'short', day: 'numeric' });
-      return '<li class="sp-announce-item" data-material-id="' + m.material_id + '">' +
+      return '<li class="sp-announce-item type-' + m.type + '" style="--row-i:' + i + '" data-material-id="' + m.material_id + '">' +
         '<div class="sp-announce-item-head">' +
           '<iconify-icon icon="' + materialTypeIcon[m.type] + '"></iconify-icon>' +
           '<strong>' + escHtml(m.title) + '</strong>' +

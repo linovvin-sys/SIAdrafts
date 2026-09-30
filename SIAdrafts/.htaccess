@@ -21,14 +21,22 @@
     php_value session.gc_maxlifetime 1800
     php_flag display_errors off
     php_flag log_errors on
-
-    # Turns session.cookie_secure on automatically once this is actually
-    # served over HTTPS — see Backend/env_security.php for why this can't
-    # just be a static php_value like the settings above (it needs a
-    # runtime check of the current request, not a fixed value) and why
-    # it must run this early rather than from inside config.php.
-    php_value auto_prepend_file "C:/xampp/htdocs/SIAdrafts/SIAdrafts/Backend/env_security.php"
 </IfModule>
+
+# A hardcoded auto_prepend_file path used to live in the block above —
+# removed. It pointed at one collaborator's local Windows/XAMPP folder
+# layout (C:/xampp/htdocs/...), which is exactly how the whole site went
+# down once before (see git history, 2026-09-14) when that same mistake
+# was in .user.ini instead. .htaccess/.user.ini are committed files
+# shared across machines with different OSes and folder layouts, so
+# nothing in them can be an absolute filesystem path — there's no path
+# that's simultaneously correct on a Mac, this Windows machine, and
+# whatever the real production host turns out to be.
+# The thing that line was for (turning session.cookie_secure on once
+# actually served over HTTPS) doesn't need a filesystem path at all: it's
+# Backend/env_security.php's apply_https_cookie_security() function,
+# called directly from Backend/config.php — a plain PHP function call,
+# identical behavior on every machine, nothing to hardcode.
 
 <IfModule mod_headers.c>
     Header always set X-Content-Type-Options "nosniff"
@@ -72,6 +80,13 @@
     # anyway, but keeping it conditional avoids a false signal in dev).
     Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 </IfModule>
+
+# .env, .env.example, .user.ini, .git, etc. are readable server-side but
+# must never be served over HTTP — they were previously fetchable directly
+# by URL (e.g. /SIAdrafts/.env) since nothing here denied dotfiles.
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
 
 # Directory listing was on (MAMP's default) — any folder with no index.php
 # (Frontend/View/Admission/, Backend/api/Treasury/, etc.) served a raw file

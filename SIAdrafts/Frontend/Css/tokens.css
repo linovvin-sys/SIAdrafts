@@ -41,6 +41,12 @@
   --success-100: #E1EBE3;
   --info-600: #35526E;
   --info-100: #E2E8EF;
+  /* muted amber for "due soon" / "late" states -- same desaturated,
+     warm-family treatment as the other semantic colors above, not a raw
+     saturated goldenrod (#b8860b), which read as an out-of-palette
+     brown/khaki next to these. */
+  --warning-600: #8C6D2F;
+  --warning-100: #F1E8D3;
 
   /* text */
   --slate-500: rgba(31, 46, 40, 0.80); /* AAA: 7.0:1 on parchment, 7.5:1 on white */
