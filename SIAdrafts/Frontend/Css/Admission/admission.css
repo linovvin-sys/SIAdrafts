@@ -571,4 +571,15 @@
       box-shadow: none;
     }
     #printableSlip button{ display: none; }
+
+    /* visibility:hidden alone isn't enough once the printed slip spans
+       more than one page -- confirmed live (enrollment_confirm.php's
+       registration form): admin.css's .sidebar/.top-header are
+       position:fixed, and browsers compute a fixed element's position
+       per PRINTED PAGE (treating each one as its own viewport), so it
+       keeps getting painted back in on page 2 onward even while hidden
+       on page 1. display:none removes it from layout entirely instead
+       of just hiding it, which a fixed element can't un-suppress itself
+       from on a later page. */
+    .sidebar, .top-header{ display: none !important; }
   }
