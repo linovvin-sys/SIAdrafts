@@ -26,7 +26,13 @@ RUN apt-get update \
     && docker-php-ext-install mysqli zip curl \
     && rm -rf /var/lib/apt/lists/*
 
-RUN a2enmod rewrite headers
+# The apt-get install above triggers Debian's apache2 package postinst
+# script, which silently re-enables mpm_event as a default alongside this
+# base image's required mpm_prefork (mod_php isn't thread-safe, so
+# php:apache ships with prefork) -- Apache then refuses to start at all
+# with "More than one MPM loaded." Force prefork back to being the only
+# one enabled, explicitly, regardless of what the package manager did.
+RUN a2dismod mpm_event mpm_worker 2>/dev/null; a2enmod mpm_prefork rewrite headers
 
 # AllowOverride is None in this image's default vhost -- without this,
 # .htaccess is silently ignored in its entirety (no error, every rewrite
