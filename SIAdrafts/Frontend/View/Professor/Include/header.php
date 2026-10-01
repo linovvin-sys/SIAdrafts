@@ -32,6 +32,7 @@ $_tabs = [
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><?= htmlspecialchars($pageTitle ?? 'Professor Portal', ENT_QUOTES) ?> — EduSchool</title>
+<link rel="icon" type="image/svg+xml" href="/SIAdrafts/Frontend/assets/crest.svg">
 <script>
   // Per-tab session ownership check — see Frontend/View/Include/header.php
   // for the full rationale. Same mechanism, same $_SESSION['tab_token'].

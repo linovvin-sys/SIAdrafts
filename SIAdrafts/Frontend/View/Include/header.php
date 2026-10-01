@@ -14,6 +14,7 @@ $_pageCsrfToken = csrf_token();
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>EduSchool — <?= htmlspecialchars($pageTitle ?? '', ENT_QUOTES) ?></title>
+  <link rel="icon" type="image/svg+xml" href="/SIAdrafts/Frontend/assets/crest.svg">
   <script>
     // Applies the saved theme before first paint, so there's no flash of
     // light mode before dark mode kicks in. Must run synchronously, here
