@@ -3,7 +3,8 @@
 /**
  * Turns session.cookie_secure on the moment the app is actually served
  * over HTTPS, so nobody has to remember to flip it by hand in .user.ini
- * when this leaves localhost.
+ * when this leaves localhost. Also switches SameSite from Lax to None
+ * when HTTPS is active -- see below.
  *
  * MUST be called before session_start() — ini_set('session.cookie_secure')
  * has no effect once a session has already started, since that's when PHP
@@ -30,6 +31,13 @@
  * every session instead of protecting it. If a reverse proxy is added
  * later, replace this with a check that validates REMOTE_ADDR against
  * that proxy first, then trusts its forwarded-proto header.
+ *
+ * (Railway's Docker image IS that later reverse-proxy case -- it sets
+ * $_SERVER['HTTPS'] itself via the Apache-level X-Forwarded-Proto trust
+ * in its own conf, specifically scoped to that deployment; see
+ * Dockerfile. This function still only ever reads $_SERVER['HTTPS'], the
+ * same as always -- it has no idea whether that came from a real TLS
+ * handshake or a trusted proxy header, by design.)
  */
 function apply_https_cookie_security(): void
 {
@@ -42,5 +50,25 @@ function apply_https_cookie_security(): void
 
     if ($isHttps) {
         ini_set('session.cookie_secure', '1');
+
+        // SameSite=Lax drops the session cookie on some cross-site
+        // top-level navigations back from PayMongo's hosted checkout --
+        // confirmed live: clicking PayMongo's own "Return to Merchant"
+        // button lost the Treasury staff's session (landed on the login
+        // page instead of the payment confirmation), while waiting for
+        // PayMongo's own auto-redirect timer to fire did not. The two
+        // paths likely differ in exactly how PayMongo performs that
+        // redirect (e.g. a POST-based return vs. a plain GET), which
+        // Lax treats differently -- POST-originated top-level navigations
+        // are exactly the case Lax does NOT send the cookie for, unlike
+        // a plain link/GET redirect. None is only safe with Secure also
+        // set (browsers reject a None cookie without it), which only
+        // happens together with this flag, right here.
+        //
+        // The CSRF protection this trades away (SameSite's own
+        // cross-site-POST defense) isn't load-bearing here: every
+        // state-changing endpoint already requires its own CSRF token
+        // (Backend/csrf.php), which is the actual defense against that.
+        ini_set('session.cookie_samesite', 'None');
     }
 }
