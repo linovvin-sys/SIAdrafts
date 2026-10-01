@@ -42,6 +42,8 @@ RUN echo "=== mods-enabled BEFORE any MPM changes ===" \
 # bypassing a2enmod/a2dismod's own module-management logic entirely, in
 # case that logic itself is what's leaving a second MPM enabled.
 RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
+    ; echo "=== every LoadModule line naming mpm, anywhere under /etc/apache2 (not just mods-enabled) ===" \
+    ; grep -rn "LoadModule.*mpm" /etc/apache2/ 2>/dev/null ; true \
     && ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
     && ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
     && a2enmod rewrite headers \
