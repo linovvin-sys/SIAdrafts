@@ -31,13 +31,30 @@ class Database
 
     public function connect()
     {
-        $this->conn = new mysqli(
-            $this->host,
-            $this->username,
-            $this->password,
-            $this->database,
-            $this->port
-        );
+        // Cloud MySQL providers (TiDB Cloud, Aiven, ...) reject unencrypted
+        // connections. Opt in with DB_SSL=1; local MAMP leaves it unset and
+        // keeps the plain connection it has always used.
+        if (config('DB_SSL') === '1') {
+            $this->conn = mysqli_init();
+            $this->conn->ssl_set(null, null, '/etc/ssl/certs/ca-certificates.crt', null, null);
+            $this->conn->real_connect(
+                $this->host,
+                $this->username,
+                $this->password,
+                $this->database,
+                (int)$this->port,
+                null,
+                MYSQLI_CLIENT_SSL
+            );
+        } else {
+            $this->conn = new mysqli(
+                $this->host,
+                $this->username,
+                $this->password,
+                $this->database,
+                $this->port
+            );
+        }
 
         if ($this->conn->connect_error) {
             error_log('Database connection failed: ' . $this->conn->connect_error);
