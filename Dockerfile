@@ -35,6 +35,10 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY SIAdrafts/ /var/www/html/SIAdrafts/
 
+# The bare Railway domain would otherwise hit an empty docroot; send it to
+# the app's entry page.
+RUN echo '<?php header("Location: /SIAdrafts/Frontend/View/index", true, 302);' > /var/www/html/index.php
+
 # composer.json requires smalot/pdfparser, but the committed composer.lock
 # predates that requirement being added and doesn't actually include it --
 # a plain `composer install` refuses to run at all when the lock file is
