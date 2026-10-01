@@ -28,22 +28,33 @@ $db   = new Database();
 $conn = $db->connect();
 
 $document_id = (int)($_POST['document_id'] ?? 0);
+$physical_location = trim($_POST['physical_location'] ?? '');
 
 if (!$document_id) {
     echo json_encode(['error' => 'No document specified.']);
     exit;
 }
 
+if ($physical_location === '') {
+    echo json_encode(['error' => 'Where was the hard copy filed? Enter a storage location.']);
+    exit;
+}
+
 // uploaded_at is refreshed to NOW() so it reflects when the document was
 // actually received, not when the deferred placeholder row was first
-// created back at walk-in confirmation.
+// created back at walk-in confirmation. storage_location/storage_recorded_at
+// record where staff actually filed this specific hard copy -- required
+// here (unlike confirm_admission.php's optional version) because this is
+// the one moment staff have the physical document in hand to file it;
+// there's no later step that would ever fill it in otherwise.
 try {
     $stmt = $conn->prepare("
         UPDATE applicant_documents
-        SET status = 'submitted', verified_by = ?, uploaded_at = NOW()
+        SET status = 'submitted', verified_by = ?, uploaded_at = NOW(),
+            storage_location = ?, storage_recorded_at = NOW()
         WHERE document_id = ? AND status = 'will_submit_later'
     ");
-    $stmt->bind_param('ii', $_SESSION['user_id'], $document_id);
+    $stmt->bind_param('isi', $_SESSION['user_id'], $physical_location, $document_id);
     $stmt->execute();
     $affected = $stmt->affected_rows;
     $stmt->close();

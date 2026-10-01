@@ -171,7 +171,10 @@ $upd->close();
 // inserting a second one, or Pending Documents ends up showing stale
 // "still owed" entries for documents that were in fact already collected,
 // or the same document listed twice.
-function upsert_applicant_document(mysqli $conn, int $applicant_id, string $doc, string $status, ?int $verified_by): void
+// $location is only ever set for docs physically in hand right now
+// ('submitted') -- a 'will_submit_later' row has no hard copy to file yet,
+// that gets recorded later by mark_document_received.php instead.
+function upsert_applicant_document(mysqli $conn, int $applicant_id, string $doc, string $status, ?int $verified_by, ?string $location = null): void
 {
     $find = $conn->prepare("
         SELECT document_id FROM applicant_documents
@@ -183,28 +186,37 @@ function upsert_applicant_document(mysqli $conn, int $applicant_id, string $doc,
     $existing = $find->get_result()->fetch_assoc();
     $find->close();
 
+    $storageRecordedAt = $location !== null && $location !== '' ? date('Y-m-d H:i:s') : null;
+
     if ($existing) {
         $upd = $conn->prepare("
             UPDATE applicant_documents
-            SET status = ?, verified_by = ?, uploaded_at = NOW()
+            SET status = ?, verified_by = ?, uploaded_at = NOW(), storage_location = ?, storage_recorded_at = ?
             WHERE document_id = ?
         ");
-        $upd->bind_param('sii', $status, $verified_by, $existing['document_id']);
+        $upd->bind_param('sissi', $status, $verified_by, $location, $storageRecordedAt, $existing['document_id']);
         $upd->execute();
         $upd->close();
     } else {
         $ins = $conn->prepare("
-            INSERT INTO applicant_documents (applicant_id, document_name, status, verified_by)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO applicant_documents (applicant_id, document_name, status, verified_by, storage_location, storage_recorded_at)
+            VALUES (?, ?, ?, ?, ?, ?)
         ");
-        $ins->bind_param('issi', $applicant_id, $doc, $status, $verified_by);
+        $ins->bind_param('ississ', $applicant_id, $doc, $status, $verified_by, $location, $storageRecordedAt);
         $ins->execute();
         $ins->close();
     }
 }
 
+// Where the hard copies handed over today actually got filed (e.g.
+// "Cabinet A, Box 3") -- optional (staff may file it after confirming and
+// fill this in later via document_records.php), but recorded against every
+// document confirmed right now rather than one global note, since a future
+// "will submit later" doc could end up in a different box than today's batch.
+$physical_location = trim($_POST['physical_location'] ?? '');
+
 foreach ($docs_submitted as $doc) {
-    upsert_applicant_document($conn, $applicant_id, $doc, 'submitted', (int)$_SESSION['user_id']);
+    upsert_applicant_document($conn, $applicant_id, $doc, 'submitted', (int)$_SESSION['user_id'], $physical_location !== '' ? $physical_location : null);
 }
 
 // Deferred docs get no verified_by — nobody's actually checked them yet,

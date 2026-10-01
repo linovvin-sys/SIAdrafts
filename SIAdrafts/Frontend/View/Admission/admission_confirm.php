@@ -176,6 +176,17 @@ include '../Include/header.php';
           </div>
         </div>
 
+        <div class="form-section" v-if="checkedDocs.length">
+          <div class="section-head">
+            <span class="section-num"><iconify-icon icon="mdi:archive-outline"></iconify-icon></span>
+            <div>
+              <h2>Where are these being filed?</h2>
+              <p>Optional now — the hard copies checked above can be filed after confirming and recorded later from Document Records. Write the applicant's reference ID ({{ applicant.reference_id }}) on the folder/box so it can be matched back to this record.</p>
+            </div>
+          </div>
+          <input type="text" class="form-control" v-model="physicalLocation" placeholder="e.g. Cabinet A, Box 3" :disabled="isReadonly">
+        </div>
+
         <div v-if="confirmError" class="alert-box alert-error mt-3">{{ confirmError }}</div>
 
         <div class="form-actions">

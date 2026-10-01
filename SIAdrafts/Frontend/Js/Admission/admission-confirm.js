@@ -30,6 +30,7 @@ if (document.getElementById('confirm-app')) {
       criticalGroups: ['birth_cert', 'good_moral'],
       creditableSubjects: [],
       creditedSubjectIds: [],
+      physicalLocation: '',
       authorizationNote: '',
       onlineRequirements: [],
       previewDoc: null,
@@ -55,6 +56,7 @@ if (document.getElementById('confirm-app')) {
         this.checkedDocs   = [];
         this.laterDocs     = [];
         this.onlineRequirements = [];
+        this.physicalLocation = '';
         this.closePreview();
 
         const ref = this.referenceId.trim();
@@ -168,6 +170,7 @@ if (document.getElementById('confirm-app')) {
           const body = new FormData();
           body.append('csrf_token', this.csrfToken());
           body.append('reference_id', this.referenceId.trim());
+          body.append('physical_location', this.physicalLocation.trim());
           this.checkedDocs.forEach(doc => body.append('docs[]', doc));
           this.laterDocs.forEach(doc => body.append('docs_later[]', doc));
           this.creditedSubjectIds.forEach(sid => body.append('credited_subjects[]', sid));
@@ -186,10 +189,13 @@ if (document.getElementById('confirm-app')) {
           const laterNote = (d.summary.documents_later || []).length
             ? '<br><br>Still to follow: ' + d.summary.documents_later.join(', ') + '.'
             : '';
+          const filingNote = this.physicalLocation.trim()
+            ? '<br><br>Write <strong>' + d.summary.reference_id + '</strong> on the folder/box — filed at: ' + this.physicalLocation.trim()
+            : '';
           Swal.fire({
             icon: 'success',
             title: 'Admission confirmed',
-            html: d.summary.name + ' is now verified.<br>Reference ID: <strong>' + d.summary.reference_id + '</strong>' + laterNote,
+            html: d.summary.name + ' is now verified.<br>Reference ID: <strong>' + d.summary.reference_id + '</strong>' + laterNote + filingNote,
             confirmButtonColor: '#2f8f4e',
           });
 

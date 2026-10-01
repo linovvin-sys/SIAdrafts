@@ -53,6 +53,22 @@
     color: var(--ink);
   }
 
+  /* Dashboard-shell pages (admission_confirm, enrollment*, document_records,
+     etc. -- anything with $activePage set, which loads admin.css's
+     .app-layout/.sidebar/.page-content) read as the clean white+green
+     system the rest of the app moved to, not body's cream/radial-gradient
+     above -- that gradient is sized for the marketing/login pages it was
+     built for and was bleeding through on every dashboard page instead.
+     Giving .app-layout its own solid white background (rather than relying
+     on body's) also fixes the background not extending to the bottom of
+     the page on short pages: .page-content has no explicit height of its
+     own, so whatever body's background does only reaches as far as body's
+     own box -- which doesn't always cover the actual scrollable content. */
+  .app-layout{
+    background: var(--white);
+    min-height: 100vh;
+  }
+
   /*  navbar  */
   .nav-wrap{
     position: fixed;

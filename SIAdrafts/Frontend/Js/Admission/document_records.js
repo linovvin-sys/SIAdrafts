@@ -70,10 +70,19 @@ document.addEventListener('DOMContentLoaded', function () {
         const label = STATUS_LABEL[doc.status] || doc.status;
         const pillClass = hasFile ? 'approved' : 'pending';
         const uploaded = doc.uploaded_at ? new Date(doc.uploaded_at).toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' }) : '—';
+        // No soft copy to "View" -- this is the hard copy's whereabouts
+        // instead, so reviewing staff aren't left with no way to find a
+        // document that was handed over face-to-face or walked in later.
+        const locationLine = (!hasFile && doc.storage_location)
+          ? '<div class="text-muted" style="font-size:12px;"><iconify-icon icon="mdi:archive-outline"></iconify-icon> Filed at: ' + escapeHtml(doc.storage_location) + '</div>'
+          : (!hasFile && doc.status === 'submitted'
+            ? '<div class="text-muted" style="font-size:12px;">Received, filing location not recorded.</div>'
+            : '');
         return '<div class="row-actions" style="justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--line-200);">' +
           '<div>' +
             '<div style="font-weight:600;">' + escapeHtml(doc.document_name) + '</div>' +
             '<div class="text-muted" style="font-size:12px;">' + escapeHtml(uploaded) + '</div>' +
+            locationLine +
           '</div>' +
           '<div style="display:flex;align-items:center;gap:10px;">' +
             '<span class="status-pill status-pill--' + pillClass + '">' + escapeHtml(label) + '</span>' +

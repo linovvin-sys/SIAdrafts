@@ -21,6 +21,7 @@ $conn = $db->connect();
 // admission_confirm.php (a "currently awaiting a decision" screen) isn't.
 $rows = $conn->query("
     SELECT ad.document_id, ad.document_name, ad.status, ad.uploaded_at, ad.file_path,
+           ad.storage_location, ad.storage_recorded_at,
            a.applicant_id, a.reference_id, a.first_name, a.last_name, a.middle_name,
            a.program, a.year_level, a.status AS applicant_status
     FROM applicant_documents ad

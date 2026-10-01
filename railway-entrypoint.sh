@@ -27,4 +27,15 @@ rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_eve
 ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load
 ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf
 
+# Backend/uploads is now a mounted Railway volume (added so applicant
+# document uploads survive redeploys, instead of living on the
+# container's own throwaway disk and vanishing on the next deploy --
+# confirmed live that's exactly what was happening). The Dockerfile's own
+# chown only touched that path inside the IMAGE layer; a volume mounts
+# its own separate storage over that path at container start, owned by
+# root by default, which would make every upload fail with a permission
+# error. Re-applying chown here, after the mount already exists, is what
+# actually makes it writable by the user PHP/Apache runs as.
+chown -R www-data:www-data /var/www/html/SIAdrafts/Backend/uploads
+
 exec "$@"

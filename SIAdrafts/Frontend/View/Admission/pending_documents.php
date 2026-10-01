@@ -213,16 +213,34 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', function (e) {
       e.stopPropagation();
       const documentId = btn.dataset.documentId;
-      const confirmFn = window.confirmAction || function (opts) {
-        return Promise.resolve(window.confirm(opts.title || 'Are you sure?'));
+      // Where this hard copy actually gets filed, right now -- this is the
+      // one moment staff have it in hand, so it's asked for here rather
+      // than left as a separate step someone has to remember to do later.
+      // The applicant's own reference ID (already unique, already on every
+      // other record) is what gets written on the folder/box itself --
+      // this just records which folder/box that reference ID ended up in.
+      const promptFn = (typeof Swal !== 'undefined') ? function () {
+        return Swal.fire({
+          title: 'Where was this filed?',
+          input: 'text',
+          inputPlaceholder: 'e.g. Cabinet A, Box 3',
+          inputValidator: function (value) {
+            if (!value || !value.trim()) return 'Enter a storage location.';
+          },
+          showCancelButton: true,
+          confirmButtonText: 'Mark received',
+          confirmButtonColor: '#2f8f4e',
+          cancelButtonColor: '#aaa',
+        }).then(function (result) {
+          return result.isConfirmed ? result.value.trim() : null;
+        });
+      } : function () {
+        const loc = window.prompt('Where was this hard copy filed? (e.g. Cabinet A, Box 3)');
+        return Promise.resolve(loc && loc.trim() ? loc.trim() : null);
       };
 
-      confirmFn({
-        title: 'Mark this document as received?',
-        icon: 'question',
-        confirmText: 'Yes, mark received',
-      }).then(function (ok) {
-        if (!ok) return;
+      promptFn().then(function (location) {
+        if (!location) return;
 
         btn.disabled = true;
         btn.textContent = 'Saving…';
@@ -230,7 +248,7 @@ document.addEventListener('DOMContentLoaded', function () {
         fetch('/SIAdrafts/Backend/api/Admission/mark_document_received.php', {
           method: 'POST',
           headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'X-CSRF-Token': document.body.dataset.csrf || '' },
-          body: new URLSearchParams({ document_id: documentId }),
+          body: new URLSearchParams({ document_id: documentId, physical_location: location }),
         })
           .then(function (res) { return res.json(); })
           .then(function (result) {
