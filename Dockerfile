@@ -11,10 +11,19 @@ FROM php:8.3-apache
 # base image by default. mbstring is omitted deliberately -- it's already
 # built into this image's core PHP build, and explicitly reinstalling it
 # fails the build rather than being a harmless no-op.
+#
+# Deliberately NOT purging libzip-dev/libcurl4-openssl-dev afterward: the
+# compiled zip.so extension links against libzip's runtime .so at
+# container start, not just at compile time, and `apt-get purge
+# --auto-remove` cascades to remove that runtime library along with the
+# dev headers -- it did exactly that on the first build, and the
+# extension failed to load with "libzip.so.5: cannot open shared object
+# file" even though the install step itself had reported success. The
+# few MB these dev packages cost is a better trade than a silently broken
+# extension.
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libzip-dev libcurl4-openssl-dev \
     && docker-php-ext-install mysqli zip curl \
-    && apt-get purge -y --auto-remove libzip-dev libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 RUN a2enmod rewrite headers
