@@ -17,8 +17,15 @@ apply_https_cookie_security();
 
 require_once __DIR__ . '/../vendor/autoload.php';
 
+// safeLoad(), not load() -- load() throws if no .env file exists at all,
+// which is exactly the production setup: secrets get injected directly
+// into the container's real environment (Railway's dashboard, etc.)
+// instead of a committed/baked-in .env file, so $_ENV is already populated
+// before this ever runs. safeLoad() just does nothing in that case,
+// leaving the real environment variables as config() finds them below;
+// load() would otherwise crash every single request in production.
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
-$dotenv->load();
+$dotenv->safeLoad();
 
 function config(string $key): ?string
 {

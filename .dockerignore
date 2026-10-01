@@ -1,0 +1,15 @@
+SIAdrafts/.env
+SIAdrafts/vendor/
+SIAdrafts/storage/backups/*
+SIAdrafts/storage/rate_limit/*
+SIAdrafts/storage/stream_locks/*
+SIAdrafts/Frontend/Css/.cache/
+docs/
+kiosk-integ/
+vue-todo-example/
+lampara/
+lino-portfolio/
+portfolio-lino/
+*.sql
+.git/
+.DS_Store
