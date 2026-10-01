@@ -26,29 +26,17 @@ RUN apt-get update \
     && docker-php-ext-install mysqli zip curl \
     && rm -rf /var/lib/apt/lists/*
 
-# "More than one MPM loaded" has survived two prior fix attempts
-# (a2dismod, then removing mpm_event/mpm_worker's own symlinks) -- rather
-# than guess a third time, this prints the full mods-enabled listing
-# BEFORE touching anything, so the real cause is visible in the build log
-# instead of inferred from a runtime crash with no further detail.
-RUN echo "=== mods-enabled BEFORE any MPM changes ===" \
-    && ls -la /etc/apache2/mods-enabled/ \
-    && echo "=== every LoadModule line naming an mpm, across all enabled .load files ===" \
-    && grep -H "mpm" /etc/apache2/mods-enabled/*.load || true
-
-# Wipe every mpm_*.load/.conf glob match (prefork/event/worker/itk, enabled
-# by the base image, by a2enmod, or by anything else) and manually
-# recreate only the prefork symlinks directly against mods-available --
-# bypassing a2enmod/a2dismod's own module-management logic entirely, in
-# case that logic itself is what's leaving a second MPM enabled.
-RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
-    ; echo "=== every LoadModule line naming mpm, anywhere under /etc/apache2 (not just mods-enabled) ===" \
-    ; grep -rn "LoadModule.*mpm" /etc/apache2/ 2>/dev/null ; true \
-    && ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
-    && ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
-    && a2enmod rewrite headers \
-    && echo "=== mods-enabled AFTER forcing prefork-only ===" \
-    && ls -la /etc/apache2/mods-enabled/ | grep -i mpm
+# Confirmed via the actual build log (railway logs --build) that the base
+# image + the apt-get step above already leave exactly one MPM enabled
+# (mpm_prefork, nothing else) -- three rounds of "fix" attempts here
+# (a2dismod, removing symlinks, rebuilding them manually) were all
+# solving a problem that didn't exist in the static config, and none of
+# them changed the runtime crash at all. Reverted back to not touching
+# MPM modules -- whatever's actually causing "More than one MPM loaded"
+# happens at container start, not at build time, so it has to be
+# diagnosed from railway-entrypoint.sh instead (see the apache2ctl calls
+# added there).
+RUN a2enmod rewrite headers
 
 # AllowOverride is None in this image's default vhost -- without this,
 # .htaccess is silently ignored in its entirety (no error, every rewrite
