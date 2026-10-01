@@ -54,6 +54,16 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 WORKDIR /var/www/html
 COPY SIAdrafts/ /var/www/html/SIAdrafts/
 
+# The docroot's own bare / has nothing in it by design (same as local dev
+# -- hitting bare localhost:8888/ shows nothing either; the real app
+# always lives under /SIAdrafts/...), which 403s on a public domain with
+# no SIAdrafts/ path typed in: "Cannot serve directory /var/www/html/:
+# No matching DirectoryIndex found, and server-generated directory index
+# forbidden." A real visitor to the Railway domain's bare root needs
+# somewhere to land, so this sends them to the actual public landing
+# page instead of a dead end.
+RUN echo '<?php header("Location: /SIAdrafts/Frontend/View/index.php"); exit;' > /var/www/html/index.php
+
 # composer.json requires smalot/pdfparser, but the committed composer.lock
 # predates that requirement being added and doesn't actually include it --
 # a plain `composer install` refuses to run at all when the lock file is
