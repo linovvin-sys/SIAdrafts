@@ -26,20 +26,27 @@ RUN apt-get update \
     && docker-php-ext-install mysqli zip curl \
     && rm -rf /var/lib/apt/lists/*
 
-# The apt-get install above triggers Debian's apache2 package postinst
-# script, which silently re-enables mpm_event as a default alongside this
-# base image's required mpm_prefork (mod_php isn't thread-safe, so
-# php:apache ships with prefork) -- Apache then refuses to start at all
-# with "More than one MPM loaded." `a2dismod` alone didn't reliably clear
-# this (still failed after it ran), so this removes the conflicting
-# module's enabled-symlinks directly instead of trusting a2dismod's exit
-# behavior, then re-enables prefork explicitly. The `ls` at the end prints
-# into the build log so a future build failure here is visible immediately
-# instead of requiring a fresh runtime crash to diagnose again.
-RUN rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf \
-           /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf \
-    && a2enmod mpm_prefork rewrite headers \
-    && ls -la /etc/apache2/mods-enabled/ | grep mpm
+# "More than one MPM loaded" has survived two prior fix attempts
+# (a2dismod, then removing mpm_event/mpm_worker's own symlinks) -- rather
+# than guess a third time, this prints the full mods-enabled listing
+# BEFORE touching anything, so the real cause is visible in the build log
+# instead of inferred from a runtime crash with no further detail.
+RUN echo "=== mods-enabled BEFORE any MPM changes ===" \
+    && ls -la /etc/apache2/mods-enabled/ \
+    && echo "=== every LoadModule line naming an mpm, across all enabled .load files ===" \
+    && grep -H "mpm" /etc/apache2/mods-enabled/*.load || true
+
+# Wipe every mpm_*.load/.conf glob match (prefork/event/worker/itk, enabled
+# by the base image, by a2enmod, or by anything else) and manually
+# recreate only the prefork symlinks directly against mods-available --
+# bypassing a2enmod/a2dismod's own module-management logic entirely, in
+# case that logic itself is what's leaving a second MPM enabled.
+RUN rm -f /etc/apache2/mods-enabled/mpm_*.load /etc/apache2/mods-enabled/mpm_*.conf \
+    && ln -sf ../mods-available/mpm_prefork.load /etc/apache2/mods-enabled/mpm_prefork.load \
+    && ln -sf ../mods-available/mpm_prefork.conf /etc/apache2/mods-enabled/mpm_prefork.conf \
+    && a2enmod rewrite headers \
+    && echo "=== mods-enabled AFTER forcing prefork-only ===" \
+    && ls -la /etc/apache2/mods-enabled/ | grep -i mpm
 
 # AllowOverride is None in this image's default vhost -- without this,
 # .htaccess is silently ignored in its entirety (no error, every rewrite
