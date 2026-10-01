@@ -127,8 +127,24 @@ Options -Indexes
     #    to itself. THE_REQUEST is immune to internal rewrites, so this
     #    only fires for what the browser actually asked for. GET-only so
     #    POST bodies are never silently dropped by a redirect.
+    #
+    #    Built as a FULLY absolute https://%{HTTP_HOST}/... or
+    #    http://%{HTTP_HOST}/... URL ourselves, deliberately -- a relative
+    #    target (just the path) makes Apache auto-absolutize the Location
+    #    header using its OWN view of scheme and port, which behind a
+    #    TLS-terminating reverse proxy (Railway, and most real hosts) is
+    #    plain HTTP on the proxy's internal port, not the public HTTPS URL
+    #    the browser actually used -- confirmed live: this produced
+    #    redirects to `http://host:8080/...`, broken for every external
+    #    visitor. %{HTTP_HOST} is always the original public Host header
+    #    regardless of proxying, so it never carries an internal port.
     RewriteCond %{THE_REQUEST} ^GET\s+/SIAdrafts/Frontend/View/([^?\s]+)\.php[?\s]
-    RewriteRule ^ /SIAdrafts/Frontend/View/%1 [R=301,L]
+    RewriteCond %{HTTPS} =on
+    RewriteRule ^ https://%{HTTP_HOST}/SIAdrafts/Frontend/View/%1 [R=301,L]
+
+    RewriteCond %{THE_REQUEST} ^GET\s+/SIAdrafts/Frontend/View/([^?\s]+)\.php[?\s]
+    RewriteCond %{HTTPS} !=on
+    RewriteRule ^ http://%{HTTP_HOST}/SIAdrafts/Frontend/View/%1 [R=301,L]
 
     # 2) Internally serve the matching .php file for the extension-less
     #    URL, without changing what the browser shows.
