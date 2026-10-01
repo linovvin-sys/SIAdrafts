@@ -29,16 +29,9 @@ $statusPillClass = match ($enrollment['status'] ?? '') {
 include __DIR__ . '/Include/header.php';
 ?>
 
-<div style="display:flex; align-items:flex-start; justify-content:space-between; gap:16px; flex-wrap:wrap;">
-  <div>
-    <h1 class="sp-greeting">Registration</h1>
-    <p class="sp-subline">Your official record for the current term, as recorded by the Registrar's Office.</p>
-  </div>
-  <?php if ($enrollment): ?>
-    <button type="button" class="sp-btn sp-btn-secondary sp-print-hide" onclick="window.print()">
-      <iconify-icon icon="mdi:printer-outline"></iconify-icon> Print / Save as PDF
-    </button>
-  <?php endif; ?>
+<div>
+  <h1 class="sp-greeting">Registration</h1>
+  <p class="sp-subline">Your official record for the current term, as recorded by the Registrar's Office.</p>
 </div>
 
 <?php if (!$enrollment): ?>
@@ -48,11 +41,6 @@ include __DIR__ . '/Include/header.php';
     <p>Your registration summary will appear here once you've enrolled for the term.</p>
   </div>
 <?php else: ?>
-
-<div class="sp-print-letterhead">
-  <h2>EduSchool — Certificate of Registration</h2>
-  <p><?= htmlspecialchars($enrollment['school_year'] . ', Semester ' . $enrollment['semester'], ENT_QUOTES) ?> · Printed <?= date('F j, Y') ?></p>
-</div>
 
 <div class="sp-section">
   <h2 class="sp-section-title">Student information</h2>
