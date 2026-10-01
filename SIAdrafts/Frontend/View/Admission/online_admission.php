@@ -55,6 +55,14 @@ include '../Admission/Include/header.php';
        complete verification.</p>
   </div>
 
+  <!-- Shown after a successful submit; hidden until then. Sits above the
+       form itself so the reference ID is the first thing visible, not
+       something you have to scroll past a long form (now empty/reset) to
+       find. -->
+  <div style="max-width:900px;margin:0 auto 18px;padding:0 16px;">
+    <div id="referenceBanner" class="form-banner" style="display:none;"></div>
+  </div>
+
   <?php $recaptchaSiteKey = config('RECAPTCHA_SITE_KEY'); ?>
   <?php if ($recaptchaSiteKey): ?>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
@@ -333,11 +341,6 @@ include '../Admission/Include/header.php';
     </div>
 
   </form>
-
-  <!-- Shown after a successful submit; hidden until then. -->
-  <div style="max-width:900px;margin:18px auto 0;padding:0 16px;">
-    <div id="referenceBanner" class="form-banner" style="display:none;"></div>
-  </div>
 
 </main>
 

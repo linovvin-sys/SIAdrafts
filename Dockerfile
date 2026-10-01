@@ -26,6 +26,23 @@ RUN apt-get update \
     && docker-php-ext-install mysqli zip curl \
     && rm -rf /var/lib/apt/lists/*
 
+# This image's stock php.ini caps uploads at 2M per file / 8M total POST --
+# confirmed live (railway ssh + php -i) after a real admission submission
+# got stuck "uploading" until its reCAPTCHA token expired: the form allows
+# up to 5MB per document across as many as 4 required documents at once
+# (Backend/api/Admission/online_admission_process.php's own 5MB-per-file
+# check), so a real submission routinely exceeds post_max_size. PHP can
+# only reject an oversized POST body AFTER receiving the whole thing, so
+# on a slow connection the browser just sits there uploading data PHP is
+# about to discard anyway -- indistinguishable from a hang. 20M/40M gives
+# headroom for 4 documents at the app's own cap, plus the uncapped DOCX/
+# PPTX lesson-file uploads for quiz generation (Backend/Quizzes/
+# text_extraction.php), which have no app-level size check of their own.
+# max_execution_time/max_input_time deliberately left alone -- confirmed
+# live they're already unlimited (0 / -1), which is correct for a slow
+# upload finishing properly rather than being cut off arbitrarily.
+RUN printf 'upload_max_filesize = 20M\npost_max_size = 40M\n' > /usr/local/etc/php/conf.d/uploads.ini
+
 # Confirmed via the actual build log (railway logs --build) that the base
 # image + the apt-get step above already leave exactly one MPM enabled
 # (mpm_prefork, nothing else) -- three rounds of "fix" attempts here
