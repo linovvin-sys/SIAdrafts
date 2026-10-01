@@ -223,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function () {
         '<iconify-icon icon="' + (a.status === 'submitted' ? 'mdi:check-circle-outline' : 'mdi:alert-outline') + '"></iconify-icon>' +
         '<p><strong>' + escHtml(label) + '</strong></p>' +
         '<p>Score: ' + a.score + ' / ' + a.max_score + '</p>' +
-        '<a class="sp-btn sp-btn-primary" href="/SIAdrafts/Frontend/View/Student/quizzes.php">Back to Quizzes</a>' +
+        '<a class="sp-btn sp-btn-primary" href="/SIAdrafts/Frontend/View/Student/my_courses.php">Back to My Courses</a>' +
       '</div>';
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   }

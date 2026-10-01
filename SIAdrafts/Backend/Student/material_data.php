@@ -30,3 +30,30 @@ function get_my_materials(mysqli $conn, int $applicantId): array
     $stmt->close();
     return $rows;
 }
+
+/**
+ * Same as get_my_materials(), scoped to one SUBJECT -- see
+ * get_my_assignments_for_subject()'s docblock for why this joins on
+ * subject_id (merging every schedule block's materials) rather than one
+ * fixed schedule_id.
+ */
+function get_my_materials_for_subject(mysqli $conn, int $applicantId, int $subjectId): array
+{
+    $stmt = $conn->prepare("
+        SELECT m.material_id, m.title, m.type, m.file_name, m.url, m.body, m.created_at
+        FROM enrollment e
+        JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.status = 'Enrolled'
+        JOIN schedule sc ON sc.subject_id = ? AND sc.subject_id = es.subject_id
+             AND sc.school_year = e.school_year AND sc.semester = e.semester
+             AND (e.section_id = sc.section_id OR es.schedule_id = sc.schedule_id)
+        JOIN class_material m ON m.schedule_id = sc.schedule_id
+             AND (m.visible_from IS NULL OR m.visible_from <= CURDATE())
+        WHERE e.applicant_id = ? AND e.status = 'Enrolled'
+        ORDER BY m.created_at DESC
+    ");
+    $stmt->bind_param('ii', $subjectId, $applicantId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}

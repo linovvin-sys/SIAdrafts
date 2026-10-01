@@ -54,6 +54,121 @@ const banner = document.getElementById('formBanner');
 const refBanner = document.getElementById('referenceBanner');
 const submitBtn = form.querySelector('.btn-submit');
 
+// ---------- Draft autosave (survives closing the tab/browser) ----------
+// localStorage, not the server: this form is filled out by anonymous
+// applicants with no account/session yet, so there's nothing to attach a
+// server-side draft to. Versioned key in case the field set here ever
+// changes shape -- an old draft from a different version just won't match
+// and gets ignored rather than partially, confusingly restored.
+const DRAFT_KEY = 'sia_admission_draft_v1';
+const DRAFT_MAX_AGE_MS = 7 * 24 * 60 * 60 * 1000; // a week-old draft is more likely to be stale (term/program list can change) than wanted back
+const draftBanner = document.getElementById('draftBanner');
+const draftSaveStatus = document.getElementById('draftSaveStatus');
+
+// File inputs can't be serialized into localStorage at all (browsers
+// never expose a file's actual bytes to JS for security reasons) -- every
+// other field is fair game, including checkboxes/radios (kept only when
+// checked, same as how a real form submission would omit them otherwise)
+// and the repeatable school_name[]-style array fields (each input's own
+// [name, value] pair, not collapsed into one entry).
+function serializeDraft() {
+  const pairs = [];
+  for (const el of form.elements) {
+    if (!el.name || el.type === 'file') continue;
+    if (el.name === 'website' || el.name === 'g-recaptcha-response') continue;
+    if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) continue;
+    pairs.push([el.name, el.value]);
+  }
+  return pairs;
+}
+
+function hasMeaningfulData(pairs) {
+  return pairs.some(function (p) { return p[1] && p[1].trim() !== ''; });
+}
+
+function saveDraft() {
+  try {
+    const pairs = serializeDraft();
+    if (!hasMeaningfulData(pairs)) {
+      localStorage.removeItem(DRAFT_KEY);
+      if (draftSaveStatus) draftSaveStatus.textContent = '';
+      return;
+    }
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ savedAt: Date.now(), pairs: pairs }));
+    if (draftSaveStatus) draftSaveStatus.textContent = 'Draft saved just now.';
+  } catch (e) {
+    // Private browsing / storage disabled / quota exceeded -- the form
+    // still works, just without the safety net. Nothing to show the
+    // applicant here; failing loudly over an autosave would be worse.
+  }
+}
+
+function clearDraft() {
+  try { localStorage.removeItem(DRAFT_KEY); } catch (e) {}
+  if (draftSaveStatus) draftSaveStatus.textContent = '';
+}
+
+function restoreDraft(pairs) {
+  pairs.forEach(function (pair) {
+    const name = pair[0];
+    const value = pair[1];
+    const els = form.querySelectorAll('[name="' + CSS.escape(name) + '"]');
+    if (!els.length) return;
+    if (els[0].type === 'checkbox' || els[0].type === 'radio') {
+      els.forEach(function (el) { if (el.value === value) el.checked = true; });
+    } else {
+      els[0].value = value;
+    }
+  });
+  // Re-sync UI state that depends on the values just restored, same as a
+  // real user interacting with these controls would trigger.
+  document.querySelectorAll('.requirement-row').forEach(function (row) {
+    const fileInput = row.querySelector('.requirement-file');
+    const laterCheckbox = row.querySelector('.requirement-later');
+    if (fileInput && laterCheckbox) fileInput.disabled = laterCheckbox.checked;
+  });
+  suggestApplicantType();
+}
+
+(function initDraftBanner() {
+  let saved = null;
+  try {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (raw) saved = JSON.parse(raw);
+  } catch (e) {
+    saved = null;
+  }
+
+  if (!saved || !saved.pairs || (Date.now() - saved.savedAt) > DRAFT_MAX_AGE_MS || !hasMeaningfulData(saved.pairs)) {
+    return;
+  }
+
+  draftBanner.innerHTML =
+    '<span><strong>You have an unfinished application.</strong> Pick up where you left off — you\'ll need to re-attach any documents, since browsers don\'t let a page remember files across visits.</span>' +
+    '<span class="draft-actions">' +
+      '<button type="button" class="btn btn-sm btn-outline-secondary" id="discardDraftBtn">Start fresh</button>' +
+      '<button type="button" class="btn btn-sm btn-success" id="restoreDraftBtn">Restore draft</button>' +
+    '</span>';
+  draftBanner.style.display = 'flex';
+
+  document.getElementById('restoreDraftBtn').addEventListener('click', function () {
+    restoreDraft(saved.pairs);
+    draftBanner.style.display = 'none';
+    if (draftSaveStatus) draftSaveStatus.textContent = 'Draft restored.';
+  });
+  document.getElementById('discardDraftBtn').addEventListener('click', function () {
+    clearDraft();
+    draftBanner.style.display = 'none';
+  });
+})();
+
+let draftSaveTimer = null;
+form.addEventListener('input', function () {
+  if (draftSaveStatus) draftSaveStatus.textContent = 'Saving…';
+  clearTimeout(draftSaveTimer);
+  draftSaveTimer = setTimeout(saveDraft, 600);
+});
+
 function showBanner(el, type, html) {
   el.className = 'form-banner ' + type;
   el.innerHTML = html;
@@ -130,6 +245,7 @@ function submitApplication() {
       while (rows.children.length > 1) {
         rows.removeChild(rows.lastChild);
       }
+      clearDraft();
     })
     .catch(function (err) {
       submitBtn.disabled = false;
@@ -144,6 +260,20 @@ function submitApplication() {
 
 form.addEventListener('submit', function (e) {
   e.preventDefault();
+
+  // Only checks when the widget is actually on the page (RECAPTCHA_SITE_KEY
+  // configured) -- window.grecaptcha won't exist at all otherwise. The real
+  // enforcement is server-side either way; this just avoids a round trip
+  // for the common case of a student just forgetting to check the box.
+  if (window.grecaptcha && typeof grecaptcha.getResponse === 'function' && !grecaptcha.getResponse()) {
+    Swal.fire({
+      icon: 'warning',
+      title: 'Verification required',
+      text: 'Please complete the "I\'m not a robot" check before submitting.',
+      confirmButtonColor: '#2f8f4e',
+    });
+    return;
+  }
 
   Swal.fire({
     icon: 'question',

@@ -1,107 +1,72 @@
-<?php
-$pageTitle  = "Quizzes";
-$activePage = "quizzes";
-$pageScript = "quizzes";
+<?php /** Quizzes tab for course_detail.php. Expects $scheduleId in scope. */ ?>
+<div id="quizEmptyState" class="sp-empty" hidden>
+  <iconify-icon icon="mdi:cursor-default-click-outline"></iconify-icon>
+  <p>Loading quizzes…</p>
+</div>
 
-require_once __DIR__ . '/../../../Backend/require_professor.php';
-require_professor();
-require_once __DIR__ . '/../../../Backend/db.php';
-require_once __DIR__ . '/../../../Backend/Professor/schedule_data.php';
+<div id="quizPanel">
+  <button type="button" class="sp-btn sp-btn-primary" id="openGenerateQuizBtn" style="margin-bottom:20px;">
+    <iconify-icon icon="mdi:file-upload-outline"></iconify-icon>
+    <span>Generate quiz from a lesson file</span>
+  </button>
 
-$db   = new Database();
-$conn = $db->connect();
-
-$professorId = (int)$_SESSION['professor_id'];
-$classes     = get_professor_active_classes($conn, $professorId);
-
-$db->close();
-
-include __DIR__ . '/Include/header.php';
-?>
-
-<h1 class="sp-greeting">Quizzes</h1>
-<p class="sp-subline">Timed, auto-graded multiple-choice quizzes for one of your classes — with tab-switch/fullscreen deterrents while a student is taking one.</p>
-
-<?php if (empty($classes)): ?>
-  <div class="sp-empty">
-    <iconify-icon icon="mdi:clipboard-text-clock-outline"></iconify-icon>
-    <p><strong>No class quizzes yet.</strong></p>
-    <p>You'll be able to post quizzes once the Registrar's Office assigns your classes.</p>
-  </div>
-<?php else: ?>
-
-<div class="sp-section">
-  <?php $selectId = 'quizClassSelect'; include __DIR__ . '/Include/class_picker.php'; ?>
-
-  <div id="quizEmptyState" class="sp-empty" style="margin-top:16px;">
-    <iconify-icon icon="mdi:cursor-default-click-outline"></iconify-icon>
-    <p>Select a class above to view or post quizzes.</p>
-  </div>
-
-  <div id="quizPanel" hidden style="margin-top:16px;">
-    <button type="button" class="sp-btn sp-btn-primary" id="openGenerateQuizBtn" style="margin-bottom:20px;">
-      <iconify-icon icon="mdi:file-upload-outline"></iconify-icon>
-      <span>Generate quiz from a lesson file</span>
-    </button>
-
-    <details id="manualQuizDetails" style="margin-bottom:20px;">
-      <summary class="sp-table-action" style="display:inline-flex; cursor:pointer;">
-        <iconify-icon icon="mdi:pencil-plus-outline"></iconify-icon> Or create one manually
-      </summary>
-    <form id="quizForm" style="margin-top:16px;">
-      <div class="sp-form-group">
-        <label for="quizTitleInput">Title</label>
-        <input type="text" id="quizTitleInput" maxlength="150" required>
+  <details id="manualQuizDetails" style="margin-bottom:20px;">
+    <summary class="sp-table-action" style="display:inline-flex; cursor:pointer;">
+      <iconify-icon icon="mdi:pencil-plus-outline"></iconify-icon> Or create one manually
+    </summary>
+  <form id="quizForm" style="margin-top:16px;">
+    <div class="sp-form-group">
+      <label for="quizTitleInput">Title</label>
+      <input type="text" id="quizTitleInput" maxlength="150" required placeholder="e.g. Midterm Quiz — Chapter 3">
+    </div>
+    <div class="sp-form-group">
+      <label for="quizInstructionsInput">Instructions (optional)</label>
+      <textarea id="quizInstructionsInput" rows="2" placeholder="Any notes students should see before starting…"></textarea>
+    </div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div class="sp-form-group" style="flex:1; min-width:140px;">
+        <label for="quizTimeLimitInput">Time limit (minutes)</label>
+        <input type="number" id="quizTimeLimitInput" min="1" max="180" value="10" required>
       </div>
-      <div class="sp-form-group">
-        <label for="quizInstructionsInput">Instructions (optional)</label>
-        <textarea id="quizInstructionsInput" rows="2"></textarea>
+      <div class="sp-form-group" style="flex:1; min-width:200px;">
+        <label for="quizAvailableFromInput">Opens at (optional)</label>
+        <input type="datetime-local" id="quizAvailableFromInput">
       </div>
-      <div style="display:flex; gap:12px; flex-wrap:wrap;">
-        <div class="sp-form-group" style="flex:1; min-width:140px;">
-          <label for="quizTimeLimitInput">Time limit (minutes)</label>
-          <input type="number" id="quizTimeLimitInput" min="1" max="180" value="10" required>
-        </div>
-        <div class="sp-form-group" style="flex:1; min-width:200px;">
-          <label for="quizAvailableFromInput">Opens at (optional)</label>
-          <input type="datetime-local" id="quizAvailableFromInput">
-        </div>
-        <div class="sp-form-group" style="flex:1; min-width:200px;">
-          <label for="quizAvailableUntilInput">Closes at (optional)</label>
-          <input type="datetime-local" id="quizAvailableUntilInput">
-        </div>
-        <div class="sp-form-group" style="flex:1; min-width:160px;">
-          <label for="quizQuestionsPerAttemptInput">Questions per attempt (optional)</label>
-          <input type="number" id="quizQuestionsPerAttemptInput" min="1" max="999" placeholder="All questions">
-        </div>
+      <div class="sp-form-group" style="flex:1; min-width:200px;">
+        <label for="quizAvailableUntilInput">Closes at (optional)</label>
+        <input type="datetime-local" id="quizAvailableUntilInput">
       </div>
-      <div class="sp-form-error" id="quizFormError" role="alert" aria-live="assertive">
-        <p class="sp-form-error-msg" id="quizFormErrorMsg"></p>
+      <div class="sp-form-group" style="flex:1; min-width:160px;">
+        <label for="quizQuestionsPerAttemptInput">Questions per attempt (optional)</label>
+        <input type="number" id="quizQuestionsPerAttemptInput" min="1" max="999" placeholder="All questions">
       </div>
-      <div style="display:flex; gap:10px; align-items:center;">
-        <button type="submit" class="sp-btn sp-btn-primary" id="quizPostBtn">
-          <span class="sp-btn-spinner" hidden></span>
-          <span class="sp-btn-label">Create quiz</span>
-        </button>
-        <button type="button" class="sp-btn sp-btn-secondary" id="cancelQuizEditBtn" hidden>Cancel edit</button>
-      </div>
-    </form>
-    </details>
+    </div>
+    <div class="sp-form-error" id="quizFormError" role="alert" aria-live="assertive">
+      <p class="sp-form-error-msg" id="quizFormErrorMsg"></p>
+    </div>
+    <div style="display:flex; gap:10px; align-items:center;">
+      <button type="submit" class="sp-btn sp-btn-primary" id="quizPostBtn">
+        <span class="sp-btn-spinner" hidden></span>
+        <span class="sp-btn-label">Create quiz</span>
+      </button>
+      <button type="button" class="sp-btn sp-btn-secondary" id="cancelQuizEditBtn" hidden>Cancel edit</button>
+    </div>
+  </form>
+  </details>
 
-    <ul class="sp-announce-list" id="quizList" style="margin-top:20px;"></ul>
-  </div>
+  <ul class="sp-announce-list" id="quizList" style="margin-top:20px;"></ul>
 </div>
 
 <!-- Generate quiz from file (primary path: one form creates the quiz AND generates its questions) -->
 <dialog class="sp-dialog sp-dialog-lg" id="generateQuizDialog">
   <div class="sp-dialog-body">
     <p class="sp-dialog-title">Generate quiz from a lesson file</p>
-    <p class="sp-dialog-message">Upload a PDF, DOCX, or PPTX — we turn its sentences into fill-in-the-blank questions automatically (no AI). You'll land on the review list right after, and nothing is visible to students until you publish.</p>
+    <p class="sp-dialog-message">Upload a PDF, DOCX, or PPTX — we turn its content into True/False and identification questions automatically (no AI). You'll land on the review list right after, and nothing is visible to students until you publish.</p>
 
     <form id="generateQuizForm">
       <div class="sp-form-group">
         <label for="genQuizTitleInput">Title</label>
-        <input type="text" id="genQuizTitleInput" maxlength="150" required>
+        <input type="text" id="genQuizTitleInput" maxlength="150" required placeholder="e.g. Midterm Quiz — Chapter 3">
       </div>
       <div style="display:flex; gap:12px; flex-wrap:wrap;">
         <div class="sp-form-group" style="flex:1; min-width:140px;">
@@ -145,9 +110,9 @@ include __DIR__ . '/Include/header.php';
       <summary class="sp-table-action" style="display:inline-flex; cursor:pointer;">
         <iconify-icon icon="mdi:file-upload-outline"></iconify-icon> Add more questions from another file
       </summary>
-      <div style="margin-top:12px; padding:12px; background:var(--paper-100); border-radius:var(--sp-radius-sm);">
+      <div style="margin-top:12px; padding:12px; background:var(--paper-50); border:1px solid var(--line-200); border-radius:var(--sp-radius-sm);">
         <p style="margin:0 0 10px; font-size:12.5px; color:var(--slate-500);">
-          Upload a PDF, DOCX, or PPTX to generate more fill-in-the-blank questions into this quiz's pool. No AI involved, and the file itself isn't kept after generating.
+          Upload a PDF, DOCX, or PPTX to generate more True/False and identification questions into this quiz's pool. No AI involved, and the file itself isn't kept after generating.
         </p>
         <form id="generateForm" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
           <div class="sp-form-group" style="margin-bottom:0; flex:1; min-width:200px;">
@@ -169,10 +134,10 @@ include __DIR__ . '/Include/header.php';
       </div>
     </details>
 
-    <form id="questionForm" style="padding:12px; background:var(--paper-100); border-radius:var(--sp-radius-sm); margin-bottom:16px;">
+    <form id="questionForm" style="padding:12px; background:var(--paper-50); border:1px solid var(--line-200); border-radius:var(--sp-radius-sm); margin-bottom:16px;">
       <div class="sp-form-group">
         <label for="questionTextInput">Question</label>
-        <textarea id="questionTextInput" rows="2" required></textarea>
+        <textarea id="questionTextInput" rows="2" required placeholder="e.g. What is the powerhouse of the cell?"></textarea>
       </div>
       <div class="sp-form-group" style="max-width:120px;">
         <label for="questionPointsInput">Points</label>
@@ -227,7 +192,3 @@ include __DIR__ . '/Include/header.php';
     <button type="button" class="sp-btn sp-btn-secondary" id="closeReviewDialog">Close</button>
   </div>
 </dialog>
-
-<?php endif; ?>
-
-<?php include __DIR__ . '/Include/footer.php'; ?>

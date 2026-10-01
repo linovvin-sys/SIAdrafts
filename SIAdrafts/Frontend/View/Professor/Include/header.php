@@ -6,7 +6,8 @@
  * (own tabs, own nav-user slot) rather than pulling from the staff
  * Backend/nav_config.php system.
  */
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../../../../Backend/session_bootstrap.php';
+app_session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
 require_once __DIR__ . '/../../../../Backend/asset_url.php';
@@ -20,14 +21,7 @@ $_professorInitials = strtoupper(implode('', array_map(fn($p) => mb_substr($p, 0
 $_tabs = [
     ['page' => 'dashboard',      'label' => 'Home',          'icon' => 'mdi:home-variant',           'url' => '/SIAdrafts/Frontend/View/Professor/professor_dashboard.php'],
     ['page' => 'schedule',       'label' => 'Schedule',      'icon' => 'mdi:calendar-week',          'url' => '/SIAdrafts/Frontend/View/Professor/schedule.php'],
-    ['page' => 'classes',        'label' => 'Classes',       'icon' => 'mdi:google-classroom',       'url' => '/SIAdrafts/Frontend/View/Professor/classes.php'],
-    ['page' => 'announcements',  'label' => 'Announcements', 'icon' => 'mdi:bullhorn-outline',       'url' => '/SIAdrafts/Frontend/View/Professor/announcements.php'],
-    ['page' => 'assignments',    'label' => 'Assignments',   'icon' => 'mdi:file-document-edit-outline', 'url' => '/SIAdrafts/Frontend/View/Professor/assignments.php'],
-    ['page' => 'quizzes',        'label' => 'Quizzes',       'icon' => 'mdi:clipboard-text-clock-outline', 'url' => '/SIAdrafts/Frontend/View/Professor/quizzes.php'],
-    ['page' => 'materials',      'label' => 'Materials',     'icon' => 'mdi:folder-multiple-outline', 'url' => '/SIAdrafts/Frontend/View/Professor/materials.php'],
-    ['page' => 'grades',         'label' => 'Grades',        'icon' => 'mdi:school-outline',         'url' => '/SIAdrafts/Frontend/View/Professor/grades.php'],
-    ['page' => 'attendance',     'label' => 'Attendance',    'icon' => 'mdi:clipboard-check-outline','url' => '/SIAdrafts/Frontend/View/Professor/attendance.php'],
-    ['page' => 'groups',         'label' => 'Groups',        'icon' => 'mdi:account-group-outline',  'url' => '/SIAdrafts/Frontend/View/Professor/groups.php'],
+    ['page' => 'classes',        'label' => 'My Courses',    'icon' => 'mdi:bookshelf',              'url' => '/SIAdrafts/Frontend/View/Professor/classes.php'],
     ['page' => 'messages',       'label' => 'Messages',      'icon' => 'mdi:message-outline',        'url' => '/SIAdrafts/Frontend/View/Professor/messages.php'],
     ['page' => 'profile',        'label' => 'Profile',       'icon' => 'mdi:account-circle-outline', 'url' => '/SIAdrafts/Frontend/View/Professor/profile.php'],
 ];
@@ -59,12 +53,13 @@ $_tabs = [
 <link rel="stylesheet" href="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Css/required.css'), ENT_QUOTES) ?>">
 <?= cdn_script_tag(CDN_ICONIFY, true) ?>
 </head>
-<body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>">
+<body class="student-body" data-csrf="<?= htmlspecialchars($_pageCsrfToken, ENT_QUOTES) ?>"<?= isset($scheduleId) ? ' data-schedule-id="' . (int)$scheduleId . '"' : '' ?>>
 <a class="sp-skip-link" href="#sp-content">Skip to content</a>
 
 <nav class="sp-nav" aria-label="Professor portal">
   <a class="sp-brand" href="/SIAdrafts/Frontend/View/Professor/professor_dashboard.php">
-    Edu<em>School</em>
+    <img class="sp-brand-mark" src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="22" height="22">
+    <span>Edu<em>School</em></span>
   </a>
 
   <ul class="sp-nav-links">

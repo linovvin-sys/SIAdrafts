@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../../Backend/session_bootstrap.php';
+app_session_start();
 require_once __DIR__ . '/../../../Backend/config.php'; // sets the app's real timezone (Asia/Manila) before the date('G') greeting below
 require_once __DIR__ . '/../../../Backend/cdn_assets.php';
 

@@ -1,5 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE) require_once __DIR__ . '/../Backend/session_bootstrap.php';
+app_session_start();
 
 // Staff/Admin accounts carry a users.user_id session; professors log in
 // against the professor table directly and carry professor_id instead.

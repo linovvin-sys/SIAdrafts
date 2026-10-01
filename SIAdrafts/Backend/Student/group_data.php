@@ -1,5 +1,14 @@
 <?php
 require_once __DIR__ . '/../Professor/group_data.php';
+require_once __DIR__ . '/course_data.php';
+
+/** Up to 2 initials from a full name, for avatar circles. Shared by Student/groups.php and course_detail.php's Groups tab. */
+function sp_group_initials(string $name): string
+{
+    $parts = array_filter(explode(' ', $name));
+    $initials = array_map(fn($p) => mb_strtoupper(mb_substr($p, 0, 1)), array_slice($parts, 0, 2));
+    return implode('', $initials) ?: '?';
+}
 
 /** The student's own group (with groupmates) for one class, or null if ungrouped/not enrolled. */
 function get_my_group(mysqli $conn, int $scheduleId, int $applicantId): ?array
@@ -25,6 +34,29 @@ function get_my_group(mysqli $conn, int $scheduleId, int $applicantId): ?array
         }
     }
     return null;
+}
+
+/**
+ * Every group the student belongs to across a SUBJECT's schedule blocks,
+ * for course_detail.php's Groups tab. class_group is keyed by schedule_id
+ * directly (no subject_id column), so unlike the content-feature
+ * functions this can't be done in one subject_id-joined query -- it loops
+ * get_my_group() over every schedule_id the subject has (usually one, but
+ * a lecture block and a lab block can each have their own groupings).
+ * Almost always returns 0 or 1 group; more than one is the rare case
+ * where lecture and lab were grouped separately.
+ */
+function get_my_groups_for_subject(mysqli $conn, int $subjectId, int $applicantId): array
+{
+    $scheduleIds = get_my_schedule_ids_for_subject($conn, $subjectId, $applicantId);
+    $groups = [];
+    foreach ($scheduleIds as $scheduleId) {
+        $group = get_my_group($conn, $scheduleId, $applicantId);
+        if ($group) {
+            $groups[] = $group;
+        }
+    }
+    return $groups;
 }
 
 /** Every class the student is in, each with its group (or null if that class has no groups yet). */

@@ -2,9 +2,8 @@
 require_once __DIR__ . '/../../db.php';
 require_once __DIR__ . '/can_message.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../../../Backend/session_bootstrap.php';
+app_session_start();
 
 $isProfessor = !empty($_SESSION['professor_id']);
 $isStudent   = !empty($_SESSION['student_id']);
@@ -35,6 +34,15 @@ if ($isProfessor) {
         exit;
     }
     $unreadSenderRole = 'professor';
+}
+
+require_once __DIR__ . '/../../stream_limit.php';
+$streamOwner = $isProfessor ? 'prof_' . $professor_id : 'stud_' . $applicant_id;
+if (!stream_slot_acquire('class_msg_' . $streamOwner, 4)) {
+    http_response_code(429);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Too many open conversations at once. Close a tab and try again.']);
+    exit;
 }
 
 // Release the session lock -- otherwise it stays held for the entire life

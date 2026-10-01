@@ -40,8 +40,8 @@ $db->close();
 include __DIR__ . '/Include/header.php';
 ?>
 
-<h1 class="sp-greeting">My Classes</h1>
-<p class="sp-subline">Every class offering assigned to you, grouped by section. Announcements, assignments, materials, and grades each have their own page in the sidebar.</p>
+<h1 class="sp-greeting">My Courses</h1>
+<p class="sp-subline">Every class offering assigned to you, grouped by section. Open a course to see its assignments, materials, quizzes, and groups all in one place.</p>
 
 <?php if (!empty($pendingClasses)): ?>
   <div class="sp-section sp-print-hide">
@@ -97,7 +97,7 @@ include __DIR__ . '/Include/header.php';
         </div>
         <table class="sp-table">
           <thead>
-            <tr><th>Subject</th><th>Schedule</th><th>Room</th><th class="sp-print-hide">Roster</th></tr>
+            <tr><th>Subject</th><th>Schedule</th><th>Room</th><th class="sp-print-hide"></th><th class="sp-print-hide">Roster</th></tr>
           </thead>
           <tbody>
             <?php foreach ($group['classes'] as $c): ?>
@@ -105,6 +105,11 @@ include __DIR__ . '/Include/header.php';
                 <td class="sp-class-subject"><?= htmlspecialchars($c['subject_code'], ENT_QUOTES) ?><div style="color:var(--slate-300); font-size:12.5px;"><?= htmlspecialchars($c['subject_name'], ENT_QUOTES) ?></div></td>
                 <td class="sp-num"><?= htmlspecialchars($c['day'], ENT_QUOTES) ?>, <?= date('g:ia', strtotime($c['time_start'])) ?>–<?= date('g:ia', strtotime($c['time_end'])) ?></td>
                 <td><?= htmlspecialchars($c['room_name'], ENT_QUOTES) ?></td>
+                <td class="sp-print-hide">
+                  <a class="sp-table-action is-primary" href="/SIAdrafts/Frontend/View/Professor/course_detail.php?schedule_id=<?= (int)$c['schedule_id'] ?>">
+                    <iconify-icon icon="mdi:arrow-right-circle-outline"></iconify-icon> Open course
+                  </a>
+                </td>
                 <td class="sp-print-hide">
                   <button type="button" class="sp-table-action" data-view-roster="<?= (int)$c['schedule_id'] ?>">
                     <iconify-icon icon="mdi:eye-outline"></iconify-icon> View roster

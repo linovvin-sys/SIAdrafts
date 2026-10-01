@@ -1,5 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+if (session_status() === PHP_SESSION_NONE) require_once __DIR__ . '/../../Backend/session_bootstrap.php';
+app_session_start();
 if (!empty($_SESSION['user_id'])) {
     require_once __DIR__ . '/../../Backend/roles.php';
     header('Location: ' . staff_dashboard_url($_SESSION['role_name'] ?? ''));

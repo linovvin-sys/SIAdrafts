@@ -11,7 +11,7 @@ require_once __DIR__ . '/../../../Backend/Student/quiz_data.php';
 
 $attemptId = (int)($_GET['attempt_id'] ?? 0);
 if (!$attemptId) {
-    header('Location: /SIAdrafts/Frontend/View/Student/quizzes.php');
+    header('Location: /SIAdrafts/Frontend/View/Student/my_courses.php');
     exit;
 }
 
@@ -24,7 +24,7 @@ $owned = load_owned_attempt($conn, $attemptId, (int)$_SESSION['student_id']);
 $db->close();
 
 if (!$owned) {
-    header('Location: /SIAdrafts/Frontend/View/Student/quizzes.php');
+    header('Location: /SIAdrafts/Frontend/View/Student/my_courses.php');
     exit;
 }
 
@@ -33,7 +33,7 @@ include __DIR__ . '/Include/header.php';
 
 <div class="sp-quiz-attempt-shell" id="quizAttemptShell" data-attempt-id="<?= $attemptId ?>">
   <div class="sp-empty">
-    <iconify-icon icon="mdi:loading"></iconify-icon>
+    <span class="sp-loading-dots" style="margin-bottom:12px;"><span></span><span></span><span></span></span>
     <p>Loading your quiz…</p>
   </div>
 </div>

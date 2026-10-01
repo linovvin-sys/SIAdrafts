@@ -92,8 +92,34 @@ function treasury_snapshot_block(mysqli $conn): string
         $fullyPaidText = implode("\n", $lines);
     }
 
+    // The actual "who" behind unpaid_count above -- the FULL population
+    // owing a balance, not just the narrower "flagged overdue" subset
+    // above (a payment can owe a balance without its due date having
+    // passed yet). Without this, "list the ones who still owe" had no
+    // matching list to answer from even though the count was right there.
+    // Highest balance first since that's what Treasury acts on first;
+    // capped at 10 for the same prompt-size reason as every other list.
+    $owing = $conn->query("
+        SELECT s.student_name, s.student_no, p.balance, p.due_date
+        FROM payment p
+        JOIN enrollment e ON e.enrollment_id = p.enrollment_id
+        JOIN student s ON s.applicant_id = e.applicant_id
+        WHERE p.balance > 0
+        ORDER BY p.balance DESC
+        LIMIT 10
+    ")->fetch_all(MYSQLI_ASSOC);
+
+    $owingText = 'None currently owing a balance.';
+    if ($owing) {
+        $lines = array_map(function ($o) {
+            $due = $o['due_date'] ? date('M j, Y', strtotime($o['due_date'])) : 'no due date set';
+            return "  - {$o['student_name']} ({$o['student_no']}) — balance \u{20B1}" . number_format((float)$o['balance'], 2) . ", due {$due}";
+        }, $owing);
+        $owingText = implode("\n", $lines);
+    }
+
     return "TREASURY\n"
-        . "- Payments still owing a balance: {$row['unpaid_count']} (total outstanding: \u{20B1}" . number_format((float)$row['unpaid_balance'], 2) . ")\n"
+        . "- Payments still owing a balance: {$row['unpaid_count']} (total outstanding: \u{20B1}" . number_format((float)$row['unpaid_balance'], 2) . "), highest balance first, up to 10 shown:\n{$owingText}\n"
         . "- Fully paid accounts: {$row['fully_paid_count']}\n"
         . "- Total collected to date (all downpayments/payments recorded): \u{20B1}" . number_format((float)$row['collected_total'], 2) . "\n"
         . "- Students flagged overdue and still unpaid (most overdue first, up to 10):\n{$criticalText}\n"
@@ -154,6 +180,47 @@ function admission_snapshot_block(mysqli $conn): string
         . "- Outstanding \"will submit later\" documents ({$docs['pending_docs']} total, up to 10 shown):\n{$docText}";
 }
 
+/**
+ * Shared by registrar_snapshot_block() and enrollment_snapshot_block() --
+ * both previously only carried the COUNT of enrolled/pending-payment
+ * students, with no actual list, so "list them" always came back empty no
+ * matter how the prompt was worded. Same up-to-10, most-recent-first
+ * convention as every other list in this file.
+ */
+function enrollment_status_list(mysqli $conn, string $status): array
+{
+    $stmt = $conn->prepare("
+        SELECT s.student_no, CONCAT(s.first_name, ' ', s.last_name) AS student_name,
+               c.course_code, sec.section_name, e.year_level, e.semester
+        FROM enrollment e
+        JOIN student s ON s.applicant_id = e.applicant_id
+        LEFT JOIN section sec ON sec.section_id = s.section_id
+        LEFT JOIN course c ON c.course_id = sec.course_id
+        WHERE e.status = ?
+        ORDER BY e.created_at DESC
+        LIMIT 10
+    ");
+    $stmt->bind_param('s', $status);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+function enrollment_status_list_text(mysqli $conn, string $status, string $emptyText): string
+{
+    $rows = enrollment_status_list($conn, $status);
+    if (!$rows) {
+        return $emptyText;
+    }
+    $lines = array_map(function ($r) {
+        $course = $r['course_code'] ?? 'no program set';
+        $section = $r['section_name'] ?? 'no section set';
+        return "  - {$r['student_name']} ({$r['student_no']}) — {$course}, {$section}, Year {$r['year_level']} Sem {$r['semester']}";
+    }, $rows);
+    return implode("\n", $lines);
+}
+
 function registrar_snapshot_block(mysqli $conn): string
 {
     $row = $conn->query("
@@ -212,11 +279,14 @@ function registrar_snapshot_block(mysqli $conn): string
         $schedulesText = implode("\n", $lines);
     }
 
+    $enrolledText = enrollment_status_list_text($conn, 'Enrolled', 'None currently enrolled.');
+    $pendingPaymentText = enrollment_status_list_text($conn, 'Pending Payment', 'None currently pending payment.');
+
     return "REGISTRAR\n"
         . "- Sections awaiting approval: {$row['pending_sections']} (of {$row['total_sections']} total sections):\n{$sectionsText}\n"
         . "- Schedules awaiting approval: {$sched['pending_schedules']}:\n{$schedulesText}\n"
-        . "- Enrolled students this term: {$enr['enrolled']}\n"
-        . "- Enrollments still waiting on payment: {$enr['pending_payment']}";
+        . "- Enrolled students this term ({$enr['enrolled']} total, most recent 10 shown):\n{$enrolledText}\n"
+        . "- Enrollments still waiting on payment ({$enr['pending_payment']} total, most recent 10 shown):\n{$pendingPaymentText}";
 }
 
 function enrollment_snapshot_block(mysqli $conn): string
@@ -228,7 +298,10 @@ function enrollment_snapshot_block(mysqli $conn): string
         FROM enrollment
     ")->fetch_assoc();
 
+    $enrolledText = enrollment_status_list_text($conn, 'Enrolled', 'None currently enrolled.');
+    $pendingPaymentText = enrollment_status_list_text($conn, 'Pending Payment', 'None currently pending payment.');
+
     return "ENROLLMENT\n"
-        . "- Enrolled students this term: {$row['enrolled']}\n"
-        . "- Enrollments still waiting on payment: {$row['pending_payment']}";
+        . "- Enrolled students this term ({$row['enrolled']} total, most recent 10 shown):\n{$enrolledText}\n"
+        . "- Enrollments still waiting on payment ({$row['pending_payment']} total, most recent 10 shown):\n{$pendingPaymentText}";
 }

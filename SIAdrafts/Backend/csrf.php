@@ -1,8 +1,7 @@
 <?php
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/session_bootstrap.php';
+app_session_start();
 
 function csrf_token(): string
 {

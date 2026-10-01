@@ -7,10 +7,8 @@
  */
 
 require_once __DIR__ . '/session_security.php';
-
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/session_bootstrap.php';
+app_session_start();
 
 function require_professor(bool $isApi = false): void
 {

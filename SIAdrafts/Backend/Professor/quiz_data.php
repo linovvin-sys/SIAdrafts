@@ -312,12 +312,16 @@ function post_question(mysqli $conn, int $quizId, int $professorId, string $ques
  */
 function generate_questions_from_text(mysqli $conn, int $quizId, int $professorId, ?int $questionsPerAttempt, string $text): array
 {
-    $stmt = $conn->prepare("SELECT 1 FROM quiz WHERE quiz_id = ? AND professor_id = ?");
+    $stmt = $conn->prepare(
+        "SELECT sub.subject_name, sub.subject_code
+         FROM quiz q JOIN schedule sc ON sc.schedule_id = q.schedule_id JOIN subject sub ON sub.subject_id = sc.subject_id
+         WHERE q.quiz_id = ? AND q.professor_id = ?"
+    );
     $stmt->bind_param('ii', $quizId, $professorId);
     $stmt->execute();
-    $owns = (bool)$stmt->get_result()->fetch_row();
+    $owned = $stmt->get_result()->fetch_assoc();
     $stmt->close();
-    if (!$owns) {
+    if (!$owned) {
         return ['error' => 'That quiz does not belong to you.'];
     }
 
@@ -325,8 +329,15 @@ function generate_questions_from_text(mysqli $conn, int $quizId, int $professorI
         return ['error' => 'Questions per attempt must be between 1 and 999.'];
     }
 
+    // The subject name/code is typically the single most-repeated
+    // capitalized phrase in a lesson file (it's the class's own name),
+    // so without excluding it the generator kept picking it as "the
+    // important term" -- asking the student to fill in the name of the
+    // class they're already taking.
+    $excludedTerms = [$owned['subject_name'], $owned['subject_code']];
+
     require_once __DIR__ . '/../Quizzes/cloze_generator.php';
-    $generated = generate_cloze_questions($text, 100);
+    $generated = generate_cloze_questions($text, 100, $excludedTerms);
     if (empty($generated)) {
         return ['error' => "Couldn't generate any usable questions from this file — try a file with more full sentences."];
     }

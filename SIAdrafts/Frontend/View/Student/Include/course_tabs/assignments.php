@@ -1,42 +1,23 @@
 <?php
-$pageTitle  = "Assignments";
-$activePage = "assignments";
-$pageScript = "assignments";
-
-require_once __DIR__ . '/../../../Backend/require_student.php';
-require_student();
-require_once __DIR__ . '/../../../Backend/db.php';
-require_once __DIR__ . '/../../../Backend/Student/assignment_data.php';
-
-$db   = new Database();
-$conn = $db->connect();
-
-$applicantId = (int)$_SESSION['student_id'];
-$assignments = get_my_assignments($conn, $applicantId);
-$db->close();
-
-include __DIR__ . '/Include/header.php';
+/**
+ * Assignments tab for course_detail.php. Expects $tabData['assignments']
+ * in scope. Same card markup as the old cross-class Assignments page,
+ * minus the subject_code pill (redundant -- the whole page is already
+ * scoped to this one course).
+ */
+$assignments = $tabData['assignments'] ?? [];
 ?>
-
-<h1 class="sp-greeting">Assignments</h1>
-<p class="sp-subline">Assignments posted by your professors for your current classes.</p>
-
 <?php if (empty($assignments)): ?>
   <div class="sp-empty">
     <iconify-icon icon="mdi:file-document-edit-outline"></iconify-icon>
     <p><strong>No assignments yet.</strong></p>
-    <p>Assignments your professors post will appear here.</p>
+    <p>Assignments your professor posts for this class will appear here.</p>
   </div>
 <?php else: ?>
-
   <?php foreach ($assignments as $i => $a): ?>
     <div class="sp-section" style="--row-i: <?= $i ?>;">
       <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap;">
-        <div>
-          <span class="sp-pill enrolled"><?= htmlspecialchars($a['subject_code'], ENT_QUOTES) ?></span>
-          <h2 class="sp-section-title" style="margin-top:8px; margin-bottom:2px;"><?= htmlspecialchars($a['title'], ENT_QUOTES) ?></h2>
-          <p style="color:var(--slate-300); font-size:12.5px; margin:0;"><?= htmlspecialchars($a['subject_name'], ENT_QUOTES) ?></p>
-        </div>
+        <h2 class="sp-section-title" style="margin:0;"><?= htmlspecialchars($a['title'], ENT_QUOTES) ?></h2>
         <div style="text-align:right; font-size:13px; color:var(--slate-500);">
           <?php if ($a['due_date']): ?>
             <div>Due <?= date('M j, Y', strtotime($a['due_date'])) ?></div>
@@ -96,7 +77,4 @@ include __DIR__ . '/Include/header.php';
       </form>
     </div>
   <?php endforeach; ?>
-
 <?php endif; ?>
-
-<?php include __DIR__ . '/Include/footer.php'; ?>

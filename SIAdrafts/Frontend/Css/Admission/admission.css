@@ -420,6 +420,17 @@
     border: 1px solid rgba(124,152,133,0.35);
     color: var(--ink);
   }
+  .form-banner.draft{
+    background: #EFF3EF;
+    border: 1px solid rgba(31,46,40,0.18);
+    color: var(--ink);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  .form-banner.draft .draft-actions{ display: flex; gap: 10px; flex-shrink: 0; }
   .form-banner ul{ margin: 8px 0 0; padding-left: 18px; }
   .form-banner li{ margin-bottom: 3px; }
   .form-banner .banner-title{ font-weight: 700; margin-bottom: 2px; }

@@ -1,5 +1,6 @@
 <?php
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../../../../Backend/session_bootstrap.php';
+app_session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
 $_pageCsrfToken = csrf_token();
@@ -47,7 +48,7 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
     <nav class="navbar <?= !$_logged_in ? 'navbar-guest' : '' ?>">
       <a class="brand" href="<?= $_logged_in ? '/SIAdrafts/Frontend/View/Admission/enrollment.php' : '/SIAdrafts/Frontend/View/index.php' ?>">
         <span class="brand-mark">
-          <iconify-icon icon="mdi:school" style="color:#FAF7F0; font-size:19px;"></iconify-icon>
+          <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="22" height="22">
         </span>
         <span class="brand-name">Edu<em>School</em></span>
       </a>

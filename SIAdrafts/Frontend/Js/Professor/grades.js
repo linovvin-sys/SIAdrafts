@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const periodSelect    = document.getElementById('gradesPeriodSelect');
   const emptyState      = document.getElementById('gradesEmptyState');
   const panel           = document.getElementById('gradesPanel');
+  const fixedScheduleId = document.body.dataset.scheduleId || null;
   const gradesBody      = document.getElementById('gradesTableBody');
   const errBox          = document.getElementById('gradesFormError');
   const errMsg          = document.getElementById('gradesFormErrorMsg');
@@ -16,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const successMsg      = document.getElementById('gradesFormSuccessMsg');
   const saveGradesBtn   = document.getElementById('saveGradesBtn');
 
-  if (!classSelect) return;
+  if (!classSelect && !fixedScheduleId) return;
 
   let currentScheduleId = null;
 
@@ -52,8 +53,8 @@ document.addEventListener('DOMContentLoaded', function () {
       return '<tr data-enrollment-subject-id="' + s.enrollment_subject_id + '" style="--row-i:' + i + '">' +
         '<td class="sp-num">' + escHtml(s.student_no) + '</td>' +
         '<td>' + escHtml(name) + '</td>' +
-        '<td><input type="text" class="sp-table-input sp-grade-input" data-grade-input maxlength="10" value="' + escHtml(s.grade_value || '') + '"><span class="sp-remarks-hint" data-pass-hint hidden></span></td>' +
-        '<td><input type="text" class="sp-table-input" data-remarks-input maxlength="255" value="' + escHtml(s.remarks || '') + '"></td>' +
+        '<td><input type="text" class="sp-table-input sp-grade-input" data-grade-input maxlength="10" placeholder="e.g. 95" value="' + escHtml(s.grade_value || '') + '"><span class="sp-remarks-hint" data-pass-hint hidden></span></td>' +
+        '<td><input type="text" class="sp-table-input" data-remarks-input maxlength="255" placeholder="Optional remarks…" value="' + escHtml(s.remarks || '') + '"></td>' +
         '</tr>';
     }).join('');
     gradesBody.querySelectorAll('[data-grade-input]').forEach(updatePassHint);
@@ -79,7 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   async function loadGrades(scheduleId, period) {
-    gradesBody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Loading…</td></tr>';
+    gradesBody.innerHTML = '<tr><td colspan="4" style="text-align:center;"><span class="sp-loading-dots"><span></span><span></span><span></span></span></td></tr>';
     try {
       const params = new URLSearchParams({ schedule_id: scheduleId, period: period });
       const res = await fetch(API + 'Professors/get_class_grades.php?' + params.toString());
@@ -106,18 +107,24 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   } catch (e) {}
 
-  classSelect.addEventListener('change', () => {
-    window.spRememberClassSelection?.(classSelect);
-    currentScheduleId = classSelect.value || null;
-    if (!currentScheduleId) {
-      panel.hidden = true;
-      emptyState.hidden = false;
-      return;
-    }
-    panel.hidden = false;
-    emptyState.hidden = true;
+  function initForClass(scheduleId) {
+    currentScheduleId = scheduleId;
+    if (panel) panel.hidden = false;
+    if (emptyState) emptyState.hidden = true;
     hideNotices();
     loadGrades(currentScheduleId, periodSelect.value);
+  }
+
+  classSelect?.addEventListener('change', () => {
+    window.spRememberClassSelection?.(classSelect);
+    const scheduleId = classSelect.value || null;
+    if (!scheduleId) {
+      if (panel) panel.hidden = true;
+      if (emptyState) emptyState.hidden = false;
+      currentScheduleId = null;
+      return;
+    }
+    initForClass(scheduleId);
   });
 
   periodSelect?.addEventListener('change', () => {
@@ -170,8 +177,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  if (window.spRestoreClassSelection?.(classSelect)) {
-    classSelect.dispatchEvent(new Event('change'));
+  if (classSelect) {
+    if (window.spRestoreClassSelection?.(classSelect)) {
+      classSelect.dispatchEvent(new Event('change'));
+    }
+  } else if (fixedScheduleId) {
+    initForClass(fixedScheduleId);
   }
 
 });

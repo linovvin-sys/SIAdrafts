@@ -45,9 +45,11 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       Swal.fire({
-        icon: 'success',
+        icon: result.email_sent ? 'success' : 'warning',
         title: 'Password reset',
-        html: `New temporary password: <strong>${result.temp_password}</strong><br>They must change it on next login.`,
+        text: result.email_sent
+          ? `A new temporary password was emailed to ${name}. They must change it on next login.`
+          : `Password reset, but the email could not be sent — ${name} has no email on file, or delivery failed. They'll need another way to get their new password.`,
         confirmButtonColor: '#1c2b4a',
       }).then(() => location.reload());
     });

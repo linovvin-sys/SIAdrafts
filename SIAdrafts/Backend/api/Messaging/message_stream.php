@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../../Backend/session_bootstrap.php';
+app_session_start();
 require_once '../../db.php';
 require_once '../../roles.php';
 require_once '../../require_role.php';
@@ -21,6 +22,14 @@ $conn = $db->connect();
 
 if (!$with_id || !users_can_message($conn, $my_id, $with_id)) {
     http_response_code(403);
+    exit;
+}
+
+require_once '../../stream_limit.php';
+if (!stream_slot_acquire('staff_msg_' . $my_id, 4)) {
+    http_response_code(429);
+    header('Content-Type: application/json');
+    echo json_encode(['error' => 'Too many open conversations at once. Close a tab and try again.']);
     exit;
 }
 

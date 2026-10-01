@@ -184,14 +184,14 @@ include __DIR__ . '/Include/header.php';
           </a>
         </li>
         <li>
-          <a href="/SIAdrafts/Frontend/View/Professor/grades.php">
+          <a href="/SIAdrafts/Frontend/View/Professor/classes.php">
             <span class="sp-quickaction-icon"><iconify-icon icon="mdi:school-outline"></iconify-icon></span>
             <span>Encode grades</span>
             <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>
           </a>
         </li>
         <li>
-          <a href="/SIAdrafts/Frontend/View/Professor/assignments.php">
+          <a href="/SIAdrafts/Frontend/View/Professor/classes.php">
             <span class="sp-quickaction-icon"><iconify-icon icon="mdi:file-document-edit-outline"></iconify-icon></span>
             <span>Post an assignment</span>
             <iconify-icon icon="mdi:chevron-right" class="sp-quickaction-chevron"></iconify-icon>

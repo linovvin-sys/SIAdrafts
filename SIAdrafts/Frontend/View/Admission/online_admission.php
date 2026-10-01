@@ -55,6 +55,11 @@ include '../Admission/Include/header.php';
        complete verification.</p>
   </div>
 
+  <?php $recaptchaSiteKey = config('RECAPTCHA_SITE_KEY'); ?>
+  <?php if ($recaptchaSiteKey): ?>
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+  <?php endif; ?>
+
   <!-- TODO: confirm this matches the real route to online_admission_process.php
        (it lives under Backend/api/, this page lives under Frontend/.../Admission/Online/) -->
   <form id="admissionForm" action="/SIAdrafts/Backend/api/Admission/online_admission_process.php" enctype="multipart/form-data" novalidate>
@@ -67,6 +72,7 @@ include '../Admission/Include/header.php';
     </div>
 
     <div style="max-width:900px;margin:0 auto 18px;padding:0 16px;">
+      <div id="draftBanner" class="form-banner draft" style="display:none;" role="status" aria-live="polite"></div>
       <div id="formBanner" class="form-banner" style="display:none;" role="alert" aria-live="polite"></div>
     </div>
 
@@ -313,8 +319,14 @@ include '../Admission/Include/header.php';
         <?php endforeach; ?>
       </section>
 
+      <?php if ($recaptchaSiteKey): ?>
+        <div style="margin-bottom:18px;">
+          <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars($recaptchaSiteKey, ENT_QUOTES) ?>"></div>
+        </div>
+      <?php endif; ?>
+
       <div class="form-actions">
-        <span class="hint">Double-check your details — you'll need matching documents on campus.</span>
+        <span class="hint">Double-check your details — you'll need matching documents on campus.<br><span id="draftSaveStatus" style="opacity:0.75;"></span></span>
         <button type="submit" class="btn-submit">Submit application <iconify-icon icon="mdi:arrow-right"></iconify-icon></button>
       </div>
 

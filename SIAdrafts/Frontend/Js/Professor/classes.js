@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const subjectLabel = row ? row.querySelector('.sp-class-subject')?.textContent.trim() : '';
 
       rosterSubtitle.textContent = subjectLabel || 'Class roster';
-      rosterBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Loading…</td></tr>';
+      rosterBody.innerHTML = '<tr><td colspan="2" style="text-align:center;"><span class="sp-loading-dots"><span></span><span></span><span></span></span></td></tr>';
       openRoster();
 
       try {
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const sectionName = btn.getAttribute('data-section-name');
 
       rosterSubtitle.textContent = sectionName + ' — Master List (' + schoolYear + ', Sem ' + semester + ')';
-      rosterBody.innerHTML = '<tr><td colspan="2" style="text-align:center;">Loading…</td></tr>';
+      rosterBody.innerHTML = '<tr><td colspan="2" style="text-align:center;"><span class="sp-loading-dots"><span></span><span></span><span></span></span></td></tr>';
       openRoster();
 
       try {

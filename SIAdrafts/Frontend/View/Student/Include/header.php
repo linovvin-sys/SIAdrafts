@@ -4,7 +4,8 @@
  * $activePage to be set by the including view, same convention as the
  * staff Include/header.php files.
  */
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/../../../../Backend/session_bootstrap.php';
+app_session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
 require_once __DIR__ . '/../../../../Backend/asset_url.php';
@@ -19,12 +20,7 @@ $_tabs = [
     ['page' => 'dashboard',       'label' => 'Home',            'icon' => 'mdi:home-variant',        'url' => '/SIAdrafts/Frontend/View/Student/dashboard.php'],
     ['page' => 'registration',    'label' => 'Registration',    'icon' => 'mdi:file-document-outline','url' => '/SIAdrafts/Frontend/View/Student/registration.php'],
     ['page' => 'schedule',        'label' => 'Schedule',        'icon' => 'mdi:calendar-week',       'url' => '/SIAdrafts/Frontend/View/Student/schedule.php'],
-    ['page' => 'assignments',     'label' => 'Assignments',     'icon' => 'mdi:file-document-edit-outline', 'url' => '/SIAdrafts/Frontend/View/Student/assignments.php'],
-    ['page' => 'quizzes',         'label' => 'Quizzes',         'icon' => 'mdi:clipboard-text-clock-outline', 'url' => '/SIAdrafts/Frontend/View/Student/quizzes.php'],
-    ['page' => 'materials',       'label' => 'Materials',       'icon' => 'mdi:folder-multiple-outline', 'url' => '/SIAdrafts/Frontend/View/Student/materials.php'],
-    ['page' => 'grades',          'label' => 'Grades',          'icon' => 'mdi:school-outline',      'url' => '/SIAdrafts/Frontend/View/Student/grades.php'],
-    ['page' => 'attendance',      'label' => 'Attendance',      'icon' => 'mdi:clipboard-check-outline','url' => '/SIAdrafts/Frontend/View/Student/attendance.php'],
-    ['page' => 'groups',          'label' => 'Groups',          'icon' => 'mdi:account-group-outline','url' => '/SIAdrafts/Frontend/View/Student/groups.php'],
+    ['page' => 'my_courses',      'label' => 'My Courses',      'icon' => 'mdi:bookshelf',            'url' => '/SIAdrafts/Frontend/View/Student/my_courses.php'],
     ['page' => 'messages',        'label' => 'Messages',        'icon' => 'mdi:message-outline',     'url' => '/SIAdrafts/Frontend/View/Student/messages.php'],
     ['page' => 'accountabilities','label' => 'Accountabilities','icon' => 'mdi:cash-multiple',       'url' => '/SIAdrafts/Frontend/View/Student/accountabilities.php'],
 ];
@@ -61,7 +57,8 @@ $_tabs = [
 <?php if (empty($hideNav)): ?>
 <nav class="sp-nav" aria-label="Student portal">
   <a class="sp-brand" href="/SIAdrafts/Frontend/View/Student/dashboard.php">
-    Edu<em>School</em>
+    <img class="sp-brand-mark" src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="22" height="22">
+    <span>Edu<em>School</em></span>
   </a>
 
   <ul class="sp-nav-links">
@@ -97,7 +94,7 @@ $_tabs = [
   <div class="sp-notif-panel" id="notifPanel">
     <p class="sp-notif-panel-title">Notifications</p>
     <div class="sp-notif-panel-list" id="notifList">
-      <p class="sp-announce-empty">Loading…</p>
+      <p class="sp-announce-empty"><span class="sp-loading-dots"><span></span><span></span><span></span></span></p>
     </div>
   </div>
 </div>

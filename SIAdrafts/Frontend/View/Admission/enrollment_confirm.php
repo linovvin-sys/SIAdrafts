@@ -255,7 +255,7 @@ $extraCss = [
         <!-- Header -->
         <div class="reg-header">
           <div class="reg-school-mark">
-            <iconify-icon icon="mdi:school"></iconify-icon>
+            <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="26" height="26">
           </div>
           <div>
             <h2 class="reg-title">Enrollment Registration Form</h2>

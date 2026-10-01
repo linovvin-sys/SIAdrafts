@@ -5,9 +5,8 @@ require_once __DIR__ . '/../../csrf.php';
 require_once __DIR__ . '/can_message.php';
 require_once __DIR__ . '/../Messaging/message_attachments.php';
 
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/../../../Backend/session_bootstrap.php';
+app_session_start();
 
 $isProfessor = !empty($_SESSION['professor_id']);
 $isStudent   = !empty($_SESSION['student_id']);

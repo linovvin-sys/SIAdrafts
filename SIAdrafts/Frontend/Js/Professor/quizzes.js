@@ -12,8 +12,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const errMsg               = document.getElementById('quizFormErrorMsg');
   const postBtn                = document.getElementById('quizPostBtn');
   const cancelEditBtn           = document.getElementById('cancelQuizEditBtn');
+  const fixedScheduleId         = document.body.dataset.scheduleId || null;
 
-  if (!classSelect) return;
+  if (!classSelect && !fixedScheduleId) return;
 
   let currentScheduleId = null;
   let editingQuizId = null;
@@ -63,8 +64,8 @@ document.addEventListener('DOMContentLoaded', function () {
             '<iconify-icon icon="mdi:account-group-outline"></iconify-icon> Results (' + q.attempt_count + ')' +
           '</button>' +
           (q.status === 'published'
-            ? '<button type="button" class="sp-table-action" data-unpublish-quiz="' + q.quiz_id + '"><iconify-icon icon="mdi:eye-off-outline"></iconify-icon> Unpublish</button>'
-            : '<button type="button" class="sp-table-action is-primary" data-publish-quiz="' + q.quiz_id + '"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon> Publish</button>') +
+            ? '<button type="button" class="sp-table-action" data-unpublish-quiz="' + q.quiz_id + '"><span class="sp-btn-spinner" hidden></span><iconify-icon icon="mdi:eye-off-outline"></iconify-icon> <span>Unpublish</span></button>'
+            : '<button type="button" class="sp-table-action is-primary" data-publish-quiz="' + q.quiz_id + '"><span class="sp-btn-spinner" hidden></span><iconify-icon icon="mdi:check-circle-outline"></iconify-icon> <span>Publish</span></button>') +
         '</div>' +
       '</li>';
     }).join('');
@@ -91,19 +92,26 @@ document.addEventListener('DOMContentLoaded', function () {
     cancelEditBtn.hidden = true;
   }
 
-  classSelect.addEventListener('change', () => {
-    window.spRememberClassSelection?.(classSelect);
-    currentScheduleId = classSelect.value || null;
+  function initForClass(scheduleId) {
+    currentScheduleId = scheduleId;
     resetQuizForm();
-    if (!currentScheduleId) {
-      panel.hidden = true;
-      emptyState.hidden = false;
-      return;
-    }
-    panel.hidden = false;
-    emptyState.hidden = true;
+    if (panel) panel.hidden = false;
+    if (emptyState) emptyState.hidden = true;
     errBox.classList.remove('is-visible');
     loadQuizzes(currentScheduleId);
+  }
+
+  classSelect?.addEventListener('change', () => {
+    window.spRememberClassSelection?.(classSelect);
+    const scheduleId = classSelect.value || null;
+    resetQuizForm();
+    if (!scheduleId) {
+      if (panel) panel.hidden = true;
+      if (emptyState) emptyState.hidden = false;
+      currentScheduleId = null;
+      return;
+    }
+    initForClass(scheduleId);
   });
 
   quizForm.addEventListener('submit', (e) => {
@@ -226,22 +234,26 @@ document.addEventListener('DOMContentLoaded', function () {
     const unpublishBtn = e.target.closest('[data-unpublish-quiz]');
 
     if (publishBtn) {
+      publishBtn.disabled = true;
+      publishBtn.querySelector('.sp-btn-spinner').hidden = false;
       const body = new FormData();
       body.append('quiz_id', publishBtn.dataset.publishQuiz);
       body.append('csrf_token', csrfToken);
       const res = await fetch(API + 'Quizzes/publish_quiz.php', { method: 'POST', body }).then(r => r.json());
-      if (res.error) { showError(errBox, errMsg, res.error); return; }
+      if (res.error) { publishBtn.disabled = false; publishBtn.querySelector('.sp-btn-spinner').hidden = true; showError(errBox, errMsg, res.error); return; }
       renderQuizzes(res.quizzes);
       if (window.spToast) window.spToast('Quiz published — students can now see it.', 'mdi:check-circle-outline');
       return;
     }
 
     if (unpublishBtn) {
+      unpublishBtn.disabled = true;
+      unpublishBtn.querySelector('.sp-btn-spinner').hidden = false;
       const body = new FormData();
       body.append('quiz_id', unpublishBtn.dataset.unpublishQuiz);
       body.append('csrf_token', csrfToken);
       const res = await fetch(API + 'Quizzes/unpublish_quiz.php', { method: 'POST', body }).then(r => r.json());
-      if (res.error) { showError(errBox, errMsg, res.error); return; }
+      if (res.error) { unpublishBtn.disabled = false; unpublishBtn.querySelector('.sp-btn-spinner').hidden = true; showError(errBox, errMsg, res.error); return; }
       renderQuizzes(res.quizzes);
       if (window.spToast) window.spToast('Quiz moved back to draft — hidden from students until republished.', 'mdi:eye-off-outline');
       return;
@@ -568,7 +580,11 @@ document.addEventListener('DOMContentLoaded', function () {
 
   resetQuestionForm();
 
-  if (window.spRestoreClassSelection?.(classSelect)) {
-    classSelect.dispatchEvent(new Event('change'));
+  if (classSelect) {
+    if (window.spRestoreClassSelection?.(classSelect)) {
+      classSelect.dispatchEvent(new Event('change'));
+    }
+  } else if (fixedScheduleId) {
+    initForClass(fixedScheduleId);
   }
 });

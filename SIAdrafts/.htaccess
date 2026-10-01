@@ -70,7 +70,16 @@
     # blocked and every "bi bi-*" icon renders as an empty box (the mdi/
     # iconify icons are unaffected -- those fetch SVG data over connect-src
     # via api.iconify.design, not a font file).
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    #
+    # script-src/frame-src also allow www.google.com + www.gstatic.com for
+    # reCAPTCHA on the public online-admission form (Backend/recaptcha.php) --
+    # the widget's own JS loads under script-src, but it then renders its
+    # actual checkbox/challenge UI in a cross-origin iframe, which needs an
+    # explicit frame-src entry (no frame-src directive existed before this,
+    # so it fell back to default-src 'self' and silently blocked the iframe).
+    # frame-ancestors below is unrelated and unaffected -- that's who may
+    # frame THIS site, not what this site may itself embed.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; frame-src https://www.google.com/recaptcha/; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
     # mod_ssl sets the "HTTPS" server/env variable itself whenever a
     # connection actually terminated TLS here — env=HTTPS makes this

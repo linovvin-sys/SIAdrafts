@@ -63,6 +63,38 @@ function get_my_quizzes(mysqli $conn, int $applicantId): array
 }
 
 /**
+ * Same as get_my_quizzes(), scoped to one SUBJECT for course_detail.php's
+ * Quizzes tab -- joins on subject_id rather than one fixed schedule_id,
+ * merging quizzes from every schedule block (lecture/lab) a subject has.
+ */
+function get_my_quizzes_for_subject(mysqli $conn, int $applicantId, int $subjectId): array
+{
+    $stmt = $conn->prepare("
+        SELECT q.quiz_id, q.title, q.instructions, q.time_limit_minutes,
+               q.available_from, q.available_until,
+               sub.subject_code, sub.subject_name,
+               es.enrollment_subject_id,
+               qa.attempt_id, qa.status, qa.score, qa.max_score
+        FROM enrollment e
+        JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.status = 'Enrolled'
+        JOIN subject sub ON sub.subject_id = es.subject_id
+        JOIN schedule sc ON sc.subject_id = ? AND sc.subject_id = es.subject_id
+             AND sc.school_year = e.school_year AND sc.semester = e.semester
+             AND (e.section_id = sc.section_id OR es.schedule_id = sc.schedule_id)
+        JOIN quiz q ON q.schedule_id = sc.schedule_id AND q.status = 'published'
+             AND EXISTS (SELECT 1 FROM quiz_question qq WHERE qq.quiz_id = q.quiz_id)
+        LEFT JOIN quiz_attempt qa ON qa.quiz_id = q.quiz_id AND qa.enrollment_subject_id = es.enrollment_subject_id
+        WHERE e.applicant_id = ? AND e.status = 'Enrolled'
+        ORDER BY q.created_at DESC
+    ");
+    $stmt->bind_param('ii', $subjectId, $applicantId);
+    $stmt->execute();
+    $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $stmt->close();
+    return $rows;
+}
+
+/**
  * Starts (or resumes) an attempt. Returns ['error' => string] or
  * ['attempt' => array]. deadline_at is computed by the DB itself
  * (DATE_ADD(NOW(), INTERVAL ? MINUTE)), capped at the quiz's

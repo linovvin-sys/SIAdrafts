@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const classSelect  = document.getElementById('attendanceClassSelect');
   const emptyState   = document.getElementById('attendanceEmptyState');
   const panel        = document.getElementById('attendancePanel');
+  const fixedScheduleId = document.body.dataset.scheduleId || null;
   const dateInput    = document.getElementById('attendanceDateInput');
   const rosterBody   = document.getElementById('attendanceRosterBody');
   const saveBtn      = document.getElementById('saveAttendanceBtn');
@@ -13,7 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const errMsg       = document.getElementById('attendanceFormErrorMsg');
   let currentScheduleId = null;
 
-  if (!classSelect) return;
+  if (!classSelect && !fixedScheduleId) return;
 
   const STATUSES = ['Present', 'Absent', 'Late', 'Excused'];
 
@@ -67,18 +68,24 @@ document.addEventListener('DOMContentLoaded', function () {
       .catch(() => showError('Could not load attendance.'));
   }
 
-  classSelect.addEventListener('change', () => {
-    window.spRememberClassSelection?.(classSelect);
-    currentScheduleId = classSelect.value || null;
-    if (!currentScheduleId) {
-      panel.hidden = true;
-      emptyState.hidden = false;
-      return;
-    }
-    panel.hidden = false;
-    emptyState.hidden = true;
+  function initForClass(scheduleId) {
+    currentScheduleId = scheduleId;
+    if (panel) panel.hidden = false;
+    if (emptyState) emptyState.hidden = true;
     errBox.classList.remove('is-visible');
     loadAttendance();
+  }
+
+  classSelect?.addEventListener('change', () => {
+    window.spRememberClassSelection?.(classSelect);
+    const scheduleId = classSelect.value || null;
+    if (!scheduleId) {
+      if (panel) panel.hidden = true;
+      if (emptyState) emptyState.hidden = false;
+      currentScheduleId = null;
+      return;
+    }
+    initForClass(scheduleId);
   });
 
   dateInput.addEventListener('change', loadAttendance);
@@ -123,7 +130,11 @@ document.addEventListener('DOMContentLoaded', function () {
       });
   });
 
-  if (window.spRestoreClassSelection?.(classSelect)) {
-    classSelect.dispatchEvent(new Event('change'));
+  if (classSelect) {
+    if (window.spRestoreClassSelection?.(classSelect)) {
+      classSelect.dispatchEvent(new Event('change'));
+    }
+  } else if (fixedScheduleId) {
+    initForClass(fixedScheduleId);
   }
 });

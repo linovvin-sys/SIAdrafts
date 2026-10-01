@@ -13,9 +13,13 @@ SIAdrafts/Backend/uploads/materials/*
 !SIAdrafts/Backend/uploads/materials/.gitkeep
 SIAdrafts/storage/rate_limit/*
 !SIAdrafts/storage/rate_limit/.gitkeep
+SIAdrafts/storage/stream_locks/*
+!SIAdrafts/storage/stream_locks/.gitkeep
 SIAdrafts/storage/backups/*
 !SIAdrafts/storage/backups/.gitkeep
 SIAdrafts/Frontend/Css/.cache/
 .superpowers/
 SIAdrafts/composer.phar
 /enrollment_db_sia_final.sql
+lampara/secrets.php
+lampara/tailwindcss-cli

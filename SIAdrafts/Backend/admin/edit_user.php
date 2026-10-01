@@ -1,5 +1,6 @@
 <?php
-session_start();
+require_once __DIR__ . '/../../Backend/session_bootstrap.php';
+app_session_start();
 
 require_once "../db.php";   // Change this if your db.php is in another folder
 require_once __DIR__ . '/../roles.php';

@@ -71,7 +71,7 @@ $iconMap = [
 <aside class="sidebar" id="appSidebar">
 
   <div class="sidebar-brand" id="sidebar-toggle" title="Toggle sidebar">
-    <div class="brand-icon"><iconify-icon icon="mdi:school"></iconify-icon></div>
+    <div class="brand-icon"><img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="22" height="22"></div>
     <div class="brand-name">Edu<span>School</span></div>
   </div>
 

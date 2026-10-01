@@ -15,10 +15,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const errBox        = document.getElementById('announceFormError');
   const errMsg        = document.getElementById('announceFormErrorMsg');
   const postBtn       = document.getElementById('announcePostBtn');
+  const fixedScheduleId = document.body.dataset.scheduleId || null;
   let currentScheduleId = null;
   let editingAnnouncementId = null;
 
-  if (!classSelect) return;
+  if (!classSelect && !fixedScheduleId) return;
 
   function showError(message) {
     errBox.classList.remove('is-visible');
@@ -51,7 +52,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   async function loadAnnouncements(scheduleId) {
-    announceList.innerHTML = '<li class="sp-announce-empty">Loading…</li>';
+    announceList.innerHTML = '<li class="sp-announce-empty"><span class="sp-loading-dots"><span></span><span></span><span></span></span></li>';
     try {
       const res = await fetch(API + 'Announcements/get_class_announcements.php?schedule_id=' + encodeURIComponent(scheduleId));
       const data = await res.json();
@@ -65,19 +66,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  classSelect.addEventListener('change', () => {
-    window.spRememberClassSelection?.(classSelect);
-    currentScheduleId = classSelect.value || null;
-    if (!currentScheduleId) {
-      panel.hidden = true;
-      emptyState.hidden = false;
-      return;
-    }
-    panel.hidden = false;
-    emptyState.hidden = true;
+  function initForClass(scheduleId) {
+    currentScheduleId = scheduleId;
+    if (panel) panel.hidden = false;
+    if (emptyState) emptyState.hidden = true;
     cancelEdit();
     errBox.classList.remove('is-visible');
     loadAnnouncements(currentScheduleId);
+  }
+
+  classSelect?.addEventListener('change', () => {
+    window.spRememberClassSelection?.(classSelect);
+    const scheduleId = classSelect.value || null;
+    if (!scheduleId) {
+      if (panel) panel.hidden = true;
+      if (emptyState) emptyState.hidden = false;
+      currentScheduleId = null;
+      return;
+    }
+    initForClass(scheduleId);
   });
 
   function cancelEdit() {
@@ -165,8 +172,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  if (window.spRestoreClassSelection?.(classSelect)) {
-    classSelect.dispatchEvent(new Event('change'));
+  if (classSelect) {
+    if (window.spRestoreClassSelection?.(classSelect)) {
+      classSelect.dispatchEvent(new Event('change'));
+    }
+  } else if (fixedScheduleId) {
+    initForClass(fixedScheduleId);
   }
 
 });

@@ -1,6 +1,7 @@
 <?php
 header('Content-Type: application/json');
-session_start();
+require_once __DIR__ . '/../../../Backend/session_bootstrap.php';
+app_session_start();
 require_once '../../db.php';
 require_once '../../roles.php';
 require_once '../../require_role.php';

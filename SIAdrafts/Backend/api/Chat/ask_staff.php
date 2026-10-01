@@ -11,7 +11,8 @@
  * own "data" to ground answers on.
  */
 
-session_start();
+require_once __DIR__ . '/../../../Backend/session_bootstrap.php';
+app_session_start();
 require_once __DIR__ . '/../../db.php';
 require_once __DIR__ . '/../../roles.php';
 require_once __DIR__ . '/../../require_role.php';
@@ -100,11 +101,14 @@ Format depends on what's actually being answered:
 - A single fact (one number, one name, one date) → one short sentence, inline.
 - Multiple items (several names, several rows) → a real list: one item per line, each line starting with "- ", nothing before the list but a short lead-in if needed (e.g. "3 fully paid:"). Use an actual newline between items, not commas crammed into one paragraph — the point is that it's scannable, not that it's short.
 
-The live figures block below is your ONLY data source — it's already scoped to exactly what a {$roleName} account may see. Rules, in priority order:
-1. If the block lists specific names/rows relevant to the question, use them directly, one per line as above — quote names, dates, and peso amounts exactly as given, never rounded, never summarized down to just a count when the actual list is available.
-2. If the question is covered only as an aggregate (a count/total, no list), give that number exactly, as a single sentence.
-3. If it isn't covered at all, say plainly you don't have that — do NOT guess which other office/role would, you have no reliable way to know that and a wrong guess misleads. If it plausibly belongs to the asker's own role but just isn't in the block, say the same thing: not something you can currently see.
-4. Never invent, estimate, or guess a number, name, or date under any circumstance.
+THE BLOCK BELOW IS GROUND TRUTH, NOT A PERMISSION GATE. Server-side code already filtered it to exactly what a {$roleName} account is cleared to see before this prompt was ever built — that decision is already made and done. If a number, name, or row is sitting in the block, {$fullName} is fully authorized to hear it. Your only job is reading the block correctly, not re-deciding what they're allowed to know. Never hedge with "I believe," "it looks like," or "I think" about something that's stated plainly in the block, and never frame an answer as a permission or access issue — the block IS the access grant.
+
+Before answering, check in this exact order:
+1. Does the block state this number, name, or date directly, anywhere in it (read the whole block, not just the first lines)? → State it immediately, exactly as written — never round a peso amount, never shorten an available list down to just a count.
+2. Can it be computed from numbers already in the block with simple arithmetic (a difference, a sum, a percentage of two figures that are both present)? → Do the math and give the resulting number, not just a description of how to get it.
+3. Only if neither #1 nor #2 applies — the block truly has nothing related to the question, even indirectly — say so in one plain sentence using language like "That's not something captured in what I can see right now," never "you don't have access" or "that's above your role." The real reason is almost always that this particular figure isn't tracked in this snapshot, not a permissions problem, and implying otherwise is inaccurate and unhelpful.
+4. Never guess which other office or system might have it instead. You have no reliable way to know that, and a wrong guess sends someone chasing the wrong desk.
+5. Never invent, estimate, or guess a number, name, or date that isn't in the block or isn't trivially derivable from it per #2.
 
 Casual conversation (greetings, small talk) doesn't need the data block — answer it naturally and briefly.
 
@@ -121,12 +125,23 @@ $payload = [
         [['role' => 'user', 'parts' => [['text' => $message]]]]
     ),
     'generationConfig' => [
-        // Bumped from 350 — a real 10-item list (name + date + amount per
-        // line) needs more headroom than a one-sentence answer, and a cap
-        // that's too tight would cut a list off mid-way instead of just
-        // being terser.
-        'maxOutputTokens' => 600,
-        'thinkingConfig'  => ['thinkingLevel' => 'low'],
+        // 1500, not 600 -- thinkingConfig's reasoning tokens are drawn from
+        // this SAME budget, not a separate pool, for this model. 600 was
+        // sized back when thinkingLevel was 'low' and left barely any of
+        // that shared budget for the actual reply once 'medium' thinking
+        // started eating into it first, silently truncating real answers
+        // mid-list (e.g. a 10-row applicant list cutting off after row 2).
+        // Sized generously here so a full 10-item list (name + date +
+        // amount per line) always has room left after thinking, regardless
+        // of how much of the budget reasoning consumes first.
+        'maxOutputTokens' => 1500,
+        // premature "I don't have that" refusals are more likely when the
+        // model doesn't budget enough reasoning to actually scan the whole
+        // block (see the numbered check in the system prompt above) before
+        // giving up. 'medium' costs a bit more latency/tokens but directly
+        // trades for the accuracy this prompt is tuned for -- maxOutputTokens
+        // above was raised specifically to afford this.
+        'thinkingConfig'  => ['thinkingLevel' => 'medium'],
     ],
 ];
 

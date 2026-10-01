@@ -8,6 +8,11 @@ document.addEventListener('DOMContentLoaded', function () {
   const classSelect          = document.getElementById('assignmentClassSelect');
   const emptyState           = document.getElementById('assignmentEmptyState');
   const panel                = document.getElementById('assignmentPanel');
+  // Set only on Frontend/View/*/course_detail.php's Assignments tab, where
+  // there's no dropdown -- the page is already scoped to one class, so
+  // this script just needs to know which one instead of waiting for a
+  // <select> change event.
+  const fixedScheduleId      = document.body.dataset.scheduleId || null;
   const assignmentList       = document.getElementById('assignmentList');
   const assignmentForm       = document.getElementById('assignmentForm');
   const assignmentTitleEl    = document.getElementById('assignmentTitleInput');
@@ -24,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const addCategoryBtn       = document.getElementById('addCategoryBtn');
   const categoryListEl       = document.getElementById('categoryList');
 
-  if (!classSelect) return;
+  if (!classSelect && !fixedScheduleId) return;
 
   let currentScheduleId = null;
   let lastAssignments = [];
@@ -151,6 +156,17 @@ document.addEventListener('DOMContentLoaded', function () {
     return '';
   }
 
+  function dueBadgeText(dueDate) {
+    if (!dueDate) return '';
+    var due = new Date(dueDate + 'T00:00:00');
+    var days = Math.ceil((due - new Date()) / 86400000);
+    if (days < 0) return '';
+    if (days === 0) return 'Due today';
+    if (days === 1) return 'Due tomorrow';
+    if (days <= 3) return days + ' days left';
+    return '';
+  }
+
   function renderAssignments(items) {
     lastAssignments = items || [];
     if (!items || items.length === 0) {
@@ -159,7 +175,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     assignmentList.innerHTML = items.map((a, i) => {
       var meta = formatDue(a.due_date) + (a.max_score ? ' · ' + a.max_score + ' pts' : '') + (a.category_name ? ' · ' + a.category_name : '') + ' · ' + a.submission_count + ' submitted';
-      return '<li class="sp-announce-item ' + dueUrgencyClass(a.due_date) + '" style="--row-i:' + i + '" data-assignment-id="' + a.assignment_id + '">' +
+      var badge = dueBadgeText(a.due_date);
+      return '<li class="sp-announce-item ' + dueUrgencyClass(a.due_date) + '"' + (badge ? ' data-badge="' + escHtml(badge) + '"' : '') + ' style="--row-i:' + i + '" data-assignment-id="' + a.assignment_id + '">' +
         '<div class="sp-announce-item-head">' +
           '<strong>' + escHtml(a.title) + '</strong>' +
           '<span class="sp-announce-item-date">' + escHtml(meta) + '</span>' +
@@ -179,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   async function loadAssignments(scheduleId) {
-    assignmentList.innerHTML = '<li class="sp-announce-empty">Loading…</li>';
+    assignmentList.innerHTML = '<li class="sp-announce-empty"><span class="sp-loading-dots"><span></span><span></span><span></span></span></li>';
     try {
       const res = await fetch(API + 'Assignments/get_class_assignments.php?schedule_id=' + encodeURIComponent(scheduleId));
       const data = await res.json();
@@ -193,20 +210,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  classSelect.addEventListener('change', () => {
-    window.spRememberClassSelection?.(classSelect);
-    currentScheduleId = classSelect.value || null;
-    if (!currentScheduleId) {
-      panel.hidden = true;
-      emptyState.hidden = false;
-      return;
-    }
-    panel.hidden = false;
-    emptyState.hidden = true;
+  function initForClass(scheduleId) {
+    currentScheduleId = scheduleId;
+    if (panel) panel.hidden = false;
+    if (emptyState) emptyState.hidden = true;
     resetAssignmentForm();
     assignmentErrBox.classList.remove('is-visible');
     loadAssignments(currentScheduleId);
     loadCategories(currentScheduleId);
+  }
+
+  classSelect?.addEventListener('change', () => {
+    window.spRememberClassSelection?.(classSelect);
+    const scheduleId = classSelect.value || null;
+    if (!scheduleId) {
+      if (panel) panel.hidden = true;
+      if (emptyState) emptyState.hidden = false;
+      currentScheduleId = null;
+      return;
+    }
+    initForClass(scheduleId);
   });
 
   assignmentForm?.addEventListener('submit', async (e) => {
@@ -360,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   async function loadSubmissions(assignmentId) {
-    submissionsBody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Loading…</td></tr>';
+    submissionsBody.innerHTML = '<tr><td colspan="7" style="text-align:center;"><span class="sp-loading-dots"><span></span><span></span><span></span></span></td></tr>';
     try {
       const res = await fetch(API + 'Assignments/get_assignment_submissions.php?assignment_id=' + encodeURIComponent(assignmentId));
       const data = await res.json();
@@ -485,8 +508,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  if (window.spRestoreClassSelection?.(classSelect)) {
-    classSelect.dispatchEvent(new Event('change'));
+  if (classSelect) {
+    if (window.spRestoreClassSelection?.(classSelect)) {
+      classSelect.dispatchEvent(new Event('change'));
+    }
+  } else if (fixedScheduleId) {
+    initForClass(fixedScheduleId);
   }
 
 });

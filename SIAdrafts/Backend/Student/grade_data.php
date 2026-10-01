@@ -1,6 +1,6 @@
 <?php
 /**
- * Query layer for Frontend/View/Student/grades.php. Grades are filtered by
+ * Query layer for the Student Grades views. Grades are filtered by
  * year_level + semester (1st Year Sem 1 through 4th Year Sem 2) rather
  * than by enrollment.school_year, since the filter is meant to read like a
  * transcript's term list, not a literal school-year picker -- see
@@ -65,4 +65,35 @@ function get_student_grades_for_term(mysqli $conn, int $applicantId, int $yearLe
     $rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
     return $rows;
+}
+
+/**
+ * A single course's own grade row, for course_detail.php's Grades tab.
+ * Grades are already naturally subject-scoped (one enrollment_subject row
+ * per subject per term, independent of how many schedule/meeting blocks
+ * that subject has), so this filters directly on es.subject_id -- no
+ * schedule join needed at all, unlike every other per-course Student
+ * function. Null if not enrolled in this subject.
+ */
+function get_my_grades_for_subject(mysqli $conn, int $applicantId, int $subjectId): ?array
+{
+    $stmt = $conn->prepare("
+        SELECT sub.subject_code, sub.subject_name,
+               MAX(CASE WHEN g.period = 'Prelim'   THEN g.grade_value END) AS prelim,
+               MAX(CASE WHEN g.period = 'Midterm'  THEN g.grade_value END) AS midterm,
+               MAX(CASE WHEN g.period = 'Prefinal' THEN g.grade_value END) AS prefinal,
+               MAX(CASE WHEN g.period = 'Final'    THEN g.grade_value END) AS final,
+               MAX(CASE WHEN g.period = 'Final'    THEN g.remarks END) AS final_remarks
+        FROM enrollment e
+        JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.status = 'Enrolled' AND es.subject_id = ?
+        JOIN subject sub ON sub.subject_id = es.subject_id
+        LEFT JOIN grade g ON g.enrollment_subject_id = es.enrollment_subject_id
+        WHERE e.applicant_id = ? AND e.status = 'Enrolled'
+        GROUP BY es.enrollment_subject_id, sub.subject_code, sub.subject_name
+    ");
+    $stmt->bind_param('ii', $subjectId, $applicantId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
 }

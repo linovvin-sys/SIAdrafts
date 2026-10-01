@@ -7,11 +7,11 @@ window.escHtml = function (s) {
   return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 };
 
-// Persists which class is selected in the Professor portal's per-class
-// tool pages (Announcements/Assignments/Materials/Grades, each its own
-// page since the classes.php split -- see Include/class_picker.php).
-// Without this, switching between tools for the same class means
-// re-picking it from the dropdown on every single page.
+// Persists which class was selected on the Professor portal's old
+// standalone class-picker pages. Every per-class tool now lives inside
+// course_detail.php's tabs, which read scheduleId from the URL instead,
+// so these calls are no-ops there (classSelect is null) -- kept only in
+// case a future standalone picker page needs it again.
 window.spRestoreClassSelection = function (selectEl) {
   if (!selectEl) return false;
   try {

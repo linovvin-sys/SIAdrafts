@@ -14,6 +14,7 @@ require '../../requirements.php';
 require '../../settings.php';
 require '../../mailer.php';
 require '../../rate_limit.php';
+require '../../recaptcha.php';
 
 $db   = new Database();
 $conn = $db->connect();
@@ -35,11 +36,28 @@ if (!rate_limit_check('online_admission', 5, 3600)) {
 }
 
 // Basic bot deterrent: a hidden field that real applicants never fill in.
-// Pair with a real CAPTCHA (e.g. reCAPTCHA) before going live publicly.
+// Catches naive script spam for free, before spending a reCAPTCHA check on it.
 if (!empty($_POST['website'])) {
     http_response_code(422);
     echo json_encode(['success' => false, 'errors' => ['Submission rejected.']]);
     exit;
+}
+
+// The real bot deterrent: a human (or a CAPTCHA-farm-assisted bot, which
+// at least costs the operator money per submission) has to pass Google's
+// challenge. Checked after the honeypot/rate-limit above so a pure script
+// spamming this endpoint never even reaches a network call to Google.
+// Skipped entirely (not enforced as a failure) when no key pair has been
+// configured yet -- the form still works on the honeypot + rate limit
+// alone until real keys are set in .env, same as before this existed,
+// rather than silently rejecting every applicant.
+if (recaptcha_is_configured()) {
+    $recaptchaToken = $_POST['g-recaptcha-response'] ?? '';
+    if (!recaptcha_verify($recaptchaToken, $_SERVER['REMOTE_ADDR'] ?? '')) {
+        http_response_code(422);
+        echo json_encode(['success' => false, 'errors' => ["Please complete the \"I'm not a robot\" verification."]]);
+        exit;
+    }
 }
 
 function clean($value) {

@@ -50,6 +50,25 @@ function get_professor_active_classes(mysqli $conn, int $professorId): array
     return $rows;
 }
 
+/** Single-class lookup for the course-detail page header + ownership check. Null if not owned/active. */
+function get_professor_class_by_schedule(mysqli $conn, int $scheduleId, int $professorId): ?array
+{
+    $stmt = $conn->prepare("
+        SELECT s.schedule_id, s.section_id, s.day, s.time_start, s.time_end, s.school_year, s.semester,
+               sub.subject_code, sub.subject_name, sec.section_name, r.room_name
+        FROM schedule s
+        JOIN subject sub ON sub.subject_id = s.subject_id
+        JOIN section sec ON sec.section_id = s.section_id
+        JOIN room r       ON r.room_id = s.room_id
+        WHERE s.schedule_id = ? AND s.professor_id = ? AND s.is_active = 1 AND s.status = 'Approved'
+    ");
+    $stmt->bind_param('ii', $scheduleId, $professorId);
+    $stmt->execute();
+    $row = $stmt->get_result()->fetch_assoc();
+    $stmt->close();
+    return $row ?: null;
+}
+
 function get_professor_terms(mysqli $conn, int $professorId): array
 {
     $stmt = $conn->prepare("

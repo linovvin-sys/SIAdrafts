@@ -8,6 +8,9 @@ document.addEventListener('DOMContentLoaded', function () {
   const classSelect       = document.getElementById('materialClassSelect');
   const emptyState        = document.getElementById('materialEmptyState');
   const panel             = document.getElementById('materialPanel');
+  // Set only on course_detail.php's Materials tab -- see assignments.js
+  // for the same pattern.
+  const fixedScheduleId   = document.body.dataset.scheduleId || null;
   const materialList      = document.getElementById('materialList');
   const materialForm      = document.getElementById('materialForm');
   const materialTitleEl   = document.getElementById('materialTitleInput');
@@ -24,7 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const materialPostBtn   = document.getElementById('materialPostBtn');
   const cancelMaterialEditBtn = document.getElementById('cancelMaterialEditBtn');
 
-  if (!classSelect) return;
+  if (!classSelect && !fixedScheduleId) return;
 
   let currentScheduleId = null;
   let lastMaterials = [];
@@ -77,6 +80,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   const materialTypeIcon = { file: 'mdi:file-outline', link: 'mdi:link-variant', text: 'mdi:text-box-outline' };
+  const materialTypeBadge = { file: 'File', link: 'Link', text: 'Note' };
 
   function renderMaterials(items) {
     lastMaterials = items || [];
@@ -97,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
       var meta = m.visible_from && m.visible_from > today
         ? 'Hidden from students until ' + m.visible_from
         : new Date(m.created_at.replace(' ', 'T')).toLocaleDateString([], { month: 'short', day: 'numeric' });
-      return '<li class="sp-announce-item type-' + m.type + '" style="--row-i:' + i + '" data-material-id="' + m.material_id + '">' +
+      return '<li class="sp-announce-item type-' + m.type + '" data-badge="' + (materialTypeBadge[m.type] || '') + '" style="--row-i:' + i + '" data-material-id="' + m.material_id + '">' +
         '<div class="sp-announce-item-head">' +
           '<iconify-icon icon="' + materialTypeIcon[m.type] + '"></iconify-icon>' +
           '<strong>' + escHtml(m.title) + '</strong>' +
@@ -115,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   async function loadMaterials(scheduleId) {
-    materialList.innerHTML = '<li class="sp-announce-empty">Loading…</li>';
+    materialList.innerHTML = '<li class="sp-announce-empty"><span class="sp-loading-dots"><span></span><span></span><span></span></span></li>';
     try {
       const res = await fetch(API + 'Materials/get_class_materials.php?schedule_id=' + encodeURIComponent(scheduleId));
       const data = await res.json();
@@ -129,19 +133,25 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  classSelect.addEventListener('change', () => {
-    window.spRememberClassSelection?.(classSelect);
-    currentScheduleId = classSelect.value || null;
-    if (!currentScheduleId) {
-      panel.hidden = true;
-      emptyState.hidden = false;
-      return;
-    }
-    panel.hidden = false;
-    emptyState.hidden = true;
+  function initForClass(scheduleId) {
+    currentScheduleId = scheduleId;
+    if (panel) panel.hidden = false;
+    if (emptyState) emptyState.hidden = true;
     resetMaterialForm();
     materialErrBox.classList.remove('is-visible');
     loadMaterials(currentScheduleId);
+  }
+
+  classSelect?.addEventListener('change', () => {
+    window.spRememberClassSelection?.(classSelect);
+    const scheduleId = classSelect.value || null;
+    if (!scheduleId) {
+      if (panel) panel.hidden = true;
+      if (emptyState) emptyState.hidden = false;
+      currentScheduleId = null;
+      return;
+    }
+    initForClass(scheduleId);
   });
 
   materialForm?.addEventListener('submit', async (e) => {
@@ -222,8 +232,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  if (window.spRestoreClassSelection?.(classSelect)) {
-    classSelect.dispatchEvent(new Event('change'));
+  if (classSelect) {
+    if (window.spRestoreClassSelection?.(classSelect)) {
+      classSelect.dispatchEvent(new Event('change'));
+    }
+  } else if (fixedScheduleId) {
+    initForClass(fixedScheduleId);
   }
 
 });

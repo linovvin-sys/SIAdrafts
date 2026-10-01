@@ -19,7 +19,7 @@ function get_student_notification_feed(mysqli $conn, int $applicantId, int $limi
     $items = [];
 
     $stmt = $conn->prepare(
-        "SELECT DISTINCT a.announcement_id AS item_id, a.title, a.body, a.created_at, sub.subject_code
+        "SELECT DISTINCT a.announcement_id AS item_id, a.title, a.body, a.created_at, sub.subject_code, sub.subject_id
          FROM enrollment e
          JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.status = 'Enrolled'
          JOIN schedule sch ON sch.subject_id = es.subject_id
@@ -38,7 +38,7 @@ function get_student_notification_feed(mysqli $conn, int $applicantId, int $limi
     $stmt->close();
 
     $stmt = $conn->prepare(
-        "SELECT DISTINCT q.quiz_id AS item_id, q.title, q.instructions AS body, q.created_at, sub.subject_code
+        "SELECT DISTINCT q.quiz_id AS item_id, q.title, q.instructions AS body, q.created_at, sub.subject_code, sub.subject_id
          FROM enrollment e
          JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.status = 'Enrolled'
          JOIN subject sub ON sub.subject_id = es.subject_id
@@ -58,7 +58,7 @@ function get_student_notification_feed(mysqli $conn, int $applicantId, int $limi
     $stmt->close();
 
     $stmt = $conn->prepare(
-        "SELECT DISTINCT a.assignment_id AS item_id, a.title, a.instructions AS body, a.created_at, sub.subject_code
+        "SELECT DISTINCT a.assignment_id AS item_id, a.title, a.instructions AS body, a.created_at, sub.subject_code, sub.subject_id
          FROM enrollment e
          JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.status = 'Enrolled'
          JOIN subject sub ON sub.subject_id = es.subject_id
@@ -80,7 +80,7 @@ function get_student_notification_feed(mysqli $conn, int $applicantId, int $limi
     // material scheduled for the future shouldn't notify before students
     // can actually see it on the Materials page.
     $stmt = $conn->prepare(
-        "SELECT DISTINCT m.material_id AS item_id, m.title, m.type, m.body, m.created_at, sub.subject_code
+        "SELECT DISTINCT m.material_id AS item_id, m.title, m.type, m.body, m.created_at, sub.subject_code, sub.subject_id
          FROM enrollment e
          JOIN enrollment_subject es ON es.enrollment_id = e.enrollment_id AND es.status = 'Enrolled'
          JOIN subject sub ON sub.subject_id = es.subject_id
@@ -104,11 +104,14 @@ function get_student_notification_feed(mysqli $conn, int $applicantId, int $limi
     return array_slice($items, 0, $limit);
 }
 
-const NOTIFICATION_LINKS = [
-    'announcement' => '/SIAdrafts/Frontend/View/Student/dashboard.php',
-    'quiz'          => '/SIAdrafts/Frontend/View/Student/quizzes.php',
-    'assignment'    => '/SIAdrafts/Frontend/View/Student/assignments.php',
-    'material'      => '/SIAdrafts/Frontend/View/Student/materials.php',
+// Each notification type maps to its course_detail.php tab, so the bell
+// deep-links straight into the right course's tab instead of a flat
+// cross-class page (those standalone pages no longer exist).
+const NOTIFICATION_TABS = [
+    'announcement' => 'announcements',
+    'quiz'         => 'quizzes',
+    'assignment'   => 'assignments',
+    'material'     => 'materials',
 ];
 
 function notification_row(string $type, array $row, string $title, ?string $body): array
@@ -120,6 +123,6 @@ function notification_row(string $type, array $row, string $title, ?string $body
         'body'         => $body ?? '',
         'subject_code' => $row['subject_code'],
         'created_at'   => $row['created_at'],
-        'link'         => NOTIFICATION_LINKS[$type],
+        'link'         => '/SIAdrafts/Frontend/View/Student/course_detail.php?subject_id=' . (int)$row['subject_id'] . '&tab=' . NOTIFICATION_TABS[$type],
     ];
 }
