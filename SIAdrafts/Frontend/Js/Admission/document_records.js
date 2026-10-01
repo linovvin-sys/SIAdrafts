@@ -59,8 +59,15 @@ document.addEventListener('DOMContentLoaded', function () {
   const subtitleEl = document.getElementById('viewDocumentsSubtitle');
   const docsByApplicant = window.APPLICANT_DOCUMENTS || {};
 
-  document.querySelectorAll('[data-view-documents]').forEach(function (btn) {
-    btn.addEventListener('click', function () {
+  // Delegated on document rather than bound per-button: DataTables rebuilds
+  // the <tr>/<button> nodes from its own internal data cache on every
+  // search and page change (it doesn't just hide/show the original
+  // elements), which silently drops any listener attached directly to a
+  // button here -- confirmed as exactly why this only ever worked on page 1
+  // before any search/page interaction had triggered a redraw yet.
+  document.addEventListener('click', function (e) {
+    const btn = e.target.closest('[data-view-documents]');
+    if (btn) {
       const applicantId = btn.dataset.viewDocuments;
       const docs = docsByApplicant[applicantId] || [];
 
@@ -94,7 +101,7 @@ document.addEventListener('DOMContentLoaded', function () {
       }).join('') : '<p class="text-muted">No documents on file.</p>';
 
       openModal(viewModal);
-    });
+    }
   });
 
   document.querySelectorAll('[data-close]').forEach(function (btn) {
