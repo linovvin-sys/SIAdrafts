@@ -30,9 +30,16 @@ RUN apt-get update \
 # script, which silently re-enables mpm_event as a default alongside this
 # base image's required mpm_prefork (mod_php isn't thread-safe, so
 # php:apache ships with prefork) -- Apache then refuses to start at all
-# with "More than one MPM loaded." Force prefork back to being the only
-# one enabled, explicitly, regardless of what the package manager did.
-RUN a2dismod mpm_event mpm_worker 2>/dev/null; a2enmod mpm_prefork rewrite headers
+# with "More than one MPM loaded." `a2dismod` alone didn't reliably clear
+# this (still failed after it ran), so this removes the conflicting
+# module's enabled-symlinks directly instead of trusting a2dismod's exit
+# behavior, then re-enables prefork explicitly. The `ls` at the end prints
+# into the build log so a future build failure here is visible immediately
+# instead of requiring a fresh runtime crash to diagnose again.
+RUN rm -f /etc/apache2/mods-enabled/mpm_event.load /etc/apache2/mods-enabled/mpm_event.conf \
+           /etc/apache2/mods-enabled/mpm_worker.load /etc/apache2/mods-enabled/mpm_worker.conf \
+    && a2enmod mpm_prefork rewrite headers \
+    && ls -la /etc/apache2/mods-enabled/ | grep mpm
 
 # AllowOverride is None in this image's default vhost -- without this,
 # .htaccess is silently ignored in its entirety (no error, every rewrite
