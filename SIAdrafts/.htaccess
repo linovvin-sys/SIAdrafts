@@ -138,12 +138,24 @@ Options -Indexes
     #    redirects to `http://host:8080/...`, broken for every external
     #    visitor. %{HTTP_HOST} is always the original public Host header
     #    regardless of proxying, so it never carries an internal port.
+    #
+    #    Condition is %{ENV:RW_HTTPS}, not the built-in %{HTTPS} -- that
+    #    special mod_rewrite variable only ever reflects mod_ssl's own
+    #    real-TLS-handshake state and ignores the generic HTTPS env var
+    #    entirely, so behind a proxy (which never performs a TLS handshake
+    #    with Apache itself) it's always "off" regardless of what any
+    #    SetEnvIf sets -- confirmed live, this read as !=on even with
+    #    HTTPS=on correctly set and the HSTS header correctly appearing
+    #    from that same variable elsewhere. RW_HTTPS is a distinctly-named
+    #    env var set alongside HTTPS in the Railway Docker image's own
+    #    Apache conf (never in this portable .htaccess) specifically so
+    #    this condition can read it via the generic %{ENV:...} syntax.
     RewriteCond %{THE_REQUEST} ^GET\s+/SIAdrafts/Frontend/View/([^?\s]+)\.php[?\s]
-    RewriteCond %{HTTPS} =on
+    RewriteCond %{ENV:RW_HTTPS} =on
     RewriteRule ^ https://%{HTTP_HOST}/SIAdrafts/Frontend/View/%1 [R=301,L]
 
     RewriteCond %{THE_REQUEST} ^GET\s+/SIAdrafts/Frontend/View/([^?\s]+)\.php[?\s]
-    RewriteCond %{HTTPS} !=on
+    RewriteCond %{ENV:RW_HTTPS} !=on
     RewriteRule ^ http://%{HTTP_HOST}/SIAdrafts/Frontend/View/%1 [R=301,L]
 
     # 2) Internally serve the matching .php file for the extension-less

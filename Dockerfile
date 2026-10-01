@@ -80,7 +80,17 @@ RUN cd /var/www/html/SIAdrafts \
 # .htaccess if this app is ever deployed on a traditional host with a
 # public IP instead, where a client could forge this header directly
 # against Apache with no real proxy in between.
-RUN echo 'SetEnvIf X-Forwarded-Proto "https" HTTPS=on' > /etc/apache2/conf-enabled/railway-trust-proxy.conf
+# RW_HTTPS, not just HTTPS: mod_rewrite's %{HTTPS} is a special variable
+# that only ever reflects mod_ssl's own real-TLS-handshake state -- it
+# ignores the generic HTTPS env var entirely, unlike PHP's $_SERVER and
+# Header's `env=` condition, which both read the generic env table and
+# so already worked correctly from the HTTPS=on line alone. Confirmed
+# live: the HSTS header appeared correctly, but a %{HTTPS}-conditioned
+# RewriteCond in .htaccess still always evaluated to "off" behind
+# Railway's proxy. A distinctly-named variable, read via %{ENV:RW_HTTPS}
+# instead of the special %{HTTPS} token, is what .htaccess's redirect
+# rule actually needs.
+RUN printf 'SetEnvIf X-Forwarded-Proto "https" HTTPS=on\nSetEnvIf X-Forwarded-Proto "https" RW_HTTPS=on\n' > /etc/apache2/conf-enabled/railway-trust-proxy.conf
 
 COPY railway-entrypoint.sh /usr/local/bin/railway-entrypoint.sh
 RUN chmod +x /usr/local/bin/railway-entrypoint.sh
