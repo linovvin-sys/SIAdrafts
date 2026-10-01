@@ -79,7 +79,21 @@
     # so it fell back to default-src 'self' and silently blocked the iframe).
     # frame-ancestors below is unrelated and unaffected -- that's who may
     # frame THIS site, not what this site may itself embed.
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; frame-src https://www.google.com/recaptcha/; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    #
+    # script-src needs 'unsafe-eval' too -- every Vue page here (Admission's
+    # admission_confirm.php, enrollment*.php, etc.) loads vue.global.prod.js
+    # and writes its templates straight into the PHP-rendered HTML (v-model,
+    # {{ }}, v-if) with no build/compile step. Vue's runtime template
+    # compiler turns that in-DOM markup into render functions using
+    # `new Function(...)`, which is exactly what 'unsafe-eval' gates --
+    # confirmed live: without it, Vue.createApp(...).mount() throws
+    # "EvalError: ... violates ... 'unsafe-eval' is not an allowed source"
+    # synchronously, so the app never mounts, nothing becomes reactive, and
+    # every v-bound element just sits there as inert static HTML (no fetch
+    # ever fires, no visible error unless you're looking at exactly that
+    # mount() call in the console). A precompiled-template build (vue-loader/
+    # vite) would let this go away later, but isn't how this app is built.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; frame-src https://www.google.com/recaptcha/; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
     # mod_ssl sets the "HTTPS" server/env variable itself whenever a
     # connection actually terminated TLS here — env=HTTPS makes this
