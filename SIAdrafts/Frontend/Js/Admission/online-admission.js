@@ -305,6 +305,12 @@ function renderReferenceSlip(referenceId, summary, emailSent, email) {
   });
 }
 
+function resetRecaptcha() {
+  if (window.grecaptcha && typeof grecaptcha.reset === 'function') {
+    try { grecaptcha.reset(); } catch (_) {}
+  }
+}
+
 function submitApplication() {
   banner.style.display = 'none';
   refBanner.style.display = 'none';
@@ -319,6 +325,12 @@ function submitApplication() {
   })
     .then(function (res) { return res.json(); })
     .then(function (data) {
+      // A reCAPTCHA token is single-use: the server spends it on every
+      // submit attempt, pass or fail. Without a reset the widget still
+      // looks checked, the next attempt resends the dead token, and the
+      // server answers "complete the verification" even though the box
+      // is ticked.
+      resetRecaptcha();
       submitBtn.disabled = false;
       submitBtn.innerHTML = 'Submit application <iconify-icon icon="mdi:arrow-right"></iconify-icon>';
 
@@ -354,6 +366,7 @@ function submitApplication() {
       clearDraft();
     })
     .catch(function (err) {
+      resetRecaptcha();
       submitBtn.disabled = false;
       submitBtn.innerHTML = 'Submit application <iconify-icon icon="mdi:arrow-right"></iconify-icon>';
       showBanner(banner, 'error',

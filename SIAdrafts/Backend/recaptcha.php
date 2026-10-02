@@ -68,5 +68,17 @@ function recaptcha_verify(string $token, string $remoteIp): bool
     }
 
     $result = json_decode($raw, true);
-    return !empty($result['success']);
+    if (empty($result['success'])) {
+        // Google says exactly why: invalid-input-secret (wrong/mismatched
+        // secret key), invalid-keys / hostname problems (domain not
+        // registered for this site key), timeout-or-duplicate (token
+        // already used or expired). Without this the form could only say
+        // "complete the verification" with nothing in the logs to act on.
+        error_log('recaptcha_verify: rejected -- ' . json_encode([
+            'error-codes' => $result['error-codes'] ?? null,
+            'hostname'    => $result['hostname'] ?? null,
+        ]));
+        return false;
+    }
+    return true;
 }
