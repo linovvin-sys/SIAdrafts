@@ -272,8 +272,37 @@ body.editorial-body{
   position: absolute; inset: 0;
   background: linear-gradient(to bottom, transparent 58%, var(--paper) 100%);
 }
+/* Below 860px there's no room for the desktop treatment (a wide photo
+   bleeding in from the right, behind a text column) -- the previous fix
+   was just display:none, which didn't adapt the photo for mobile, it
+   deleted it, leaving every mobile visitor with a photo-less hero while
+   desktop got the real one. Same element, repurposed as a plain
+   top-of-page banner instead: position:relative (not absolute) drops it
+   back into normal document flow, and it's already the first element
+   before <main class="e-hero"> in the markup, so it naturally renders
+   above the headline with zero markup changes. */
 @media (max-width: 860px){
-  .e-hero-photo{ display: none; }
+  .e-hero-photo{
+    display: block;
+    position: relative;
+    top: auto; right: auto;
+    width: 100%;
+    height: 240px;
+    -webkit-mask-image: none;
+            mask-image: none;
+  }
+  .e-hero-photo::after{
+    background: linear-gradient(to bottom, transparent 50%, var(--paper) 100%);
+  }
+  /* The 100px top padding was sized for the desktop layout, where the
+     photo is an absolutely-positioned overlay that takes up no flow
+     space of its own. Now that the photo sits in normal flow directly
+     above .e-hero, keeping that same 100px would stack on top of the
+     photo's own height instead of replacing it. */
+  .e-hero{ padding-top: 36px; }
+}
+@media (max-width: 480px){
+  .e-hero-photo{ height: 200px; }
 }
 
 .e-folio{
