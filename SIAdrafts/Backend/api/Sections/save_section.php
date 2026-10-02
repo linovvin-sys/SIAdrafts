@@ -34,8 +34,8 @@ $year_level   = (int)($data['year_level'] ?? 0);
 $shift        = strtoupper(trim($data['shift'] ?? ''));
 $section_no   = (int)($data['section_no'] ?? 0);
 
-// Section names are generated, never free text: <COURSE CODE> <year><shift><no>,
-// e.g. "BSIT 1M3". Shift is M(orning)/A(fternoon)/E(vening), 5 sections each,
+// Section names are generated, never free text: <COURSE CODE> <year>-<shift><no>,
+// e.g. "BSIT 1-M3". Shift is M(orning)/A(fternoon)/E(vening), 5 sections each,
 // 4 year levels -- so a typo or an out-of-scheme name can't be created
 // even by calling this endpoint directly.
 if ($course_id <= 0 || $year_level < 1 || $year_level > 4
@@ -54,7 +54,7 @@ if (!$courseRow) {
     echo json_encode(['error' => 'Selected course does not exist.']);
     exit;
 }
-$section_name = $courseRow['course_code'] . ' ' . $year_level . $shift . $section_no;
+$section_name = $courseRow['course_code'] . ' ' . $year_level . '-' . $shift . $section_no;
 
 if ($capacity <= 0) {
     echo json_encode(['error' => 'Capacity must be a positive number.']);

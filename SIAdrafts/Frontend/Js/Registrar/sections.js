@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ----- Add Section -----
   // The name is never typed: course + year level + shift (M/A/E) + number
-  // (1-5) -> e.g. "BSIT 1M3", so every year level has at most 15 sections
+  // (1-5) -> e.g. "BSIT 1-M3", so every year level has at most 15 sections
   // per course (5 each of morning/afternoon/evening) and no stray names.
   const confirmAddSection = document.getElementById('confirmAddSection');
   if (confirmAddSection) {
@@ -97,7 +97,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const opt  = courseSel.options[courseSel.selectedIndex];
       const code = opt && opt.dataset.code ? opt.dataset.code : '';
       if (!code || !yearSel.value || !shiftSel.value || !noSel.value) return '';
-      return code + ' ' + yearSel.value + shiftSel.value + noSel.value;
+      return code + ' ' + yearSel.value + '-' + shiftSel.value + noSel.value;
     }
 
     // Names already used for the chosen course, read from the table above.
