@@ -502,8 +502,14 @@ document.getElementById('studentSearchInput').addEventListener('keydown', functi
 });
 
 // ===== "Pay" buttons inside the queue table =====
-document.querySelectorAll('.btn-pay-row').forEach(function (btn) {
-  btn.addEventListener('click', function () {
+// Delegated from document, not bound per button: DataTables only keeps the
+// current page's rows in the DOM, so a querySelectorAll at load only ever
+// found page 1 -- rows on other pages (or revealed by a search) had no
+// click handler at all and "Pay" silently did nothing.
+document.addEventListener('click', function (e) {
+  const btn = e.target.closest('.btn-pay-row');
+  if (!btn) return;
+  {
     tabSearch.click();
     document.getElementById('studentSearchInput').value = btn.dataset.student || '';
     if (btn.dataset.paymentId) {
@@ -515,5 +521,5 @@ document.querySelectorAll('.btn-pay-row').forEach(function (btn) {
       // back to the name search (unchanged from prior behavior).
       fetchAndRenderByStudentId(btn.dataset.student);
     }
-  });
+  }
 });

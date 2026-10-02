@@ -102,8 +102,12 @@ document.addEventListener('DOMContentLoaded', () => {
   if (editModal) {
 
     /* -- Open (one button per row, populated with that row's data) -- */
-    document.querySelectorAll('.btn-edit-user').forEach(btn => {
-      btn.addEventListener('click', () => {
+    // Delegated: DataTables drops off-page rows from the DOM, so per-button
+    // listeners only reached whichever rows were rendered at load.
+    document.addEventListener('click', e => {
+      const btn = e.target.closest('.btn-edit-user');
+      if (!btn) return;
+      {
         document.getElementById('editUserId').value     = btn.dataset.id || '';
         document.getElementById('editFirstName').value  = btn.dataset.first_name || '';
         document.getElementById('editMiddleName').value = btn.dataset.middle_name || '';
@@ -118,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
         clearEditErrors();
         editModal.classList.add('active');
         document.body.style.overflow = 'hidden';
-      });
+      }
     });
 
     /* -- Close -- */
