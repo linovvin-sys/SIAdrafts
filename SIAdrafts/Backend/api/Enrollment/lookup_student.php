@@ -15,7 +15,12 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR], true);
+// Admin is read-only monitoring across Registrar (see git history) --
+// add_drop_subject.php, which looks a student up before showing their
+// current subjects, already allows Admin; this endpoint was the gap.
+// The actual add/drop write action stays correctly tier-gated
+// elsewhere -- this only ever returns data to look at.
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR, ROLE_ADMIN], true);
 
 $student_no = trim($_GET['student_no'] ?? '');
 if ($student_no === '') {

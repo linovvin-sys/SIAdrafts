@@ -12,8 +12,12 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-// Only Registrar staff/head may look up students for add/drop.
-require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR], true);
+// Registrar staff/head, plus Admin's read-only monitoring (see git
+// history) -- add_drop_subject.php already allows Admin at the page
+// level; this endpoint was the gap. The actual add/drop write action
+// stays correctly tier-gated elsewhere -- this only ever returns data
+// to look at.
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR, ROLE_ADMIN], true);
 
 $db   = new Database();
 $conn = $db->connect();

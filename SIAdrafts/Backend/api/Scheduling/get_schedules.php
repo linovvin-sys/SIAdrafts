@@ -12,7 +12,10 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR], true);
+// Admin is read-only monitoring across Registrar (see git history) --
+// schedule.php, which lists these, already allows Admin; this endpoint
+// was the gap (same pattern as get_course_subjects.php).
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR, ROLE_ADMIN], true);
 
 $db   = new Database();
 $conn = $db->connect();
