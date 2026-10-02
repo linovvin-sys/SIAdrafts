@@ -29,6 +29,12 @@
     return dataPromise;
   }
 
+  // Exposed so school-autocomplete.js can cross-check a selected school's
+  // real recorded municipality against this same region/province/city set
+  // and auto-fill School Address from it -- same cached promise, not a
+  // second fetch of the same ~97KB.
+  window.PHLocations = { load: loadData };
+
   function fillSelect(select, items, placeholder) {
     select.innerHTML = '<option value="">' + placeholder + '</option>' +
       items.map(function (item) {

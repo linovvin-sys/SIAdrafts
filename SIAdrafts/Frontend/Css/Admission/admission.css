@@ -307,6 +307,22 @@
   .address-picker .address-detail{ margin-top: 8px; }
   .address-picker--compact .address-detail{ margin-top: 6px; }
 
+  .address-autofill-note{
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.74rem;
+    font-weight: 600;
+    color: #2f6b40;
+    background: rgba(124,152,133,0.1);
+    border: 1px solid rgba(124,152,133,0.3);
+    border-radius: 5px;
+    padding: 7px 10px;
+    margin-bottom: 8px;
+    animation: schoolPanelIn .18s cubic-bezier(0.23,1,0.32,1);
+  }
+  .address-autofill-note iconify-icon{ flex: none; font-size: 14px; }
+
   /*  school-name autocomplete  */
   .school-autocomplete{ position: relative; }
   /* Same glass recipe as .navbar/.progress-track (blur+saturate, a

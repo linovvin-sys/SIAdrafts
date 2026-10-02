@@ -76,6 +76,59 @@
       if (!school) return;
       input.value = school.name;
       closePanel();
+      applySchoolLocation(school);
+    }
+
+    // The thing this was actually built to fix: School Name and School
+    // Address were two completely independent fields, so nothing stopped
+    // picking a real school and a real city that have nothing to do with
+    // each other (confirmed live: "National College of Science and
+    // Technology" picked alongside "Manila" -- its actual campus is in
+    // Dasmariñas, Cavite). Once a school is chosen from the directory, its
+    // own recorded municipality drives the address picker directly,
+    // instead of asking the applicant to separately know and re-select
+    // where their own school is.
+    function applySchoolLocation(school) {
+      const historyRow = root.closest('.history-row');
+      const addressPicker = historyRow && historyRow.querySelector('.address-picker');
+      if (!addressPicker || !window.PHLocations) return;
+
+      const regionSelect   = addressPicker.querySelector('.address-region');
+      const provinceSelect = addressPicker.querySelector('.address-province');
+      const citySelect      = addressPicker.querySelector('.address-city');
+      const muni = (school.municipality || '').trim().toLowerCase();
+      if (!regionSelect || !provinceSelect || !citySelect || !muni) return;
+
+      window.PHLocations.load().then(function (data) {
+        const cityMatch = data.cities.find(function (c) { return c.name.toLowerCase() === muni; });
+        if (!cityMatch) return; // no confident match -- leave the picker alone rather than guess
+        const provinceMatch = data.provinces.find(function (p) { return p.code === cityMatch.province; });
+        const regionMatch = provinceMatch && data.regions.find(function (r) { return r.code === provinceMatch.region; });
+        if (!provinceMatch || !regionMatch) return;
+
+        // Each assignment's change event is handled synchronously by
+        // ph-address-picker.js (it repopulates the next select's options
+        // in-place, no async step), so setting the next value immediately
+        // after dispatching is safe and always lands on real options.
+        regionSelect.value = regionMatch.code;
+        regionSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        provinceSelect.value = provinceMatch.code;
+        provinceSelect.dispatchEvent(new Event('change', { bubbles: true }));
+        citySelect.value = cityMatch.code;
+        citySelect.dispatchEvent(new Event('change', { bubbles: true }));
+
+        showAutoFillNote(addressPicker, school);
+      });
+    }
+
+    function showAutoFillNote(addressPicker, school) {
+      let note = addressPicker.querySelector('.address-autofill-note');
+      if (!note) {
+        note = document.createElement('div');
+        note.className = 'address-autofill-note';
+        addressPicker.insertBefore(note, addressPicker.firstChild);
+      }
+      note.innerHTML = '<iconify-icon icon="mdi:check-decagram-outline"></iconify-icon> Location filled in from the school directory — adjust it below if this isn\'t right.';
     }
 
     function escapeHtml(str) {
