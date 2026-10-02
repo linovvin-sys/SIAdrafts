@@ -81,15 +81,54 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // ----- Add Section -----
+  // The name is never typed: course + year level + shift (M/A/E) + number
+  // (1-5) -> e.g. "BSIT 1M3", so every year level has at most 15 sections
+  // per course (5 each of morning/afternoon/evening) and no stray names.
   const confirmAddSection = document.getElementById('confirmAddSection');
   if (confirmAddSection) {
-    confirmAddSection.addEventListener('click', async () => {
-      const section_name = document.getElementById('newSectionName').value.trim();
-      const capacity      = document.getElementById('newSectionCapacity').value;
-      const course_id     = document.getElementById('newSectionCourse').value;
+    const courseSel = document.getElementById('newSectionCourse');
+    const yearSel   = document.getElementById('newSectionYear');
+    const shiftSel  = document.getElementById('newSectionShift');
+    const noSel     = document.getElementById('newSectionNo');
+    const nameInput = document.getElementById('newSectionName');
+    const hint      = document.getElementById('newSectionHint');
 
-      if (!section_name || !course_id) {
-        Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Section name and course are required.' });
+    function composeName() {
+      const opt  = courseSel.options[courseSel.selectedIndex];
+      const code = opt && opt.dataset.code ? opt.dataset.code : '';
+      if (!code || !yearSel.value || !shiftSel.value || !noSel.value) return '';
+      return code + ' ' + yearSel.value + shiftSel.value + noSel.value;
+    }
+
+    // Names already used for the chosen course, read from the table above.
+    function takenNames(courseId) {
+      const set = new Set();
+      document.querySelectorAll('tr[data-course-id="' + courseId + '"]').forEach(tr => {
+        const td = tr.querySelector('td');
+        if (td) set.add(td.textContent.trim().toUpperCase());
+      });
+      return set;
+    }
+
+    function refreshName() {
+      const name = composeName();
+      nameInput.value = name;
+      if (!name) { hint.textContent = 'Pick a course, year level, shift and number \u2014 the section name is generated for you.'; return; }
+      const taken = takenNames(courseSel.value).has(name.toUpperCase());
+      hint.textContent = taken ? name + ' already exists for this course.' : '';
+      hint.style.color = taken ? '#dc2626' : '';
+    }
+    [courseSel, yearSel, shiftSel, noSel].forEach(el => el.addEventListener('change', refreshName));
+
+    confirmAddSection.addEventListener('click', async () => {
+      const capacity      = document.getElementById('newSectionCapacity').value;
+      const course_id     = courseSel.value;
+      const year_level    = yearSel.value;
+      const shift         = shiftSel.value;
+      const section_no    = noSel.value;
+
+      if (!course_id || !year_level || !shift || !section_no) {
+        Swal.fire({ icon: 'warning', title: 'Missing fields', text: 'Course, year level, shift and section number are required.' });
         return;
       }
 
@@ -98,7 +137,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return;
       }
 
-      const result = await postJSON('Sections/save_section.php', { section_name, capacity, course_id });
+      const result = await postJSON('Sections/save_section.php', { course_id, year_level, shift, section_no, capacity });
       if (result.error) {
         Swal.fire({ icon: 'error', title: 'Could not add section', text: result.error });
         return;

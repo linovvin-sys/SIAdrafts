@@ -28,14 +28,33 @@ $conn = $db->connect();
 $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true) ?? $_POST;
 
-$section_name = trim($data['section_name'] ?? '');
 $capacity     = (int)($data['capacity']  ?? 40);
 $course_id    = (int)($data['course_id'] ?? 0);
+$year_level   = (int)($data['year_level'] ?? 0);
+$shift        = strtoupper(trim($data['shift'] ?? ''));
+$section_no   = (int)($data['section_no'] ?? 0);
 
-if ($section_name === '' || $course_id <= 0) {
-    echo json_encode(['error' => 'Section name and course are required.']);
+// Section names are generated, never free text: <COURSE CODE> <year><shift><no>,
+// e.g. "BSIT 1M3". Shift is M(orning)/A(fternoon)/E(vening), 5 sections each,
+// 4 year levels -- so a typo or an out-of-scheme name can't be created
+// even by calling this endpoint directly.
+if ($course_id <= 0 || $year_level < 1 || $year_level > 4
+    || !in_array($shift, ['M', 'A', 'E'], true)
+    || $section_no < 1 || $section_no > 5) {
+    echo json_encode(['error' => 'Choose a course, year level (1-4), shift (M/A/E) and section number (1-5).']);
     exit;
 }
+
+$codeStmt = $conn->prepare("SELECT course_code FROM course WHERE course_id = ? LIMIT 1");
+$codeStmt->bind_param('i', $course_id);
+$codeStmt->execute();
+$courseRow = $codeStmt->get_result()->fetch_assoc();
+$codeStmt->close();
+if (!$courseRow) {
+    echo json_encode(['error' => 'Selected course does not exist.']);
+    exit;
+}
+$section_name = $courseRow['course_code'] . ' ' . $year_level . $shift . $section_no;
 
 if ($capacity <= 0) {
     echo json_encode(['error' => 'Capacity must be a positive number.']);

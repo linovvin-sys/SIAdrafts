@@ -155,25 +155,58 @@ include '../Include/header.php';
 
         <div class="modal-body">
           <div class="form-group">
-            <label class="form-label">Section Name<span class="required">*</span></label>
-            <input type="text" id="newSectionName" class="form-input" placeholder="e.g. BSIT A2" required>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Capacity</label>
-            <input type="number" id="newSectionCapacity" class="form-input" value="40" min="1" required>
-          </div>
-          <div class="form-group">
             <label class="form-label">Course<span class="required">*</span></label>
             <div class="select-wrapper">
               <select id="newSectionCourse" class="form-input form-select" required>
                 <option value="">-- Select Course --</option>
                 <?php foreach ($approvedCourses as $c): ?>
-                  <option value="<?= (int)$c['course_id'] ?>">
+                  <option value="<?= (int)$c['course_id'] ?>" data-code="<?= htmlspecialchars($c['course_code'], ENT_QUOTES) ?>">
                     <?= htmlspecialchars($c['course_code']) ?> - <?= htmlspecialchars($c['course_name']) ?>
                   </option>
                 <?php endforeach; ?>
               </select>
             </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Year Level<span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select id="newSectionYear" class="form-input form-select" required>
+                <option value="">-- Select Year Level --</option>
+                <option value="1">1st Year</option>
+                <option value="2">2nd Year</option>
+                <option value="3">3rd Year</option>
+                <option value="4">4th Year</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Shift<span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select id="newSectionShift" class="form-input form-select" required>
+                <option value="">-- Select Shift --</option>
+                <option value="M">M &mdash; Morning</option>
+                <option value="A">A &mdash; Afternoon</option>
+                <option value="E">E &mdash; Evening</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Section No.<span class="required">*</span></label>
+            <div class="select-wrapper">
+              <select id="newSectionNo" class="form-input form-select" required>
+                <option value="">-- Select Section No. --</option>
+                <?php for ($n = 1; $n <= 5; $n++): ?><option value="<?= $n ?>"><?= $n ?></option><?php endfor; ?>
+              </select>
+            </div>
+            <div class="form-hint" id="newSectionHint" style="margin-top:6px;font-size:12px;opacity:.8;">Pick a course, year level, shift and number &mdash; the section name is generated for you.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Section Name</label>
+            <input type="text" id="newSectionName" class="form-input" value="" placeholder="Generated automatically" readonly>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Capacity</label>
+            <input type="number" id="newSectionCapacity" class="form-input" value="40" min="1" required>
           </div>
         </div>
 
