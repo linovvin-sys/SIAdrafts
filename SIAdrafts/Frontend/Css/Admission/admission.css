@@ -197,6 +197,12 @@
     transition: opacity .6s cubic-bezier(0.23,1,0.32,1), transform .6s cubic-bezier(0.23,1,0.32,1), background-color .3s ease;
   }
   .form-section.is-revealed{ opacity: 1; transform: translateY(0) scale(1); }
+  /* The reveal-on-scroll toggle lives in online-admission.js, which the
+     dashboard-shell pages (admission_confirm, etc.) never load -- every
+     .form-section there stayed at opacity:0 forever, so the lookup
+     "worked" but the applicant / authorization / checklist cards rendered
+     as blank space. Inside .page-content there's nothing to reveal. */
+  .page-content .form-section{ opacity: 1; transform: none; }
   .form-section:last-of-type{ border-bottom: none; }
   /* Orients you to which section you're actually typing in right now --
      a background wash rather than a colored border-left (that specific
