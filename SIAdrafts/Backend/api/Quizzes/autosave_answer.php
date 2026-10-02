@@ -28,4 +28,9 @@ $conn = $db->connect();
 $result = autosave_answer($conn, $attemptId, (int)$_SESSION['student_id'], $questionId, $choiceId);
 $db->close();
 
+// Same UTC-vs-local fix as get_attempt_state.php -- see parse_db_utc_datetime().
+if (!empty($result['deadline_at'])) {
+    $result['deadline_at'] = utc_datetime_to_iso($result['deadline_at']);
+}
+
 echo json_encode($result);

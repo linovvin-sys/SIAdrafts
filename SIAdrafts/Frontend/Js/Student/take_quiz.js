@@ -265,10 +265,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ---------- Server-authoritative countdown (client is a UX nicety only) ----------
   function syncDeadline(deadlineAt) {
-    // MySQL DATETIME strings have no timezone marker; the server's own
-    // config.php sets Asia/Manila, so treat this as a local wall-clock
-    // string rather than parsing it as UTC.
-    deadlineMs = new Date(deadlineAt.replace(' ', 'T')).getTime();
+    // Backend now sends this as a proper UTC ISO string (trailing 'Z') --
+    // previously it was a naive "Y-m-d H:i:s" string actually written in
+    // MySQL's own UTC clock, which this code (and the server's own
+    // deadline check) both misread as local wall-clock time, shifting it
+    // 8 hours and causing every quiz attempt to look already-expired the
+    // instant it started. `new Date()` parses an explicit 'Z' correctly
+    // regardless of the browser's own timezone, so no manual handling is
+    // needed here anymore.
+    deadlineMs = new Date(deadlineAt).getTime();
   }
 
   function startCountdown() {

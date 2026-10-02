@@ -8,6 +8,36 @@
  */
 
 /**
+ * quiz_attempt.deadline_at is written as LEAST(DATE_ADD(NOW(), ...), ...)
+ * -- MySQL's own NOW(), not PHP's -- and this database's global/session
+ * time_zone is SYSTEM, which on Railway's MySQL image is UTC, while this
+ * app's PHP runs in Asia/Manila (config.php). strtotime()/`new DateTime()`
+ * with no explicit timezone interpret a naive "Y-m-d H:i:s" string using
+ * PHP's AMBIENT timezone, so reading a genuinely-UTC deadline_at that way
+ * silently shifts it 8 hours -- confirmed live: attempts were finalizing
+ * as "time expired" within 2 seconds of starting, because the shifted
+ * (8-hours-earlier) deadline already looked like it was in the past the
+ * instant the attempt began. Every read of deadline_at (or any other
+ * quiz_attempt timestamp column) must go through this, not strtotime().
+ */
+function parse_db_utc_datetime(string $mysqlDatetime): DateTime
+{
+    return new DateTime($mysqlDatetime, new DateTimeZone('UTC'));
+}
+
+/** Same UTC assumption as parse_db_utc_datetime(), serialized for the
+ * client: appending 'Z' makes `new Date(...)` in JS parse it as a real
+ * UTC instant instead of guessing the browser's own local timezone (the
+ * previous approach -- treating it as an unmarked local wall-clock string
+ * -- only ever happened to work if the browser's timezone and the
+ * mismatched assumption above cancelled out, which they usually don't).
+ */
+function utc_datetime_to_iso(string $mysqlDatetime): string
+{
+    return str_replace(' ', 'T', $mysqlDatetime) . 'Z';
+}
+
+/**
  * Resolves the enrollment_subject_id for this applicant in the class that
  * owns $quizId, or null if not enrolled. Same dual-path join
  * get_my_assignments() uses: Regular/Transferee enrollments carry their
@@ -243,7 +273,7 @@ function enforce_attempt_caps(mysqli $conn, array $attempt): array
     if ($attempt['status'] !== 'in_progress') {
         return $attempt;
     }
-    if (strtotime($attempt['deadline_at']) <= time()) {
+    if (parse_db_utc_datetime($attempt['deadline_at'])->getTimestamp() <= time()) {
         return finalize_attempt($conn, (int)$attempt['attempt_id'], 'auto_submitted_time');
     }
     if ((int)$attempt['violation_count'] >= 3) {

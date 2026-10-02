@@ -25,4 +25,9 @@ $conn = $db->connect();
 $result = start_attempt($conn, $quizId, (int)$_SESSION['student_id']);
 $db->close();
 
+// Same UTC-vs-local fix as get_attempt_state.php -- see parse_db_utc_datetime().
+if (!empty($result['attempt']['deadline_at'])) {
+    $result['attempt']['deadline_at'] = utc_datetime_to_iso($result['attempt']['deadline_at']);
+}
+
 echo json_encode($result);
