@@ -12,6 +12,7 @@
      their spacing from .page-content's padding — the extra 130px there was
      just stacking on top of it. */
   .page-content .admission-page{
+    background: transparent;
     padding-top: 0;
     min-height: 0;
   }

@@ -12,6 +12,19 @@ $conn = $db->connect();
 
 header('Content-Type: application/json');
 
+// mysqli throws on any SQL error since PHP 8.1 (e.g. a column from a
+// migration that hasn't been applied yet). Uncaught, that became an HTML
+// 500 page, which the confirm screen could only report as "Connection
+// error" -- and left the FOR UPDATE transaction open. Always answer JSON
+// and roll back instead.
+set_exception_handler(function (Throwable $e) use ($conn) {
+    try { $conn->rollback(); } catch (Throwable $_) {}
+    error_log('confirm_admission.php: ' . $e->getMessage());
+    if (!headers_sent()) http_response_code(500);
+    echo json_encode(['success' => false, 'errors' => ['Could not confirm this admission because of a server error. Please try again, and contact an administrator if it keeps happening.']]);
+    exit;
+});
+
 if (empty($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(['success' => false, 'errors' => ['Unauthorized.']]);
@@ -174,8 +187,20 @@ $upd->close();
 // $location is only ever set for docs physically in hand right now
 // ('submitted') -- a 'will_submit_later' row has no hard copy to file yet,
 // that gets recorded later by mark_document_received.php instead.
+function applicant_documents_has_storage_columns(mysqli $conn): bool
+{
+    static $has = null;
+    if ($has === null) {
+        $r = $conn->query("SHOW COLUMNS FROM applicant_documents LIKE 'storage_location'");
+        $has = $r && $r->num_rows > 0;
+        if ($r) $r->free();
+    }
+    return $has;
+}
+
 function upsert_applicant_document(mysqli $conn, int $applicant_id, string $doc, string $status, ?int $verified_by, ?string $location = null): void
 {
+    $hasStorage = applicant_documents_has_storage_columns($conn);
     $find = $conn->prepare("
         SELECT document_id FROM applicant_documents
         WHERE applicant_id = ? AND document_name = ?
@@ -188,7 +213,12 @@ function upsert_applicant_document(mysqli $conn, int $applicant_id, string $doc,
 
     $storageRecordedAt = $location !== null && $location !== '' ? date('Y-m-d H:i:s') : null;
 
-    if ($existing) {
+    if ($existing && !$hasStorage) {
+        $upd = $conn->prepare("UPDATE applicant_documents SET status = ?, verified_by = ?, uploaded_at = NOW() WHERE document_id = ?");
+        $upd->bind_param('sii', $status, $verified_by, $existing['document_id']);
+        $upd->execute();
+        $upd->close();
+    } elseif ($existing) {
         $upd = $conn->prepare("
             UPDATE applicant_documents
             SET status = ?, verified_by = ?, uploaded_at = NOW(), storage_location = ?, storage_recorded_at = ?
@@ -197,6 +227,11 @@ function upsert_applicant_document(mysqli $conn, int $applicant_id, string $doc,
         $upd->bind_param('sissi', $status, $verified_by, $location, $storageRecordedAt, $existing['document_id']);
         $upd->execute();
         $upd->close();
+    } elseif (!$hasStorage) {
+        $ins = $conn->prepare("INSERT INTO applicant_documents (applicant_id, document_name, status, verified_by) VALUES (?, ?, ?, ?)");
+        $ins->bind_param('issi', $applicant_id, $doc, $status, $verified_by);
+        $ins->execute();
+        $ins->close();
     } else {
         $ins = $conn->prepare("
             INSERT INTO applicant_documents (applicant_id, document_name, status, verified_by, storage_location, storage_recorded_at)

@@ -67,6 +67,17 @@
   .app-layout{
     background: var(--white);
     min-height: 100vh;
+    /* Everything inside the shell that reads var(--paper) as a surface
+       (.admission-page, the doc-preview panel, button hover fills) was
+       still painting the old cream -- that was the stale background left
+       after the .app-layout fix above. Inside the shell, "paper" is the
+       system's white (dark-mode aware, since --white is remapped there). */
+    --paper: var(--white);
+  }
+  /* Overscroll / short pages: don't let body's cream gradient show
+     around the shell either. */
+  html:has(.app-layout), body:has(.app-layout){
+    background: var(--white);
   }
 
   /*  navbar  */

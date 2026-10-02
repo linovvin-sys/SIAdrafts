@@ -15,6 +15,15 @@ if (empty($_SESSION['user_id'])) {
 
 require_role([ROLE_ADMISSION, ROLE_ADMIN], true);
 
+// Same reason as confirm_admission.php: a SQL error must come back as JSON
+// the lookup screen can show, not an HTML 500 it reports as "Connection error".
+set_exception_handler(function (Throwable $e) {
+    error_log('get_applicant.php: ' . $e->getMessage());
+    if (!headers_sent()) http_response_code(500);
+    echo json_encode(['error' => 'Could not load this application because of a server error. Please try again.']);
+    exit;
+});
+
 $db   = new Database();
 $conn = $db->connect();
 
