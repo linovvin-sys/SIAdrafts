@@ -885,6 +885,32 @@
   .btn-submit:hover{ color: var(--ink); transform: translateY(-2px); }
   .btn-submit:active{ transform: translateY(0); }
   @media (prefers-reduced-motion: reduce){ .btn-submit, .btn-submit::before{ transition:none; } .btn-submit:hover, .btn-submit:active{ transform:none; } }
+  /* "Not your program? Change" under the locked Program field (course
+     picked on the landing page). Was an unstyled class="btn-link" that
+     no stylesheet defined, so it rendered as a bare browser button. */
+  .btn-change-program{
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 8px;
+    padding: 6px 12px;
+    background: rgba(4,106,56,0.06);
+    border: 1px solid rgba(4,106,56,0.28);
+    border-radius: 999px;
+    color: var(--amber);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.2;
+    cursor: pointer;
+    transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .15s cubic-bezier(0.23,1,0.32,1);
+  }
+  .btn-change-program iconify-icon{ font-size: 16px; }
+  .btn-change-program:hover{ background: var(--amber); border-color: var(--amber); color: #fff; }
+  .btn-change-program:active{ transform: scale(0.97); }
+  .btn-change-program:focus-visible{ outline: 2px solid var(--amber); outline-offset: 2px; }
+  @media (prefers-reduced-motion: reduce){ .btn-change-program{ transition: none; } .btn-change-program:active{ transform: none; } }
+
   .btn-save-draft{
     position: relative;
     background: transparent;

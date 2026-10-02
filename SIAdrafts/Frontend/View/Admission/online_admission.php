@@ -287,7 +287,7 @@ include '../Admission/Include/header.php';
               ?>
               <input type="text" class="form-control" value="<?= htmlspecialchars($lockedName) ?>" disabled id="programDisplay">
               <input type="hidden" name="course_id" id="course_id" value="<?= $lockedCourseId ?>">
-              <button type="button" class="btn-link" id="unlockProgramBtn" style="padding:4px 0;">Not your program? Change</button>
+              <button type="button" class="btn-change-program" id="unlockProgramBtn"><iconify-icon icon="mdi:swap-horizontal"></iconify-icon> Not your program? Change</button>
               <template id="programOptionsTemplate"><option value="">Select a program</option><?php foreach ($courses as $course): ?><option value="<?= (int)$course['course_id'] ?>"><?= htmlspecialchars($course['course_name']) ?></option><?php endforeach; ?></template>
             <?php else: ?>
               <select class="form-control" id="course_id" name="course_id" required>
