@@ -93,7 +93,13 @@
     # ever fires, no visible error unless you're looking at exactly that
     # mount() call in the console). A precompiled-template build (vue-loader/
     # vite) would let this go away later, but isn't how this app is built.
-    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; frame-src https://www.google.com/recaptcha/; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
+    # frame-src 'self' / object-src 'self': the walk-in confirm page previews an
+    # applicant's uploaded soft copy in an <iframe> pointing at
+    # view_requirement_document.php (same origin). With frame-src limited to
+    # reCAPTCHA and object-src 'none', the browser refused to render it at all
+    # ("This content is blocked. Contact the site owner to fix the issue.") --
+    # object-src also governs Chrome's built-in PDF viewer.
+    Header always set Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://code.jquery.com https://cdn.datatables.net https://code.iconify.design https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net https://cdn.datatables.net; font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' https://api.iconify.design https://api.simplesvg.com https://api.unisvg.com; frame-src 'self' https://www.google.com/recaptcha/; object-src 'self'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'"
 
     # mod_ssl sets the "HTTPS" server/env variable itself whenever a
     # connection actually terminated TLS here — env=HTTPS makes this
