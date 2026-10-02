@@ -136,6 +136,12 @@ function validate_gpa($value) {
     if (strlen($value) > 10) {
         return 'GPA/grade value looks too long to be a real grade.';
     }
+    // applicant_school_history.school_gpa is DECIMAL(4,2): anything that
+    // isn't a plain number up to 99.99 (e.g. "90%", "1.5 GWA") used to
+    // reach the INSERT and fail it with a generic database error.
+    if (!is_numeric($value) || (float)$value < 0 || (float)$value > 99.99) {
+        return 'GPA/grade must be a number (for example 1.75 or 92.5) -- no letters or symbols.';
+    }
     return null;
 }
 

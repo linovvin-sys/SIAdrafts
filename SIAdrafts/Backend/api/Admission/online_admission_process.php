@@ -401,9 +401,12 @@ try {
         VALUES (?,?,?,?,?,?)
     ");
     foreach ($history as $row) {
+        // GPA is optional: an empty string is not a valid DECIMAL (strict
+        // mode rejects it and the whole application failed), so store NULL.
+        $gpa = $row['gpa'] === '' ? null : $row['gpa'];
         $histStmt->bind_param(
             'isssss',
-            $applicant_id, $row['school'], $row['address'], $row['year'], $row['strand'], $row['gpa']
+            $applicant_id, $row['school'], $row['address'], $row['year'], $row['strand'], $gpa
         );
         $histStmt->execute();
     }
