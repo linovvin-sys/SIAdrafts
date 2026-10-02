@@ -128,6 +128,10 @@ $fields = [
     'guardian_contact'      => clean($_POST['guardian_contact'] ?? ''),
     'guardian_id_type'      => clean($_POST['guardian_id_type'] ?? ''),
     'guardian_id_number'    => clean($_POST['guardian_id_number'] ?? ''),
+    // Both optional -- only meaningful when someone other than the
+    // guardian is the one actually enrolling the student in person.
+    'representative_name'         => clean($_POST['representative_name'] ?? ''),
+    'representative_relationship' => clean($_POST['representative_relationship'] ?? ''),
 
     'course_id'      => (int)($_POST['course_id'] ?? 0),
     'year_level'     => clean($_POST['year_level'] ?? ''),
@@ -166,6 +170,24 @@ foreach ($required_fields as $key => $label) {
     }
 }
 
+// Carries real legal weight as the applicant's own affirmative act (RA
+// 8792, the E-Commerce Act) specifically because it's enforced here, not
+// just shown in the UI -- a client that stripped the `required` attribute
+// or disabled JS entirely would otherwise bypass it silently.
+if (($_POST['consent_given'] ?? '') !== '1') {
+    $errors[] = 'You must certify the information provided and confirm guardian consent before submitting.';
+}
+
+// Representative fields are a matched pair -- enrolling in someone's
+// place needs to say both who and how they're related, not just a name
+// with no stated authority, or a relationship with no one attached to it.
+if ($fields['representative_name'] !== '' && $fields['representative_relationship'] === '') {
+    $errors[] = "Representative's relationship to the applicant is required when a representative is named.";
+}
+if ($fields['representative_relationship'] !== '' && $fields['representative_name'] === '') {
+    $errors[] = "Representative's full name is required when a relationship is given.";
+}
+
 $check = [
     validate_name($fields['last_name'], 'Last name'),
     validate_name($fields['first_name'], 'First name'),
@@ -179,6 +201,7 @@ $check = [
     validate_address($fields['home_address']),
     validate_nationality($fields['nationality']),
     validate_relationship($fields['guardian_relationship']),
+    $fields['representative_name'] !== '' ? validate_name($fields['representative_name'], "Representative's name") : null,
 ];
 
 $fields['program'] = '';
@@ -336,19 +359,22 @@ try {
                 (reference_id, last_name, first_name, middle_name, birth_date, sex, nationality, civil_status,
                 contact_number, email, home_address,
                 guardian_name, guardian_relationship, guardian_contact,
-                guardian_id_type, guardian_id_number, id_verified_by, admission_status,
+                guardian_id_type, guardian_id_number,
+                representative_name, representative_relationship,
+                id_verified_by, admission_status, consent_given_at,
                 program, course_id, year_level, school_year, semester, applicant_type,
                 possible_duplicate_student_id, duplicate_match_status, created_at)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',?,?,?,?,?,?,?,?, NOW())
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,NULL,'pending_verification',NOW(),?,?,?,?,?,?,?,?, NOW())
         ");
         $stmt->bind_param(
-            'sssssssssssssssssissisis',
+            'sssssssssssssssssssissisis',
             $reference_id,
             $fields['last_name'], $fields['first_name'], $fields['middle_name'],
             $fields['birth_date'], $fields['sex'], $fields['nationality'], $fields['civil_status'],
             $fields['contact_number'], $fields['email'], $fields['home_address'],
             $fields['guardian_name'], $fields['guardian_relationship'], $fields['guardian_contact'],
             $fields['guardian_id_type'], $fields['guardian_id_number'],
+            $fields['representative_name'], $fields['representative_relationship'],
             $fields['program'], $fields['course_id'], $fields['year_level'], $fields['school_year'], $fields['semester'],
             $fields['applicant_type'], $possible_duplicate_student_id, $duplicate_match_status
         );

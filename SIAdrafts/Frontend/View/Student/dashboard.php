@@ -29,7 +29,7 @@ foreach (REQUIREMENT_DEFINITIONS as $def) { $labelToKey[$def['label']] = $def['k
 $submittedKeys = array_values(array_filter(array_map(fn($l) => $labelToKey[$l] ?? null, $submittedLabels)));
 $missingGroups = missing_requirement_groups($submittedKeys);
 
-$totalGroups     = count(requirement_groups());
+$totalGroups     = count(trackable_requirement_groups());
 $submittedGroups = $totalGroups - count($missingGroups);
 $reqPercent      = $totalGroups > 0 ? (int)round($submittedGroups / $totalGroups * 100) : 100;
 

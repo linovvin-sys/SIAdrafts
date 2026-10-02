@@ -14,6 +14,14 @@ if (unlockBtn) {
   });
 }
 
+// Mirrors online_admission_process.php's own limit exactly (5MB, PDF/JPG/PNG
+// only) -- that's still the real enforcement (a client can always skip
+// this), but rejecting a 20MB phone photo here means an applicant on slow
+// mobile data finds out instantly instead of waiting through a full
+// upload just to have the server throw it away afterward.
+const REQUIREMENT_FILE_MAX_BYTES = 5 * 1024 * 1024;
+const REQUIREMENT_FILE_ALLOWED_TYPES = ['application/pdf', 'image/jpeg', 'image/png'];
+
 document.querySelectorAll('.requirement-row').forEach(function (row) {
   const fileInput = row.querySelector('.requirement-file');
   const laterCheckbox = row.querySelector('.requirement-later');
@@ -22,8 +30,28 @@ document.querySelectorAll('.requirement-row').forEach(function (row) {
   const iconEl = drop ? drop.querySelector('.file-drop-icon') : null;
   if (!fileInput || !laterCheckbox || !drop || !textEl) return;
 
+  function rejectFile(message) {
+    fileInput.value = '';
+    if (window.spToast) window.spToast(message, 'mdi:alert-circle-outline');
+    else alert(message);
+  }
+
   function renderFileState() {
-    const file = fileInput.files[0];
+    let file = fileInput.files[0];
+
+    // Checked here (not just in the change/drop handlers separately) so
+    // both the native file picker and drag-and-drop go through the same
+    // gate regardless of how the file arrived -- setting .files directly
+    // on a drop doesn't fire its own 'change' event, so a check living
+    // only in that handler would miss the drop path entirely.
+    if (file && file.size > REQUIREMENT_FILE_MAX_BYTES) {
+      rejectFile('"' + file.name + '" is too large (max 5MB). Try a smaller photo or scan.');
+      file = null;
+    } else if (file && REQUIREMENT_FILE_ALLOWED_TYPES.indexOf(file.type) === -1) {
+      rejectFile('"' + file.name + '" must be a PDF, JPG, or PNG file.');
+      file = null;
+    }
+
     const existingRemove = drop.querySelector('.file-drop-remove');
     if (existingRemove) existingRemove.remove();
 
@@ -549,4 +577,31 @@ form.addEventListener('submit', function (e) {
   numberInput.addEventListener('input', checkValue);
   numberInput.addEventListener('blur', checkValue);
   updatePlaceholder();
+})();
+
+/* ===== Representative fields -- only required/shown when the applicant
+   actually says someone other than their guardian will handle enrollment ===== */
+(function () {
+  const toggle = document.getElementById('hasRepresentative');
+  const nameWrap = document.getElementById('representativeNameWrap');
+  const relWrap = document.getElementById('representativeRelWrap');
+  if (!toggle || !nameWrap || !relWrap) return;
+
+  const nameInput = nameWrap.querySelector('input');
+  const relInput = relWrap.querySelector('input');
+
+  function sync() {
+    const on = toggle.checked;
+    nameWrap.hidden = !on;
+    relWrap.hidden = !on;
+    if (nameInput) nameInput.required = on;
+    if (relInput) relInput.required = on;
+    if (!on) {
+      if (nameInput) nameInput.value = '';
+      if (relInput) relInput.value = '';
+    }
+  }
+
+  toggle.addEventListener('change', sync);
+  sync();
 })();

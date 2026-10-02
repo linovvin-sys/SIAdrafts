@@ -58,7 +58,7 @@ if (!$hasDownpayment && $balance > 0 && $payment && !empty($payment['due_date'])
     else { $dueLabel = 'Due in ' . $daysUntil . ' day' . ($daysUntil === 1 ? '' : 's'); }
 }
 
-$totalReqGroups     = count(requirement_groups());
+$totalReqGroups     = count(trackable_requirement_groups());
 $submittedReqGroups = $totalReqGroups - count($missingGroups);
 
 include __DIR__ . '/Include/header.php';

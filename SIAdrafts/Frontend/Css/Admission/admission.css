@@ -563,6 +563,36 @@
     accent-color: var(--ink);
   }
 
+  /* Same checkbox-plus-text pattern as .requirement-later-label, but for
+     longer sentences (the representative toggle, the consent statement)
+     that genuinely need to wrap instead of truncating on one line. */
+  .checkbox-line{
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    font-size: 0.86rem;
+    color: var(--ink);
+    cursor: pointer;
+    line-height: 1.5;
+  }
+  .checkbox-line input[type="checkbox"]{
+    flex: none;
+    width: 17px; height: 17px;
+    margin-top: 2px;
+    accent-color: var(--ink);
+  }
+  .representative-field{
+    transition: opacity .25s cubic-bezier(0.23,1,0.32,1);
+  }
+  .consent-block{
+    background: rgba(31,46,40,0.03);
+    border: 1px solid var(--ink-line);
+    border-radius: 6px;
+    padding: 14px 16px;
+    margin-bottom: 18px;
+  }
+  .consent-block .checkbox-line{ font-weight: 600; }
+
   /*  checklist  */
   .doc-checklist{
     display: grid;

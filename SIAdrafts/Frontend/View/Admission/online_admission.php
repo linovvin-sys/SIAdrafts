@@ -242,6 +242,28 @@ include '../Admission/Include/header.php';
             <input type="text" class="form-control" id="guardian_id_number" name="guardian_id_number" required autocomplete="off">
             <div class="field-hint" id="guardianIdHint"></div>
           </div>
+
+          <!-- Guardians are often overseas, working, or in another
+               province entirely -- walk-in confirmation only ever
+               physically checked the APPLICANT's own documents anyway
+               (see confirm_admission.php), so this just makes that
+               already-true fact explicit instead of silently assumed,
+               and gives staff a real paper trail (who's enrolling
+               instead, on what authority) when it happens. -->
+          <div class="col-12">
+            <label class="checkbox-line">
+              <input type="checkbox" id="hasRepresentative">
+              Someone other than my guardian (relative, etc.) will handle enrollment in person
+            </label>
+          </div>
+          <div class="col-md-6 representative-field" id="representativeNameWrap" hidden>
+            <label class="form-label" for="representative_name">Representative's Full Name</label>
+            <input type="text" class="form-control" id="representative_name" name="representative_name" autocomplete="off">
+          </div>
+          <div class="col-md-6 representative-field" id="representativeRelWrap" hidden>
+            <label class="form-label" for="representative_relationship">Representative's Relationship to Applicant</label>
+            <input type="text" class="form-control" id="representative_relationship" name="representative_relationship" placeholder="e.g. Aunt, Uncle, Elder Sibling" autocomplete="off">
+          </div>
         </div>
       </section>
 
@@ -399,6 +421,17 @@ include '../Admission/Include/header.php';
           <div class="g-recaptcha" data-sitekey="<?= htmlspecialchars($recaptchaSiteKey, ENT_QUOTES) ?>"></div>
         </div>
       <?php endif; ?>
+
+      <!-- Electronic consent -- carries real legal weight under the
+           E-Commerce Act (RA 8792) as the applicant's own affirmative,
+           logged act, which is exactly why it's recorded with a
+           timestamp (consent_given_at) rather than just a bare yes/no. -->
+      <div class="consent-block">
+        <label class="checkbox-line">
+          <input type="checkbox" id="consentCheckbox" name="consent_given" value="1" required>
+          I certify that the information I've provided is true and accurate, and that I have my parent's/legal guardian's consent to submit this application.
+        </label>
+      </div>
 
       <div class="form-actions">
         <span class="hint">Double-check your details — you'll need matching documents on campus.<br><span id="draftSaveStatus" style="opacity:0.75;"></span></span>
