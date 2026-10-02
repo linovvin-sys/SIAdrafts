@@ -17,15 +17,79 @@ if (unlockBtn) {
 document.querySelectorAll('.requirement-row').forEach(function (row) {
   const fileInput = row.querySelector('.requirement-file');
   const laterCheckbox = row.querySelector('.requirement-later');
-  if (!fileInput || !laterCheckbox) return;
+  const drop = row.querySelector('.file-drop');
+  const textEl = drop ? drop.querySelector('.file-drop-text') : null;
+  const iconEl = drop ? drop.querySelector('.file-drop-icon') : null;
+  if (!fileInput || !laterCheckbox || !drop || !textEl) return;
+
+  function renderFileState() {
+    const file = fileInput.files[0];
+    const existingRemove = drop.querySelector('.file-drop-remove');
+    if (existingRemove) existingRemove.remove();
+
+    if (file) {
+      drop.classList.add('has-file');
+      textEl.textContent = file.name;
+      if (iconEl) iconEl.setAttribute('icon', 'mdi:file-check-outline');
+      row.classList.add('has-file');
+      const removeBtn = document.createElement('span');
+      removeBtn.className = 'file-drop-remove';
+      removeBtn.setAttribute('role', 'button');
+      removeBtn.setAttribute('aria-label', 'Remove selected file');
+      removeBtn.innerHTML = '<iconify-icon icon="mdi:close"></iconify-icon>';
+      removeBtn.addEventListener('click', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        fileInput.value = '';
+        renderFileState();
+      });
+      drop.appendChild(removeBtn);
+    } else {
+      drop.classList.remove('has-file');
+      textEl.textContent = 'Choose file or drag here';
+      if (iconEl) iconEl.setAttribute('icon', 'mdi:tray-arrow-up');
+      row.classList.remove('has-file');
+    }
+  }
 
   laterCheckbox.addEventListener('change', function () {
     fileInput.disabled = laterCheckbox.checked;
-    if (laterCheckbox.checked) fileInput.value = '';
+    if (laterCheckbox.checked) {
+      fileInput.value = '';
+      renderFileState();
+    }
+    drop.classList.toggle('is-disabled', laterCheckbox.checked);
+    row.dispatchEvent(new Event('sp-progress-check', { bubbles: true }));
   });
   fileInput.addEventListener('change', function () {
-    if (fileInput.files.length > 0) {
+    if (fileInput.files.length > 0) laterCheckbox.checked = false;
+    renderFileState();
+    row.dispatchEvent(new Event('sp-progress-check', { bubbles: true }));
+  });
+
+  // Drag-and-drop onto the label itself -- the hidden native input only
+  // ever reacts to its own click/file-picker flow, not a dropped file, so
+  // this wires the drop target's dataTransfer back into it manually.
+  ['dragenter', 'dragover'].forEach(function (evt) {
+    drop.addEventListener(evt, function (e) {
+      e.preventDefault();
+      if (!fileInput.disabled) drop.classList.add('is-dragover');
+    });
+  });
+  ['dragleave', 'drop'].forEach(function (evt) {
+    drop.addEventListener(evt, function (e) {
+      e.preventDefault();
+      drop.classList.remove('is-dragover');
+    });
+  });
+  drop.addEventListener('drop', function (e) {
+    if (fileInput.disabled) return;
+    const dropped = e.dataTransfer && e.dataTransfer.files;
+    if (dropped && dropped.length) {
+      fileInput.files = dropped;
       laterCheckbox.checked = false;
+      renderFileState();
+      row.dispatchEvent(new Event('sp-progress-check', { bubbles: true }));
     }
   });
 });
@@ -291,3 +355,129 @@ form.addEventListener('submit', function (e) {
     }
   });
 });
+/* ===== Scroll-reveal entrance (one authored moment, reused per section) ===== */
+(function () {
+  const sections = document.querySelectorAll('.form-section');
+  if (!sections.length) return;
+
+  if (!('IntersectionObserver' in window)) {
+    sections.forEach(function (s) { s.classList.add('is-revealed'); });
+    return;
+  }
+
+  const revealObserver = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('is-revealed');
+        revealObserver.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15, rootMargin: '0px 0px -8% 0px' });
+
+  sections.forEach(function (s) { revealObserver.observe(s); });
+})();
+
+/* ===== Progress rail: active-section tracking, real completion state,
+   and click-to-scroll ===== */
+(function () {
+  const track = document.getElementById('progressTrack');
+  if (!track) return;
+
+  const steps = Array.from(track.querySelectorAll('.progress-step'));
+  const sections = steps.map(function (step) {
+    return document.getElementById(step.dataset.target);
+  });
+
+  // Jump nav -- offset accounts for the sticky rail itself (~60px) plus
+  // breathing room, so the target section's heading doesn't land flush
+  // against the rail.
+  steps.forEach(function (step, i) {
+    step.addEventListener('click', function () {
+      const target = sections[i];
+      if (!target) return;
+      const railHeight = track.closest('.progress-rail').offsetHeight;
+      const y = target.getBoundingClientRect().top + window.scrollY - railHeight - 28;
+      window.scrollTo({ top: y, behavior: 'smooth' });
+    });
+  });
+
+  // Active section -- whichever section currently owns the most of the
+  // band just below the sticky rail, not simply "first one touching the
+  // viewport" (which flickers between two adjacent sections at the
+  // boundary).
+  function updateActiveStep() {
+    const railBottom = track.getBoundingClientRect().bottom;
+    let activeIndex = 0;
+    let bestScore = -Infinity;
+    sections.forEach(function (section, i) {
+      if (!section) return;
+      const rect = section.getBoundingClientRect();
+      const score = rect.top <= railBottom + 40 ? -(railBottom - rect.top) : -(rect.top - railBottom) - 100000;
+      if (rect.top <= railBottom + 40 && rect.bottom > railBottom) {
+        activeIndex = i;
+        bestScore = Infinity;
+      } else if (score > bestScore) {
+        bestScore = score;
+        activeIndex = i;
+      }
+    });
+    steps.forEach(function (step, i) { step.classList.toggle('is-active', i === activeIndex); });
+  }
+
+  // Real completion -- every [required] field in the section is filled/
+  // valid, with two section-specific exceptions where "required" doesn't
+  // map cleanly onto the markup: Requirements (satisfied per-row by either
+  // a file or "I'll submit later") and Academic History (optional overall,
+  // signaled complete once the first school name is entered).
+  function isRequirementsSectionComplete(section) {
+    const rows = section.querySelectorAll('.requirement-row');
+    if (!rows.length) return true;
+    return Array.from(rows).every(function (row) {
+      const fileInput = row.querySelector('.requirement-file');
+      const later = row.querySelector('.requirement-later');
+      return (fileInput && fileInput.files && fileInput.files.length > 0) || (later && later.checked);
+    });
+  }
+  function isHistorySectionComplete(section) {
+    const firstName = section.querySelector('input[name="school_name[]"]');
+    return !!(firstName && firstName.value.trim() !== '');
+  }
+  function isSectionComplete(section) {
+    if (!section) return false;
+    if (section.id === 'section-requirements') return isRequirementsSectionComplete(section);
+    if (section.id === 'section-history') return isHistorySectionComplete(section);
+    const required = section.querySelectorAll('[required]');
+    if (!required.length) return false;
+    return Array.from(required).every(function (field) {
+      if (field.type === 'checkbox' || field.type === 'radio') return field.checked;
+      return field.value.trim() !== '' && field.checkValidity();
+    });
+  }
+  function updateCompletion() {
+    steps.forEach(function (step, i) {
+      step.classList.toggle('is-complete', isSectionComplete(sections[i]));
+    });
+  }
+
+  function updateAll() {
+    updateActiveStep();
+    updateCompletion();
+  }
+
+  let ticking = false;
+  window.addEventListener('scroll', function () {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(function () { updateActiveStep(); ticking = false; });
+  }, { passive: true });
+
+  const formEl = document.getElementById('admissionForm');
+  if (formEl) {
+    formEl.addEventListener('input', updateCompletion);
+    formEl.addEventListener('change', updateCompletion);
+    formEl.addEventListener('sp-progress-check', updateCompletion);
+  }
+
+  window.addEventListener('resize', updateAll);
+  updateAll();
+})();

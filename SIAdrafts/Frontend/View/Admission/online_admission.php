@@ -45,15 +45,42 @@ include '../Admission/Include/header.php';
 
 <main class="admission-page">
   <div class="admission-head">
-    <span class="admission-eyebrow">
-      <iconify-icon icon="mdi:file-document-edit-outline"></iconify-icon>
-      Online Application
-    </span>
     <h1>Start Your Application</h1>
     <p>Fill out this form to apply. After submitting, you'll get a reference number —
        bring it (printed or on your phone) along with your documents to campus to
        complete verification.</p>
   </div>
+
+  <!-- Sticky, tracks real per-section completion (not just scroll position)
+       and doubles as jump navigation -- see online-admission.js. -->
+  <nav class="progress-rail" aria-label="Application progress">
+    <div class="progress-track" id="progressTrack">
+      <button type="button" class="progress-step" data-target="section-personal">
+        <span class="progress-dot"><span class="progress-dot-num">1</span><iconify-icon icon="mdi:check"></iconify-icon></span>
+        <span class="progress-label">Personal</span>
+      </button>
+      <span class="progress-connector"></span>
+      <button type="button" class="progress-step" data-target="section-guardian">
+        <span class="progress-dot"><span class="progress-dot-num">2</span><iconify-icon icon="mdi:check"></iconify-icon></span>
+        <span class="progress-label">Guardian</span>
+      </button>
+      <span class="progress-connector"></span>
+      <button type="button" class="progress-step" data-target="section-program">
+        <span class="progress-dot"><span class="progress-dot-num">3</span><iconify-icon icon="mdi:check"></iconify-icon></span>
+        <span class="progress-label">Program</span>
+      </button>
+      <span class="progress-connector"></span>
+      <button type="button" class="progress-step" data-target="section-history">
+        <span class="progress-dot"><span class="progress-dot-num">4</span><iconify-icon icon="mdi:check"></iconify-icon></span>
+        <span class="progress-label">Academic</span>
+      </button>
+      <span class="progress-connector"></span>
+      <button type="button" class="progress-step" data-target="section-requirements">
+        <span class="progress-dot"><span class="progress-dot-num">5</span><iconify-icon icon="mdi:check"></iconify-icon></span>
+        <span class="progress-label">Documents</span>
+      </button>
+    </div>
+  </nav>
 
   <!-- Shown after a successful submit; hidden until then. Sits above the
        form itself so the reference ID is the first thing visible, not
@@ -86,7 +113,7 @@ include '../Admission/Include/header.php';
 
     <div class="admission-card">
 
-      <section class="form-section">
+      <section class="form-section" id="section-personal">
         <div class="section-head">
           <span class="section-num section-num--index">01</span>
           <div>
@@ -152,7 +179,7 @@ include '../Admission/Include/header.php';
         </div>
       </section>
 
-      <section class="form-section">
+      <section class="form-section" id="section-guardian">
         <div class="section-head">
           <span class="section-num section-num--index">02</span>
           <div>
@@ -199,7 +226,7 @@ include '../Admission/Include/header.php';
         </div>
       </section>
 
-      <section class="form-section">
+      <section class="form-section" id="section-program">
         <div class="section-head">
           <span class="section-num section-num--index">03</span>
           <div>
@@ -254,7 +281,7 @@ include '../Admission/Include/header.php';
         </div>
       </section>
 
-      <section class="form-section">
+      <section class="form-section" id="section-history">
         <div class="section-head">
           <span class="section-num section-num--index">04</span>
           <div>
@@ -291,7 +318,7 @@ include '../Admission/Include/header.php';
         </div>
       </section>
 
-      <section class="form-section">
+      <section class="form-section" id="section-requirements">
         <div class="section-head">
           <span class="section-num section-num--index">05</span>
           <div>
@@ -306,19 +333,22 @@ include '../Admission/Include/header.php';
             $groupAlreadyRendered = isset($renderedGroups[$req['group']]);
             $renderedGroups[$req['group']] = true;
         ?>
-          <div class="row g-2 align-items-center requirement-row" data-group="<?= htmlspecialchars($req['group']) ?>" style="margin-bottom:10px;">
-            <div class="col-md-4">
+          <div class="requirement-row" data-group="<?= htmlspecialchars($req['group']) ?>">
+            <div class="requirement-label">
               <?php if ($groupAlreadyRendered): ?>
-                <label class="form-label" style="opacity:.6;">or — <?= htmlspecialchars($req['label']) ?><span class="required">*</span></label>
-              <?php else: ?>
-                <label class="form-label"><?= htmlspecialchars($req['label']) ?><span class="required">*</span></label>
+                <span class="requirement-alt">or —</span>
               <?php endif; ?>
+              <label class="form-label" style="margin:0;"><?= htmlspecialchars($req['label']) ?><span class="required">*</span></label>
             </div>
-            <div class="col-md-4">
+
+            <label class="file-drop" data-key="<?= htmlspecialchars($req['key']) ?>">
+              <iconify-icon icon="mdi:tray-arrow-up" class="file-drop-icon"></iconify-icon>
+              <span class="file-drop-text">Choose file or drag here</span>
               <input type="file" class="form-control requirement-file" name="requirement_file[<?= htmlspecialchars($req['key']) ?>]" accept="application/pdf,image/*">
-            </div>
-            <div class="col-md-4">
-              <label class="form-check-label" style="font-size:13px;">
+            </label>
+
+            <div class="requirement-later-wrap">
+              <label class="requirement-later-label">
                 <input type="checkbox" class="requirement-later" name="requirement_status[<?= htmlspecialchars($req['key']) ?>]" value="later">
                 I'll submit this at campus
               </label>
