@@ -39,7 +39,10 @@ if (isset($_GET['course_id']) && ctype_digit((string)$_GET['course_id'])) {
     if (!$lockedValid) $lockedCourseId = 0;
 }
 
-$page_scripts = ['/SIAdrafts/Frontend/Js/Admission/online-admission.js'];
+$page_scripts = [
+    '/SIAdrafts/Frontend/Js/Admission/ph-address-picker.js',
+    '/SIAdrafts/Frontend/Js/Admission/online-admission.js',
+];
 include '../Admission/Include/header.php';
 ?>
 
@@ -173,8 +176,22 @@ include '../Admission/Include/header.php';
             <input type="email" class="form-control" id="email" name="email" required>
           </div>
           <div class="col-12">
-            <label class="form-label" for="home_address">Home Address</label>
-            <textarea class="form-control" id="home_address" name="home_address" rows="2" required></textarea>
+            <label class="form-label">Home Address</label>
+            <div class="address-picker">
+              <div class="row g-2">
+                <div class="col-md-4">
+                  <select class="form-control address-region" required></select>
+                </div>
+                <div class="col-md-4">
+                  <select class="form-control address-province" required disabled></select>
+                </div>
+                <div class="col-md-4">
+                  <select class="form-control address-city" required disabled></select>
+                </div>
+              </div>
+              <input type="text" class="form-control address-detail mt-2" placeholder="Street, Barangay, House / Unit No." required>
+              <input type="hidden" name="home_address" data-required>
+            </div>
           </div>
         </div>
       </section>
@@ -221,7 +238,8 @@ include '../Admission/Include/header.php';
           </div>
           <div class="col-md-4">
             <label class="form-label" for="guardian_id_number">Guardian's ID Number</label>
-            <input type="text" class="form-control" id="guardian_id_number" name="guardian_id_number" required>
+            <input type="text" class="form-control" id="guardian_id_number" name="guardian_id_number" required autocomplete="off">
+            <div class="field-hint" id="guardianIdHint"></div>
           </div>
         </div>
       </section>
@@ -299,20 +317,35 @@ include '../Admission/Include/header.php';
               </div>
               <div class="col-md-6">
                 <label class="form-label">School address</label>
-                <input type="text" class="form-control" name="school_address[]">
+                <div class="address-picker address-picker--compact">
+                  <div class="row g-2">
+                    <div class="col-4">
+                      <select class="form-control address-region"></select>
+                    </div>
+                    <div class="col-4">
+                      <select class="form-control address-province" disabled></select>
+                    </div>
+                    <div class="col-4">
+                      <select class="form-control address-city" disabled></select>
+                    </div>
+                  </div>
+                  <input type="text" class="form-control address-detail mt-2" placeholder="Street, Barangay (optional)">
+                  <input type="hidden" name="school_address[]">
+                </div>
               </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label">Year graduated / last attended</label>
                 <input type="text" class="form-control" name="school_year[]">
               </div>
-              <div class="col-md-4">
+              <div class="col-md-6">
                 <label class="form-label">Strand / track (if SHS)</label>
                 <input type="text" class="form-control" name="school_strand[]">
               </div>
-              <div class="col-md-4">
-                <label class="form-label">General average / GPA</label>
-                <input type="text" class="form-control" name="school_gpa[]">
-              </div>
+              <!-- GPA/general average deliberately not collected here --
+                   the applicant brings Form 138 (which already has it) as
+                   a physical requirement, so asking for it again here was
+                   just one more thing to mistype and have cross-checked
+                   later for no benefit. -->
             </div>
           </div>
         </div>

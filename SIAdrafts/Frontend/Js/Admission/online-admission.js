@@ -481,3 +481,72 @@ form.addEventListener('submit', function (e) {
   window.addEventListener('resize', updateAll);
   updateAll();
 })();
+
+/* ===== Guardian ID format check -- mirrors
+   Backend/api/Admission/validation_rules.php's GUARDIAN_ID_FORMATS.
+   Keep both in sync if these patterns ever change. Soft inline feedback
+   here; the server re-checks the same shape regardless (never trust the
+   client alone), this just saves a round trip for the common typo. ===== */
+(function () {
+  const typeSelect = document.getElementById('guardian_id_type');
+  const numberInput = document.getElementById('guardian_id_number');
+  const hint = document.getElementById('guardianIdHint');
+  if (!typeSelect || !numberInput || !hint) return;
+
+  const GUARDIAN_ID_FORMATS = {
+    'SSS ID':                  { pattern: /^\d{2}-?\d{7}-?\d{1}$/, example: '34-1234567-8' },
+    'Philhealth ID':           { pattern: /^\d{2}-?\d{9}-?\d{1}$/, example: '12-345678901-2' },
+    'UMID':                    { pattern: /^\d{4}-?\d{7}-?\d{1}$/, example: '1234-5678901-2' },
+    "Driver's License":        { pattern: /^[A-Za-z]\d{2}-?\d{2}-?\d{6}$/, example: 'N01-12-123456' },
+    'Passport':                { pattern: /^[A-Za-z]{1,2}\d{6,7}[A-Za-z]?$/, example: 'P1234567A' },
+    'Philippine National ID':  { pattern: /^\d{4}-?\d{4}-?\d{4}-?\d{4}$/, example: '1234-5678-9012-3456' },
+    "Voter's ID":              { pattern: /^\d{8,20}$/, example: '1234567890' },
+  };
+
+  function currentFormat() {
+    return GUARDIAN_ID_FORMATS[typeSelect.value] || null;
+  }
+
+  function setHintState(cls, text) {
+    hint.className = 'field-hint' + (cls ? ' ' + cls : '');
+    hint.textContent = text;
+  }
+
+  function updatePlaceholder() {
+    const fmt = currentFormat();
+    numberInput.placeholder = fmt ? 'e.g. ' + fmt.example : '';
+    // Switching ID type invalidates whatever was already typed against
+    // the old format -- re-run the check instead of leaving a stale
+    // valid/invalid state showing against the new type.
+    checkValue();
+  }
+
+  function checkValue() {
+    const value = numberInput.value.trim();
+    const fmt = currentFormat();
+
+    numberInput.classList.remove('is-invalid', 'is-valid');
+
+    if (value === '') {
+      setHintState('', fmt ? 'Format: ' + fmt.example : '');
+      return;
+    }
+    if (!fmt) {
+      // "Other" or nothing selected yet -- no format to check against.
+      setHintState('', '');
+      return;
+    }
+    if (fmt.pattern.test(value)) {
+      numberInput.classList.add('is-valid');
+      setHintState('is-ok', 'Looks right.');
+    } else {
+      numberInput.classList.add('is-invalid');
+      setHintState('is-error', "Doesn't match a " + typeSelect.value + " number (e.g. " + fmt.example + ').');
+    }
+  }
+
+  typeSelect.addEventListener('change', updatePlaceholder);
+  numberInput.addEventListener('input', checkValue);
+  numberInput.addEventListener('blur', checkValue);
+  updatePlaceholder();
+})();

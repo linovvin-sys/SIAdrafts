@@ -59,10 +59,42 @@ function validate_birth_date($value) {
     return null;
 }
 
-function validate_guardian_id($value) {
+// Real per-ID-type number formats -- this used to be one generic "5-30
+// alphanumeric characters" check regardless of which ID type was picked,
+// which would happily accept a Driver's License number typed into a
+// Passport field. Patterns tolerate however someone actually types
+// digits (with or without the dashes printed on the card) rather than
+// demanding one exact mask, since cross-checking those still happens by
+// eye against the physical ID at campus either way -- this is a format
+// sanity check, not a government ID verification API. Mirrored in
+// Frontend/Js/Admission/online-admission.js (GUARDIAN_ID_FORMATS) for
+// the live client-side hint; keep both in sync if these ever change.
+const GUARDIAN_ID_FORMATS = [
+    'SSS ID'                    => ['pattern' => '/^\d{2}-?\d{7}-?\d{1}$/', 'example' => '34-1234567-8'],
+    'Philhealth ID'              => ['pattern' => '/^\d{2}-?\d{9}-?\d{1}$/', 'example' => '12-345678901-2'],
+    'UMID'                       => ['pattern' => '/^\d{4}-?\d{7}-?\d{1}$/', 'example' => '1234-5678901-2'],
+    "Driver's License"           => ['pattern' => '/^[A-Za-z]\d{2}-?\d{2}-?\d{6}$/', 'example' => 'N01-12-123456'],
+    'Passport'                   => ['pattern' => '/^[A-Za-z]{1,2}\d{6,7}[A-Za-z]?$/', 'example' => 'P1234567A'],
+    'Philippine National ID'     => ['pattern' => '/^\d{4}-?\d{4}-?\d{4}-?\d{4}$/', 'example' => '1234-5678-9012-3456'],
+    "Voter's ID"                 => ['pattern' => '/^\d{8,20}$/', 'example' => '1234567890'],
+];
+
+function validate_guardian_id($value, $idType = null) {
     if ($value === '') return null;
-    if (!preg_match('/^[A-Za-z0-9\- ]{5,30}$/', $value)) {
-        return 'Guardian ID number looks invalid — check the number was copied correctly.';
+
+    $format = GUARDIAN_ID_FORMATS[$idType] ?? null;
+    if ($format === null) {
+        // "Other" or an unrecognized type -- fall back to the old generic
+        // sanity check rather than rejecting a real ID this list just
+        // doesn't happen to name.
+        if (!preg_match('/^[A-Za-z0-9\- ]{5,30}$/', $value)) {
+            return 'Guardian ID number looks invalid — check the number was copied correctly.';
+        }
+        return null;
+    }
+
+    if (!preg_match($format['pattern'], $value)) {
+        return "That doesn't look like a $idType number — expected a format like {$format['example']}.";
     }
     return null;
 }

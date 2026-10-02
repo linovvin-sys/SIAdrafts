@@ -51,13 +51,19 @@
  
   /*  progress rail -- sticky, tracks real completion (required fields
       filled per section) rather than just scroll position, and doubles as
-      jump navigation. Parked at top:14px so it settles just under the
-      floating pill navbar (.nav-wrap, ~94px tall incl. its own 18px/10px
-      top offset) once scrolled past .admission-head, instead of fighting
-      it for the same fixed band. */
+      jump navigation.
+      top:86px, not a small offset, deliberately: .nav-wrap is itself
+      position:fixed with a higher z-index, and by the time this rail has
+      scrolled far enough to actually engage its sticky position (past
+      .admission-head), .nav-wrap has always already gained its own
+      .scrolled state (JS flips that at scrollY>24 -- main.js) --
+      top:10px + 64px tall = bottom edge ~74px. Parking below that with a
+      12px gap stops the two fixed/sticky bars fighting for the same band,
+      which is what made the rail look like it wasn't sticking at all
+      (it was "stuck", just visually buried under/behind the pill). */
   .progress-rail{
     position: sticky;
-    top: 14px;
+    top: 86px;
     z-index: 40;
     max-width: 900px;
     margin: 0 auto 28px;
@@ -92,19 +98,29 @@
   .progress-step:focus-visible{ outline: 2px solid var(--sage); outline-offset: 2px; }
   .progress-step + .progress-step{ margin-left: 2px; }
   .progress-dot{
+    position: relative;
     flex: none;
     width: 22px;
     height: 22px;
     border-radius: 50%;
     border: 1.5px solid var(--ink-line);
     background: var(--white);
-    display:flex;
-    align-items:center;
-    justify-content:center;
     font-size: 0.68rem;
     font-weight: 700;
     color: var(--ink-soft);
     transition: border-color .3s cubic-bezier(0.23,1,0.32,1), background-color .3s cubic-bezier(0.23,1,0.32,1), color .3s cubic-bezier(0.23,1,0.32,1), transform .3s cubic-bezier(0.16,1,0.3,1);
+  }
+  /* Number and checkmark occupy the exact same spot (absolute + inset:0,
+     not flex siblings) and cross-fade -- as flex children they both took
+     up box space even at opacity:0, which is what was pushing the number
+     off-center instead of sitting in the middle of the circle. */
+  .progress-dot .progress-dot-num,
+  .progress-dot iconify-icon{
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .progress-dot iconify-icon{ font-size: 0.78rem; opacity: 0; transform: scale(0.5); transition: opacity .2s ease, transform .25s cubic-bezier(0.16,1,0.3,1); }
   .progress-dot .progress-dot-num{ transition: opacity .2s ease; }
@@ -150,8 +166,14 @@
     margin: 0 auto;
     background: var(--white);
     border: 1px solid var(--ink-line);
-    border-radius: 3px;
+    border-radius: 6px;
     overflow: hidden;
+    /* Soft, tinted elevation -- the card was previously flush with the
+       page (border only, no depth at all), which read as inert rather
+       than as the one surface actually being worked in. Blur+offset,
+       tinted to the page's own ink hue rather than a generic black, same
+       system admin.css's --shadow-lift already established elsewhere. */
+    box-shadow: 0 1px 2px rgba(31,46,40,0.04), 0 24px 48px -28px rgba(31,46,40,0.22);
   }
  
   .form-section{
@@ -164,10 +186,14 @@
        an already-visible 10px/0.985 default, never from nothing. */
     opacity: 0;
     transform: translateY(10px) scale(0.985);
-    transition: opacity .6s cubic-bezier(0.23,1,0.32,1), transform .6s cubic-bezier(0.23,1,0.32,1);
+    transition: opacity .6s cubic-bezier(0.23,1,0.32,1), transform .6s cubic-bezier(0.23,1,0.32,1), background-color .3s ease;
   }
   .form-section.is-revealed{ opacity: 1; transform: translateY(0) scale(1); }
   .form-section:last-of-type{ border-bottom: none; }
+  /* Orients you to which section you're actually typing in right now --
+     a background wash rather than a colored border-left (that specific
+     treatment reads as a generic AI-UI tell regardless of how subtle). */
+  .form-section:focus-within{ background: rgba(4,106,56,0.025); }
   @media (prefers-reduced-motion: reduce){
     .form-section{ opacity: 1; transform: none; transition: none; }
   }
@@ -233,25 +259,67 @@
   .form-control, .form-select{
     color: var(--ink);
     border-color: var(--ink-line);
-    border-radius: 2px;
+    border-radius: 5px;
     padding-top: 0.6rem;
     padding-bottom: 0.6rem;
     font-size: 0.93rem;
+    transition: border-color .15s cubic-bezier(0.23,1,0.32,1), box-shadow .15s cubic-bezier(0.23,1,0.32,1), background-color .15s ease;
+  }
+  /* Hover reads as "this is about to respond to you" before the stronger
+     focus state commits -- previously inputs gave zero feedback until
+     actually clicked into. */
+  .form-control:hover:not(:disabled):not(:focus), .form-select:hover:not(:disabled):not(:focus){
+    border-color: rgba(124,152,133,0.6);
   }
   .form-control:focus, .form-select:focus{
     border-color: var(--sage);
     box-shadow: 0 0 0 0.2rem rgba(124,152,133,0.18);
   }
   .form-text{ color: var(--ink-soft); font-size: 0.78rem; }
+
+  /* Inline format validation (guardian ID number, etc.) -- same palette
+     as the rest of the form (sage for good, the existing danger-family
+     red from .form-banner.error for bad) rather than Bootstrap's default
+     green/red, which would be the one jarring off-palette note on the
+     page. */
+  .form-control.is-invalid{ border-color: #A6472E; }
+  .form-control.is-invalid:focus{ border-color: #A6472E; box-shadow: 0 0 0 0.2rem rgba(166,71,46,0.14); }
+  .form-control.is-valid{ border-color: var(--sage); }
+  .field-hint{
+    font-size: 0.76rem;
+    margin-top: 5px;
+    min-height: 1.2em;
+    transition: color .15s ease;
+  }
+  .field-hint{ color: var(--ink-soft); }
+  .field-hint.is-error{ color: #A6472E; font-weight: 600; }
+  .field-hint.is-ok{ color: #2f6b40; }
+
+  /* Region/Province/City cascade (Home Address, School Address) -- a
+     disabled downstream select reads visually inert (not just grayed
+     Bootstrap default) so it's obvious province/city aren't choosable
+     yet, not broken. */
+  .address-picker .form-control:disabled{
+    background: rgba(31,46,40,0.03);
+    color: var(--ink-soft);
+    cursor: not-allowed;
+  }
+  .address-picker .address-detail{ margin-top: 8px; }
+  .address-picker--compact .address-detail{ margin-top: 6px; }
  
   /*  repeatable academic-history row  */
   .history-row{
     background: rgba(31,46,40,0.03);
     border: 1px solid var(--ink-line);
-    border-radius: 3px;
+    border-radius: 6px;
     padding: 18px;
     margin-bottom: 14px;
     position: relative;
+    transition: border-color .2s cubic-bezier(0.23,1,0.32,1), box-shadow .2s cubic-bezier(0.23,1,0.32,1);
+  }
+  .history-row:focus-within{
+    border-color: var(--sage);
+    box-shadow: 0 4px 16px -10px rgba(31,46,40,0.25);
   }
   .history-row .row-tag{
     position:absolute;
@@ -290,12 +358,13 @@
     gap: 16px;
     background: rgba(31,46,40,0.025);
     border: 1px solid var(--ink-line);
-    border-radius: 4px;
+    border-radius: 6px;
     padding: 16px 18px;
     margin-bottom: 12px;
-    transition: border-color .25s cubic-bezier(0.23,1,0.32,1), background-color .25s cubic-bezier(0.23,1,0.32,1);
+    transition: border-color .25s cubic-bezier(0.23,1,0.32,1), background-color .25s cubic-bezier(0.23,1,0.32,1), box-shadow .25s cubic-bezier(0.23,1,0.32,1);
   }
   .requirement-row:last-child{ margin-bottom: 0; }
+  .requirement-row:focus-within{ box-shadow: 0 4px 16px -10px rgba(31,46,40,0.22); }
   .requirement-row.has-file{
     border-color: var(--sage);
     background: rgba(124,152,133,0.06);
@@ -323,7 +392,7 @@
     align-items: center;
     gap: 10px;
     border: 1.5px dashed var(--ink-line);
-    border-radius: 3px;
+    border-radius: 5px;
     background: var(--white);
     padding: 10px 14px;
     cursor: pointer;

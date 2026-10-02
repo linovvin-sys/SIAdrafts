@@ -175,7 +175,7 @@ $check = [
     validate_ph_mobile($fields['guardian_contact'], "Guardian's contact number"),
     validate_email_field($fields['email']),
     validate_birth_date($fields['birth_date']),
-    validate_guardian_id($fields['guardian_id_number']),
+    validate_guardian_id($fields['guardian_id_number'], $fields['guardian_id_type']),
     validate_address($fields['home_address']),
     validate_nationality($fields['nationality']),
     validate_relationship($fields['guardian_relationship']),
