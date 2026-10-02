@@ -9,6 +9,7 @@ $extraScripts = $extraScripts ?? [];
 <?= cdn_script_tag(CDN_DATATABLES_BS5_JS) ?>
 <script src="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Js/datatable-init.js'), ENT_QUOTES) ?>"></script>
 <script src="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Js/required-marker.js'), ENT_QUOTES) ?>"></script>
+<script src="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Js/responsive-tables.js'), ENT_QUOTES) ?>"></script>
 <?php if (!empty($_SESSION['user_id'])): ?>
 <script src="<?= htmlspecialchars(asset_url('/SIAdrafts/Frontend/Js/Admin/dotty-staff.js'), ENT_QUOTES) ?>"></script>
 <?php endif; ?>

@@ -949,6 +949,49 @@ table.sp-table th {
 table.sp-table td { padding: 12px 10px; font-size: 14px; border-top: 1px solid var(--line-200); }
 table.sp-table td.sp-num { font-family: var(--font-mono); }
 
+/* ===== MOBILE: desktop rows -> stacked cards =====
+   Same pattern as admin.css's .data-table (shared Js/responsive-tables.js
+   stamps data-label from each table's own <thead> at runtime -- no
+   per-page markup changes needed). Student/Professor schedule and grade
+   tables are exactly the kind of grid that turns illegible, not just
+   cramped, once squeezed below ~5 columns on a phone. */
+@media (max-width: 768px) {
+  table.sp-table thead { display: none; }
+  table.sp-table, table.sp-table tbody, table.sp-table tr {
+    display: block;
+    width: 100%;
+  }
+  table.sp-table tr {
+    margin-bottom: 10px;
+    border: 1px solid var(--line-200);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--paper-50);
+  }
+  table.sp-table td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: 100%;
+    padding: 10px 12px;
+    text-align: right;
+    border-top: none;
+    border-bottom: 1px solid var(--line-200);
+  }
+  table.sp-table tr td:last-child { border-bottom: none; }
+  table.sp-table td::before {
+    content: attr(data-label);
+    flex: none;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    color: var(--slate-300);
+    text-align: left;
+  }
+}
+
 /* ---------- schedule grid (the signature element) ---------- */
 
 .sp-schedule-scroll { overflow-x: auto; }

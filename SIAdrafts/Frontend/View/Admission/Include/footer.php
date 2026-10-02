@@ -13,6 +13,7 @@ $page_scripts = array_merge($page_scripts ?? [], $extraScripts ?? []);
   <script src="/SIAdrafts/Frontend/Js/Admission/login.js"></script>
    <script src="/SIAdrafts/Frontend/Js/Admission/confirm.js"></script>
   <script src="/SIAdrafts/Frontend/Js/required-marker.js"></script>
+  <script src="/SIAdrafts/Frontend/Js/responsive-tables.js"></script>
 
   
 <?php foreach ($page_scripts as $_s): ?>
