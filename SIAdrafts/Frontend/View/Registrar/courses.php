@@ -138,13 +138,13 @@ include '../Include/header.php';
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">📘</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:bookshelf"></iconify-icon></div>
             <div>
               <div class="modal-title">Add Course</div>
               <div class="modal-subtitle">Create a new course record</div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="addCourseModal">✕</button>
+          <button type="button" class="modal-close" data-close="addCourseModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body">
@@ -174,13 +174,13 @@ include '../Include/header.php';
       <div class="modal-box" style="max-width:640px;">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">📘</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:bookshelf"></iconify-icon></div>
             <div>
               <div class="modal-title">Subjects</div>
               <div class="modal-subtitle" id="viewCourseLabel"></div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="viewCourseModal">✕</button>
+          <button type="button" class="modal-close" data-close="viewCourseModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body" style="max-height:60vh; overflow-y:auto;">

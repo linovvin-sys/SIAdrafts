@@ -142,7 +142,7 @@ include '../Include/header.php';
                     </div>
                 <?php else: ?>
                     <div class="rd-empty-state">
-                        <div class="rd-empty-icon">✓</div>
+                        <div class="rd-empty-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>
                         <div class="rd-empty-title">No recent admissions</div>
                         <div class="rd-empty-sub">New applications will show up here as they come in.</div>
                     </div>

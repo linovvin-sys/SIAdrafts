@@ -156,13 +156,13 @@ include '../Include/header.php';
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">📗</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:book-open-page-variant"></iconify-icon></div>
             <div>
               <div class="modal-title">Add Subject</div>
               <div class="modal-subtitle">Enroll this student in another subject</div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="addSubjectModal">✕</button>
+          <button type="button" class="modal-close" data-close="addSubjectModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body">

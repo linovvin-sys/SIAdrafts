@@ -48,7 +48,7 @@ include '../Include/header.php';
           </table>
           </div>
           <div class="empty-state" id="emptyCourseState" style="display:none">
-            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>
             <p class="empty-state-text">No pending courses — new submissions from Registrar Staff will show up here.</p>
           </div>
         </div>
@@ -76,7 +76,7 @@ include '../Include/header.php';
           </table>
           </div>
           <div class="empty-state" id="emptySectionState" style="display:none">
-            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>
             <p class="empty-state-text">No pending sections — new submissions from Registrar Staff will show up here.</p>
           </div>
         </div>
@@ -105,7 +105,7 @@ include '../Include/header.php';
           </table>
           </div>
           <div class="empty-state" id="emptySubjectState" style="display:none">
-            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>
             <p class="empty-state-text">No pending subjects — new submissions from Registrar Staff will show up here.</p>
           </div>
         </div>
@@ -135,7 +135,7 @@ include '../Include/header.php';
           </table>
           </div>
           <div class="empty-state" id="emptyState" style="display:none">
-            <div class="empty-state-icon">✓</div>
+            <div class="empty-state-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>
             <p class="empty-state-text">No pending schedules — new submissions from Registrar Staff will show up here.</p>
           </div>
         </div>

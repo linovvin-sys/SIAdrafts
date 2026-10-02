@@ -190,13 +190,13 @@ include '../Include/header.php';
       <div class="modal-box" style="max-width:560px;">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">📄</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:file-document-outline"></iconify-icon></div>
             <div>
               <div class="modal-title">Documents on File</div>
               <div class="modal-subtitle" id="viewDocumentsSubtitle"></div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="viewDocumentsModal">✕</button>
+          <button type="button" class="modal-close" data-close="viewDocumentsModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body" style="max-height:60vh; overflow-y:auto;">

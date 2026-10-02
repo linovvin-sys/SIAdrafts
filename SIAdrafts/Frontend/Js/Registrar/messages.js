@@ -59,9 +59,9 @@ function renderAttachment(m) {
   link.rel = 'noopener';
   link.className = 'chat-attachment-file';
 
-  const icon = document.createElement('span');
+  const icon = document.createElement('iconify-icon');
   icon.className = 'chat-attachment-file-icon';
-  icon.textContent = '📄';
+  icon.setAttribute('icon', 'mdi:file-document-outline');
   link.appendChild(icon);
 
   const meta = document.createElement('span');

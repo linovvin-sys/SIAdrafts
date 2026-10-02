@@ -164,13 +164,13 @@ include '../Include/header.php';
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">🧑‍🏫</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:account-tie-outline"></iconify-icon></div>
             <div>
               <div class="modal-title">Add Professor</div>
               <div class="modal-subtitle">Create a new professor record</div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="addProfessorModal">✕</button>
+          <button type="button" class="modal-close" data-close="addProfessorModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body">
@@ -232,13 +232,13 @@ include '../Include/header.php';
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">🔑</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:key-outline"></iconify-icon></div>
             <div>
               <div class="modal-title">Portal Account</div>
               <div class="modal-subtitle" id="accountProfessorSubtitle">Set up portal login</div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="accountProfessorModal">✕</button>
+          <button type="button" class="modal-close" data-close="accountProfessorModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body">

@@ -58,7 +58,7 @@ include '../Include/header.php';
                     <span class="panel-title">Admission Registration Form</span>
                     <div style="display:flex; gap:10px;">
                         <a href="admission.php" class="btn btn-outline">&larr; Back</a>
-                        <button type="button" class="btn btn-primary" onclick="window.print()">🖨 Print</button>
+                        <button type="button" class="btn btn-primary" onclick="window.print()"><iconify-icon icon="mdi:printer-outline"></iconify-icon> Print</button>
                     </div>
                 </div>
 

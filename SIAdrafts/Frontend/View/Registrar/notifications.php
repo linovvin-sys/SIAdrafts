@@ -69,7 +69,7 @@ include '../Include/header.php';
 
         <?php if (empty($grouped)): ?>
             <div class="surface-2 rd-empty-state">
-                <div class="rd-empty-icon">✓</div>
+                <div class="rd-empty-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>
                 <div class="rd-empty-title">All quiet</div>
                 <div class="rd-empty-sub">New admissions and payments will show up here as they happen.</div>
             </div>

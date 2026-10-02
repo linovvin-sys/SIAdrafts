@@ -126,7 +126,7 @@ include '../Include/header.php';
 
       <div v-else class="form-section">
         <div class="section-head">
-          <span class="section-num">✓</span>
+          <span class="section-num"><iconify-icon icon="mdi:check"></iconify-icon></span>
           <div>
             <h2>Document Checklist</h2>
             <p>Check off only what the applicant has physically handed over today. PSA/NSO Birth Certificate and Certificate of Good Moral must be on hand — everything else can be marked "To follow" if the applicant doesn't have it yet.</p>

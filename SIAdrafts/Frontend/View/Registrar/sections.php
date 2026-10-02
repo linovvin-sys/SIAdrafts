@@ -144,13 +144,13 @@ include '../Include/header.php';
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">🏫</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:account-group-outline"></iconify-icon></div>
             <div>
               <div class="modal-title">Add Section</div>
               <div class="modal-subtitle">Create a new section</div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="addSectionModal">✕</button>
+          <button type="button" class="modal-close" data-close="addSectionModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body">
@@ -189,13 +189,13 @@ include '../Include/header.php';
       <div class="modal-box" style="max-width:640px;">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">🏫</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:account-group-outline"></iconify-icon></div>
             <div>
               <div class="modal-title">Enrolled Students</div>
               <div class="modal-subtitle" id="viewSectionLabel"></div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="viewSectionModal">✕</button>
+          <button type="button" class="modal-close" data-close="viewSectionModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body" style="max-height:60vh; overflow-y:auto;">

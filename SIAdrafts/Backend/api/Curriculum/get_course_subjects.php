@@ -12,7 +12,11 @@ if (empty($_SESSION['user_id'])) {
     exit;
 }
 
-require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR], true);
+// Admin is read-only monitoring across every Registrar/Admission/Treasury
+// screen (see git history) -- this endpoint was the one gap: the page
+// that calls it (Registrar/courses.php) already allows Admin, but this
+// is where the actual "no permission" error was coming from.
+require_role([ROLE_REGISTRAR_STAFF, ROLE_HEAD_REGISTRAR, ROLE_ADMIN], true);
 
 $course_id = (int)($_GET['course_id'] ?? 0);
 

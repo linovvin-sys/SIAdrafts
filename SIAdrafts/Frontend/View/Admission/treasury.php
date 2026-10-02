@@ -133,7 +133,7 @@ function student_fullname_t(array $s): string {
           <div class="rd-stat-label">Total Revenue Expected</div>
         </div>
         <div class="surface-1 rd-stat-card">
-          <div class="rd-stat-icon" style="background:var(--teal-100); color:var(--teal-600);">✓</div>
+          <div class="rd-stat-icon" style="background:var(--teal-100); color:var(--teal-600);"><iconify-icon icon="mdi:cash-check"></iconify-icon></div>
           <div class="rd-stat-figure mono">₱<?= number_format($revenue['collected'], 2) ?></div>
           <div class="rd-stat-label">Collected</div>
         </div>

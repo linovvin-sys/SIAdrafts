@@ -96,7 +96,7 @@ include '../Include/header.php';
         </div>
 
         <div class="empty-state" id="emptyState" style="display:none">
-          <div class="empty-icon">📅</div>
+          <div class="empty-icon"><iconify-icon icon="mdi:calendar-blank-outline"></iconify-icon></div>
           <p>No schedules found.<br>Try adjusting your filters or add a new one.</p>
         </div>
       </div>
@@ -107,7 +107,7 @@ include '../Include/header.php';
       <div class="modal-box">
         <div class="modal-header">
           <div class="modal-header-left">
-            <div class="modal-icon">🗓️</div>
+            <div class="modal-icon"><iconify-icon icon="mdi:calendar-plus-outline"></iconify-icon></div>
             <div>
               <div class="modal-title">Add Schedule</div>
               <div class="modal-subtitle">
@@ -115,7 +115,7 @@ include '../Include/header.php';
               </div>
             </div>
           </div>
-          <button type="button" class="modal-close" data-close="addScheduleModal">✕</button>
+          <button type="button" class="modal-close" data-close="addScheduleModal"><iconify-icon icon="mdi:close"></iconify-icon></button>
         </div>
 
         <div class="modal-body">

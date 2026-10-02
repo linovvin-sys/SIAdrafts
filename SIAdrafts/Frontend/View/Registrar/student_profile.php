@@ -147,7 +147,7 @@ include '../Include/header.php';
                     <div class="rd-section-title" style="padding:0 18px;">Activity ledger</div>
                     <?php if (empty($activity)): ?>
                         <div class="rd-empty-state">
-                            <div class="rd-empty-icon">✓</div>
+                            <div class="rd-empty-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>
                             <div class="rd-empty-title">No activity yet</div>
                             <div class="rd-empty-sub">Enrollment and payment history will appear here.</div>
                         </div>

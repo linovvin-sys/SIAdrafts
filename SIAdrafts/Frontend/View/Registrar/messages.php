@@ -180,7 +180,7 @@ include '../Include/header.php';
           </div>
           <div class="chat-input-controls">
             <input type="file" id="chat-file-input" hidden accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.xls,.xlsx,.txt">
-            <button type="button" class="btn btn-outline chat-attach-btn" id="chat-attach-btn" disabled title="Attach a file">📎</button>
+            <button type="button" class="btn btn-outline chat-attach-btn" id="chat-attach-btn" disabled title="Attach a file"><iconify-icon icon="mdi:paperclip"></iconify-icon></button>
             <input type="text" id="chat-input" class="form-input" placeholder="Select a contact to start messaging…" autocomplete="off" disabled>
             <button type="submit" class="btn btn-primary" id="chat-send-btn" disabled>Send</button>
           </div>
