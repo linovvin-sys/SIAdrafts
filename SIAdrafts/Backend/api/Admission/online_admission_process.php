@@ -486,5 +486,6 @@ echo json_encode([
         'name'        => $applicantName,
         'program'     => $fields['program'] . ' — ' . $fields['year_level'],
         'school_year' => $fields['school_year'] . ' — Semester ' . $fields['semester'],
+        'email'       => $fields['email'],
     ],
 ]);

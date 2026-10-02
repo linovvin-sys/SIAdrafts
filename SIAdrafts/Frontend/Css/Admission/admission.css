@@ -910,38 +910,90 @@
 
   /*  reference slip (shown after a successful online submission)  */
   .reference-slip{
-    max-width: 460px;
+    max-width: 480px;
     margin: 0 auto;
     background: var(--white);
     border: 1px solid var(--ink-line);
-    border-radius: 3px;
-    padding: 30px 32px;
+    border-radius: 8px;
+    padding: 36px 32px;
     text-align: center;
+    box-shadow: 0 1px 2px rgba(31,46,40,0.04), 0 24px 48px -28px rgba(31,46,40,0.24);
+    animation: refSlipIn .4s cubic-bezier(0.23,1,0.32,1);
   }
-  .reference-slip .banner-title{
-    font-family: 'Fraunces', Georgia, serif;
-    font-size: 1rem;
+  @keyframes refSlipIn{
+    from{ opacity: 0; transform: translateY(10px) scale(0.98); }
+    to{ opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce){ .reference-slip{ animation: none; } }
+
+  .ref-slip-icon{
+    font-size: 36px;
+    color: #2f6b40;
+    margin-bottom: 6px;
+  }
+  .ref-slip-eyebrow{
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
     color: var(--ink-soft);
-    margin-bottom: 8px;
+    margin-bottom: 10px;
   }
-  .reference-slip .banner-title strong{
-    display: block;
-    font-size: 1.6rem;
+  /* This is the one thing the applicant must walk away remembering --
+     sized and set off from everything else on the slip so it can't be
+     mistaken for secondary detail (the previous version gave it the same
+     visual weight as a line of body copy). */
+  .ref-slip-id{
+    font-family: 'IBM Plex Mono', 'Courier New', monospace;
+    font-size: clamp(1.6rem, 5vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
     color: var(--ink);
-    letter-spacing: 0.03em;
-    margin-top: 4px;
+    background: rgba(4,106,56,0.07);
+    border: 1.5px dashed var(--amber);
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 18px;
+    word-break: break-word;
   }
   .reference-slip p{
     color: var(--ink-soft);
     font-size: 0.9rem;
     margin: 6px 0;
   }
+  .ref-slip-instruction{
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--ink-line);
+  }
+  .ref-email-note{
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
+    text-align: left;
+    font-size: 0.82rem;
+    border-radius: 6px;
+    padding: 11px 13px;
+    margin: 16px 0 4px;
+    line-height: 1.5;
+  }
+  .ref-email-note iconify-icon{ flex: none; font-size: 16px; margin-top: 1px; }
+  .ref-email-note--sent{
+    background: rgba(124,152,133,0.1);
+    border: 1px solid rgba(124,152,133,0.3);
+    color: #2f6b40;
+  }
+  .ref-email-note--failed{
+    background: #F5E1DA;
+    border: 1px solid rgba(166,71,46,0.35);
+    color: #7A3322;
+  }
   .reference-slip button{
     margin-top: 18px;
     background: var(--ink);
     color: var(--paper);
     border: 1px solid var(--ink);
-    border-radius: 2px;
+    border-radius: 4px;
     padding: 11px 24px;
     font-weight: 600;
     font-size: 0.9rem;

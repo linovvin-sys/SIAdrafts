@@ -274,13 +274,27 @@ function escapeHtml(str) {
   return div.innerHTML;
 }
 
-function renderReferenceSlip(referenceId, summary) {
+function renderReferenceSlip(referenceId, summary, emailSent, email) {
+  // The reference ID is the one thing an applicant must not lose track
+  // of -- it's the only way to pick this application back up at campus --
+  // so it gets its own high-contrast badge instead of sharing visual
+  // weight with everything else on the slip, and the email line is
+  // explicit about whether a backup copy actually went out or not,
+  // rather than assuming the applicant will just notice an inbox message
+  // on their own.
+  const emailNote = emailSent
+    ? '<div class="ref-email-note ref-email-note--sent"><iconify-icon icon="mdi:email-check-outline"></iconify-icon> We also emailed this reference ID to <strong>' + escapeHtml(email) + '</strong> — check your inbox (and spam folder) for a copy you can keep.</div>'
+    : '<div class="ref-email-note ref-email-note--failed"><iconify-icon icon="mdi:email-alert-outline"></iconify-icon> We couldn\'t email you a copy right now — save or screenshot this reference ID yourself, you\'ll need it at campus.</div>';
+
   refBanner.innerHTML =
     '<div class="reference-slip" id="printableSlip">' +
-      '<div class="banner-title">Your reference ID: <strong>' + escapeHtml(referenceId) + '</strong></div>' +
+      '<div class="ref-slip-icon"><iconify-icon icon="mdi:check-circle-outline"></iconify-icon></div>' +
+      '<div class="ref-slip-eyebrow">Application submitted — your reference ID</div>' +
+      '<div class="ref-slip-id">' + escapeHtml(referenceId) + '</div>' +
       '<p>' + escapeHtml(summary.name) + ' &middot; ' + escapeHtml(summary.program) + '</p>' +
       '<p>Term: ' + escapeHtml(summary.school_year) + '</p>' +
-      '<p>Bring this reference ID and your physical documents to the admissions counter to complete your application.</p>' +
+      emailNote +
+      '<p class="ref-slip-instruction">Bring this reference ID and your physical documents to the admissions counter to complete your application.</p>' +
       '<button type="button" class="btn" id="printSlipBtn">Print this slip</button>' +
     '</div>';
   refBanner.style.display = 'block';
@@ -319,7 +333,7 @@ function submitApplication() {
         return;
       }
 
-      renderReferenceSlip(data.reference_id, data.summary);
+      renderReferenceSlip(data.reference_id, data.summary, data.email_sent, data.summary.email);
 
       Swal.fire({
         icon: 'success',
