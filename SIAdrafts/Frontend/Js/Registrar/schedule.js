@@ -150,8 +150,30 @@ function populateFormDropdowns() {
   refreshSubjects();
 }
 
+// A section named like "BSIT 1-M3" already says which year level it is, so
+// the Year Level field follows it and is locked -- otherwise a 1st-year
+// section could be scheduled under, say, 3rd-year subjects. Older sections
+// without a year in their name (e.g. "BSIT A1") can't be derived, so the
+// field stays editable for those.
+function syncYearFromSection() {
+  const sectionSel = document.getElementById('schedSection');
+  const yearSel    = document.getElementById('schedYear');
+  const opt  = sectionSel.options[sectionSel.selectedIndex];
+  const name = opt ? (options.sections.find(s => String(s.section_id) === sectionSel.value) || {}).section_name || '' : '';
+  const m = name.match(/\b([1-4])-[MAE][1-5]\s*$/i);
+  if (m) {
+    yearSel.value = m[1];
+    yearSel.disabled = true;
+    yearSel.title = 'Set by the selected section';
+  } else {
+    yearSel.disabled = false;
+    yearSel.title = '';
+  }
+}
+
 function refreshSubjects() {
   const sectionSel = document.getElementById('schedSection');
+  syncYearFromSection();
   populateSubjectsForSection(sectionSel);
 }
 
