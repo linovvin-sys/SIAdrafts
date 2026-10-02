@@ -22,65 +22,95 @@ include '../Include/header.php';
     <?php include '../Include/sidebar.php'; ?>
 
     <main class="page-content">
-      <div class="surface-2" style="max-width: 480px; padding:22px;">
-        <div class="rd-section-title">Current Term</div>
-        <form id="settingsForm">
-          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
-          <div class="rd-field">
-            <label>Current School Year (YYYY-YYYY)</label>
-            <input type="text" class="mono" name="current_school_year"
-                   value="<?= htmlspecialchars($currentSchoolYear ?? '', ENT_QUOTES) ?>" pattern="\d{4}-\d{4}" required>
-          </div>
-          <div class="rd-field">
-            <label>Current Semester</label>
-            <select name="current_semester" required>
-              <?php foreach (['1' => '1st Semester', '2' => '2nd Semester', '3' => 'Summer'] as $val => $label): ?>
-                <option value="<?= $val ?>" <?= $currentSemester === $val ? 'selected' : '' ?>><?= $label ?></option>
-              <?php endforeach; ?>
-            </select>
-          </div>
-          <button type="submit" class="btn-primary">Save</button>
-          <div id="settingsMsg" class="row-secondary" style="margin-top:8px;"></div>
-        </form>
-      </div>
+      <div class="panel-stack rd-settings-stack">
 
-      <div class="surface-2" style="max-width: 480px; padding:22px; margin-top:20px;">
-        <div class="rd-section-title">Branding</div>
-        <p class="row-secondary" style="margin:-4px 0 16px;">What students, staff, and anyone visiting this site see as the school's identity — the name, the logo in the nav, and the browser-tab icon.</p>
-
-        <form id="brandNameForm">
-          <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
-          <div class="rd-field">
-            <label>School Name</label>
-            <input type="text" name="school_name" maxlength="80"
-                   value="<?= htmlspecialchars($branding['name'], ENT_QUOTES) ?>"
-                   placeholder="e.g. Saint Michael's Academy" required>
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Current Term</span>
           </div>
-          <button type="submit" class="btn-primary">Save Name</button>
-          <div id="brandNameMsg" class="row-secondary" style="margin-top:8px;"></div>
-        </form>
-
-        <hr style="margin:20px 0;border:none;border-top:1px solid var(--line-200, #eee);">
-
-        <div class="rd-field">
-          <label>Logo (shown in the nav/sidebar on every page)</label>
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
-            <img id="logoPreview" src="<?= htmlspecialchars($branding['logo'], ENT_QUOTES) ?>" alt="" width="40" height="40" style="border-radius:6px;border:1px solid #ddd;object-fit:contain;background:#fff;">
-            <input type="file" id="logoInput" accept=".svg,.png,.jpg,.jpeg">
+          <div class="panel-body">
+            <form id="settingsForm">
+              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
+              <div class="rd-field">
+                <label>Current School Year (YYYY-YYYY)</label>
+                <input type="text" class="mono" name="current_school_year"
+                       value="<?= htmlspecialchars($currentSchoolYear ?? '', ENT_QUOTES) ?>" pattern="\d{4}-\d{4}" required>
+              </div>
+              <div class="rd-field">
+                <label>Current Semester</label>
+                <select name="current_semester" required>
+                  <?php foreach (['1' => '1st Semester', '2' => '2nd Semester', '3' => 'Summer'] as $val => $label): ?>
+                    <option value="<?= $val ?>" <?= $currentSemester === $val ? 'selected' : '' ?>><?= $label ?></option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <button type="submit" class="btn btn-primary">Save</button>
+              <div id="settingsMsg" class="row-secondary" style="margin-top:8px;"></div>
+            </form>
           </div>
-          <div id="logoMsg" class="row-secondary"></div>
         </div>
 
-        <div class="rd-field" style="margin-top:16px;">
-          <label>Favicon (browser tab icon)</label>
-          <div style="display:flex;align-items:center;gap:14px;margin-bottom:8px;">
-            <img id="faviconPreview" src="<?= htmlspecialchars($branding['favicon'], ENT_QUOTES) ?>" alt="" width="24" height="24" style="border-radius:4px;border:1px solid #ddd;object-fit:contain;background:#fff;">
-            <input type="file" id="faviconInput" accept=".svg,.png,.ico">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">Branding</span>
           </div>
-          <div id="faviconMsg" class="row-secondary"></div>
+          <div class="panel-body">
+            <p class="row-secondary" style="margin:-6px 0 18px;">What students, staff, and anyone visiting this site see as the school's identity — the name, the logo in the nav, and the browser-tab icon.</p>
+
+            <form id="brandNameForm">
+              <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($token, ENT_QUOTES) ?>">
+              <div class="rd-field">
+                <label>School Name</label>
+                <input type="text" name="school_name" maxlength="80"
+                       value="<?= htmlspecialchars($branding['name'], ENT_QUOTES) ?>"
+                       placeholder="e.g. Saint Michael's Academy" required>
+              </div>
+              <button type="submit" class="btn btn-primary">Save Name</button>
+              <div id="brandNameMsg" class="row-secondary" style="margin-top:8px;"></div>
+            </form>
+
+            <div class="rd-divider-tick"></div>
+
+            <div class="rd-field">
+              <label>Logo</label>
+              <div class="rd-asset-row">
+                <div class="rd-asset-preview">
+                  <img id="logoPreview" src="<?= htmlspecialchars($branding['logo'], ENT_QUOTES) ?>" alt="">
+                </div>
+                <div class="rd-asset-info">
+                  <div class="rd-asset-label">Shown in the nav/sidebar on every page</div>
+                  <div class="rd-asset-hint">SVG, PNG, or JPG — max 2MB</div>
+                </div>
+                <label class="btn btn-outline rd-upload-btn">
+                  Change
+                  <input type="file" id="logoInput" accept=".svg,.png,.jpg,.jpeg">
+                </label>
+              </div>
+              <div id="logoMsg" class="rd-asset-status"></div>
+            </div>
+
+            <div class="rd-field" style="margin-top:18px;">
+              <label>Favicon</label>
+              <div class="rd-asset-row">
+                <div class="rd-asset-preview">
+                  <img id="faviconPreview" src="<?= htmlspecialchars($branding['favicon'], ENT_QUOTES) ?>" alt="">
+                </div>
+                <div class="rd-asset-info">
+                  <div class="rd-asset-label">Browser tab icon</div>
+                  <div class="rd-asset-hint">SVG, PNG, or ICO — max 2MB</div>
+                </div>
+                <label class="btn btn-outline rd-upload-btn">
+                  Change
+                  <input type="file" id="faviconInput" accept=".svg,.png,.ico">
+                </label>
+              </div>
+              <div id="faviconMsg" class="rd-asset-status"></div>
+            </div>
+
+            <p class="row-secondary" style="margin-top:18px;">Changes apply immediately — reload any open page to see them.</p>
+          </div>
         </div>
 
-        <p class="row-secondary" style="margin-top:16px;font-size:12px;">SVG, PNG, JPG, or ICO — max 2MB. Changes apply immediately across the whole site.</p>
       </div>
     </main>
 </div>
@@ -133,6 +163,7 @@ function wireBrandingUpload(inputId, previewId, msgId, assetType) {
   input.addEventListener('change', async function () {
     const file = input.files[0];
     if (!file) return;
+    msgEl.className = 'rd-asset-status';
     msgEl.textContent = 'Uploading...';
     const body = new FormData();
     body.append('csrf_token', document.querySelector('input[name="csrf_token"]').value);
@@ -142,12 +173,15 @@ function wireBrandingUpload(inputId, previewId, msgId, assetType) {
       const res = await fetch('/SIAdrafts/Backend/api/Settings/upload_branding_asset.php', { method: 'POST', body });
       const data = await res.json();
       if (!data.success) {
+        msgEl.className = 'rd-asset-status is-error';
         msgEl.textContent = data.error || 'Upload failed.';
         return;
       }
       preview.src = data.path + '&v=' + Date.now();
+      msgEl.className = 'rd-asset-status is-ok';
       msgEl.textContent = 'Saved — reload any open page to see it everywhere.';
     } catch (err) {
+      msgEl.className = 'rd-asset-status is-error';
       msgEl.textContent = 'Could not reach the server. Please try again.';
     }
   });

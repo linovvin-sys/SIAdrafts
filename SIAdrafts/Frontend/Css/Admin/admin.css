@@ -2110,6 +2110,62 @@ select option {
 
 .rd-divider-tick { width: 100%; height: 1px; background: var(--line-200); margin: 20px 0; }
 .rd-section-title { font-size: 14.5px; font-weight: 600; margin-bottom: 14px; color: var(--ink-950); }
+
+/* ===== Branding asset upload (Admin/settings.php) =====
+   A bare <input type=file> next to a loose <img> was the single biggest
+   "unstyled placeholder" tell on this page -- same card-row treatment as
+   everywhere else an uploaded file gets a thumbnail + a real action, not
+   the browser's own default file-picker chrome sitting in the middle of
+   a form. */
+.rd-asset-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px;
+  border: 1px solid var(--line-200);
+  border-radius: 8px;
+  background: var(--paper-100);
+}
+.rd-asset-preview {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 8px;
+  border: 1px solid var(--line-200);
+  background: var(--paper-50);
+  overflow: hidden;
+}
+.rd-asset-preview img { max-width: 70%; max-height: 70%; object-fit: contain; }
+.rd-asset-info { flex: 1; min-width: 0; }
+.rd-asset-info .rd-asset-label { font-size: 13px; font-weight: 600; color: var(--ink-950); }
+.rd-asset-info .rd-asset-hint { font-size: 11.5px; color: var(--slate-500); margin-top: 2px; }
+.rd-asset-status { font-size: 11.5px; color: var(--slate-500); margin-top: 6px; min-height: 1.3em; }
+.rd-asset-status.is-error { color: var(--danger-600, #a6472e); font-weight: 600; }
+.rd-asset-status.is-ok { color: var(--seal-600, #2f6b40); }
+
+/* A real button that happens to trigger a hidden <input type=file> --
+   not the browser's own file-picker control, which can't be styled to
+   match anything else on the page. */
+.rd-asset-row input[type="file"] {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+.rd-upload-btn {
+  flex: none;
+  position: relative;
+}
+
+/* Settings-style pages (a form or two, not a data table) read better
+   capped to a readable measure than stretched full page-width. */
+.rd-settings-stack { max-width: 560px; }
 /* ===================================================================
    Polish layer — micro-interactions, selection, scrollbar, motion
    discipline. Every effect here is 150-300ms and fully disabled
