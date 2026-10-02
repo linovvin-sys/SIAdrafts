@@ -323,13 +323,13 @@ include '../Admission/Include/header.php';
                 <label class="form-label">School address</label>
                 <div class="address-picker address-picker--compact">
                   <div class="row g-2">
-                    <div class="col-4">
+                    <div class="col-12 col-md-4">
                       <select class="form-control address-region"></select>
                     </div>
-                    <div class="col-4">
+                    <div class="col-12 col-md-4">
                       <select class="form-control address-province" disabled></select>
                     </div>
-                    <div class="col-4">
+                    <div class="col-12 col-md-4">
                       <select class="form-control address-city" disabled></select>
                     </div>
                   </div>

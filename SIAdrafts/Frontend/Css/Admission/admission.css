@@ -163,6 +163,13 @@
   /*  card / sections  */
   .admission-card{
     max-width: 900px;
+    /* width (not just max-width) so there's always a 16px gutter from the
+       viewport edge below 900px+32px -- every other top-level block on
+       this page (.admission-head, .progress-rail, the banner wrapper) has
+       its own padding:0 16px, but this one, the actual card itself, had
+       nothing, so it ran flush edge-to-edge on anything narrower than
+       900px -- effectively all of mobile. */
+    width: calc(100% - 32px);
     margin: 0 auto;
     background: var(--white);
     border: 1px solid var(--ink-line);
@@ -517,6 +524,13 @@
     color: var(--ink-soft);
     font-size: 13px;
     transition: background-color .15s ease, color .15s ease;
+  }
+  /* A 20px target is fine for a mouse but too tight to reliably tap --
+     widened only on touch input (not just a viewport-width breakpoint,
+     since a touch laptop at desktop width has the same problem a mouse
+     at narrow width doesn't). */
+  @media (hover: none) and (pointer: coarse){
+    .file-drop .file-drop-remove{ width: 30px; height: 30px; font-size: 15px; }
   }
   .file-drop .file-drop-remove:hover{ background: rgba(166,71,46,0.12); color: #A6472E; }
   .file-drop input[type="file"]{
