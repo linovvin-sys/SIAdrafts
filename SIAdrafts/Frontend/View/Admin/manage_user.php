@@ -259,7 +259,7 @@ include '../Include/header.php';
 
                 <div class="modal-header-left">
 
-                    <div class="modal-icon">👤</div>
+                    <div class="modal-icon"><iconify-icon icon="mdi:account-plus-outline"></iconify-icon></div>
 
                     <div>
                         <div class="modal-title">Add New User</div>
@@ -271,7 +271,7 @@ include '../Include/header.php';
                 <button type="button"
                         class="modal-close"
                         id="closeAddUserModal">
-                    ✕
+                    <iconify-icon icon="mdi:close"></iconify-icon>
                 </button>
 
             </div>
@@ -366,7 +366,7 @@ include '../Include/header.php';
                         <button type="button"
                                 class="pass-toggle"
                                 id="togglePassword">
-                            👁
+                            <iconify-icon id="togglePasswordIcon" icon="mdi:eye-outline"></iconify-icon>
                         </button>
 
                     </div>
@@ -434,7 +434,7 @@ include '../Include/header.php';
 
                 <div class="modal-header-left">
 
-                    <div class="modal-icon">✏️</div>
+                    <div class="modal-icon"><iconify-icon icon="mdi:account-edit-outline"></iconify-icon></div>
 
                     <div>
                         <div class="modal-title">Edit User</div>
@@ -446,7 +446,7 @@ include '../Include/header.php';
                 <button type="button"
                         class="modal-close"
                         id="closeEditUserModal">
-                    ✕
+                    <iconify-icon icon="mdi:close"></iconify-icon>
                 </button>
 
             </div>
@@ -548,7 +548,7 @@ include '../Include/header.php';
                         <button type="button"
                                 class="pass-toggle"
                                 id="toggleEditPassword">
-                            👁
+                            <iconify-icon id="toggleEditPasswordIcon" icon="mdi:eye-outline"></iconify-icon>
                         </button>
 
                     </div>

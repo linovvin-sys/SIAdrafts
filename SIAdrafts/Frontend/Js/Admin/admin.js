@@ -59,11 +59,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   /* -- Close -- */
+  const pwToggleIcon = document.getElementById('togglePasswordIcon');
+
   function closeModal() {
     modal.classList.remove('active');
     document.body.style.overflow = '';
     if (pwField) pwField.type = 'password';
-    if (pwToggleBtn) pwToggleBtn.textContent = '👁';
+    if (pwToggleIcon) pwToggleIcon.setAttribute('icon', 'mdi:eye-outline');
   }
 
   if (closeBtn)  closeBtn.addEventListener('click', closeModal);
@@ -84,7 +86,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pwToggleBtn.addEventListener('click', () => {
       const show = pwField.type === 'password';
       pwField.type = show ? 'text' : 'password';
-      pwToggleBtn.textContent = show ? '🙈' : '👁';
+      if (pwToggleIcon) pwToggleIcon.setAttribute('icon', show ? 'mdi:eye-off-outline' : 'mdi:eye-outline');
     });
   }
 
@@ -93,6 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeEditBtn     = document.getElementById('closeEditUserModal');
   const cancelEditBtn    = document.getElementById('cancelEditUser');
   const editPwToggleBtn  = document.getElementById('toggleEditPassword');
+  const editPwToggleIcon = document.getElementById('toggleEditPasswordIcon');
   const editPwField      = document.getElementById('editPassword');
   const editForm         = document.getElementById('editUserForm');
 
@@ -124,7 +127,7 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.style.overflow = '';
       if (editForm) editForm.reset();
       if (editPwField) editPwField.type = 'password';
-      if (editPwToggleBtn) editPwToggleBtn.textContent = '👁';
+      if (editPwToggleIcon) editPwToggleIcon.setAttribute('icon', 'mdi:eye-outline');
       clearEditErrors();
     }
 
@@ -144,7 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
       editPwToggleBtn.addEventListener('click', () => {
         const show = editPwField.type === 'password';
         editPwField.type = show ? 'text' : 'password';
-        editPwToggleBtn.textContent = show ? '🙈' : '👁';
+        if (editPwToggleIcon) editPwToggleIcon.setAttribute('icon', show ? 'mdi:eye-off-outline' : 'mdi:eye-outline');
       });
     }
 
