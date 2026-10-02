@@ -151,7 +151,10 @@ document.addEventListener('click', function (e) {
   }
 
   function timeAgo(mysqlDatetime) {
-    var then = new Date(mysqlDatetime.replace(' ', 'T')).getTime();
+    // MySQL TIMESTAMPs arrive as naive UTC strings; without the trailing Z the
+    // browser reads them as its own local time, so a PH browser saw every
+    // notification as 8 hours older than it was.
+    var then = new Date(mysqlDatetime.replace(' ', 'T') + 'Z').getTime();
     var diff = Math.floor((Date.now() - then) / 1000);
     if (diff < 60) return 'just now';
     if (diff < 3600) return Math.floor(diff / 60) + 'm ago';

@@ -63,15 +63,25 @@ $statusPillClass = match ($enrollmentStatus) {
     default => 'attention',
 };
 
+// created_at / ts come straight from MySQL TIMESTAMP columns, which on
+// Railway's MySQL (time_zone=SYSTEM=UTC) are naive UTC strings. strtotime()
+// reads a naive string in PHP's Asia/Manila zone (see config.php), so
+// everything looked exactly 8 hours old ("paid 8h ago" right after paying).
+// Parse them as the UTC they are -- same assumption quiz_data.php makes.
+function sp_db_ts(string $ts): int
+{
+    return (new DateTimeImmutable($ts, new DateTimeZone('UTC')))->getTimestamp();
+}
+
 function sp_time_ago(string $ts): string
 {
-    $diff = time() - strtotime($ts);
+    $diff = time() - sp_db_ts($ts);
     if ($diff < 60) return 'just now';
     if ($diff < 3600) return (int)($diff / 60) . 'm ago';
     if ($diff < 86400) return (int)($diff / 3600) . 'h ago';
     $days = (int)($diff / 86400);
     if ($days < 7) return $days . 'd ago';
-    return date('M j', strtotime($ts));
+    return date('M j', sp_db_ts($ts));
 }
 
 include __DIR__ . '/Include/header.php';

@@ -14,7 +14,7 @@ $announcements = $tabData['announcements'] ?? [];
       <li class="sp-announce-item" style="--row-i:<?= $i ?>">
         <div class="sp-announce-item-head">
           <strong><?= htmlspecialchars($a['title'], ENT_QUOTES) ?></strong>
-          <span class="sp-announce-item-date"><?= date('M j, Y, g:ia', strtotime($a['created_at'])) ?></span>
+          <span class="sp-announce-item-date"><?= (new DateTimeImmutable($a['created_at'], new DateTimeZone('UTC')))->setTimezone(new DateTimeZone('Asia/Manila'))->format('M j, Y, g:ia') ?></span>
         </div>
         <p><?= nl2br(htmlspecialchars($a['body'], ENT_QUOTES)) ?></p>
         <p style="margin:6px 0 0; font-size:12.5px; color:var(--slate-300);">— <?= htmlspecialchars($a['professor_name'], ENT_QUOTES) ?></p>
