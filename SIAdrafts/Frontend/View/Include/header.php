@@ -6,15 +6,17 @@ require_once __DIR__ . '/../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../Backend/cdn_assets.php';
 require_once __DIR__ . '/../../../Backend/css_bundle_config.php';
 require_once __DIR__ . '/../../../Backend/asset_url.php';
+require_once __DIR__ . '/../../../Backend/school_branding.php';
 $_pageCsrfToken = csrf_token();
+$_branding = get_school_branding();
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EduSchool — <?= htmlspecialchars($pageTitle ?? '', ENT_QUOTES) ?></title>
-  <link rel="icon" type="image/svg+xml" href="/SIAdrafts/Frontend/assets/crest.svg">
+  <title><?= htmlspecialchars($_branding['name'], ENT_QUOTES) ?> — <?= htmlspecialchars($pageTitle ?? '', ENT_QUOTES) ?></title>
+  <link rel="icon" href="<?= htmlspecialchars($_branding['favicon'], ENT_QUOTES) ?>">
   <script>
     // Applies the saved theme before first paint, so there's no flash of
     // light mode before dark mode kicks in. Must run synchronously, here

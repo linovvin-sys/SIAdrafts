@@ -9,7 +9,9 @@ app_session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
 require_once __DIR__ . '/../../../../Backend/asset_url.php';
+require_once __DIR__ . '/../../../../Backend/school_branding.php';
 $_pageCsrfToken = csrf_token();
+$_branding = get_school_branding();
 $_studentName = htmlspecialchars($_SESSION['student_full_name'] ?? '', ENT_QUOTES);
 $_studentNo   = htmlspecialchars($_SESSION['student_no'] ?? '', ENT_QUOTES);
 
@@ -30,8 +32,8 @@ $_tabs = [
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title><?= htmlspecialchars($pageTitle ?? 'Student Portal', ENT_QUOTES) ?> — EduSchool</title>
-<link rel="icon" type="image/svg+xml" href="/SIAdrafts/Frontend/assets/crest.svg">
+<title><?= htmlspecialchars($pageTitle ?? 'Student Portal', ENT_QUOTES) ?> — <?= htmlspecialchars($_branding['name'], ENT_QUOTES) ?></title>
+<link rel="icon" href="<?= htmlspecialchars($_branding['favicon'], ENT_QUOTES) ?>">
 <script>
   // Per-tab session ownership check — see Frontend/View/Include/header.php
   // for the full rationale. Same mechanism, same $_SESSION['tab_token'].
@@ -58,8 +60,8 @@ $_tabs = [
 <?php if (empty($hideNav)): ?>
 <nav class="sp-nav" aria-label="Student portal">
   <a class="sp-brand" href="/SIAdrafts/Frontend/View/Student/dashboard.php">
-    <img class="sp-brand-mark" src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="22" height="22">
-    <span>Edu<em>School</em></span>
+    <img class="sp-brand-mark" src="<?= htmlspecialchars($_branding['logo'], ENT_QUOTES) ?>" alt="" width="22" height="22">
+    <span><?= htmlspecialchars($_branding['name'], ENT_QUOTES) ?></span>
   </a>
 
   <ul class="sp-nav-links">

@@ -13,6 +13,7 @@ require 'validation_rules.php';
 require '../../requirements.php';
 require '../../settings.php';
 require '../../mailer.php';
+require '../../school_branding.php';
 require '../../rate_limit.php';
 require '../../recaptcha.php';
 
@@ -442,11 +443,12 @@ $applicantName = trim($fields['first_name'] . ' ' . $fields['middle_name'] . ' '
 $emailSent = false;
 if (!empty($fields['email'])) {
     $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+    $brandName = get_school_branding()['name'];
     $slipHtml = '
     <div style="margin:0;padding:24px;background:#F7F4EC;font-family:Helvetica,Arial,sans-serif;color:#1F2E28;">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
         <tr><td style="padding-bottom:18px;text-align:center;">
-          <div style="font-family:Georgia,serif;font-size:22px;font-weight:600;">Edu<span style="color:#A47B3F;">School</span></div>
+          <div style="font-family:Georgia,serif;font-size:22px;font-weight:600;">' . $e($brandName) . '</div>
           <div style="font-size:12px;color:rgba(31,46,40,0.8);letter-spacing:1px;text-transform:uppercase;margin-top:4px;">Admission Slip</div>
         </td></tr>
         <tr><td style="background:#FFFFFF;border:1px solid rgba(31,46,40,0.14);border-radius:14px;padding:28px 30px;">
@@ -467,13 +469,13 @@ if (!empty($fields['email'])) {
           </p>
         </td></tr>
         <tr><td style="padding-top:16px;text-align:center;font-size:11px;color:rgba(31,46,40,0.6);">
-          This is an automated message from the EduSchool admissions office — replies are not monitored.
+          This is an automated message from the ' . $e($brandName) . ' admissions office — replies are not monitored.
         </td></tr>
       </table>
     </div>';
     $emailSent = send_email(
         $fields['email'],
-        'Your EduSchool Admission Slip — ' . $reference_id,
+        'Your ' . $brandName . ' Admission Slip — ' . $reference_id,
         $slipHtml
     );
 }

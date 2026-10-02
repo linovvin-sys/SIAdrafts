@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../../../Backend/require_role.php';
 require_once __DIR__ . '/../../../Backend/db.php';
+require_once __DIR__ . '/../../../Backend/school_branding.php';
+$branding = get_school_branding();
 
 $navConfig   = require __DIR__ . '/../../../Backend/nav_config.php';
 $currentRole = strtolower(trim($_SESSION['role_name'] ?? ''));
@@ -71,8 +73,8 @@ $iconMap = [
 <aside class="sidebar" id="appSidebar">
 
   <div class="sidebar-brand" id="sidebar-toggle" title="Toggle sidebar">
-    <div class="brand-icon"><img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="22" height="22"></div>
-    <div class="brand-name">Edu<span>School</span></div>
+    <div class="brand-icon"><img src="<?= htmlspecialchars($branding['logo'], ENT_QUOTES) ?>" alt="" width="22" height="22"></div>
+    <div class="brand-name"><?= htmlspecialchars($branding['name'], ENT_QUOTES) ?></div>
   </div>
 
   <nav class="nav-section">

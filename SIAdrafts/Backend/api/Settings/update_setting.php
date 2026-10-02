@@ -28,10 +28,16 @@ csrf_verify();
 $key   = trim($_POST['setting_key'] ?? '');
 $value = trim($_POST['setting_value'] ?? '');
 
-$allowedKeys = ['current_school_year', 'current_semester'];
+$allowedKeys = ['current_school_year', 'current_semester', 'school_name'];
 if (!in_array($key, $allowedKeys, true) || $value === '') {
     http_response_code(422);
     echo json_encode(['error' => 'Invalid setting key or value.']);
+    exit;
+}
+
+if ($key === 'school_name' && mb_strlen($value) > 80) {
+    http_response_code(422);
+    echo json_encode(['error' => 'School name is too long (max 80 characters).']);
     exit;
 }
 

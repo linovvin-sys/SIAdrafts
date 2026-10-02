@@ -3,7 +3,9 @@ require_once __DIR__ . '/../../../../Backend/session_bootstrap.php';
 app_session_start();
 require_once __DIR__ . '/../../../../Backend/csrf.php';
 require_once __DIR__ . '/../../../../Backend/cdn_assets.php';
+require_once __DIR__ . '/../../../../Backend/school_branding.php';
 $_pageCsrfToken = csrf_token();
+$_branding = get_school_branding();
 $_logged_in  = !empty($_SESSION['user_id']);
 $_role       = $_SESSION['role_name'] ?? '';
 
@@ -17,8 +19,8 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EduSchool</title>
-<link rel="icon" type="image/svg+xml" href="/SIAdrafts/Frontend/assets/crest.svg">
+<title><?= htmlspecialchars($_branding['name'], ENT_QUOTES) ?></title>
+<link rel="icon" href="<?= htmlspecialchars($_branding['favicon'], ENT_QUOTES) ?>">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,400;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -49,9 +51,9 @@ $_admission_pages = ['admission.php','admission_process.php','admission_confirm.
     <nav class="navbar <?= !$_logged_in ? 'navbar-guest' : '' ?>">
       <a class="brand" href="<?= $_logged_in ? '/SIAdrafts/Frontend/View/Admission/enrollment.php' : '/SIAdrafts/Frontend/View/index.php' ?>">
         <span class="brand-mark">
-          <img src="/SIAdrafts/Frontend/assets/crest.svg" alt="" width="22" height="22">
+          <img src="<?= htmlspecialchars($_branding['logo'], ENT_QUOTES) ?>" alt="" width="22" height="22">
         </span>
-        <span class="brand-name">Edu<em>School</em></span>
+        <span class="brand-name"><?= htmlspecialchars($_branding['name'], ENT_QUOTES) ?></span>
       </a>
       <ul class="nav-links">
         <?php if ($_logged_in && $_role === 'Staff'): ?>
