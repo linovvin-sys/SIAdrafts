@@ -41,6 +41,7 @@ if (isset($_GET['course_id']) && ctype_digit((string)$_GET['course_id'])) {
 
 $page_scripts = [
     '/SIAdrafts/Frontend/Js/Admission/ph-address-picker.js',
+    '/SIAdrafts/Frontend/Js/Admission/school-autocomplete.js',
     '/SIAdrafts/Frontend/Js/Admission/online-admission.js',
 ];
 include '../Admission/Include/header.php';
@@ -313,7 +314,10 @@ include '../Admission/Include/header.php';
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">School name</label>
-                <input type="text" class="form-control" name="school_name[]">
+                <div class="school-autocomplete">
+                  <input type="text" class="form-control" name="school_name[]" autocomplete="off" role="combobox" aria-expanded="false" aria-autocomplete="list" placeholder="Start typing to search…">
+                  <div class="school-suggestions" role="listbox" hidden></div>
+                </div>
               </div>
               <div class="col-md-6">
                 <label class="form-label">School address</label>

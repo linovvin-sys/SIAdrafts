@@ -1,0 +1,5 @@
+# ph_schools.sqlite is read server-side only (search_schools.php), never
+# served directly -- not sensitive data (it's DepEd's own public school
+# directory), but there's no reason a raw 8MB database file should be
+# directly downloadable by URL either.
+Require all denied

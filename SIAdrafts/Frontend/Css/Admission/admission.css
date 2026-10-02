@@ -306,6 +306,71 @@
   }
   .address-picker .address-detail{ margin-top: 8px; }
   .address-picker--compact .address-detail{ margin-top: 6px; }
+
+  /*  school-name autocomplete  */
+  .school-autocomplete{ position: relative; }
+  /* Same glass recipe as .navbar/.progress-track (blur+saturate, a
+     hairline border, a soft tinted shadow) -- reused deliberately so the
+     one floating panel that needed it reads as part of the same system,
+     not a one-off decorative effect. */
+  .school-suggestions{
+    position: absolute;
+    top: calc(100% + 6px);
+    left: 0;
+    right: 0;
+    z-index: 30;
+    max-height: 280px;
+    overflow-y: auto;
+    background: rgba(255,255,255,0.88);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid var(--ink-line);
+    border-radius: 8px;
+    box-shadow: 0 1px 1px rgba(31,46,40,0.03), 0 18px 36px -16px rgba(31,46,40,0.28);
+    padding: 6px;
+    /* Pop in from the input, not the viewport center -- it's anchored to
+       what triggered it. */
+    transform-origin: top center;
+    animation: schoolPanelIn .18s cubic-bezier(0.23,1,0.32,1);
+  }
+  @keyframes schoolPanelIn{
+    from{ opacity: 0; transform: translateY(-4px) scale(0.98); }
+    to{ opacity: 1; transform: translateY(0) scale(1); }
+  }
+  @media (prefers-reduced-motion: reduce){ .school-suggestions{ animation: none; } }
+
+  .school-suggestion{
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 10px;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color .12s ease;
+  }
+  .school-suggestion:hover,
+  .school-suggestion.is-active{ background: rgba(4,106,56,0.08); }
+  .school-suggestion iconify-icon{
+    flex: none;
+    font-size: 16px;
+    color: var(--amber);
+  }
+  .school-suggestion-text{ min-width: 0; }
+  .school-suggestion-name{
+    font-size: 0.86rem;
+    font-weight: 600;
+    color: var(--ink);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .school-suggestion-where{
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
  
   /*  repeatable academic-history row  */
   .history-row{
