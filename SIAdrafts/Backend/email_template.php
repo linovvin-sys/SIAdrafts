@@ -138,3 +138,75 @@ function email_layout(string $schoolName, string $eyebrow, string $title, string
 
         . '</table></td></tr></table></body></html>';
 }
+
+/** Admission slip sent when an application is filed. */
+function email_admission_slip(string $brandName, array $fields, string $applicantName, string $referenceId): string
+{
+    return email_layout(
+        $brandName,
+        'Admissions Office',
+        'Your application is in!',
+        email_paragraph('Hi ' . $fields['first_name'] . ', thank you for choosing ' . $brandName . '. We have received your application and it is now being processed.')
+        . email_highlight('Your reference number', $referenceId)
+        . email_details([
+            ['Applicant', $applicantName],
+            ['Program', $fields['program'] . ' — ' . $fields['year_level']],
+            ['Term', $fields['school_year'] . ' — Semester ' . $fields['semester']],
+            ['Date filed', date('F j, Y')],
+        ])
+        . email_steps('What happens next', [
+            'Keep this email. Print the slip or show it on your phone when you visit campus.',
+            'Bring your Certificate of Good Moral, PSA birth certificate, Form 138, and 2x2 photos for document verification.',
+            'Once your documents are verified, the registrar will complete your enrollment and issue your student portal account.',
+        ])
+        . email_callout('Tip', 'Your reference number is how the admissions office finds your application, so keep it handy.'),
+        'Admissions Office',
+        'We received your application. Reference ' . $referenceId
+    );
+}
+
+/** Welcome email with the new student's portal credentials. */
+function email_portal_welcome(string $brandName, string $firstName, array $credentials): string
+{
+    return email_layout(
+        $brandName,
+        "Registrar's Office",
+        'Welcome to ' . $brandName . '!',
+        email_paragraph('Hi ' . $firstName . ', your enrollment is complete and your student portal account is ready.')
+        . email_highlight('Temporary password', $credentials['temp_password'])
+        . email_details([
+            ['Student No.', $credentials['student_no']],
+            ['Portal', 'Student Portal'],
+        ])
+        . email_steps('Getting started', [
+            'Open the Student Portal and sign in with your student number and the temporary password above.',
+            'You will be asked to set your own password right away.',
+            'Explore your schedule, grades, announcements, and class materials.',
+        ])
+        . email_callout('Keep it secure', 'The temporary password stops working as soon as you set your own. Never share it with anyone.'),
+        "Registrar's Office",
+        'Your student portal account is ready. Student No. ' . $credentials['student_no']
+    );
+}
+
+/** Password reset email carrying a new temporary password. */
+function email_password_reset(string $brandName, string $firstName, string $studentNo, string $tempPassword): string
+{
+    return email_layout(
+        $brandName,
+        'Student Portal Support',
+        'Your password was reset',
+        email_paragraph('Hi ' . $firstName . ', the password for your ' . $brandName . ' student portal account was just reset.')
+        . email_highlight('Temporary password', $tempPassword)
+        . email_details([
+            ['Student No.', $studentNo],
+        ])
+        . email_steps('To sign back in', [
+            'Open the Student Portal and sign in with your student number and the temporary password above.',
+            'Choose a new password when prompted. The temporary one stops working once you do.',
+        ])
+        . email_callout("Didn't request this?", "If you didn't ask for a reset, contact the school administration right away so your account can be secured."),
+        'School Administration',
+        'Your temporary password is inside.'
+    );
+}

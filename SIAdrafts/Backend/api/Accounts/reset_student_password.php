@@ -85,23 +85,7 @@ $upd->close();
 $emailSent = false;
 if (!empty($account['email'])) {
     $brandName = get_school_branding()['name'];
-    $credsHtml = email_layout(
-        $brandName,
-        "Registrar's Office",
-        'Your password was reset',
-        email_paragraph('Hi ' . $account['first_name'] . ', the password for your ' . $brandName . ' student portal account was just reset.')
-        . email_highlight('Temporary password', $tempPassword)
-        . email_details([
-            ['Student No.', $account['student_no']],
-        ])
-        . email_steps('To sign back in', [
-            'Open the Student Portal and sign in with your student number and the temporary password above.',
-            'Choose a new password when prompted. The temporary one stops working once you do.',
-        ])
-        . email_callout("Didn't request this?", "If you didn't ask for a reset, contact the registrar's office right away so your account can be secured."),
-        "Registrar's Office",
-        'Your temporary password is inside.'
-    );
+    $credsHtml = email_password_reset($brandName, $account['first_name'], $account['student_no'], $tempPassword);
     $emailSent = send_email(
         $account['email'],
         'Your ' . $brandName . ' Student Portal Password Was Reset',

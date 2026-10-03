@@ -446,27 +446,7 @@ $applicantName = trim($fields['first_name'] . ' ' . $fields['middle_name'] . ' '
 $emailSent = false;
 if (!empty($fields['email'])) {
     $brandName = get_school_branding()['name'];
-    $slipHtml = email_layout(
-        $brandName,
-        'Admissions Office',
-        'Your application is in!',
-        email_paragraph('Hi ' . $fields['first_name'] . ', thank you for choosing ' . $brandName . '. We have received your application and it is now being processed.')
-        . email_highlight('Your reference number', $reference_id)
-        . email_details([
-            ['Applicant', $applicantName],
-            ['Program', $fields['program'] . ' — ' . $fields['year_level']],
-            ['Term', $fields['school_year'] . ' — Semester ' . $fields['semester']],
-            ['Date filed', date('F j, Y')],
-        ])
-        . email_steps('What happens next', [
-            'Keep this email. Print the slip or show it on your phone when you visit campus.',
-            'Bring your Certificate of Good Moral, PSA birth certificate, Form 138, and 2x2 photos for document verification.',
-            'Once your documents are verified, the registrar will complete your enrollment and issue your student portal account.',
-        ])
-        . email_callout('Tip', 'Your reference number is how the admissions office finds your application, so keep it handy.'),
-        'Admissions Office',
-        'We received your application. Reference ' . $reference_id
-    );
+    $slipHtml = email_admission_slip($brandName, $fields, $applicantName, $reference_id);
     $emailSent = send_email(
         $fields['email'],
         'Your ' . $brandName . ' Admission Slip — ' . $reference_id,

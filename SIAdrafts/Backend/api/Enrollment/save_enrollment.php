@@ -616,25 +616,7 @@ try {
     $portalEmailSent = false;
     if ($newPortalCredentials && !empty($applicant['email'])) {
         $brandName = get_school_branding()['name'];
-        $credsHtml = email_layout(
-            $brandName,
-            "Registrar's Office",
-            'Welcome to ' . $brandName . '!',
-            email_paragraph('Hi ' . $applicant['first_name'] . ', your enrollment is complete and your student portal account is ready.')
-            . email_highlight('Temporary password', $newPortalCredentials['temp_password'])
-            . email_details([
-                ['Student No.', $newPortalCredentials['student_no']],
-                ['Portal', 'Student Portal'],
-            ])
-            . email_steps('Getting started', [
-                'Open the Student Portal and sign in with your student number and the temporary password above.',
-                'You will be asked to set your own password right away.',
-                'Explore your schedule, grades, announcements, and class materials.',
-            ])
-            . email_callout('Keep it secure', 'The temporary password stops working as soon as you set your own. Never share it with anyone.'),
-            "Registrar's Office",
-            'Your student portal account is ready. Student No. ' . $newPortalCredentials['student_no']
-        );
+        $credsHtml = email_portal_welcome($brandName, $applicant['first_name'], $newPortalCredentials);
         $portalEmailSent = send_email(
             $applicant['email'],
             'Your ' . $brandName . ' Student Portal Account — ' . $newPortalCredentials['student_no'],
