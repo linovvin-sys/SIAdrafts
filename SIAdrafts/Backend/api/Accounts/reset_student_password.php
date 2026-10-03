@@ -84,30 +84,24 @@ $upd->close();
 
 $emailSent = false;
 if (!empty($account['email'])) {
-    $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     $brandName = get_school_branding()['name'];
-    $credsHtml = '
-    <div style="margin:0;padding:24px;background:#F7F4EC;font-family:Helvetica,Arial,sans-serif;color:#1F2E28;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
-        <tr><td style="padding-bottom:18px;text-align:center;">
-          <div style="font-family:Georgia,serif;font-size:22px;font-weight:600;">' . $e($brandName) . '</div>
-          <div style="font-size:12px;color:rgba(31,46,40,0.8);letter-spacing:1px;text-transform:uppercase;margin-top:4px;">Student Portal Access</div>
-        </td></tr>
-        <tr><td style="background:#FFFFFF;border:1px solid rgba(31,46,40,0.14);border-radius:14px;padding:28px 30px;">
-          <p style="margin:0 0 16px;font-size:15px;">Hi ' . $e($account['first_name']) . ', your ' . $e($brandName) . ' student portal password was just reset:</p>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-top:1px solid rgba(31,46,40,0.14);">
-            <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);border-bottom:1px solid rgba(31,46,40,0.08);">Student No.</td><td style="padding:10px 0;text-align:right;font-weight:bold;border-bottom:1px solid rgba(31,46,40,0.08);">' . $e($account['student_no']) . '</td></tr>
-            <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);">Temporary Password</td><td style="padding:10px 0;text-align:right;font-weight:bold;font-family:Courier,monospace;">' . $e($tempPassword) . '</td></tr>
-          </table>
-          <p style="margin:22px 0 0;font-size:13px;color:rgba(31,46,40,0.8);line-height:1.6;">
-            Sign in at the Student Portal with the credentials above — you\'ll be asked to set your own password right away, and this temporary one stops working once you do. If you didn\'t request this reset, contact the registrar\'s office.
-          </p>
-        </td></tr>
-        <tr><td style="padding-top:16px;text-align:center;font-size:11px;color:rgba(31,46,40,0.6);">
-          This is an automated message from the ' . $e($brandName) . ' registrar\'s office — replies are not monitored.
-        </td></tr>
-      </table>
-    </div>';
+    $credsHtml = email_layout(
+        $brandName,
+        "Registrar's Office",
+        'Your password was reset',
+        email_paragraph('Hi ' . $account['first_name'] . ', the password for your ' . $brandName . ' student portal account was just reset.')
+        . email_highlight('Temporary password', $tempPassword)
+        . email_details([
+            ['Student No.', $account['student_no']],
+        ])
+        . email_steps('To sign back in', [
+            'Open the Student Portal and sign in with your student number and the temporary password above.',
+            'Choose a new password when prompted. The temporary one stops working once you do.',
+        ])
+        . email_callout("Didn't request this?", "If you didn't ask for a reset, contact the registrar's office right away so your account can be secured."),
+        "Registrar's Office",
+        'Your temporary password is inside.'
+    );
     $emailSent = send_email(
         $account['email'],
         'Your ' . $brandName . ' Student Portal Password Was Reset',

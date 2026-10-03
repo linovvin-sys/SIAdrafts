@@ -445,37 +445,28 @@ $conn->close();
 $applicantName = trim($fields['first_name'] . ' ' . $fields['middle_name'] . ' ' . $fields['last_name']);
 $emailSent = false;
 if (!empty($fields['email'])) {
-    $e = fn($v) => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
     $brandName = get_school_branding()['name'];
-    $slipHtml = '
-    <div style="margin:0;padding:24px;background:#F7F4EC;font-family:Helvetica,Arial,sans-serif;color:#1F2E28;">
-      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;margin:0 auto;">
-        <tr><td style="padding-bottom:18px;text-align:center;">
-          <div style="font-family:Georgia,serif;font-size:22px;font-weight:600;">' . $e($brandName) . '</div>
-          <div style="font-size:12px;color:rgba(31,46,40,0.8);letter-spacing:1px;text-transform:uppercase;margin-top:4px;">Admission Slip</div>
-        </td></tr>
-        <tr><td style="background:#FFFFFF;border:1px solid rgba(31,46,40,0.14);border-radius:14px;padding:28px 30px;">
-          <p style="margin:0 0 16px;font-size:15px;">Hi ' . $e($fields['first_name']) . ', we received your application. Your reference number is:</p>
-          <div style="text-align:center;background:#F3ECDD;border:1px dashed #A47B3F;border-radius:10px;padding:16px;margin-bottom:22px;">
-            <span style="font-family:Courier,monospace;font-size:24px;font-weight:bold;letter-spacing:2px;">' . $e($reference_id) . '</span>
-          </div>
-          <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px;border-top:1px solid rgba(31,46,40,0.14);">
-            <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);border-bottom:1px solid rgba(31,46,40,0.08);">Applicant</td><td style="padding:10px 0;text-align:right;font-weight:bold;border-bottom:1px solid rgba(31,46,40,0.08);">' . $e($applicantName) . '</td></tr>
-            <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);border-bottom:1px solid rgba(31,46,40,0.08);">Program</td><td style="padding:10px 0;text-align:right;font-weight:bold;border-bottom:1px solid rgba(31,46,40,0.08);">' . $e($fields['program'] . ' — ' . $fields['year_level']) . '</td></tr>
-            <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);border-bottom:1px solid rgba(31,46,40,0.08);">Term</td><td style="padding:10px 0;text-align:right;font-weight:bold;border-bottom:1px solid rgba(31,46,40,0.08);">' . $e($fields['school_year'] . ' — Semester ' . $fields['semester']) . '</td></tr>
-            <tr><td style="padding:10px 0;color:rgba(31,46,40,0.8);">Date filed</td><td style="padding:10px 0;text-align:right;font-weight:bold;">' . $e(date('F j, Y')) . '</td></tr>
-          </table>
-          <p style="margin:22px 0 0;font-size:13px;color:rgba(31,46,40,0.8);line-height:1.6;">
-            Print this slip or show it on your phone when you visit campus, together with your
-            Certificate of Good Moral, PSA birth certificate, Form 138, and 2x2 photos,
-            to complete document verification and enrollment.
-          </p>
-        </td></tr>
-        <tr><td style="padding-top:16px;text-align:center;font-size:11px;color:rgba(31,46,40,0.6);">
-          This is an automated message from the ' . $e($brandName) . ' admissions office — replies are not monitored.
-        </td></tr>
-      </table>
-    </div>';
+    $slipHtml = email_layout(
+        $brandName,
+        'Admissions Office',
+        'Your application is in!',
+        email_paragraph('Hi ' . $fields['first_name'] . ', thank you for choosing ' . $brandName . '. We have received your application and it is now being processed.')
+        . email_highlight('Your reference number', $reference_id)
+        . email_details([
+            ['Applicant', $applicantName],
+            ['Program', $fields['program'] . ' — ' . $fields['year_level']],
+            ['Term', $fields['school_year'] . ' — Semester ' . $fields['semester']],
+            ['Date filed', date('F j, Y')],
+        ])
+        . email_steps('What happens next', [
+            'Keep this email. Print the slip or show it on your phone when you visit campus.',
+            'Bring your Certificate of Good Moral, PSA birth certificate, Form 138, and 2x2 photos for document verification.',
+            'Once your documents are verified, the registrar will complete your enrollment and issue your student portal account.',
+        ])
+        . email_callout('Tip', 'Your reference number is how the admissions office finds your application, so keep it handy.'),
+        'Admissions Office',
+        'We received your application. Reference ' . $reference_id
+    );
     $emailSent = send_email(
         $fields['email'],
         'Your ' . $brandName . ' Admission Slip — ' . $reference_id,

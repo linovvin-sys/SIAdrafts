@@ -1,6 +1,7 @@
 <?php
 
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/email_template.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
