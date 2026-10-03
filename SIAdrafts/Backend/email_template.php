@@ -194,7 +194,8 @@ function email_password_reset(string $brandName, string $firstName, string $stud
 {
     return email_layout(
         $brandName,
-        XX,
+        'Student Portal Support',
+        'Your password was reset',
         email_paragraph('Hi ' . $firstName . ', the password for your ' . $brandName . ' student portal account was just reset.')
         . email_highlight('Temporary password', $tempPassword)
         . email_details([
